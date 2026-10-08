@@ -53,6 +53,8 @@ Every thing in town is a hand-pixelled prop: trees (round, young, poplar), palms
 - **Clusters, not grids.** Flowers, tufts, rocks, mushrooms and shelf items come in uneven groups from a seeded random generator (`rand`), with open space between. Nothing repeats on a fixed step.
 - **Depth through layers.** Far things are paler and cooler with less contrast; mist sits between layers (`mist`); everything overlaps something; framing in the bottom corners sits in front of the pets.
 - **Hue-shifted light.** Shadows go cooler within their colour (green toward teal, cloud undersides toward lavender), never plain grey; highlights go lighter and warmer.
+- **Grounds are soft fields, not fills.** `k.field(y, colour)` lights the open middle, deepens the edges and the bottom, adds fine grass strokes and a sprinkle of tiny flowers. Skies carry several big clouds, with a bank of them along the horizon (`k.horizonClouds`).
+- **Bold framing.** `k.frame('left' | 'right', leaf)` puts banded shrubs and bushes in a bottom corner, in front of the pets.
 - **An open stage.** Keep the middle clear for the pets and put the detail around the edges, with a trail, river or path leading in.
 
 Each place in town is drawn in code at the room's double density (`src/art/town.js`), using a small kit of shaded shapes so every scene follows the same rules:
