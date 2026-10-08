@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.17.4, 8 October 2026)
+## Where things stand (v0.17.5, 8 October 2026)
 
 Everything is committed, pushed and live. `npm test` passes (87 tests).
 
@@ -91,7 +91,7 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 - **Two grids in one framebuffer.** Scene code works in normal pixels (128×224). The framebuffer is 256×448 fine pixels. `scr.rect`, `panel`, `rule` and `draw` take normal pixels; `hpset`, `hrect` take fine ones; bitmaps flagged `hd` and `hdSprite`s are drawn one fine pixel per cell. `scr.rule(x, y, w, c, bottom)` is a divider one fine pixel thick, the same weight as a panel outline; the old two-pixel `hline`, `vline`, `box` and `dither` are gone.
 - **Sprites:** `hdSprite(rows, key)` is drawn at fine density with no upscaling; its `w` and `h` are in normal pixels, so its grid must have an even width and height. `sprite(rows)` is the old 1x grid that `scr.draw` upscales with Scale2x; only the unused lens grids still use it. `scr.draw` options: `frame`, `flip`, `ctx` (colour context), `solid`, `remap` (a palette-to-palette table such as `mutedLut()`).
 - **Font** (`src/engine/font.js`): `FINE` holds each glyph as ten fine rows, hand-drawn; widths are twice the old 3×5 lettering so every layout kept its place (`tests/font.test.js` enforces that). `SMALL` is the old lettering, kept for signs painted into town backdrops (`glyphRows`). A new character needs rows in both. There is no `&`.
-- **Screen layout** (`LAYOUT` in `src/ui.js`, normal pixels): status bar 0-12, top icon row 12-34, room 34-190, bottom icon row 190-212, info bar 212-224. The icon rows are navy; an icon is drawn in greys (`MUTED` in `home.js`) until the cursor is on it. The info bar shows only the highlighted menu's name.
+- **Screen layout** (`LAYOUT` in `src/ui.js`, normal pixels): status bar 0-12, top icon row 12-34, room 34-190, bottom icon row 190-212, info bar 212-224. The bars are open sky (see "The sky round the room"); an icon is drawn in greys (`MUTED`, or `MUTED_DAY` on a bright sky, in `home.js`) until the cursor is on it. The info bar shows only the highlighted menu's name.
 - **Page sizing** (`resize()` in `main.js`): the canvas takes the full width, or the height left above the buttons, whichever runs out first. `--px` is set to the size of one normal game pixel; the buttons (32×36 art pixels), their gap and their offsets are all measured in it, so they match the game's scale. `BUTTON_ROWS` is the strip's height in game pixels. On a short viewport (a phone browser with its toolbars) thin strips show at the sides; removing them would need a taller logical screen.
 - **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `pet-art.js`), feet 3 rows above the bottom; drawn at fine density.
 - **Town backdrops and the home room:** each is a 256×312 fine bitmap (`RW`, `RH`).
@@ -102,6 +102,13 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 ## The home room
 
 `homeRoom(sky, dark)` in `src/art/town.js` builds it like a town place from the props in `src/art/props-home.js` (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`), one cached picture per time of day plus a lights-off version (`dim` keeps the shapes as moonlit half-tones). The window panes are holes: `src/scenes/room.js` draws the sky, sun and cloud, or moon and stars, and then the room over them. The garland is drawn after the window so it hangs in front. The toy chest and plant are on the front layer (`drawRoomFront`). Room decorations would slot in by swapping props or colours in `homeScene`.
+
+## The sky round the room
+
+The owner asked for the dark blue areas outside the room to show the sky the window looks out on (v0.17.5).
+- `src/scenes/room.js` holds one sky picture the size of the whole screen per state (`SKY`: four bands, dithered seams at `SEAMS`). `drawRoom` copies the part behind the window panes; `drawSkyBars` copies the parts above and below the room (status bar, icon rows, info bar) and adds twinkling stars at night or small drifting clouds by day. Lights off counts as night.
+- `drawSkyBars` returns `{ sky, dark, top, bottom }`. `drawBars` in `home.js` writes in ink on a bright sky and in white at night, and passes the top and bottom colours to `app.pageSky` (`main.js`), which colours the notch area and the button strip (a shade deeper when the LCD filter is on, to match the filtered screen). The navy in `style.css` only shows until the first frame.
+- Text or sprites added to the bars must read on both a pale sky and a dark one; check day, dawn, dusk and night by setting `app.game.simTime`.
 
 ## Town art
 
@@ -151,7 +158,7 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 - Settings > Screen filter (`settings.lcd`, on by default). The owner asked for something that hides the pixels a little and feels like a 90s handheld, "not just blurry", and then for it to cover the buttons too.
 - `app.setFilter(on)` in `main.js` is the one switch. It calls `scr.setFilter`, repaints the buttons with the same treatment (`paintButtons(true)`), and sets `body.lcd`.
 - `Screen.present()` (`src/engine/screen.js`) keeps the plain 256×448 frame off-screen and composes the visible canvas at three times that size: the frame enlarged with hard edges; the same frame again, offset down and right and multiplied in faintly (dark shapes cast a soft shadow, like LCD segments over their backing); then the grid of cells (`lcdCell`). The canvas's `image-rendering` becomes `auto`, so the browser smooths only the last small step.
-- Under `body.lcd`, `style.css` shows `#glass` (a sheen and a vignette over the whole device, taps pass through), lays the cell grid over the button strip, and sets the page navy to `#201e4e`, the shade the filtered screen's navy comes out at.
+- Under `body.lcd`, `style.css` shows `#glass` (a sheen and a vignette over the whole device, taps pass through) and lays the cell grid over the button strip. The page's colour comes from `app.pageSky`, which deepens it the way the filter deepens the screen.
 - With the filter off the canvas is the plain frame with `image-rendering: pixelated`. Anything that reads pixels from the visible canvas must allow for both sizes (`scr.canvas.width` is 256 or 768).
 - To tune: the shadow's `globalAlpha` (0.2) and offset in `present()`, the grid's two alphas in `lcdCell()`, the gradients on `#glass`.
 

@@ -1,5 +1,6 @@
 // Boot: screen, input, the scene stack, the simulation clock and saving.
 import { Screen, W, H, lcdCell } from './engine/screen.js';
+import { C, COLORS } from './engine/palette.js';
 import { setupInput } from './engine/input.js';
 import { unlockAudio, play, setMuted } from './engine/audio.js';
 import { newGame, advance, needs, MIN } from './game/pet.js';
@@ -48,6 +49,23 @@ const app = {
     paintButtons(on);
     document.body.classList.toggle('lcd', on);
     document.documentElement.style.setProperty('--cell', on ? `url(${lcdCell().toDataURL()})` : 'none');
+    if (this.sky) this.pageSky(...this.sky);
+  },
+  /**
+   * The page round the screen carries on the sky in the game's bars: its top
+   * colour above the screen (a phone's notch), its bottom colour in the strip
+   * with the buttons. With the LCD filter on, the screen's colours come out a
+   * shade deeper (its own shadow is laid over it), so the page's are too.
+   */
+  pageSky(top, bottom) {
+    this.sky = [top, bottom];
+    const css = (name) => {
+      const lcd = document.body.classList.contains('lcd');
+      return `rgb(${COLORS[C(name)].slice(0, 3).map(v => (lcd ? Math.round(v * (0.8 + 0.2 * v / 255)) : v)).join(', ')})`;
+    };
+    document.getElementById('bezel').style.background = css(top);
+    document.body.style.background = css(bottom);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', css(top));
   },
   game: null,
   scenes: [],

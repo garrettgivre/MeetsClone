@@ -9,7 +9,7 @@ import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
 import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort, bathe, toilet, isDirty, isPottyTrained, POTTY_TRAINED } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
-import { drawRoom as drawRoomHD, drawRoomFront } from './room.js';
+import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars } from './room.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -21,7 +21,8 @@ const LABEL = {
 };
 const POOP_X = [104, 116, 92, 80];
 // menu icons are drawn washed out until the cursor is on them (pale greys, to show on the navy bars)
-const MUTED = mutedLut('white', 1, 0.2);
+const MUTED = mutedLut('white', 1, 0.2);      // on the night sky
+const MUTED_DAY = mutedLut('ink', 1, 0.25);   // darker greys, to show against a bright sky
 const CELL = W / 5;
 // how far a small pet is lifted so it shows over the rim of the tub
 const BATH_LIFT = { baby: 17, child: 12, teen: 9, adult: 9 };
@@ -522,31 +523,32 @@ export class HomeScene {
   drawBars(scr, t) {
     const game = this.game, pet = this.pet;
     const { status, top, bottom, info } = LAYOUT;
+    // the bars are open sky: the same sky the window looks out on, by day and by night
+    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights);
+    const fg = sky.dark ? COL.white : COL.ink;
+    if (sky.sky !== this.skyShown) { this.skyShown = sky.sky; this.app.pageSky?.(sky.top, sky.bottom); }
     // status bar
-    scr.rect(0, status.y, W, status.h, COL.ink);
     const d = new Date(game.simTime);
     const hh = d.getHours(), mm = String(d.getMinutes()).padStart(2, '0');
-    text(scr, `${hh % 12 || 12}:${mm}${hh < 12 ? 'AM' : 'PM'}`, 3, 4, COL.white);
+    text(scr, `${hh % 12 || 12}:${mm}${hh < 12 ? 'AM' : 'PM'}`, 3, 4, fg);
     scr.draw(COIN, W - 6 - 5 - String(game.points).length * 4, 3, {});
-    text(scr, game.points, W - 4, 4, C('gold.3'), { align: 'right' });
-    text(scr, `G${pet?.generation || game.generation}`, 66, 4, C('sky.3'), { align: 'center' });
-    if (pet && (needs(pet) || pet.squirm) && Math.floor(t / 400) % 2) scr.draw(ATTN, 78, 2, { solid: C('red.2') });
-    if (pet?.paused) text(scr, 'II', 86, 4, C('gold.3'));
+    text(scr, game.points, W - 4, 4, sky.dark ? C('gold.3') : COL.ink, { align: 'right' });
+    text(scr, `G${pet?.generation || game.generation}`, 66, 4, sky.dark ? C('sky.3') : COL.shade, { align: 'center' });
+    if (pet && (needs(pet) || pet.squirm) && Math.floor(t / 400) % 2) scr.draw(ATTN, 78, 2, { solid: C(sky.dark ? 'red.2' : 'red.1') });
+    if (pet?.paused) text(scr, 'II', 86, 4, sky.dark ? C('gold.3') : COL.shade);
     // icon rows
     for (const [row, ids] of [[top, TOP], [bottom, BOTTOM]]) {
-      scr.rect(0, row.y, W, row.h, COL.ink);
-      scr.rule(0, row.y + (row === top ? row.h - 1 : 0), W, COL.shade, row === top);
+      scr.rule(0, row.y + (row === top ? row.h - 1 : 0), W, sky.dark ? COL.shade : COL.ink, row === top);
       ids.forEach((id, i) => {
         const idx = ALL.indexOf(id);
         const cx = Math.round(i * CELL + CELL / 2);
         if (this.cursor === idx) scr.panel(Math.round(i * CELL) + 1, row.y + 1, Math.round(CELL) - 1, row.h - 2, COL.hi, COL.ink);
         const ic = ICONS[id];
-        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), { remap: this.cursor === idx ? null : MUTED });
+        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), { remap: this.cursor === idx ? null : sky.dark ? MUTED : MUTED_DAY });
       });
     }
     // info bar
-    scr.rect(0, info.y, W, info.h, COL.ink);
     // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
-    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, COL.white, { align: 'center' });
+    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, fg, { align: 'center' });
   }
 }
