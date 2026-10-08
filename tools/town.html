@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Town Review</title>
+<style>
+  body { margin: 0; padding: 12px; font: 13px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  figure { margin: 0; text-align: center; font-size: 11px; }
+  canvas { image-rendering: pixelated; border-radius: 6px; }
+</style>
+</head>
+<body>
+<p>Every town backdrop at full detail, with a guide line where pets stand. <code>?only=park&amp;z=3</code> shows one place bigger; <code>&amp;pets</code> adds two pets for scale.</p>
+<div class="row" id="out"></div>
+<script type="module">
+import { PACKED } from '../src/engine/palette.js';
+import { makeRng } from '../src/engine/rng.js';
+import { backdrop, RW, RH, FEET } from '../src/art/town.js';
+import { LOCATIONS, resident } from '../src/game/town.js';
+import { composePetArt } from '../src/game/pet-art.js';
+import { FOUNDERS, express, pureGenome } from '../src/game/genetics.js';
+
+const params = new URLSearchParams(location.search);
+const only = params.get('only'), z = +params.get('z') || (only ? 3 : 1), pets = params.has('pets');
+const out = document.getElementById('out');
+
+function paint(ctx, bm, ox, oy, flip = false) {
+  const img = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height), u = new Uint32Array(img.data.buffer);
+  for (let y = 0; y < bm.h; y++) for (let x = 0; x < bm.w; x++) {
+    const c = bm.px[y * bm.w + x];
+    const X = ox + (flip ? bm.w - 1 - x : x), Y = oy + y;
+    if (c && X >= 0 && Y >= 0 && X < ctx.canvas.width && Y < ctx.canvas.height) u[Y * ctx.canvas.width + X] = PACKED[c];
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+for (const loc of LOCATIONS) {
+  if (only && loc.id !== only) continue;
+  const c = document.createElement('canvas'); c.width = RW; c.height = RH;
+  c.style.width = RW * z + 'px'; c.style.height = RH * z + 'px';
+  const ctx = c.getContext('2d');
+  paint(ctx, backdrop(loc.id), 0, 0);
+  if (pets) {
+    // pets are drawn at double density: each 64-px art pixel is one hi-res pixel here, scaled x2
+    const big = (art) => { const out = { w: art.w * 2, h: art.h * 2, px: new Uint8Array(art.w * art.h * 4) };
+      for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) out.px[y * out.w + x] = art.px[(y >> 1) * art.w + (x >> 1)]; return out; };
+    const r = resident(loc.id);
+    paint(ctx, big(composePetArt(r.phenotype, 'adult', {})), 188 - 64, FEET - 122);
+    paint(ctx, big(composePetArt(express(pureGenome(FOUNDERS[1].traits), makeRng(1)), 'teen', {})), 76 - 64, FEET - 122, true);
+  } else {
+    ctx.fillStyle = 'rgba(255,0,0,0.35)'; ctx.fillRect(0, FEET, RW, 1);
+  }
+  const f = document.createElement('figure'); f.append(c, document.createElement('br'), loc.name);
+  out.append(f);
+}
+</script>
+</body>
+</html>

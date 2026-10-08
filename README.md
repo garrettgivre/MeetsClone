@@ -78,6 +78,7 @@ tools/parts.html          every hand-drawn part: one row per allele, one column 
 tools/lab.html            Pairing Lab: breed any two pets, inspect genes, odds, random pairings, lineages
 tools/founders.html       founder review sheets (?f=Name&s=560 for one, ?grid for the set, ?grid&sil for silhouettes)
 tools/compare.html        art review: founders, children, wild pets, growth, expressions
+tools/town.html           every town backdrop at full detail (?only=park&z=3, &pets for scale)
 tools/sketch.mjs          silhouette drafts for hand-pixelling new characters
 tools/dump.mjs            print a composed pet as text for pixel-level review
 docs/                     research notes and the build plan

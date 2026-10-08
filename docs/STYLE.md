@@ -43,6 +43,14 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - **Faces fit their heads:** a head with a large face (`*`) should be about as wide as its siblings in that form at the face row; put the face socket on the widest rows. A small head or child shape can bring the eyes closer with a `spread` option on its part. The tests fail if any eye in any form, head and stage lands over the outline.
 - **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).
 
+## Town backdrops
+Each place in town is drawn in code at the room's double density (`src/art/town.js`), using a small kit of shaded shapes so every scene follows the same rules:
+- Solid shapes are lit from the upper left: a light rim on the top and left, a two-pixel shadow band on the bottom and right, and an outline in a darker shade of their own colour (ink only for small, dark details).
+- Props stand on soft dithered contact shadows, and indoor walls meet the floor with a dithered shadow line.
+- Floors are in perspective (tiles and planks get taller toward the viewer); outdoor scenes have a far layer (skyline, hills or pines) behind the main props.
+- Keep the middle of the floor clear: your pet stands at the left, the resident at the right, and the action buttons cover the bottom.
+- Review with `tools/town.html` (`?only=park&z=3`, `&pets` to see pets for scale).
+
 ## Life stages
 - **Baby:** the form's simple baby shape with baby eyes and a little mouth.
 - **Child:** the form's child shape with the pet's own eyes, mouth, markings and (small) ears, so the line already shows.
