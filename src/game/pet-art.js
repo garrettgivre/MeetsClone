@@ -116,8 +116,9 @@ function crop(L, floats = false) {
 }
 
 /** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
-function drawFace(L, p, stage, pose, ctx, [fx, fy], size) {
-  const lay = { ...FACE_LAYOUT[size], ...(FORMS[p.form]?.faceLayout || {}) };
+function drawFace(L, p, stage, pose, ctx, [fx, fy], size, on = {}) {
+  // layout: house defaults, then the form's, then the part's own (a small head can set a closer eye spread)
+  const lay = { ...FACE_LAYOUT[size], ...(FORMS[p.form]?.faceLayout || {}), ...(on.spread ? { spread: on.spread } : {}) };
   const simple = stage === 'baby';
   const eye = simple ? BABY_EYES : (EYES[p.eyes] || EYES.bead)[size];
   const spread = simple ? 3 : lay.spread;
@@ -131,10 +132,15 @@ function drawFace(L, p, stage, pose, ctx, [fx, fy], size) {
     const by = fy + eye.h - eye.pivot[1];
     for (const x of [exL - 2, exL - 1, exR + 1, exR + 2]) if (skinAt(x, by)) L.set(x, by, C('pink.2'));
   }
+  const before = L.px.slice(); // to count eye pixels that miss the head
   L.stamp(eye, exL, fy, ctx);
   // the right eye keeps its glint on the lit (left) side unless the eye is meant to mirror
   if (eye.mirror) L.stamp(eye, exR, fy, ctx, true);
   else L.stamp(eye, exR + 2 * eye.pivot[0] - eye.w + 1, fy, ctx);
+  // eye pixels on empty space or over the head's outline mean the eyes don't fit the head
+  const edge = new Set([0, C('ink'), ramp(p.color, 0)]);
+  let offFace = 0;
+  for (let i = 0; i < before.length; i++) if (L.px[i] !== before[i] && edge.has(before[i])) offFace++;
   if (pose.gender === 'f' && !simple) {
     // a single lash at the outer top of each eye
     L.set(exL - eye.pivot[0] - 1, fy - eye.pivot[1], C('ink'));
@@ -144,7 +150,7 @@ function drawFace(L, p, stage, pose, ctx, [fx, fy], size) {
   const mouth = simple ? BABY_MOUTH : (MOUTHS[p.mouth] || MOUTHS.o)[size];
   const my = fy + (mouth.bill ? 1 : lay.mouth);
   L.stamp(mouth, fx, my, ctx);
-  return { eyes: [[exL, fy], [exR, fy]], eye, mouth: [fx, my + (mouth.bill ? mouth.h - 1 : 0)], bill: !!mouth.bill, eyeSkin };
+  return { offFace, eyes: [[exL, fy], [exR, fy]], eye, mouth: [fx, my + (mouth.bill ? mouth.h - 1 : 0)], bill: !!mouth.bill, eyeSkin };
 }
 
 /**
@@ -175,7 +181,7 @@ export function composePetArt(p, stage, pose = {}) {
     if (ears && !ears.front) drawEars();
     L.stamp(shape, ax, ay, ctx, false, stage === 'child' ? patternRemap(p.pattern, 'body', shape, { form: p.form, fu: 0, fv: 0 }) : null);
     if (ears && ears.front) drawEars();
-    face = drawFace(L, p, stage, pose, ctx, at('faceS')[0], 'S');
+    face = drawFace(L, p, stage, pose, ctx, at('faceS')[0], 'S', shape);
     neckY = at('faceS')[0][1] + 4;
   } else {
     const adult = stage === 'adult';
@@ -246,13 +252,13 @@ export function composePetArt(p, stage, pose = {}) {
     for (const step of F.order) steps[step]?.();
     drawArms((k) => k === 'up'); // raised arms go in front of the head
     joinSeams(L, [p.color, p.hairColor || p.color], joinSet(F.merge ? ['1-2'] : []), F.merge ? new Set(['1-2', '2-1']) : undefined);
-    face = drawFace(L, p, stage, pose, ctx, [fx, fy], faceSock[0]);
+    face = drawFace(L, p, stage, pose, ctx, [fx, fy], faceSock[0], head);
   }
 
   const { px, dx, dy, seen, overflow } = crop(L, !!F.floats);
   const sh = ([x, y]) => [x + dx, y + dy];
   return {
-    px, w: PW, h: PH, overflow, seen,
+    px, w: PW, h: PH, overflow, seen, offFace: face.offFace,
     eyes: face.eyes.map(sh), eyeSize: [face.eye.w, face.eye.h], eyePivot: face.eye.pivot, eyeSkin: face.eyeSkin,
     mouth: sh(face.mouth), faceColour: ramp(p.color, 2), neck: neckY + dy,
     floats: !!F.floats,

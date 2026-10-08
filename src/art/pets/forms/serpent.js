@@ -357,7 +357,7 @@ export default {
     '....oo22222222o..',
     '......oooooooo...',
     '.................',
-  ]),
+  ], { spread: 3 }),
   ears: {
     fox: part([
       'k.....',

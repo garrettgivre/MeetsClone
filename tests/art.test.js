@@ -104,3 +104,16 @@ test('pattern zones, where a part has them, match the part size', () => {
     }
   }
 });
+
+test('eyes fit inside every head and child shape, in every form', () => {
+  const rng = makeRng(51);
+  const misses = [];
+  for (const form of Object.keys(FORMS)) for (const head of Object.keys(GENES.head)) for (const eyes of Object.keys(GENES.eyes)) {
+    const p = express(pureGenome({ ...STARTER, form, head, eyes, hair: 'none' }), rng);
+    for (const stage of ['child', 'teen']) {
+      const { offFace } = composePetArt(p, stage, { gender: 'f' });
+      if (offFace) misses.push(`${form} ${head} ${eyes} ${stage} (${offFace}px over the edge)`);
+    }
+  }
+  assert.deepEqual(misses, [], 'eyes spill over the outline');
+});
