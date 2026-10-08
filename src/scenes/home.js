@@ -19,10 +19,9 @@ const LABEL = {
   status: 'STATUS', food: 'FOOD', clean: 'CLEAN', medicine: 'MEDICINE', lights: 'LIGHTS',
   games: 'GAMES', items: 'ITEMS', town: 'TOWN', family: 'FAMILY', settings: 'SETTINGS',
 };
-const STAGE_NAME = { egg: 'EGG', baby: 'BABY', child: 'CHILD', teen: 'TEEN', adult: 'ADULT' };
 const POOP_X = [104, 116, 92, 80];
-// menu icons are drawn washed out until the cursor is on them
-const MUTED = mutedLut('cream.3');
+// menu icons are drawn washed out until the cursor is on them (pale greys, to show on the navy bars)
+const MUTED = mutedLut('white', 1, 0.2);
 const CELL = W / 5;
 // how far a small pet is lifted so it shows over the rim of the tub
 const BATH_LIFT = { baby: 17, child: 12, teen: 9, adult: 9 };
@@ -535,8 +534,8 @@ export class HomeScene {
     if (pet?.paused) text(scr, 'II', 86, 4, C('gold.3'));
     // icon rows
     for (const [row, ids] of [[top, TOP], [bottom, BOTTOM]]) {
-      scr.rect(0, row.y, W, row.h, COL.panel);
-      scr.hline(0, row.y + (row === top ? row.h - 1 : 0), W, C('cream.1'));
+      scr.rect(0, row.y, W, row.h, COL.ink);
+      scr.hline(0, row.y + (row === top ? row.h - 1 : 0), W, COL.shade);
       ids.forEach((id, i) => {
         const idx = ALL.indexOf(id);
         const cx = Math.round(i * CELL + CELL / 2);
@@ -547,13 +546,7 @@ export class HomeScene {
     }
     // info bar
     scr.rect(0, info.y, W, info.h, COL.ink);
+    // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
     if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, COL.white, { align: 'center' });
-    else if (pet) {
-      const label = `${pet.name.toUpperCase()}  ${STAGE_NAME[pet.stage]}`;
-      const w = text(scr, label, -999, 0, 0) + 8;
-      const x = Math.round(W / 2 - w / 2);
-      text(scr, pet.gender === 'f' ? '♀' : '♂', x, info.y + 4, pet.gender === 'f' ? C('pink.2') : C('sky.2'));
-      text(scr, label, x + 8, info.y + 4, COL.white);
-    }
   }
 }

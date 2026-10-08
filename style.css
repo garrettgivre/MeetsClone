@@ -59,15 +59,16 @@ body {
 
 #buttons {
   display: flex;
-  gap: 36px;
+  gap: 20px;
   align-items: center;
 }
 
 /* Pixel-art buttons: the pictures (up, and pressed) are painted in by
-   src/art/buttons.js, 32 x 36 pixels shown at exactly twice their size. */
+   src/art/buttons.js, 32 x 36 pixels shown at exactly three times their size
+   (twice on a short screen). */
 .btn {
-  width: 64px;
-  height: 72px;
+  width: 96px;
+  height: 108px;
   border: none;
   padding: 0;
   background: transparent no-repeat center / 100% 100%;
@@ -76,9 +77,10 @@ body {
   cursor: pointer;
   touch-action: none;
 }
-.btn[data-btn="B"] { transform: translateY(10px); }
+.btn[data-btn="B"] { transform: translateY(12px); }
 .btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 @media (max-height: 640px) {
-  .btn { width: 48px; height: 54px; }
+  .btn { width: 64px; height: 72px; }
+  .btn[data-btn="B"] { transform: translateY(8px); }
 }

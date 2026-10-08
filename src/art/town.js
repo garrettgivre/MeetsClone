@@ -77,11 +77,12 @@ function dim(bm) {
 function homeScene(k, sky) {
   const night = sky === 'night', warm = sky === 'dawn' || sky === 'dusk';
   k.wall('sky.3', 'sky.2', 'dots', { wainscot: 'sky.2' });
-  k.starString(5, { sag: 9, hearts: true, colors: ['gold.3', 'pink.3', 'white', 'mint.3'] });
   // the window: sky shows through the panes
   const { x: wx, y: wy, w: ww, h: wh } = HOME_WINDOW;
   k.rect(wx, wy, ww, wh, 'night');
   k.prop('homeWindow', wx + 32, wy + 77, { accent: 'pink', roof: 'gold', stone: 'orange', wood: 'brown' });
+  // the garland of hearts hangs in front of the curtain rod
+  k.starString(5, { sag: 9, hearts: true, colors: ['gold.3', 'pink.3', 'white', 'mint.3'] });
   // a framed heart, and a shelf of keepsakes over the bed
   k.prop('heartFrame', 138, 74, { roof: 'gold', accent: 'pink' });
   k.prop('wallShelf', 206, 78);

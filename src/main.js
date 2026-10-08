@@ -105,7 +105,7 @@ setupInput({
 function resize() {
   const device = document.getElementById('device');
   const inset = parseFloat(getComputedStyle(document.getElementById('bezel')).paddingTop) || 0; // a phone's notch
-  const btnSpace = window.innerHeight < 640 ? 76 : 100; // the strip of buttons underneath
+  const btnSpace = window.innerHeight < 640 ? 92 : 136; // the strip of buttons underneath
   const availW = device.clientWidth;
   const availH = window.innerHeight - inset - btnSpace;
   // Whichever runs out first, width or height, the screen takes all of it

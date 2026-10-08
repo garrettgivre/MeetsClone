@@ -22,7 +22,7 @@ npm start         # static server on http://localhost:5173 (http-server, cache o
 ## Layout
 
 ```
-index.html, style.css      page shell: the screen flush to the top, a navy strip below with 3 unlabelled buttons (A next, B select, C back; art in src/art/buttons.js)
+index.html, style.css      page shell: the screen flush to the top, a navy strip below with 3 large unlabelled buttons (A next, B select, C back; art in src/art/buttons.js)
 src/engine/                pixel engine: palette (64 colours, ramps like 'pink.0'..'pink.3'), screen, sprite, font, input, audio
 src/game/                  simulation (pet.js), genetics, items, save/migrate, Gene Book (book.js), town state (town.js), pet rendering (pet-art.js), alert wording (alerts.js), debug cheats (cheats.js)
 src/scenes/                home, room, menus, status, minigames, family, gene book, wardrobe, debug menu, town (TownScene / TravelScene / PlaceScene / PhotoScene)
@@ -129,7 +129,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.16.4, October 2026)
+## Status (v0.16.5, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
