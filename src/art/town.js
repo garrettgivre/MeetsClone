@@ -284,7 +284,7 @@ function kit() {
   /** A hand-pixelled tree with a soft shadow; big trees for s >= 0.95, young ones below. */
   const tree = (x, y, s = 1, leaf = 'green.2', { seed = 7 } = {}) => {
     blob(x + 4, y + 1, 18 * s, 4 * s, dk(leaf, 2), { seed, line: null, shade: false, wob: 0.2 });
-    prop(s >= 0.95 ? 'treeA' : 'treeB', x, y, { leaf: rampOf(leaf), flip: seed % 2 === 1 });
+    prop(s >= 0.95 ? (seed % 3 === 2 ? 'treeC' : 'treeA') : 'treeB', x, y, { leaf: rampOf(leaf), flip: seed % 2 === 1 });
   };
   const pine = (x, y, h = 50, c = 'green.1') => {
     rect(x - 2, y - 8, 4, 8, 'brown.1');
@@ -419,7 +419,7 @@ function kit() {
   };
   /** A hand-pixelled cloud, sized to the width asked for, with a tinted underside. */
   const pcloud = (x, y, w, tint = 'violet.3', s = 1, seed = Math.round(x + y * 7)) => {
-    const name = w * s >= 56 ? 'cloudA' : w * s >= 36 ? 'cloudB' : 'cloudC';
+    const name = w * s >= 72 && seed % 2 === 0 ? 'cloudD' : w * s >= 56 ? 'cloudA' : w * s >= 36 ? 'cloudB' : 'cloudC';
     prop(name, x + w / 2, y + 4, { accent: rampOf(tint), flip: seed % 2 === 1 });
   };
   /** Soft horizontal sky bands with dithered seams. */
@@ -476,7 +476,8 @@ function kit() {
     for (let i = 0; i < Math.max(3, n / 8); i++) clusters.push([rnd() * RW, y0 + rnd() * (y1 - y0)]);
     for (let i = 0; i < n / 2; i++) {
       const [qx, qy] = clusters[i % clusters.length];
-      prop(rnd() < 0.5 ? 'tuftA' : 'tuftB', qx + (rnd() - 0.5) * 34, qy + (rnd() - 0.5) * 12, { leaf, flip: rnd() < 0.5 });
+      const r = rnd();
+      prop(r < 0.12 ? 'tallGrass' : r < 0.56 ? 'tuftA' : 'tuftB', qx + (rnd() - 0.5) * 34, qy + (rnd() - 0.5) * 12, { leaf, flip: rnd() < 0.5 });
     }
   };
   /** A dither that darkens a ground toward the bottom of the scene. */
@@ -640,7 +641,7 @@ const SCENES = {
     // a winding trail from you to the bandstand
     k.trail(by + 6, RH, (y) => bx - 8 - (y - by) * 0.6 + Math.sin(y / 16) * 5, (y) => 8 + (y - by) * 0.16, 'cream.3', { seed: 4 });
     // flowers in clumps
-    k.flowerPatch(218, 186, 7, ['pink.2', 'white']); k.flowerPatch(108, 140, 5, ['gold.2', 'white']); k.flowerPatch(30, 200, 6, ['violet.2', 'pink.2']);
+    k.prop('flowerBed', 218, 190, { accent: 'pink' }); k.flowerPatch(108, 140, 5, ['gold.2', 'white']); k.flowerPatch(30, 200, 6, ['violet.2', 'pink.2']);
     k.rocks(126, 206, 2);
     k.lamp(112, 196, false);
     k.layer('front');
@@ -932,18 +933,9 @@ const SCENES = {
     // sand
     k.rect(0, 148, RW, RH - 148, 'gold.3'); k.mottle(160, 300, 'cream.3', 7, 9);
     for (let x = 0; x < RW; x++) { const y = 148 + Math.round(Math.sin(x / 15) * 2); k.set(x, y, 'white'); k.set(x, y - 1, 'sky.3'); k.set(x, y + 1, 'sky.3'); if ((x & 1) === 0) k.set(x, y + 3, 'white'); }
-    // palm tree
-    k.shadow(40, 202, 30, 'gold.1');
-    for (let j = 0; j < 108; j++) { const x = 28 + Math.round(Math.sin(j / 40) * 8); k.rect(x, 94 + j, 8, 1, j % 8 < 2 ? 'brown.1' : 'brown.2'); k.set(x, 94 + j, 'brown.0'); }
-    // drooping fronds with leaflets, darker underneath
-    for (const [ang, len] of [[-2.8, 44], [-2.3, 38], [-1.7, 28], [-1.2, 30], [-0.6, 40], [-0.15, 44], [2.9, 34]]) {
-      for (let i = 0; i < len; i++) {
-        const t = i / len, px = 34 + Math.cos(ang) * i, py = 92 + Math.sin(ang) * i * 0.6 + t * t * 26, wd = Math.round(2 - t * 1.5);
-        for (let w = -wd; w <= wd + 1; w++) k.set(px, py + w, w < 0 ? 'green.3' : w > wd - 1 ? 'green.1' : 'green.2');
-        if (i % 3 === 0 && i > 3) { const ly = 5 + t * 4; k.line(px, py + 1, px + 2, py + ly, 'green.1'); k.line(px, py + 1, px - 2, py + ly, 'green.2'); }
-      }
-    }
-    k.puff(30, 94, 3, 'brown.1'); k.puff(37, 95, 3, 'brown.1'); k.puff(33, 98, 3, 'brown.2');
+    // a palm tree
+    k.shadow(40, 204, 30, 'gold.1');
+    k.prop('palm', 38, 206);
     // umbrella, towel and a sandcastle
     k.shadow(206, 206, 34, 'gold.1');
     k.rect(204, 144, 3, 64, 'white');
@@ -1070,7 +1062,7 @@ const SCENES = {
     // a winding path down to you
     for (let y = B; y < RH; y++) { const cx = 128 + Math.sin((y - B) / 30) * 18, half = 12 + (y - B) * 0.32; k.rect(cx - half, y, half * 2, 1, 'cream.3'); k.set(cx - half, y, 'cream.1'); k.set(cx + half, y, 'cream.1'); }
     k.canopy(0, 96, 56, 40, 'green.2', { seed: 11, r: 10 }); k.canopy(200, 92, 58, 44, 'green.2', { seed: 12, r: 10 });
-    k.flowers(30, 176, 5, 'violet.2'); k.flowers(196, 180, 5, 'red.2'); k.flowers(60, 214, 4, 'pink.2');
+    k.prop('flowerBed', 40, 180, { accent: 'violet' }); k.prop('flowerBed', 214, 184, { accent: 'red' }); k.flowerPatch(66, 214, 4, ['pink.2']);
     k.layer('front');
     k.canopy(-14, 200, 60, 56, 'green.1', { seed: 13, r: 11 }); k.canopy(216, 204, 56, 52, 'green.1', { seed: 14, r: 11 });
     k.layer('back');
