@@ -41,7 +41,8 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - **Every gene shows:** hair and toppers sit over the forehead mark, but if they hide more than half of it the renderer moves the mark down onto bare forehead, or onto the chest; a test checks every form, head and hair.
 - **Joined seams:** where connected parts of the body or hair colour meet (ears and head, tail and body, shoulders, toppers), the renderer turns the outline into a soft crease. One-piece forms (blob, avian) also melt the head into the body.
 - **Faces fit their heads:** a head with a large face (`*`) should be about as wide as its siblings in that form at the face row; put the face socket on the widest rows. A small head or child shape can bring the eyes closer with a `spread` option on its part. The tests fail if any eye in any form, head and stage lands over the outline.
-- **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).
+- **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`), and so must each head allele in every form: fox heads flare into cheek tufts and taper to a chin, lamb heads wear a woolly crown and cheek puffs, bell heads scallop at the bottom, owl heads are flat-topped with ear tufts and a brow, bug heads carry a brow ridge, gumdrops are smooth domes with a double shine.
+- **Bodies carry their texture:** fluffy bodies have jittered fur ticks (lit on the upper left, shaded lower right), woolly bodies have curls, feathered bodies have rows of chevrons, jelly bodies a glossy highlight, bell bodies a glow line above the hem, segmented bodies their bands.
 
 ## Town backdrops
 ### Props are hand-pixelled
@@ -82,6 +83,7 @@ Each place in town is drawn in code at the room's double density (`src/art/town.
 - `tools/lab.html`: the Pairing Lab.
 - `node tools/dump.mjs <Founder|random:seed|Founder+gene=allele,...> [stage] [expr]`: prints a composed pet as characters, for pixel-level review (e.g. `Glimmer+head=lamb,accent=red`).
 - `node tools/seen.mjs [Founder]`: how many pixels of each part show in each founder's adult picture.
+- `tools/art-scripts/pet_kit.py`: `redraw_head(form, allele)` rebuilds a head from its silhouette and sockets (mask, house shading, the allele's silhouette mods and details); `paint_body(form, allele)` paints a body's texture inside its existing silhouette; `restore_body` fetches the committed grid first so a repaint starts clean.
 - `tools/art-scripts/ed.py`: Python helpers to read and rewrite any part's grid by name (`show`, `rows_of`, `setpart`, `setall`), and to block in a silhouette from row extents with the house shading (`from_extents`, `paint`), widen a part about its middle (`widen`), and paint pattern zones along a body's spine (`spine_zones`, `setzones`). `draft.py` holds the shape and shading tools the forms were first drafted with (it won't overwrite the finished grids unless given `--force`).
 
 ## Adding things
