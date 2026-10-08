@@ -115,7 +115,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.14.6, October 2026)
+## Status (v0.14.7, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -130,7 +130,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
   - Town art: every town object is a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts) and added an escalator, a hospital bed, curtained windows and concert-hall fans.
   - Pet art: v0.13.0 proper wings and tendrils on every form; v0.13.1 signature head silhouettes and body textures in every form; v0.13.2 rounded lamb crowns, cloud-puff tails, swept hair tufts, domed nub ears.
 - **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations. Smaller ones: a daycare or sitter, mail and visitors, gardening, daily goals, and job-specific minigames.
-- **Not verified:** a real notification on a phone. The browser pane blocks notifications, so only the path up to the browser call was tested (with a stand-in).
+- **Confirmed by the owner on Android Chrome (October 2026):** Settings > Install app installs the game, and care alerts arrive. The browser pane here blocks notifications, so alert changes can only be tested with a stand-in; ask the owner to check on the phone.
 - **Pet-art candidates:** the baby and child shapes (plain blobs with a face; could carry more of the line), the egg, and the lamb cheeks on the small quad and serpent heads (still a little pointed).
 - **Town-art candidates:** the home room in `src/scenes/room.js` (its window, shelf, plant and lamp are drawn in code; note its window sky changes with the time of day, so a prop would need a glass ramp per sky state), the salon mirrors, the boutique clothes rack and the school blackboard.
 
@@ -139,8 +139,8 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Saves:** `src/game/save.js` `migrate` fills in new pet fields. Add defaults there whenever the pet shape changes, and keep old saves loading; `tests/save.test.js` covers this.
 - **Deploy list:** the Pages workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
 - **Menu icons:** `tools/art-scripts/icon_kit.py` rewrites `src/art/menu-icons.js` from masks (one function per icon). Hand edits made in the JS file are lost if the script is run again, so either edit the script or stop running it. Other UI sprites in `icons.js` are still 1x grids that `scr.draw` upscales; `hdSprite(rows, key)` is the way to draw one at full density.
-- **Installing on Android:** the owner also has Room for Two installed from the same site (`garrettgivre.github.io/Room-For-Two/`). Chrome's menu install then says MeetsClone is "already installed" and "could not open app". The likely cause is that Chrome's install sheet checks for an installed app per site, not per app (not confirmed). Changing the manifest `id` to `/MeetsClone/app` (v0.14.5) did not help; leave it as it is now, since a new id makes installed copies look like a different app. v0.14.6 added Settings > Install app, which keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. If that fails too, the sure fix is a different web address for one of the two games (a custom domain or another host).
-- **App icons:** installers need PNGs, not the SVG. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
+- **Installing on Android:** the owner also has Room for Two installed from the same site (`garrettgivre.github.io/Room-For-Two/`). Chrome's menu install then says MeetsClone is "already installed" and "could not open app". The likely cause is that Chrome's install sheet checks for an installed app per site, not per app (not confirmed). Changing the manifest `id` to `/MeetsClone/app` (v0.14.5) did not help; leave it as it is now, since a new id makes installed copies look like a different app. v0.14.6 added Settings > Install app, which keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. That worked, and the owner prefers it to the browser menu.
+- **App icons:** installers need PNGs, not the SVG. `badge.png` is the status-bar shape for care alerts: Android uses only its alpha, so it must stay a white silhouette on transparent. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
 - **Fonts:** the pixel font (`src/engine/font.js`, `glyphRows`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`.
 - **Town colours:** `rampOf()` in `town.js` maps neutral colours (white, mist, ink…) onto a ramp for prop roles.
 - **Git Bash heredocs mangle backslashes:** a `python - <<'EOF'` script containing `\\` (Windows paths, regex) fails with a unicode-escape error, and `git commit -m` with a heredoc is unreliable. Write Python scripts and commit messages to files (the scratchpad is fine) and run them by path.

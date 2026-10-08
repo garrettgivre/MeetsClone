@@ -4,8 +4,10 @@ sizes an installable web app needs. Run from the project root:
     python tools/art-scripts/app_icons.py
 
 Writes assets/icon-192.png, icon-512.png (pixel-rounded corners),
-icon-maskable-512.png (full-bleed, art inside the safe zone) and
-apple-touch-icon.png (180, square: iOS rounds it itself).
+icon-maskable-512.png (full-bleed, art inside the safe zone),
+apple-touch-icon.png (180, square: iOS rounds it itself) and badge.png (96,
+the little pet in a phone's status bar when a care alert arrives: Android only
+uses its shape, so it is plain white with the eyes and mouth cut out).
 """
 import os
 from PIL import Image, ImageColor
@@ -50,7 +52,24 @@ def render(size, cell, rounded):
     return img
 
 
+def badge(size=96, cell=9):
+    """The pet's face as a white silhouette on transparent, cropped to the face."""
+    img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    px = img.load()
+    face = [row[3:13] for row in GRID[3:13]]
+    off = (size - 10 * cell) // 2
+    for gy, row in enumerate(face):
+        for gx, ch in enumerate(row):
+            if ch not in 'obp': continue  # eyes and mouth stay see-through
+            for y in range(off + gy * cell, off + (gy + 1) * cell):
+                for x in range(off + gx * cell, off + (gx + 1) * cell):
+                    px[x, y] = (255, 255, 255, 255)
+    return img
+
+
 if __name__ == '__main__':
+    badge().save(os.path.join(OUT, 'badge.png'), optimize=True)
+    print('wrote badge.png')
     for name, size, cell, rounded in [
         ('icon-192.png', 192, 12, True),
         ('icon-512.png', 512, 32, True),

@@ -32,7 +32,8 @@ export async function enable() {
 /** Show an alert: { title, body, tag }. Returns whether it was sent. */
 export async function show({ title, body, tag = 'care' }) {
   if (permission() !== 'granted') return false;
-  const opts = { body, tag, renotify: true, icon: 'assets/icon.svg' };
+  // icon: the picture in the notification; badge: the small white shape in a phone's status bar
+  const opts = { body, tag, renotify: true, icon: 'assets/icon-192.png', badge: 'assets/badge.png' };
   try {
     const reg = await registerWorker();
     if (reg?.showNotification) { await reg.showNotification(title, opts); return true; }
