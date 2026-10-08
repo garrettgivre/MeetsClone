@@ -725,6 +725,13 @@ const SCENES = {
     k.disc(128, 59, 6, 'cream.3'); k.face(128, 57, 1, { gap: 3 });
     k.sign(128, 83, 'TOWN HALL', { bg: 'red.1', pad: 2 });
     k.cobbles(HZ, 'slate.3');
+    for (let y = HZ + 16; y < RH; y++) for (let x = 0; x < RW; x++) {
+      const dx = (x - 128) / 118, dy = (y - 252) / 50, d = Math.sqrt(dx * dx + dy * dy);
+      if (d > 1) continue;
+      const ring = Math.floor(d * 6), a = Math.atan2(dy, dx), seg = Math.floor(((a + Math.PI) / (Math.PI * 2)) * (8 + ring * 6));
+      const edge = Math.abs(d * 6 - Math.round(d * 6)) < 0.08 || Math.abs((((a + Math.PI) / (Math.PI * 2)) * (8 + ring * 6)) % 1) < 0.06;
+      k.set(x, y, edge ? 'slate.2' : d > 0.98 ? 'slate.1' : ring % 2 ? ((seg & 1) ? 'cream.3' : 'gold.3') : ((seg & 1) ? 'white' : 'cream.3'));
+    }
     k.bunting(8, 14);
     k.shadow(128, 252, 54, 'slate.1', 6);
     k.prop('fountain', 128, 252);
@@ -903,7 +910,17 @@ const SCENES = {
       k.prop('cabinet', x + 22, 206, { accent: c, wall: 'cream', glass: 'indigo', stone: 'slate' });
     }
     k.prop('claw', 128, 206, { accent: 'pink', glass: 'sky', wall: 'gold' });
-    for (let y = HZ + 32; y < RH; y++) for (let x = 0; x < RW; x++) k.set(x, y, (Math.floor(x / 10) * 3 + Math.floor((y - HZ) / 8) * 5) % 7 === 0 ? 'pink.2' : ((x + y) % 19 === 0 ? 'sky.2' : 'indigo.1'));
+    k.rect(0, HZ + 32, RW, RH - HZ - 32, 'indigo.1'); k.dither(0, HZ + 32, RW, 10, C('indigo.0'));
+    {
+      const rnd = rand(404), motifs = [
+        ['.#.', '###', '.#.'], ['#..', '.#.', '..#'], ['##', '##'], ['#.#', '.#.', '#.#'], ['.#..', '#.#.', '...#'],
+      ];
+      for (let y = HZ + 36; y < RH; y += 11) for (let x = (y * 7) % 13; x < RW; x += 15 + Math.round(rnd() * 6)) {
+        const m = motifs[Math.floor(rnd() * motifs.length)], c = ['pink.2', 'sky.2', 'gold.2', 'mint.2', 'violet.2'][Math.floor(rnd() * 5)];
+        const ox = x + Math.round(rnd() * 4), oy = y + Math.round(rnd() * 4);
+        m.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') k.set(ox + i, oy + j, c); }));
+      }
+    }
     k.rect(0, HZ + 32, RW, 1, 'violet.1');
     for (const [x, c] of [[30, 'red.3'], [86, 'sky.3'], [170, 'gold.3'], [226, 'mint.3']]) k.lightPool(x, HZ + 40, 26, 6, c);
     k.layer('front');
@@ -972,16 +989,15 @@ const SCENES = {
     k.wall('violet.3', 'pink.3', 'dots', { wainscot: 'violet.2' });
     for (const x of [30, 154]) {
       k.prop('vanity', x + 36, 112, { wall: 'cream', roof: 'gold' });
-      k.shadow(x + 36, 214, 24);
-      k.prop('salonChair', x + 36, 214, { accent: 'pink', stone: 'slate' });
     }
     k.sign(128, 9, 'SALON', { bg: 'violet.1', pad: 2 }); k.star5(106, 13, 3, 'gold.3'); k.star5(150, 13, 3, 'gold.3');
     k.shelf(108, 40, 40, 'bottles', ['pink.2', 'violet.2', 'mint.2']); k.shelf(108, 70, 40, 'bottles', ['gold.2', 'sky.2']);
-    k.ellipse(128, 120, 16, 12, 'mist', { outline: 'gray', shade: true }); k.rect(127, 132, 2, 76, 'slate.1'); k.rect(118, 206, 20, 3, 'slate.0');
     k.vignette('violet.2', 34);
     k.tiles(HZ, 'white', 'violet.3', 16); k.floorShadow();
     k.rug(128, 236, 50, 9, 'violet.2', 'pink.3');
     for (const x of [66, 190]) k.lightPool(x, HZ + 36, 28, 7, 'white');
+    for (const x of [66, 190]) { k.shadow(x, 204, 18); k.prop('stylingChair', x, 204, { accent: 'pink', stone: 'slate', flip: x > 128 }); }
+    k.shadow(128, 196, 14); k.prop('hoodDryer', 128, 196, { wall: 'cream', accent: 'violet', stone: 'slate' });
     k.layer('front');
     k.plant(16, 262, 1.1, 'green.2', 'violet.2', 13);
     k.shadow(240, 262, 12); for (let i = 0; i < 3; i++) k.block(226, 248 - i * 7, 28, 7, ['pink.3', 'white', 'sky.3'][i]); // folded towels
@@ -1025,6 +1041,7 @@ const SCENES = {
     k.vignette('slate.1', 36);
     k.planks(HZ, 'slate.2'); k.floorShadow();
     k.beam(20, HZ, 40, 240, 'white', 0.3); k.lightPool(64, HZ + 30, 34, 8, 'gold.3');
+    k.shadow(134, HZ + 16, 26); k.prop('sawhorse', 134, HZ + 16, { wall: 'gold' });
     k.shadow(56, 246, 50); k.prop('workbench', 56, 248);
     k.block(70, 186, 22, 12, 'slate.1'); k.rect(78, 182, 6, 4, 'slate.0'); k.block(26, 188, 20, 10, 'red.2');
     k.layer('front');
@@ -1213,7 +1230,17 @@ const SCENES = {
     k.rect(0, HZ + 44, RW, RH - HZ - 44, 'indigo.0');
     k.layer('front');
     // the audience, in silhouette
-    for (let r = 0; r < 2; r++) for (let x = (r % 2) * 11 + 6; x < RW; x += 22) { const y = 250 + r * 12; k.puff(x, y, 9, r ? 'indigo.1' : 'violet.0', { line: 'indigo.0', hi: r ? 'indigo.2' : 'violet.1' }); if ((x / 22 | 0) % 3 === 0) { k.puff(x - 6, y - 9, 3, r ? 'indigo.1' : 'violet.0', { line: 'indigo.0', hi: 'violet.1' }); k.puff(x + 6, y - 9, 3, r ? 'indigo.1' : 'violet.0', { line: 'indigo.0', hi: 'violet.1' }); } }
+    for (let r = 0; r < 2; r++) for (let x = r * 13 - 4, i = 0; x < RW + 14; x += 26, i++) {
+      const y = 256 + r * 16;
+      if ((i + r) % 3 !== 1) { // someone's sitting here: a round head with little ears
+        const hx = x + (i % 2 ? 1 : -1), hy = y - 22;
+        const hc = r ? 'indigo.1' : 'indigo.2';
+        if (i % 2) { k.puff(hx - 6, hy - 6, 3, hc, { line: 'indigo.0', hi: 'violet.1' }); k.puff(hx + 6, hy - 6, 3, hc, { line: 'indigo.0', hi: 'violet.1' }); }
+        k.puff(hx, hy, 8, hc, { line: 'indigo.0', hi: 'violet.1' });
+        if (i % 2 === 0) k.puff(hx + 4, hy - 7, 3, 'pink.2', { line: 'pink.0' }); // a bow
+      }
+      k.prop('theatreSeat', x, y, { accent: 'red', wall: 'gold', wood: 'brown' });
+    }
     k.layer('back');
   },
   // ---- far away ----
