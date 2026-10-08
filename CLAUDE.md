@@ -15,7 +15,7 @@ npm start         # static server on http://localhost:5173 (http-server, cache o
     "runtimeArgs": ["-y", "http-server", "-p", "5173", "-c-1", "--silent"], "port": 5173 } ] }
   ```
   If port 5173 is already served by another chat's server, the browser tools in this chat can't reach it: add a second configuration on another port (same command with `-p 5174`, `"port": 5174`) and start that one. A different port has its own `localStorage`, so it starts a fresh game.
-- **Deploy:** every push to `main` runs the tests and deploys to Pages (`.github/workflows/pages.yml`). The owner wants each finished update **committed and pushed straight to `main`**; no PRs are needed. The `gh` CLI is not installed here, so check the Actions tab on GitHub if you need the deploy status.
+- **Deploy:** every push to `main` runs the tests and deploys to Pages (`.github/workflows/pages.yml`). The owner wants each finished update **committed and pushed straight to `main`**; no PRs are needed. The `gh` CLI is not installed here, but the repo is public, so check a deploy with `curl -s "https://api.github.com/repos/garrettgivre/MeetsClone/actions/runs?per_page=3"` (look at `conclusion`) and the live version with `curl -s https://garrettgivre.github.io/MeetsClone/src/version.js | tail -1`. **Check after every push:** on 2026-10-08 the `deploy-pages` step failed on GitHub's side for v0.16.7 though the tests passed, so the site stayed on the previous version until the next push. If a deploy fails, push again (a new commit re-runs it).
 - **Version:** bump `src/version.js` with every release (`VERSION` plus the one-line history in the comment above it). Settings shows the version number. Patch for art and polish, minor for a mechanics change.
 - **Commits:** end every commit message with `Co-Authored-By: Claude <noreply@anthropic.com>` (use the current model name). Write the message to a file and use `git commit -F`; see the Git Bash gotcha below.
 
@@ -126,11 +126,11 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 
 - There is no build step, so file names never change between releases and browsers would otherwise keep old copies (Pages lets them for ten minutes, and installed apps for longer).
 - `sw.js` answers every same-origin GET from the network first with `cache: 'no-cache'`, and keeps the last good copy in the `meetsclone-offline` cache for when there is no connection. It is registered at start-up for everyone.
-- `src/update.js` `checkForUpdate()` runs at boot and whenever the page becomes visible: it fetches `src/version.js` uncached, and if `VERSION` differs from the running one it saves the game and reloads once (a `sessionStorage` guard stops loops). After the reload the home screen says "Updated to vX".
+- `src/update.js` `checkForUpdate()` runs at boot and whenever the page becomes visible: it fetches `src/version.js` uncached, and if `VERSION` differs from the running one it saves the game and reloads (a `sessionStorage` guard stops it reloading for the same version more than once every three minutes). It also runs every five minutes while the game is open. After the reload the home screen says "Updated to vX".
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.16.7, October 2026)
+## Status (v0.16.8, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.

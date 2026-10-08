@@ -88,6 +88,8 @@ app.push(new HomeScene(app));
 // ----- always the newest release: check at start, and again whenever the game comes back to the front -----
 if (justUpdated()) app.toast(`Updated to v${VERSION}!`, 2600);
 checkForUpdate(() => app.save());
+// ...and every few minutes while the game stays open, so a long session picks up a release too
+setInterval(() => { if (!document.hidden) checkForUpdate(() => app.save()); }, 5 * 60 * 1000);
 if (app.pendingEvents?.length) app.scene.handleEvents(app.pendingEvents, true);
 
 paintButtons();

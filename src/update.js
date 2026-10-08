@@ -8,7 +8,8 @@
 import { VERSION } from './version.js';
 import { registerWorker } from './notify.js';
 
-const KEY = 'meetsclone.updating'; // the version a reload was last made for (this tab only)
+const KEY = 'meetsclone.updating'; // 'version@time' of the last reload made for an update (this tab only)
+const RETRY_MS = 3 * 60 * 1000;     // how long to wait before reloading for the same version again
 
 /** The version the server has now, or null if it can't be reached. */
 export async function latestVersion() {
@@ -20,7 +21,7 @@ export async function latestVersion() {
 /** True if this page load is the reload after an update (asked once). */
 export function justUpdated() {
   try {
-    const was = sessionStorage.getItem(KEY) === VERSION;
+    const was = (sessionStorage.getItem(KEY) || '').split('@')[0] === VERSION;
     if (was) sessionStorage.removeItem(KEY);
     return was;
   } catch { return false; }
@@ -45,9 +46,12 @@ export async function checkForUpdate(beforeReload) {
   try {
     const latest = await latestVersion();
     if (!latest || latest === VERSION) return false;
-    // one try per release, so a browser that still serves old files can't loop
-    if (sessionStorage.getItem(KEY) === latest) return false;
-    sessionStorage.setItem(KEY, latest);
+    // If a reload for this version was made moments ago and the old files came
+    // back anyway (the host can lag a little), wait before trying again rather
+    // than reloading in a loop.
+    const [tried, at] = (sessionStorage.getItem(KEY) || '').split('@');
+    if (tried === latest && Date.now() - Number(at) < RETRY_MS) return false;
+    sessionStorage.setItem(KEY, `${latest}@${Date.now()}`);
     await workerReady();
     beforeReload?.();
     location.reload();
