@@ -5,7 +5,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 80 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 83 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -22,7 +22,7 @@ npm start         # static server on http://localhost:5173 (http-server, cache o
 ## Layout
 
 ```
-index.html, style.css      page shell: the screen flush to the top, a black strip below with 3 unlabelled buttons (A next, B select, C back; art in src/art/buttons.js)
+index.html, style.css      page shell: the screen flush to the top, a navy strip below with 3 unlabelled buttons (A next, B select, C back; art in src/art/buttons.js)
 src/engine/                pixel engine: palette (64 colours, ramps like 'pink.0'..'pink.3'), screen, sprite, font, input, audio
 src/game/                  simulation (pet.js), genetics, items, save/migrate, Gene Book (book.js), town state (town.js), pet rendering (pet-art.js), alert wording (alerts.js), debug cheats (cheats.js)
 src/scenes/                home, room, menus, status, minigames, family, gene book, wardrobe, debug menu, town (TownScene / TravelScene / PlaceScene / PhotoScene)
@@ -107,6 +107,16 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Alerts:** `alertFor(events, pet)` in `src/game/alerts.js` picks the most urgent event and words it; `src/notify.js` shows it through `sw.js`. `main.js` runs a slow timer while the page is hidden (the frame loop stops then) that advances the pet's clock, sends the alert and flags the tab title. There is no push server, so nothing arrives once the browser has closed or suspended the page.
 - **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. A cheat that returns events is played on the home screen by `done()`.
 
+## The town's generations: how it works (v0.15)
+
+- `src/game/town.js`, section "residents". Nothing is stepped: who keeps a place and how old they are is worked out from `game.simTime - town.epoch` plus a per-place `phase` (so handovers are spread through the week). `clockOf` gives `{ gen, pos }`.
+- A tenure is `TENURE` (6 days): a teen for `JUNIOR`, a child born at `HEIR_AT` (baby, child, then teen), old from `ELDER_AT`, then the child becomes the next keeper. `AGELESS` places (hidden village, Star Isle) never change.
+- `keeper(seed, locId, gen)` builds a family forward: generation 0 is the fixed resident every game shares; each later one is `inherit(parent, randomGenome)` from a seed that includes `town.seed`, so families differ per save but never change within one. Titles (`TITLES`) stay with the place.
+- `resident(locId)` with no game still returns the first keeper (the art tests and photos rely on it); `resident(locId, game)` returns today's keeper with `stage`, `junior`, `elder`, `heir` and `parent`.
+- `townState()` calls `turnTown`, which compares the clock with `town.gens` / `town.born`, files news (`town.news`, last 12, with `town.unread`) and halves the friendship at each handover. `town.met` drives the NEW marker on the map.
+- `PlaceScene` draws the keeper at their stage, the heir beside them, and a cane and a doze for elders. Debug > Town has "Age the town" (moves `town.epoch` only).
+- Tests that count days at one place should call a helper like `freshKeeper` in `tests/town.test.js` first, or a handover can land in the middle.
+
 ## Updates: how the newest version always shows (v0.14.2)
 
 - There is no build step, so file names never change between releases and browsers would otherwise keep old copies (Pages lets them for ten minutes, and installed apps for longer).
@@ -115,12 +125,13 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.14.8, October 2026)
+## Status (v0.15.0, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
   - Skills, school classes and jobs with promotions.
   - Care alerts (browser notifications) and a debug menu of cheats.
+  - A town that grows up: residents age, have children, retire and are succeeded, with town news.
   - Genetics with six body plans and six founders (see "Genetics" above; v0.13 fixed the `none` dominance bug and made wild pets line-based).
   - Wardrobe, shops and points.
   - Four minigames.
@@ -129,7 +140,8 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
   - The town: 22 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
   - Town art: every town object is a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts) and added an escalator, a hospital bed, curtained windows and concert-hall fans.
   - Pet art: v0.13.0 proper wings and tendrils on every form; v0.13.1 signature head silhouettes and body textures in every form; v0.13.2 rounded lamb crowns, cloud-puff tails, swept hair tufts, domed nub ears.
-- **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations. Smaller ones: a daycare or sitter, mail and visitors, gardening, daily goals, and job-specific minigames.
+- **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations. Smaller ones: a daycare or sitter, mail and visitors, gardening, daily goals, and job-specific minigames. For the town: let residents' grown children turn up as matchmaker partners, retired keepers settle somewhere you can visit, and shops change a little with each keeper.
+- **Known gap:** clothes from the wardrobe are stored and shown in menus but `pet-art.js` does not draw them on the pet.
 - **Confirmed by the owner on Android Chrome (October 2026):** Settings > Install app installs the game, and care alerts arrive. The browser pane here blocks notifications, so alert changes can only be tested with a stand-in; ask the owner to check on the phone.
 - **Pet-art candidates:** the baby and child shapes (plain blobs with a face; could carry more of the line), the egg, and the lamb cheeks on the small quad and serpent heads (still a little pointed).
 - **Town-art candidates:** the home room in `src/scenes/room.js` (its window, shelf, plant and lamp are drawn in code; note its window sky changes with the time of day, so a prop would need a glass ramp per sky state), the salon mirrors, the boutique clothes rack and the school blackboard.

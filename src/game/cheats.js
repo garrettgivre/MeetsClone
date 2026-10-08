@@ -10,7 +10,7 @@ import {
   POTTY_TRAINED, SKILLS, SKILL_MAX, SKILL_STEP, STARVE_TO_DEATH, UNHAPPY_TO_RUNAWAY, BASE_WEIGHT, STAGE_LENGTH,
 } from './pet.js';
 import { discover, BOOK_GENES, entries } from './book.js';
-import { DISTRICTS, LOCATIONS, MAP_PIECES, townState } from './town.js';
+import { DISTRICTS, LOCATIONS, MAP_PIECES, townState, DAY } from './town.js';
 
 const STAGES = ['egg', 'baby', 'child', 'teen', 'adult'];
 
@@ -143,6 +143,9 @@ export function unlockTown(game) {
   for (const d of DISTRICTS) if (d.pass && !t.passes.includes(d.pass.id)) t.passes.push(d.pass.id);
   t.mapPieces = MAP_PIECES;
 }
+
+/** Let time pass for the town's residents only (they age, have children and retire). */
+export function ageTown(game, ms = 2 * DAY) { townState(game).epoch -= ms; townState(game); }
 
 /** Best friends with every resident. */
 export function befriendAll(game, hearts = 7) {

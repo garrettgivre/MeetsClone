@@ -6,7 +6,9 @@ import { has } from '../src/game/book.js';
 import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, FRIEND_GIFTS,
   townState, districtLocked, buyPass, cantGo, resident, talk, doAction, dyeHair, buySale, saleOfDay, founderKin,
+  retiresIn, isNewFace, townNews, TENURE, JUNIOR, HEIR_AT, ELDER_AT, DAY, AGELESS,
 } from '../src/game/town.js';
+import { ageTown } from '../src/game/cheats.js';
 
 const NINE_AM = new Date(2026, 0, 5, 9, 0, 0).getTime();
 
@@ -19,6 +21,13 @@ function outing(seed = 1, stage = 'teen') {
   return { g, rng };
 }
 const nextDay = (g) => { g.simTime += 24 * HOUR; };
+/** Set the town's clock so the keeper of a place has only just taken over. */
+function freshKeeper(g, locId) {
+  const t = townState(g);
+  t.epoch -= retiresIn(g, locId);
+  Object.assign(t, { gens: {}, met: {}, born: {}, news: [], unread: 0 });
+  return townState(g);
+}
 
 test('every place has a district, a resident and something to do', () => {
   assert.equal(LOCATIONS.length, 22);
@@ -59,15 +68,86 @@ test('babies stay home, and sick pets can only go to the hospital', () => {
 
 test('talking once a day builds friendship, with gifts along the way', () => {
   const { g, rng } = outing(3);
+  freshKeeper(g, 'park');
   let gifts = 0;
-  for (let d = 0; d < 8; d++) {
+  for (let d = 0; d < 5; d++) { // (within one keeper's time at the park)
     const r = talk(g, 'park', rng);
     if (r.gift) gifts += r.gift;
     talk(g, 'park', rng); // a second chat the same day doesn't count
     nextDay(g);
   }
-  assert.equal(townState(g).friends.park, 8);
-  assert.equal(gifts, Object.values(FRIEND_GIFTS).reduce((a, b) => a + b, 0));
+  assert.equal(townState(g).friends.park, 5);
+  assert.equal(gifts, FRIEND_GIFTS[3]);
+});
+
+test('a keeper starts young, grows up, has a child, grows old and hands the place to that child', () => {
+  const { g } = outing(20);
+  freshKeeper(g, 'cafe');
+  const first = resident('cafe', g);
+  assert.ok(first.junior && first.stage === 'teen' && !first.heir && !first.elder);
+  g.simTime += JUNIOR;
+  const grown = resident('cafe', g);
+  assert.equal(grown.name, first.name);
+  assert.ok(grown.stage === 'adult' && !grown.junior && !grown.heir);
+  g.simTime += HEIR_AT - JUNIOR;
+  const parent = resident('cafe', g);
+  assert.equal(parent.heir.stage, 'baby');
+  g.simTime += DAY;
+  assert.equal(resident('cafe', g).heir.stage, 'child');
+  g.simTime += ELDER_AT - HEIR_AT - DAY;
+  const old = resident('cafe', g);
+  assert.ok(old.elder && old.stage === 'adult');
+  assert.equal(old.phenotype.hairColor, 'slate', 'gone grey');
+  assert.equal(old.heir.stage, 'teen');
+  assert.ok(retiresIn(g, 'cafe') <= DAY);
+  g.simTime += TENURE - ELDER_AT;
+  const next = resident('cafe', g);
+  assert.notEqual(next.name, first.name);
+  assert.match(next.name, /^Chef /, 'the title stays with the place');
+  assert.equal(next.parent, first.name);
+  assert.equal(next.generation, first.generation + 1);
+  assert.deepEqual(next.phenotype, old.heir.phenotype, 'the child we watched grow up');
+  assert.ok(next.junior && next.stage === 'teen');
+});
+
+test('a handover is news, and half the friendship passes to the child', () => {
+  const { g, rng } = outing(21);
+  freshKeeper(g, 'bakery');
+  townState(g).friends.bakery = 7;
+  const before = resident('bakery', g).name;
+  assert.equal(isNewFace(g, 'bakery'), false);
+  // (the news only keeps the latest dozen items, so read it as the days go by)
+  const seen = [];
+  for (let h = 0; h <= TENURE / HOUR; h += 6) { g.simTime += 6 * HOUR; seen.push(...townNews(g).map(n => n.msg)); }
+  assert.ok(seen.some(m => /Bakery: .* had a baby/.test(m)));
+  assert.ok(seen.some(m => m.includes(`Bakery: ${before} has retired`)));
+  const t = townState(g);
+  assert.equal(t.friends.bakery, 3);
+  assert.ok(t.unread >= 2);
+  townNews(g, true);
+  assert.equal(townState(g).unread, 0);
+  assert.ok(isNewFace(g, 'bakery'));
+  assert.ok(talk(g, 'bakery', rng).msg.startsWith(resident('bakery', g).name));
+  assert.equal(isNewFace(g, 'bakery'), false, 'met them now');
+});
+
+test('families are fixed for a save, differ between saves, and some folk never age', () => {
+  const a = outing(22).g, b = outing(23).g;
+  townState(a).seed = 111; townState(b).seed = 222;
+  for (const g of [a, b]) g.simTime += 3 * TENURE;
+  assert.deepEqual(resident('toyshop', a), resident('toyshop', a));
+  assert.notDeepEqual(resident('toyshop', a).phenotype, resident('toyshop', b).phenotype);
+  assert.deepEqual(resident('toyshop').name, 'Pip', 'the first keeper is the same in every game');
+  for (const id of AGELESS) {
+    assert.equal(resident(id, a).name, LOCATION[id].resident);
+    assert.equal(retiresIn(a, id), null);
+  }
+  // every place turns over within one tenure, and they don't all do it at once
+  const c = outing(24).g;
+  const days = new Set(LOCATIONS.filter(l => !AGELESS.includes(l.id)).map(l => Math.floor(retiresIn(c, l.id) / DAY)));
+  assert.ok(days.size >= 4, 'handovers are spread through the week');
+  ageTown(c, TENURE);
+  assert.ok(LOCATIONS.every(l => AGELESS.includes(l.id) || resident(l.id, c).generation === 1));
 });
 
 test('daily limits reset each day', () => {

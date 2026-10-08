@@ -140,6 +140,8 @@ function townMenu(app) {
     { label: '+500 points', action: say(() => { g.points += 500; }, '+500') },
     { label: '+5000 points', action: say(() => { g.points += 5000; }, '+5000') },
     { label: 'Open every district', action: say(() => cheat.unlockTown(g), 'Passes and the old map are yours.') },
+    { label: 'Age the town 1 day', action: say(() => cheat.ageTown(g, 24 * HOUR), 'A day passes in town.') },
+    { label: 'Age the town 3 days', action: say(() => cheat.ageTown(g, 72 * HOUR), 'Three days pass in town.') },
     { label: 'Befriend everyone', action: say(() => cheat.befriendAll(g), 'Seven hearts all round.') },
     { label: 'New day in town', action: say(() => cheat.resetDaily(g), 'Daily limits reset.') },
     { label: 'Every toy and outfit', action: say(() => cheat.unlockItems(g), 'Toy box, wardrobe and fridge filled.') },

@@ -7,7 +7,7 @@
 // and a hidden village opens once you've found every piece of an old map.
 
 import { rand as defaultRng, makeRng, hash } from '../engine/rng.js';
-import { randomGenome, express, pureGenome, FOUNDERS } from './genetics.js';
+import { randomGenome, express, pureGenome, inherit, randomName, FOUNDERS } from './genetics.js';
 import { FOODS, TOYS, CLOTHES } from './items.js';
 import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT, train, skillLevel, SKILL_LABEL, SKILL_MAX } from './pet.js';
 import { BOOK_GENES, entries, has } from './book.js';
@@ -97,8 +97,17 @@ export function townState(game) {
   t.lastWork ??= 0;
   t.metQueen ??= false;
   t.wish ??= null; // a part promised to the next egg by Star Isle: { gene, allele }
+  // the town's own generations (see "residents" below)
+  t.epoch ??= game.simTime;                          // when this town's clock started
+  t.seed ??= Math.floor(defaultRng.next() * 2 ** 31); // so every save's families turn out differently
+  t.gens ||= {};   // place -> the generation of resident last seen there
+  t.born ||= {};   // place -> the generation whose baby has been announced
+  t.met ||= {};    // place -> the generation last chatted with
+  t.news ||= [];   // [{ at, msg }], newest last
+  t.unread ??= 0;
   const day = new Date(game.simTime).toDateString();
   if (t.daily.day !== day) t.daily = { day, counts: {} };
+  turnTown(game, t);
   return t;
 }
 
@@ -144,13 +153,162 @@ export function cantGo(game, locId = null) {
 }
 
 // ---------- residents ----------
+// The town grows up alongside your pets. Everyone who runs a place holds it for
+// one TENURE: new and young at first (a teen), then grown, then old. Midway
+// they have a child, who grows up at their side and takes the place over when
+// they retire. Children inherit from their parent and a partner from out of
+// town, so each family changes a little with every generation.
+//
+// Nothing is simulated step by step: who holds a place, and how old they are,
+// follows from the time since the town's clock started (t.epoch). Each place
+// runs on its own phase, so the handovers are spread through the week.
 
-/** A resident's looks: the same every time. */
-export function resident(locId) {
-  const rng = makeRng(hash('resident:' + locId));
-  const genome = randomGenome(rng);
-  const p = express(genome, rng);
-  return { name: LOCATION[locId].resident, phenotype: p, gender: rng.chance(0.5) ? 'f' : 'm' };
+export const DAY = 24 * HOUR;
+export const TENURE = 6 * DAY;      // how long one resident runs a place
+export const JUNIOR = 2 * DAY;      // new at the job (a teen) for this long
+export const HEIR_AT = 3 * DAY;     // their child is born this far in
+export const ELDER_AT = 5 * DAY;    // old from here until they retire
+const HEIR_BABY = 6 * HOUR, HEIR_CHILD = 36 * HOUR; // the child's first stages
+export const AGELESS = ['hidden', 'starisle'];      // the Elder and the star spirit do not age
+
+// what a place's keeper is called: [she, he]
+const TITLES = {
+  square: ['Mayor', 'Mayor'], cafe: ['Chef', 'Chef'], hospital: ['Dr.', 'Dr.'], boutique: ['Madame', 'Monsieur'],
+  dept: ['Clerk', 'Clerk'], salon: ['Stylist', 'Stylist'], school: ['Teacher', 'Teacher'], work: ['Boss', 'Boss'],
+  chapel: ['Matchmaker', 'Matchmaker'], stage: ['Diva', 'Maestro'], castle: ['Queen', 'King'],
+};
+
+const phase = (locId) => (hash('phase:' + locId) % (TENURE / HOUR)) * HOUR;
+
+/** Which generation holds a place at a time, and how far into their tenure they are. */
+function clockOf(t, simTime, locId) {
+  if (AGELESS.includes(locId)) return { gen: 0, pos: null };
+  const total = Math.max(0, simTime - t.epoch) + phase(locId);
+  return { gen: Math.floor(total / TENURE), pos: total % TENURE };
+}
+
+const lines_ = new Map();
+/** The gen-th keeper of a place: { name, genome, phenotype, gender, parent }. Generation 0 is the same in every game. */
+function keeper(seed, locId, gen) {
+  const key = (g) => `${g ? seed : 0}:${locId}:${g}`;
+  let k = lines_.get(key(gen));
+  if (k) return k;
+  // build the family forward from the nearest ancestor already worked out
+  let g = gen;
+  while (g > 0 && !lines_.has(key(g))) g--;
+  for (k = lines_.get(key(g)); g <= gen; g++) {
+    if (!lines_.has(key(g))) {
+      const rng = makeRng(hash(g ? `resident:${locId}:${seed}:${g}` : 'resident:' + locId));
+      let genome, name;
+      if (g === 0) genome = randomGenome(rng);
+      else genome = inherit(k.genome, randomGenome(rng), rng);
+      const phenotype = express(genome, rng);
+      const gender = rng.chance(0.5) ? 'f' : 'm';
+      if (g === 0) name = LOCATION[locId].resident;
+      else { const title = TITLES[locId]?.[gender === 'f' ? 0 : 1]; name = (title ? title + ' ' : '') + randomName(rng); }
+      lines_.set(key(g), { name, genome, phenotype, gender, parent: g ? k.name : null });
+    }
+    k = lines_.get(key(g));
+  }
+  return k;
+}
+
+const faces_ = new Map();
+/**
+ * Who is at a place. Without a game: the first keeper, grown (their looks never
+ * change). With one: whoever holds the place now:
+ * { name, phenotype, gender, stage: 'teen'|'adult', junior, elder, generation, parent,
+ *   heir: { name, phenotype, gender, stage: 'baby'|'child'|'teen' } | null }
+ */
+export function resident(locId, game = null) {
+  if (!game) {
+    const k = keeper(0, locId, 0);
+    return { name: k.name, phenotype: k.phenotype, gender: k.gender };
+  }
+  const t = townState(game);
+  const { gen, pos } = clockOf(t, game.simTime, locId);
+  const junior = pos !== null && pos < JUNIOR, elder = pos !== null && pos >= ELDER_AT;
+  const heirAge = pos !== null && pos >= HEIR_AT ? pos - HEIR_AT : -1;
+  const heirStage = heirAge < 0 ? null : heirAge < HEIR_BABY ? 'baby' : heirAge < HEIR_CHILD ? 'child' : 'teen';
+  const key = `${t.seed}:${locId}:${gen}:${junior}:${elder}:${heirStage}`;
+  let r = faces_.get(key);
+  if (!r) {
+    const k = keeper(t.seed, locId, gen);
+    let heir = null;
+    if (heirStage) { const h = keeper(t.seed, locId, gen + 1); heir = { name: h.name.split(' ').pop(), phenotype: h.phenotype, gender: h.gender, stage: heirStage }; }
+    r = {
+      name: k.name, gender: k.gender, generation: gen, parent: k.parent, junior, elder, heir,
+      stage: junior ? 'teen' : 'adult',
+      phenotype: elder ? { ...k.phenotype, hairColor: 'slate' } : k.phenotype, // gone grey
+    };
+    faces_.set(key, r);
+  }
+  return r;
+}
+
+/** Time until the keeper of a place retires (null for the ageless). */
+export function retiresIn(game, locId) {
+  const { pos } = clockOf(townState(game), game.simTime, locId);
+  return pos === null ? null : TENURE - pos;
+}
+
+/** Has a new keeper taken over that the pet hasn't chatted with yet? */
+export function isNewFace(game, locId) {
+  const t = townState(game);
+  return (t.gens[locId] || 0) > (t.met[locId] ?? 0);
+}
+
+function report(game, t, msg) {
+  t.news.push({ at: game.simTime, msg });
+  if (t.news.length > 12) t.news.shift();
+  t.unread = Math.min(12, t.unread + 1);
+}
+
+/**
+ * Catch the town up to the clock: announce babies and retirements. A friendship
+ * is with the family, so half of it carries over to the child who takes over.
+ */
+function turnTown(game, t) {
+  for (const loc of LOCATIONS) {
+    const id = loc.id;
+    if (AGELESS.includes(id)) continue;
+    const { gen, pos } = clockOf(t, game.simTime, id);
+    if (t.gens[id] === undefined) { // first look: this is simply how things are
+      t.gens[id] = gen;
+      t.met[id] = gen;
+      t.born[id] = pos >= HEIR_AT ? gen : gen - 1;
+      continue;
+    }
+    if (gen > t.gens[id]) {
+      const old = keeper(t.seed, id, gen - 1), now = keeper(t.seed, id, gen);
+      if (t.friends[id]) t.friends[id] = Math.floor(t.friends[id] / 2 ** (gen - t.gens[id]));
+      report(game, t, `${loc.name}: ${old.name} has retired. ${now.name} takes over.`);
+      t.gens[id] = gen;
+    }
+    if (pos >= HEIR_AT && (t.born[id] ?? -1) < gen) {
+      const k = keeper(t.seed, id, gen), baby = keeper(t.seed, id, gen + 1);
+      report(game, t, `${loc.name}: ${k.name} had a baby, ${baby.name.split(' ').pop()}!`);
+      t.born[id] = gen;
+    }
+  }
+}
+
+/** The town's recent news, newest first. Reading it clears the unread count. */
+export function townNews(game, read = false) {
+  const t = townState(game);
+  if (read) t.unread = 0;
+  return [...t.news].reverse();
+}
+
+/** Something a keeper might say about their own life, or null. */
+function lifeLine(r, rng) {
+  const say = [];
+  if (r.junior) say.push(r.parent ? `I just took over from ${r.parent}. Wish me luck!` : 'I only just started here. Be patient with me!', 'Still learning the ropes!');
+  if (r.elder) say.push('My knees aren\'t what they were...', r.heir ? `${r.heir.name} will take over from me soon.` : 'I\'ll be retiring before long.');
+  if (r.heir?.stage === 'baby') say.push(`Have you met little ${r.heir.name}? Born just today!`);
+  else if (r.heir && !r.elder) say.push(`${r.heir.name} is growing up so fast.`);
+  if (r.parent && !r.junior && !r.elder) say.push(`${r.parent} taught me everything I know.`);
+  return say.length && rng.chance(0.4) ? rng.pick(say) : null;
 }
 
 export const FRIEND_GIFTS = { 3: 50, 7: 150 };
@@ -158,15 +316,17 @@ export const FRIEND_GIFTS = { 3: 50, 7: 150 };
 /** Chat with the resident: friendship goes up once a day, with gifts along the way. */
 export function talk(game, locId, rng = defaultRng) {
   const loc = LOCATION[locId], t = townState(game);
-  const line = rng.pick(loc.lines);
-  if (used(game, 'talk:' + locId)) return { ok: true, msg: `${loc.resident}: "${line}"` };
+  const who = resident(locId, game);
+  const line = lifeLine(who, rng) || rng.pick(loc.lines);
+  t.met[locId] = who.generation;
+  if (used(game, 'talk:' + locId)) return { ok: true, msg: `${who.name}: "${line}"` };
   use(game, 'talk:' + locId);
   const f = (t.friends[locId] || 0) + 1;
   t.friends[locId] = f;
   const gift = FRIEND_GIFTS[f];
   if (gift) gain(game, gift);
   train(game.pet, 'charm', 1); // a good chat is practice
-  return { ok: true, friendship: f, gift, msg: `${loc.resident}: "${line}"${gift ? ` A gift for a good friend! +${gift}` : ''}` };
+  return { ok: true, friendship: f, gift, msg: `${who.name}: "${line}"${gift ? ` A gift for a good friend! +${gift}` : ''}` };
 }
 
 export const friendship = (game, locId) => townState(game).friends[locId] || 0;

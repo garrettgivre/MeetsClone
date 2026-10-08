@@ -93,6 +93,21 @@ export const POTTY = sprite([
   '....owwmmmmGGo..',
   '....oooooooooo..',
 ]);
+// an old resident's walking stick
+export const CANE = sprite([
+  '.ooo..',
+  'onNno.',
+  'ono.no',
+  '.o..no',
+  '....no',
+  '....no',
+  '....no',
+  '....no',
+  '....no',
+  '....no',
+  '....no',
+  '....oo',
+]);
 export const BROOM_ICON = sprite([
   '.......oo.',
   '......oNo.',

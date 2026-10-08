@@ -15,7 +15,7 @@ html, body {
 }
 
 body {
-  background: #000;
+  background: var(--ink);
   font-family: system-ui, sans-serif;
   color: var(--ink);
   display: flex;

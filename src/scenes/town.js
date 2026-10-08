@@ -4,14 +4,15 @@ import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, text, ListMenu } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { backdrop, frontdrop, drawVehicle, FEET } from '../art/town.js';
-import { HEART } from '../art/icons.js';
+import { HEART, CANE, ZZZ } from '../art/icons.js';
+import { wrap, LINE_H } from '../ui.js';
 import { TOYS, CLOTHES } from '../game/items.js';
 import { FOUNDERS } from '../game/genetics.js';
 import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, HAIR_DYES,
   townState, districtLocked, buyPass, cantGo, resident, talk, friendship, doAction,
   dishOfDay, saleOfDay, salePrice, buySale, dyeHair, founderKin,
-  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft,
+  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft, isNewFace, townNews,
 } from '../game/town.js';
 import { skillLevel, SKILL_LABEL } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
@@ -27,11 +28,14 @@ export class TownScene extends ListMenu {
   constructor(app) {
     super(app, 'TOWN', [], { footer: () => `POINTS: ${app.game.points}` });
     this.build();
+    // something happened in town while you were away
+    const t = townState(app.game);
+    if (t.unread) app.toast(t.news[t.news.length - 1].msg, 3600);
   }
   resume() { this.build(); }
   build() {
     const app = this.app, g = app.game, t = townState(g);
-    const rows = [];
+    const rows = [{ label: 'Town news', right: t.unread ? `${t.unread} NEW` : '▶', action: () => app.push(new NewsScene(app)) }];
     for (const d of DISTRICTS) {
       const locked = districtLocked(g, d);
       if (d.secret && locked) {
@@ -53,7 +57,7 @@ export class TownScene extends ListMenu {
       rows.push({ label: `- ${d.name} -`, disabled: true, why: d.travel === 'walk' ? 'A short walk away.' : `Your ${d.pass?.name || 'map'} takes you here.` });
       for (const loc of LOCATIONS.filter(l => l.district === d.id)) {
         const f = friendship(g, loc.id);
-        rows.push({ label: '  ' + loc.name, right: f ? `♥${f}` : '', action: () => go(app, loc.id) });
+        rows.push({ label: '  ' + loc.name, right: isNewFace(g, loc.id) ? 'NEW' : f ? `♥${f}` : '', action: () => go(app, loc.id) });
       }
     }
     this.items = rows;
@@ -120,12 +124,13 @@ export class PlaceScene {
   constructor(app, locId) {
     this.app = app;
     this.loc = LOCATION[locId];
-    this.res = resident(locId);
     this.sel = 0;
     this.anim = null;
     this.t = 0;
   }
   get game() { return this.app.game; }
+  /** Whoever keeps the place today (they grow up, grow old and hand over to their child). */
+  get res() { return resident(this.loc.id, this.app.game); }
   /** Talk first, then the place's own actions. */
   get buttons() {
     return [{ id: 'talk', label: 'Talk' }, ...ACTIONS[this.loc.id]];
@@ -242,10 +247,21 @@ export class PlaceScene {
     titleBar(scr, `◀ ${this.loc.name.toUpperCase()}`, ry);
 
     // the resident, facing your pet
+    const res = this.res;
     const resTalk = a?.type === 'talk';
-    const resExpr = a?.resType === 'happy' || resTalk ? (Math.floor(t / 200) % 2 ? 'happy' : 'idle') : (t % 4000 < 150 ? 'blink' : 'idle');
-    const rbm = composePet(this.res.phenotype, 'adult', { expr: resExpr, arms: resTalk ? 'wave' : 'down', gender: this.res.gender });
+    // an old keeper nods off now and then
+    const doze = res.elder && !a && t % 9000 > 6500;
+    const resExpr = a?.resType === 'happy' || resTalk ? (Math.floor(t / 200) % 2 ? 'happy' : 'idle') : doze ? 'sleep' : (t % 4000 < 150 ? 'blink' : 'idle');
+    // their child grows up at their side
+    if (res.heir) {
+      const hop = res.heir.stage !== 'baby' && t % 5000 < 400 ? 2 : 0;
+      const hbm = composePet(res.heir.phenotype, res.heir.stage, { expr: resTalk ? 'happy' : (t + 900) % 3800 < 150 ? 'blink' : 'idle', gender: res.heir.gender });
+      scr.bitmap(hbm, 115 - CANVAS / 2, FEET_Y - GROUND - hop);
+    }
+    const rbm = composePet(res.phenotype, res.stage, { expr: resExpr, arms: resTalk ? 'wave' : 'down', gender: res.gender });
     scr.bitmap(rbm, 94 - CANVAS / 2, FEET_Y - GROUND);
+    if (res.elder) scr.draw(CANE, 80, FEET_Y - 12, {});
+    if (doze) scr.draw(ZZZ, 102, FEET_Y - 38 - Math.floor((t / 160) % 6), {});
     // your pet
     let expr = pet.sick ? 'sick' : t % 3600 < 140 ? 'blink' : 'idle', arms = 'down', dy = 0;
     if (a) {
@@ -264,12 +280,15 @@ export class PlaceScene {
 
     // the resident's name and your friendship
     const f = friendship(g, this.loc.id);
-    const label = this.res.name.toUpperCase();
+    const label = res.name.toUpperCase();
     const lw = label.length * 4 + (f ? 12 : 0) + 6;
     const lx = Math.min(W - lw - 2, Math.round(94 - lw / 2));
     scr.panel(lx, ry + 14, lw, 9, C('white'), COL.ink);
     text(scr, label, lx + 3, ry + 16, COL.ink);
     if (f) scr.draw(HEART, lx + lw - 11, ry + 15, {});
+    // where they are in life
+    const tag = res.junior ? 'NEW HERE' : res.elder ? 'RETIRING SOON' : res.heir?.stage === 'baby' ? 'NEW BABY!' : '';
+    if (tag) { const tw = tag.length * 4 + 6; scr.panel(W - tw - 2, ry + 25, tw, 9, C('white'), COL.ink); text(scr, tag, W - tw + 1, ry + 27, res.elder ? COL.gray : COL.accent); }
     // place info
     const info = placeInfo(g, this.loc.id);
     if (info) { scr.panel(3, ry + 25, info.length * 4 + 6, 9, C('white'), COL.ink); text(scr, info, 6, ry + 27, COL.accent); }
@@ -299,6 +318,46 @@ function placeInfo(g, id) {
   if (id === 'school') return `CLASSES LEFT: ${classesLeft(g)}`;
   if (id === 'work' && g.pet.stage === 'adult') return `${jobOf(g.pet).name.toUpperCase()} ${'★'.repeat(jobRank(g.pet))}`.trim();
   return null;
+}
+
+// ---------------------------------------------------------------- news
+const NEWS_PER_PAGE = 4;
+
+/** What has been happening in town: babies, retirements and new faces. */
+class NewsScene {
+  constructor(app) { this.app = app; this.page = 0; this.news = townNews(app.game, true); }
+  get pages() { return Math.max(1, Math.ceil(this.news.length / NEWS_PER_PAGE)); }
+  button(b, dir = 1) {
+    if (b === 'C') { this.app.sfx('back'); this.app.pop(); return; }
+    this.page = (this.page + (b === 'A' ? dir : 1) + this.pages) % this.pages;
+    this.app.sfx('blip');
+  }
+  tap(x, y) {
+    const { y: ry, h: rh } = LAYOUT.room;
+    if (y < ry || y >= ry + rh) return false;
+    this.button(y < ry + 12 ? 'C' : 'B');
+    return true;
+  }
+  update() {}
+  draw(scr) {
+    const { y: ry, h: rh } = LAYOUT.room;
+    scr.rect(0, ry, W, rh, COL.panel);
+    titleBar(scr, `◀ TOWN NEWS${this.pages > 1 ? `  ${this.page + 1}/${this.pages}` : ''}`, ry);
+    if (!this.news.length) {
+      let y = ry + 56;
+      for (const l of wrap('All quiet. Folk here grow up, have children and retire as the days go by.', W - 20)) { text(scr, l, W / 2, y, COL.gray, { align: 'center' }); y += LINE_H; }
+      return;
+    }
+    let y = ry + 17;
+    for (const n of this.news.slice(this.page * NEWS_PER_PAGE, (this.page + 1) * NEWS_PER_PAGE)) {
+      const d = new Date(n.at);
+      text(scr, `${d.getMonth() + 1}/${d.getDate()}`, 6, y, COL.accent);
+      y += LINE_H;
+      for (const l of wrap(n.msg, W - 12)) { text(scr, l, 6, y, COL.ink); y += LINE_H; }
+      y += 4;
+    }
+    if (this.pages > 1) text(scr, 'B: MORE', W / 2, ry + rh - 10, COL.shade, { align: 'center' });
+  }
 }
 
 // ---------------------------------------------------------------- photos
