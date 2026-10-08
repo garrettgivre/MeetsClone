@@ -27,23 +27,22 @@ body {
   justify-content: center;
 }
 
+/* The game screen sits flush against the top and sides, with no frame round
+   it; only the strip underneath, where the three buttons live, is shell. */
 #device {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
   height: 100%;
   width: 100%;
   max-width: 560px;
-  padding: max(10px, env(safe-area-inset-top)) 8px max(14px, env(safe-area-inset-bottom));
+  padding: 0 0 max(10px, env(safe-area-inset-bottom));
 }
 
+/* (the wrapper only keeps the screen clear of a phone's notch, in the status bar's own colour) */
 #bezel {
-  background: var(--bezel);
-  border-radius: 22px;
-  padding: 6px;
-  box-shadow: 0 0 0 3px #fff inset, 0 6px 0 rgba(38, 36, 89, .12), 0 10px 30px rgba(38, 36, 89, .18);
+  background: var(--ink);
+  padding-top: env(safe-area-inset-top);
   line-height: 0;
 }
 
@@ -51,8 +50,17 @@ body {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  border-radius: 14px;
   touch-action: none;
+}
+
+#controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 0;
 }
 
 #buttons {
@@ -92,5 +100,4 @@ body {
 @media (max-height: 640px) {
   .btn { width: 54px; height: 54px; }
   #labels { display: none; }
-  #device { gap: 10px; }
 }

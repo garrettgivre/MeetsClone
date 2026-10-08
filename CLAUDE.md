@@ -38,7 +38,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 
 ## Screen and coordinates
 
-- **Logical screen:** 128×224. Pets and town art are drawn at double density (HD = 2) on a 256×448 layer.
+- **Logical screen:** 128×224. The page has no bezel: `resize()` in `main.js` scales the canvas to fill the width (or the height above the button strip, whichever runs out first), so on a short viewport thin strips of shell show at the sides. Pets and town art are drawn at double density (HD = 2) on a 256×448 layer.
 - **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `src/game/pet-art.js`), feet 3 rows above the bottom. Adults are roughly 40 to 50 px tall, so a part has very few pixels to make its point.
 - **Town backdrops:** each is a 256×312 hi-res bitmap (`RW`, `RH`).
   - `HZ = 172` is the horizon or floor line, and `FEET = 228` is where pets stand.
@@ -105,7 +105,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Alerts:** `alertFor(events, pet)` in `src/game/alerts.js` picks the most urgent event and words it; `src/notify.js` shows it through `sw.js`. `main.js` runs a slow timer while the page is hidden (the frame loop stops then) that advances the pet's clock, sends the alert and flags the tab title. There is no push server, so nothing arrives once the browser has closed or suspended the page.
 - **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. A cheat that returns events is played on the home screen by `done()`.
 
-## Status (v0.14.0, October 2026)
+## Status (v0.14.1, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.

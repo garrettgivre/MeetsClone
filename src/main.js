@@ -73,19 +73,18 @@ setupInput({
   onFirstGesture: unlockAudio,
 });
 
-// ----- sizing: big, crisp and portrait -----
+// ----- sizing: the screen fills the page from the top edge down, as wide as it can go -----
 function resize() {
-  const bezel = 12;
-  const btnSpace = window.innerHeight < 640 ? 96 : 130;
-  const availW = Math.min(window.innerWidth - 16, 560) - bezel;
-  const availH = window.innerHeight - btnSpace - bezel - 24;
-  let s = Math.min(availW / W, availH / H);
-  // The real canvas is double density, so steps of 0.5 keep every hi-res
-  // pixel a whole number of CSS pixels. Small phones get the largest fit.
-  if (s >= 2) s = Math.floor(s * 2) / 2;
-  s = Math.max(1, s);
-  canvas.style.width = Math.floor(W * s) + 'px';
-  canvas.style.height = Math.floor(H * s) + 'px';
+  const device = document.getElementById('device');
+  const inset = parseFloat(getComputedStyle(document.getElementById('bezel')).paddingTop) || 0; // a phone's notch
+  const btnSpace = window.innerHeight < 640 ? 84 : 112; // the strip of buttons underneath
+  const availW = device.clientWidth;
+  const availH = window.innerHeight - inset - btnSpace;
+  // Whichever runs out first, width or height, the screen takes all of it
+  // (so the scale is rarely a whole number; the canvas is double density, which keeps it crisp).
+  const s = Math.max(1, Math.min(availW / W, availH / H));
+  canvas.style.width = Math.round(W * s) + 'px';
+  canvas.style.height = Math.round(H * s) + 'px';
 }
 window.addEventListener('resize', resize);
 resize();

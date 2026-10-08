@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#f7c6dc">
+<meta name="theme-color" content="#262459">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -17,12 +17,14 @@
   <div id="bezel">
     <canvas id="screen" aria-label="Game screen"></canvas>
   </div>
-  <div id="buttons">
-    <button class="btn" data-btn="A" aria-label="A: next"><span></span></button>
-    <button class="btn" data-btn="B" aria-label="B: select"><span></span></button>
-    <button class="btn" data-btn="C" aria-label="C: back"><span></span></button>
+  <div id="controls">
+    <div id="buttons">
+      <button class="btn" data-btn="A" aria-label="A: next"><span></span></button>
+      <button class="btn" data-btn="B" aria-label="B: select"><span></span></button>
+      <button class="btn" data-btn="C" aria-label="C: back"><span></span></button>
+    </div>
+    <div id="labels"><span>A</span><span>B</span><span>C</span></div>
   </div>
-  <div id="labels"><span>A</span><span>B</span><span>C</span></div>
 </main>
 <script type="module" src="src/main.js"></script>
 </body>
