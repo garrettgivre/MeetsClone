@@ -27,7 +27,7 @@ export function dialog(scr, msg, { y = null, w = 112, title = null } = {}) {
   const x = Math.floor((W - w) / 2);
   y = y ?? Math.floor(LAYOUT.room.y + (LAYOUT.room.h - h) / 2);
   scr.panel(x, y, w, h, COL.white, COL.ink);
-  scr.hline(x + 2, y + h, w - 3, COL.silver);
+  scr.rule(x + 2, y + h, w - 3, COL.silver);
   let ty = y + 5;
   if (title) { text(scr, title, W / 2, ty, COL.accent, { align: 'center' }); ty += LINE_H + 2; }
   for (const l of lines) { text(scr, l, W / 2, ty, COL.ink, { align: 'center' }); ty += LINE_H; }
@@ -43,7 +43,7 @@ export function heartRow(scr, x, y, value, kind = 'heart') {
 /** Title bar used at the top of full-screen menus. */
 export function titleBar(scr, title, y = LAYOUT.room.y) {
   scr.rect(0, y, W, 11, COL.accent);
-  scr.hline(0, y + 11, W, COL.ink);
+  scr.rule(0, y + 11, W, COL.ink);
   text(scr, title, W / 2, y + 3, COL.white, { align: 'center' });
 }
 
@@ -128,7 +128,7 @@ export class ListMenu {
       if (this.scroll > 0) scr.draw(ARROW, W - 6, this.top + 1, {});
       const pct = this.scroll / (this.items.length - this.rows);
       const trackH = this.rows * this.rowH - 4;
-      scr.rect(W - 3, this.top + 2 + Math.round(pct * (trackH - 8)), 2, 8, COL.shade);
+      scr.panel(W - 4, this.top + 2 + Math.round(pct * (trackH - 8)), 3, 8, COL.silver, COL.shade);
     }
     if (!this.items.length) text(scr, 'Nothing here yet!', W / 2, ry + 60, COL.gray, { align: 'center' });
     if (this.footer) {

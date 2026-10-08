@@ -535,7 +535,7 @@ export class HomeScene {
     // icon rows
     for (const [row, ids] of [[top, TOP], [bottom, BOTTOM]]) {
       scr.rect(0, row.y, W, row.h, COL.ink);
-      scr.hline(0, row.y + (row === top ? row.h - 1 : 0), W, COL.shade);
+      scr.rule(0, row.y + (row === top ? row.h - 1 : 0), W, COL.shade, row === top);
       ids.forEach((id, i) => {
         const idx = ALL.indexOf(id);
         const cx = Math.round(i * CELL + CELL / 2);

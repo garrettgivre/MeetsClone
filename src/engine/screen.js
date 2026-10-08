@@ -113,11 +113,6 @@ export class Screen {
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) this.hpset(x + i, y + j, c);
   }
 
-  box(x, y, w, h, c) {
-    for (let i = 0; i < w; i++) { this.pset(x + i, y, c); this.pset(x + i, y + h - 1, c); }
-    for (let j = 1; j < h - 1; j++) { this.pset(x, y + j, c); this.pset(x + w - 1, y + j, c); }
-  }
-
   /** Rounded panel: fill with a fine 1 hi-res pixel outline and soft corners. */
   panel(x, y, w, h, fill, line) {
     const X = x * HD, Y = y * HD, Wd = w * HD, Hd = h * HD;
@@ -131,19 +126,16 @@ export class Screen {
     }
   }
 
-  hline(x, y, w, c) { for (let i = 0; i < w; i++) this.pset(x + i, y, c); }
-  vline(x, y, h, c) { for (let j = 0; j < h; j++) this.pset(x, y + j, c); }
+  /**
+   * A rule one fine pixel thick, the same weight as a panel's outline: along
+   * the top edge of normal row y, or along its bottom edge.
+   */
+  rule(x, y, w, c, bottom = false) { this.hrect(x * HD, y * HD + (bottom ? HD - 1 : 0), w * HD, 1, c); }
 
   /** Fine checkerboard in hi-res pixels (coordinates in normal pixels). */
   hdither(x, y, w, h, c, phase = 0) {
     for (let j = 0; j < h * HD; j++) for (let i = 0; i < w * HD; i++)
       if (((i + j + phase) & 1) === 0) this.hpset(x * HD + i, y * HD + j, c);
-  }
-
-  /** Dither fill (checkerboard) for shadows and night overlays. */
-  dither(x, y, w, h, c, phase = 0) {
-    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++)
-      if (((x + i + y + j + phase) & 1) === 0) this.pset(x + i, y + j, c);
   }
 
   /**

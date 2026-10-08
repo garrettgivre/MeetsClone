@@ -7,6 +7,7 @@ import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { CLOTHES, SLOTS, SLOT_LABEL } from '../game/items.js';
 import { toggleWear, canDress } from '../game/pet.js';
 import { HATS, FACE, BOWTIE, TIE } from '../art/wardrobe-icons.js';
+import { backdrop, FEET } from '../art/town.js';
 
 const PREVIEW_H = 58;
 
@@ -51,9 +52,11 @@ export class WardrobeScene extends ListMenu {
     const pet = this.app.game.pet;
     const { y: ry } = LAYOUT.room;
     const py = ry + 13;
-    scr.rect(0, py, W, PREVIEW_H, C('sky.3'));
-    scr.hline(0, py + PREVIEW_H - 1, W, COL.ink);
-    scr.rect(0, py + PREVIEW_H - 9, W, 8, C('cream.2'));
+    // the fitting room: the boutique in town, with the pet standing where shoppers do
+    scr.setClip(0, py, W, PREVIEW_H - 1);
+    scr.bitmap(backdrop('boutique'), 0, py + PREVIEW_H - 4 - FEET / 2);
+    scr.noClip();
+    scr.rule(0, py + PREVIEW_H - 1, W, COL.ink);
     const since = this.app.time - this.bounce;
     const happy = since < 700;
     const bm = composePet(pet.phenotype, pet.stage, {

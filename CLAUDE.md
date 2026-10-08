@@ -4,20 +4,20 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.17.1, 8 October 2026)
+## Where things stand (v0.17.4, 8 October 2026)
 
 Everything is committed, pushed and live. `npm test` passes (87 tests).
 
-**Work in progress: one pixel scale everywhere.** The owner asked for the whole game to render at a single pixel size and said "Yes make it consistent and look nice". Stage one shipped in v0.16.7. I then asked whether to carry on with the foods, toys and bath, then the scenes; the owner moved on to other requests without answering, so confirm before starting a long pass. What is left, in the order I would do it:
+**One pixel scale: done.** The owner asked for the whole game to render at a single pixel size ("Yes make it consistent and look nice", then "continue the one pixel scale pass for the rest"). It shipped in four releases:
+- v0.16.7: the font and the home-screen symbols.
+- v0.17.2: every other small sprite redrawn by hand as an `hdSprite` at twice its old grid: the foods, toys, tub, suds, bubbles, toilet, syringe, sweep wave, cane, ring, the Clean-menu icons (`src/art/icons.js`) and the wardrobe icons.
+- v0.17.3: the scenes that were plain rectangles got backdrops built like town places (see "Scenes that aren't places" under Town art), plus a hand-pixelled bus, train, balloon and rope post (`src/art/props-travel.js`).
+- v0.17.4: rules and dividers are one fine pixel thick (`scr.rule`); the Status portrait and the wardrobe preview stand on backdrops.
 
-1. **Small sprites still at the old chunky size** (1x grids that `scr.draw` upscales with Scale2x). Redraw each by hand as an `hdSprite` at twice its current grid size, so nothing that places it has to change:
-   - in `src/art/icons.js`: `SYRINGE`, `BROOM_WAVE`, `MOON`, `SUN`, `RING`, `TUB`, `SUDS`, `BUBBLE`, `POTTY`, `CANE`, `ANGRY`, and the list icons `BROOM_ICON`, `BATH_ICON`, `POTTY_ICON`;
-   - `FOOD_ART` (19 foods) and `TOY_ART` (6 toys), also in `icons.js`; they show in every feeding and play animation and in the menus;
-   - `src/art/wardrobe-icons.js`.
-2. **Scenes still drawn in code as plain rectangles**, the furthest from the rest of the art: the three minigames in `src/scenes/minigames.js`, `jumprope.js`, the travel animation and photo page in `src/scenes/town.js`, the matchmaker, wedding and album in `family.js`, and `ending.js`. Each needs a real backdrop (built like a town place) rather than a redrawn sprite.
-3. **Rules and dividers** drawn with `hline`, `vline` and `box`, which are two fine pixels thick.
-
-Already at the fine size: the room, the town, pets, the ten menu icons, the font, and the status symbols (`HEART`, `HEART_EMPTY`, `RICE`, `RICE_EMPTY`, `COIN`, `POOP`, `SKULL`, `ZZZ`, `ATTN`, `SPARKLE`, `NOTE`, `SWEAT`, `ARROW`, `STINK`).
+What is left of it, all small:
+- The three lens grids in `src/art/wardrobe-icons.js` (glasses, shades, monocle) are still 1x `sprite`s. Nothing draws them. Redraw them when clothes go onto the pet.
+- The bus, train and balloon are toy-sized next to a pet (the bus is 72 fine pixels long; a pet's canvas is 128). They never share the screen with one, and I did not ask the owner whether they should be bigger.
+- I viewed every new sprite and scene at zoom in the browser pane, not on a phone.
 
 **Other open items**
 - **Clothes are not drawn on the pet.** Wardrobe items are bought, stored, listed and "worn", but `src/game/pet-art.js` never draws them (the comment in `src/game/render.js` says so, and there is no `wear` handling in `pet-art.js`). I told the owner; they have not asked for it yet. It was my top suggestion for what to do next.
@@ -29,7 +29,7 @@ Already at the fine size: the room, the town, pets, the ten menu icons, the font
 - **Pixel art is drawn by hand, pixel by pixel. Never use a script to generate or draft it.** The owner's words: "Don't use a script for the pixel art make it yourself pixel by pixel". Write the text grid row by row in the art file. A check that only reports row lengths or stray characters is fine, because it draws nothing. Splicing hand-typed rows into a file with a small script is fine too. Code is still fine for sky, light and pattern fills inside scenes.
   - The older drafting scripts (`tools/art-scripts/town_kit.py`, `pet_kit.py`, `draft.py`, `props_draft.py`, `ed.py`) made earlier art and are kept only for reference. Do not use them for new work.
   - The three gold buttons (`src/art/buttons.js`) came from a script that is now deleted. The owner said they are fine as they are.
-- **One pixel scale, cohesive look.** See the work in progress above.
+- **One pixel scale, cohesive look.** Anything new is drawn at the fine size: an `hdSprite`, a prop, or a backdrop built from props. Never add a 1x `sprite`.
 - **Original, in the spirit of Tamagotchi.** The official town maps and backgrounds are the quality bar; match their quality, not their layouts. No clip-art, no cheap-looking pixel art, no rudimentary shapes: objects are props, not rectangles drawn in code.
 - **Charm:** faces on buildings and objects, lettered signs, marquee bulbs, hanging stars and hearts, sticker halos, mushroom houses, cone trees. Dense around the edges, clear in the middle. Pets should show every gene.
 - **Light from the upper left.** Hue-shifted shading (cool shadows, warm lights), outlines in a darker shade of the object's own colour.
@@ -75,19 +75,21 @@ src/scenes/                home, room, menus, status, minigames, jumprope, famil
 src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg
 src/art/menu-icons.js      the ten home-screen menu icons, hand-pixelled hi-res sprites
 src/art/buttons.js         the three gold buttons (UP and DOWN grids) and paintButtons
-src/art/icons.js           status symbols, foods, toys, bath and toilet sprites
+src/art/icons.js           status symbols, foods, toys, bath and toilet sprites, all hand-pixelled hdSprites (`FINE` adds the colours the shared key lacks)
+src/art/wardrobe-icons.js  the clothes' list icons
 src/art/props.js           town props (text grids with colour roles)
 src/art/props-home.js      the home room's props, hand-pixelled; registers them with defineProp
+src/art/props-travel.js    the bus, train engine and carriage, balloon and jump-rope post
 src/art/town.js            the drawing kit, the 23 town backdrops (SCENES) and the home room (homeRoom)
 tests/                     art, book, care, discipline, font, genetics, pet, save, town
-tools/                     review pages (parts, founders, gallery, compare, lab, town, props), dump.mjs, the sprite editor, old art scripts
+tools/                     review pages (parts, founders, gallery, compare, lab, town, props, icons), dump.mjs, the sprite editor, old art scripts
 docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Architecture section is out of date);  docs/RESEARCH.md  notes on the device
 ```
 
 ## Screen, sizes and coordinates
 
-- **Two grids in one framebuffer.** Scene code works in normal pixels (128×224). The framebuffer is 256×448 fine pixels. `scr.pset`, `rect`, `hline` take normal pixels (each a 2×2 block); `hpset`, `hrect` take fine ones; bitmaps flagged `hd` and `hdSprite`s are drawn one fine pixel per cell.
-- **Sprites:** `sprite(rows)` is a 1x grid that `scr.draw` upscales with Scale2x (the old chunky look). `hdSprite(rows, key)` is drawn at fine density with no upscaling; its `w` and `h` are still in normal pixels, so an `hdSprite` of twice the grid size replaces a `sprite` without moving anything. `scr.draw` options: `frame`, `flip`, `ctx` (colour context), `solid`, `remap` (a palette-to-palette table such as `mutedLut()`).
+- **Two grids in one framebuffer.** Scene code works in normal pixels (128×224). The framebuffer is 256×448 fine pixels. `scr.rect`, `panel`, `rule` and `draw` take normal pixels; `hpset`, `hrect` take fine ones; bitmaps flagged `hd` and `hdSprite`s are drawn one fine pixel per cell. `scr.rule(x, y, w, c, bottom)` is a divider one fine pixel thick, the same weight as a panel outline; the old two-pixel `hline`, `vline`, `box` and `dither` are gone.
+- **Sprites:** `hdSprite(rows, key)` is drawn at fine density with no upscaling; its `w` and `h` are in normal pixels, so its grid must have an even width and height. `sprite(rows)` is the old 1x grid that `scr.draw` upscales with Scale2x; only the unused lens grids still use it. `scr.draw` options: `frame`, `flip`, `ctx` (colour context), `solid`, `remap` (a palette-to-palette table such as `mutedLut()`).
 - **Font** (`src/engine/font.js`): `FINE` holds each glyph as ten fine rows, hand-drawn; widths are twice the old 3×5 lettering so every layout kept its place (`tests/font.test.js` enforces that). `SMALL` is the old lettering, kept for signs painted into town backdrops (`glyphRows`). A new character needs rows in both. There is no `&`.
 - **Screen layout** (`LAYOUT` in `src/ui.js`, normal pixels): status bar 0-12, top icon row 12-34, room 34-190, bottom icon row 190-212, info bar 212-224. The icon rows are navy; an icon is drawn in greys (`MUTED` in `home.js`) until the cursor is on it. The info bar shows only the highlighted menu's name.
 - **Page sizing** (`resize()` in `main.js`): the canvas takes the full width, or the height left above the buttons, whichever runs out first. `--px` is set to the size of one normal game pixel; the buttons (32×36 art pixels), their gap and their offsets are all measured in it, so they match the game's scale. `BUTTON_ROWS` is the strip's height in game pixels. On a short viewport (a phone browser with its toolbars) thin strips show at the sides; removing them would need a taller logical screen.
@@ -106,7 +108,9 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 - **Props** are text grids. Colour roles: `1-4` leaf, `5-8` wood, `a-d` accent, `e-h` stone, `A-D` wall, `r s t u` roof, `x y z Z` glass (each darkest to lightest); fixed `w` white, `k` ink, `m` mist, `v` silver, `n` grey; `.` empty. Scenes recolour them: `k.prop(name, x, y, { accent: 'pink', wood: 'brown', flip, halo: 'white' })`, anchored at the bottom centre. `rampOf()` maps neutral colours onto a ramp.
 - **New props** go in `props-home.js` or a similar file with `defineProp(name, rows)`, written by hand. Every row of a prop must be the same width (short rows are padded on the right, which shifts nothing but hides mistakes; check lengths).
 - **Scenes:** `SCENES.<id>(k)` draws with the kit `k`. Shapes: `rect`, `block`, `ellipse`, `disc`, `puff`, `blob`. Scenery: `field`, `trail`, `canopy`, `pcloud`, `horizonClouds`, `mountain`, `frame`, `tree`, `bush`. Interiors: `wall`, `tiles`, `planks`, `shelf`, `counter`, `lightPool`, `beam`, `vignette`. Charm: `sign`, `face`, `bulbs`, `starString` (hearts option), `heart`, `sun`, `signpost`, `lamp`. Floors paint over everything below the horizon, so draw things that stand on the floor after it.
-- **Review pages** (need the local server): `tools/town.html?only=park&z=3&pets`, `tools/props.html?z=4&only=a,b,c`.
+- **Scenes that aren't places** are in `SCENES` too and are fetched with `backdrop(id)`: `playfield` and `ropefield` (the minigames; pets stand at y 260), `matchmaker` (pets at y 184), `photo0`..`photo3` (the painted backdrops behind studio photos, album pages and the Status portrait), `trip` and `tripSky` (the journey), `farewell` (a pet that died). The wedding uses `chapel`, the wardrobe preview `boutique`, and a runaway's ending the home room with the `LETTER` sprite.
+- **Things that move across a scene** (vehicles, passing trees, clouds) are props turned into bitmaps with `propBitmap(name, colours)`; `bm.at` is the anchor. `TravelScene` in `src/scenes/town.js` slides them past with `slide()`; the road, track and path are fine-pixel fills in `drawWay()`.
+- **Review pages** (need the local server): `tools/town.html?only=park&z=3&pets`, `tools/town.html?scene=playfield,trip` for scenes that aren't places, `tools/props.html?z=4&only=a,b,c`, `tools/icons.html?z=6&only=TUB,riceball`.
 - `tests/town.test.js` renders every backdrop and runs every place action. A syntax error in `town.js` fails it with "Unexpected identifier"; run `node --check src/art/town.js`.
 
 ## Pet art
@@ -164,7 +168,9 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 - **The browser pane is often hidden, and then the game's frame loop doesn't run.** A screenshot or a read of the canvas shows a stale or blank picture. Force a frame first: `app.scenes[0].draw(app.scr); if (app.scenes.length > 1) app.scene.draw(app.scr); app.scr.present();`. `window.app` is exposed for this.
 - **To judge art at zoom,** copy part of the game canvas into a larger canvas with smoothing off and screenshot that, or use the review pages. Set states through the cheats: `const C = await import('/src/game/cheats.js')`. Time-skip cheats can kill the test pet; `app.reset()` starts it over.
 - **Check at phone size** (`resize_window` to about 412×883 for the owner's phone, and 390×664 for a browser with toolbars), and reset the viewport afterwards.
-- **Git Bash heredocs mangle backslashes and quotes.** Write Python scripts and commit messages to files (the scratchpad is fine) and run them by path. For many exact edits I used a small `patch(path, [(old, new), ...])` helper that fails unless each `old` matches exactly once.
+- **Git Bash heredocs mangle backslashes and quotes.** Write Python scripts and commit messages to files (the scratchpad is fine) and run them by path.
+- **Checking hand-typed grids:** a wrong row length shifts nothing visibly but breaks the drawing. A small Node script that reads an art file, groups consecutive quoted rows and prints any row whose length differs from its neighbours (and any `hdSprite` grid with an odd width or height) catches it; it draws nothing, so it is within the owner's rule.
+- **A scene left on the stack keeps running** while the browser pane is visible. When forcing frames for a screenshot, set `scene.update = () => {}` first, or a wedding will finish and marry the test pet. For many exact edits I used a small `patch(path, [(old, new), ...])` helper that fails unless each `old` matches exactly once.
 - **Saves:** `migrate` in `src/game/save.js` fills in new pet fields and merges new settings from `newGame`. Add defaults there whenever the pet's shape changes; `tests/save.test.js` and `tests/care.test.js` cover it.
 - **Seeded tests are sensitive to anything that changes how often a pet falls ill.** A long unattended stretch in a test can kill the pet; top up needs, cure and clean as the helpers in `tests/care.test.js` do.
 - **Old script notes, for reading history only:** `setpart` in `ed.py` drops a part's options unless they're passed back; `redraw_head` and `paint_body` in `pet_kit.py` stack their changes if run on an already-modified grid.

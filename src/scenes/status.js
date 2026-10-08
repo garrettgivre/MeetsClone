@@ -7,6 +7,7 @@ import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry, isChubby, isDirty, M
 import { jobOf, jobRank } from '../game/town.js';
 import { TOYS } from '../game/items.js';
 import { carried, GENE_LABELS } from '../game/genetics.js';
+import { backdrop } from '../art/town.js';
 
 const PAGES = ['PROFILE', 'NEEDS', 'TRAINING', 'PERSONALITY', 'LOOKS', 'HIDDEN GENES'];
 const GRIME = ['SPOTLESS', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
@@ -35,10 +36,11 @@ export class StatusScene {
     scr.rect(0, ry, W, rh, COL.panel);
     titleBar(scr, `◀ ${PAGES[this.page]}  ${this.page + 1}/${PAGES.length}`, ry);
     // portrait
-    scr.panel(W / 2 - 30, ry + 15, 60, 52, C('sky.3'), COL.ink);
+    scr.panel(W / 2 - 30, ry + 15, 60, 52, C('white'), COL.ink);
     const bm = pet.stage === 'egg' ? composeEgg(pet.generation > 1 ? pet.phenotype : null)
       : composePet(pet.phenotype, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender, wear: pet.wear, species: pet.species });
-    scr.setClip(W / 2 - 29, ry + 16, 58, 50);
+    scr.setClip(W / 2 - 28, ry + 17, 56, 48);
+    scr.bitmap(backdrop('photo0'), 0, ry + 64 - 86); // a portrait, on the studio's meadow backdrop
     scr.bitmap(bm, W / 2 - CANVAS / 2, ry + 64 - GROUND);
     scr.noClip();
 
