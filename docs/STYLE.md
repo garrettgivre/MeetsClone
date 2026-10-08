@@ -44,6 +44,9 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).
 
 ## Town backdrops
+### Props are hand-pixelled
+Trees, bushes, clouds, rocks, flowers, mushrooms, tufts, ferns, logs, reeds and lily pads are text grids in `src/art/props.js`, at the town's full pixel density, finished pixel by pixel. Their characters are colour roles (`1-4` leaf, `5-8` wood, `a-d` accent, `e-h` stone), so one drawing comes in any colourway. Scenes only place them (`k.prop(name, x, y, { leaf, accent, flip })`, and `tree`, `bush`, `canopy`, `pcloud`, `tufts`, `rocks`, `mushroom`, `flowerPatch` all stamp props). Review them in `tools/props.html`. `tools/art-scripts/props_draft.py` blocks in a new prop's silhouette as a starting point; the grid in `props.js` is the real art, so edit it by hand.
+
 ### What gives a scene heart
 - **No rudimentary shapes.** Ground edges, rocks, mountains, tree crowns and clouds are irregular lumps (`blob`, `canopy`, `pcloud`, `mountain`); trunks taper, curve and flare at the roots (`trunk`, `tree`); roofs curve like bells (`roofCurve`); even boxes have soft corners (`block`).
 - **Volume from lobes.** Foliage and clouds are clumps of lobes in mixed sizes, upper ones lit, lower ones in shade, each tucked into a darker pocket where it meets the ones behind.

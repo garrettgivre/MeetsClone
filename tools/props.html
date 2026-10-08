@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prop Review</title>
+<style>
+  body { margin: 0; padding: 12px; font: 13px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  figure { margin: 0; text-align: center; font-size: 11px; }
+  canvas { image-rendering: pixelated; background: #cfeee0; border-radius: 4px; }
+</style>
+</head>
+<body>
+<p>Every hand-pixelled town prop, enlarged, in a few colourways. <code>?z=6</code> sets the zoom, <code>?only=treeA</code> shows one.</p>
+<div class="row" id="out"></div>
+<script type="module">
+import { C, PACKED } from '../src/engine/palette.js';
+import { PROPS, stampProp } from '../src/art/props.js';
+const params = new URLSearchParams(location.search);
+const z = +params.get('z') || 5, only = params.get('only');
+const WAYS = [{}, { leaf: 'mint' }, { leaf: 'orange', accent: 'gold' }, { leaf: 'lime', accent: 'violet' }];
+const out = document.getElementById('out');
+for (const p of Object.values(PROPS)) {
+  if (only && p.name !== only) continue;
+  for (const way of only ? WAYS : WAYS.slice(0, 2)) {
+    const c = document.createElement('canvas'); c.width = p.w + 4; c.height = p.h + 4;
+    c.style.width = c.width * z + 'px'; c.style.height = c.height * z + 'px';
+    const ctx = c.getContext('2d'), img = ctx.createImageData(c.width, c.height), u = new Uint32Array(img.data.buffer);
+    stampProp((x, y, col) => { if (x >= 0 && y >= 0 && x < c.width && y < c.height) u[y * c.width + x] = PACKED[C(col)]; }, p.name, p.at[0] + 2, p.at[1] + 2, way);
+    ctx.putImageData(img, 0, 0);
+    const f = document.createElement('figure'); f.append(c, document.createElement('br'), `${p.name} ${Object.values(way).join(' ')}`); out.append(f);
+  }
+}
+</script>
+</body>
+</html>

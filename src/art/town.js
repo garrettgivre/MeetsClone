@@ -9,6 +9,7 @@
 import { C, RAMP_NAMES } from '../engine/palette.js';
 import { W, HD, makeBitmap } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
+import { PROPS, stampProp } from './props.js';
 
 export const RW = W * HD;               // 256
 export const RH = LAYOUT.room.h * HD;   // 312
@@ -43,6 +44,7 @@ export function tone(c, n) {
   return `${ramp}.${Math.max(0, Math.min(3, +s + n))}`;
 }
 const lt = (c, n = 1) => tone(c, n);
+const rampOf = (c) => c.split('.')[0];
 const dk = (c, n = 1) => tone(c, -n);
 /** The outline for a fill: two shades darker, or ink once that runs out. */
 const edge = (c) => (dk(c, 2) === c || c.endsWith('.0') || c.endsWith('.1') || c === 'shade' || c === 'ink' ? 'ink' : dk(c, 2));
@@ -137,15 +139,14 @@ function kit() {
       if (pebbles && rnd() < 0.12) { const side = rnd() < 0.5 ? -1 : 1; blob(Math.round(cx + side * h), y, 2 + rnd() * 2, 1.5, 'slate.3', { seed: y, wob: 0.2 }); }
     }
   };
-  /** A clump of flowers: a few stems close together, mixed sizes. */
+  /** A clump of flowers (hand-pixelled), in the first colour given. */
   const flowerPatch = (cx, cy, n = 6, colors = ['pink.2', 'white', 'gold.2'], seed = cx) => {
-    const rnd = rand(seed * 7 + 1);
-    blob(cx, cy - 1, 4 + n, 3, 'green.2', { seed, line: null, wob: 0.3, shade: false });
-    for (let i = 0; i < n; i++) flower(Math.round(cx + (rnd() - 0.5) * n * 3), Math.round(cy + (rnd() - 0.5) * 4), colors[Math.floor(rnd() * colors.length)]);
+    prop(n >= 6 ? 'flowersA' : 'flowersB', cx, cy, { accent: rampOf(colors[0] === 'white' ? colors[1] || 'pink.2' : colors[0]), flip: Math.round(seed) % 2 === 1 });
   };
   const rocks = (cx, cy, n = 3, c = 'slate.3', seed = cx) => {
-    const rnd = rand(seed * 3 + 2);
-    for (let i = 0; i < n; i++) { const r = (n - i) * 2 + 2 + rnd() * 2; blob(Math.round(cx + (i ? (rnd() - 0.5) * 16 : 0)), Math.round(cy - r * 0.5 + i * 2), r, r * 0.75, c, { seed: seed + i, wob: 0.18 }); }
+    shadow(cx + 2, cy, 12, dk(c, 2));
+    prop(n >= 3 ? 'rockA' : 'rockB', cx, cy, { stone: rampOf(c), flip: Math.round(seed) % 2 === 1 });
+    if (n >= 2) prop('pebbles', cx + 14, cy + 2, { stone: rampOf(c) });
   };
   /**
    * A roof with gently curved sides (a bell rather than a triangle), shingle
@@ -163,6 +164,8 @@ function kit() {
     }
     for (let i = -w / 2 - 1; i <= w / 2; i++) set(cx + i, top + h, dk(c, 2));
   };
+  /** Stamp a hand-pixelled prop (src/art/props.js) with its anchor at (x, y). */
+  const prop = (name, x, y, opts = {}) => stampProp(set, name, Math.round(x), Math.round(y), opts);
   /** Flat block with an outline (for small things and frames). */
   const flat = (x, y, w, h, fill, outline = edge(fill)) => { rect(x, y, w, h, fill); if (outline) box(x, y, w, h, outline); };
   const ellipse = (cx, cy, rx, ry, fill, { outline = null, shade = false } = {}) => {
@@ -277,19 +280,10 @@ function kit() {
   const floorShadow = (c = 'shade') => dither(0, HZ, RW, 3, c);
 
   // ---- props ----
-  /** A tree with a curved, tapering trunk, flared roots, bark marks, a lobed crown and a soft shadow. */
-  const tree = (x, y, s = 1, leaf = 'green.2', { seed = 7, bark = 'brown.2' } = {}) => {
-    const rnd = rand(seed * 53 + 1);
-    const h = Math.round(30 * s), bend = (rnd() - 0.5) * 6 * s;
-    blob(x + 4 * s, y + 1, 20 * s, 5 * s, dk(leaf, 2), { seed, line: null, shade: false, wob: 0.2 });
-    for (let j = 0; j < h; j++) {
-      const t = j / h, flare = t > 0.82 ? (t - 0.82) * 22 * s : 0, half = (2.4 + (1 - t) * 0.4) * s + flare;
-      const mid = x + Math.sin(t * 2.4) * bend;
-      for (let i = Math.round(-half); i < Math.round(half); i++) set(mid + i, y - h + j, i < -half + 2 ? lt(bark) : i > half - 2.5 ? dk(bark) : bark);
-      set(mid - half - 1, y - h + j, dk(bark, 2)); set(mid + half, y - h + j, dk(bark, 2));
-    }
-    for (let k = 0; k < 3 * s; k++) { const by = y - h + 4 + rnd() * (h - 10), bx = x + (rnd() - 0.5) * 2 * s; line(bx, by, bx + 1, by + 3, dk(bark)); }
-    canopy(x - 22 * s, y - h - 38 * s, 44 * s, 42 * s, leaf, { seed, r: Math.max(5, Math.round(9 * s)) });
+  /** A hand-pixelled tree with a soft shadow; big trees for s >= 0.95, young ones below. */
+  const tree = (x, y, s = 1, leaf = 'green.2', { seed = 7 } = {}) => {
+    blob(x + 4, y + 1, 18 * s, 4 * s, dk(leaf, 2), { seed, line: null, shade: false, wob: 0.2 });
+    prop(s >= 0.95 ? 'treeA' : 'treeB', x, y, { leaf: rampOf(leaf), flip: seed % 2 === 1 });
   };
   const pine = (x, y, h = 50, c = 'green.1') => {
     rect(x - 2, y - 8, 4, 8, 'brown.1');
@@ -297,7 +291,7 @@ function kit() {
   };
   const bush = (x, y, c = 'green.2', w = 16, seed = x) => {
     blob(x + 2, y, w + 3, Math.max(2, w / 5), dk(c, 2), { seed, line: null, shade: false, wob: 0.2 });
-    canopy(x - w, y - w * 1.1, w * 2, w * 1.2, c, { seed, r: Math.max(4, Math.round(w / 2.4)) });
+    prop(w >= 14 ? 'bushA' : w >= 9 ? 'bushB' : 'bushC', x, y, { leaf: rampOf(c), flip: Math.round(seed) % 2 === 1 });
   };
   const flower = (x, y, c = 'pink.2') => { rect(x, y - 5, 1, 5, 'green.1'); set(x + 1, y - 2, 'green.2'); for (const [dx, dy] of [[-1, -6], [1, -6], [0, -7], [0, -5]]) set(x + dx, y + dy, c); set(x, y - 6, 'gold.3'); };
   const flowers = (x, y, n = 5, c = 'pink.2') => { for (let i = 0; i < n; i++) flower(x + i * 6, y - (i % 2) * 2, i % 3 === 2 ? 'gold.2' : c); };
@@ -422,41 +416,26 @@ function kit() {
     if (r >= 4) { set(cx - r * 0.4, cy - r * 0.45, lt(hi)); set(cx - r * 0.4 + 1, cy - r * 0.45, lt(hi)); }
   };
   /**
-   * A clump of foliage (or a cloud, or a hedge): lobes of different sizes,
-   * the upper ones lit, the lower ones in shade, each tucked into a darker
-   * pocket where it meets the lobes behind it.
+   * A mass of foliage (hedges, tree lines, framing): hand-pixelled bushes
+   * clustered back to front, bigger ones in the middle, all in one leaf colour.
    */
-  const canopy = (x, y, w, h, c, { seed = 1, r = 9, line, light = lt(c), deep = dk(c) } = {}) => {
-    const rnd = rand(seed * 977 + 13);
-    const cx = x + w / 2, cy = y + h / 2, ax = Math.max(1, w / 2 - r * 0.7), ay = Math.max(1, h / 2 - r * 0.7);
-    const n = Math.max(4, Math.round((w * h) / (r * r * 1.2)));
-    const lobes = [];
-    for (let i = 0; i < n; i++) {
-      // more lobes near the rim, so the outline is bumpy and the middle isn't crowded
-      const a = rnd() * 6.283, d = Math.sqrt(0.25 + rnd() * 0.75);
-      lobes.push([cx + Math.cos(a) * d * ax, cy + Math.sin(a) * d * ay, r * (0.6 + rnd() * 0.65), i]);
-    }
-    lobes.sort((p, q) => p[1] - q[1]);
-    for (const [px, py, pr, i] of lobes) {
-      const low = (py - cy) / (ay || 1) > 0.35; // lobes low in the clump sit in shade
-      const base = low ? deep : c;
-      blob(px + 1, py + 2, pr, pr * 0.92, dk(base), { seed: seed * 31 + i, line: null, shade: false }); // the pocket
-      blob(px, py, pr, pr * 0.92, base, { seed: seed * 31 + i, line: line || dk(c, 2), top: dk(base), hi: low ? c : light });
+  const canopy = (x, y, w, h, c, { seed = 1, r = 9 } = {}) => {
+    const rnd = rand(seed * 977 + 13), leaf = rampOf(c);
+    const cx = x + w / 2, cy = y + h / 2, ax = Math.max(1, w / 2 - 8), ay = Math.max(1, h / 2 - 5);
+    const area = r >= 13 ? 900 : r >= 10 ? 370 : r >= 6 ? 150 : 77; // the bushes (or crowns) it's built from
+    const n = Math.max(2, Math.ceil((w * h) / (area * 0.42)));
+    const spots = [];
+    for (let i = 0; i < n; i++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()); spots.push([cx + Math.cos(a) * d * ax, cy + Math.sin(a) * d * ay, d]); }
+    spots.sort((p, q) => p[1] - q[1]);
+    for (const [px, py, d] of spots) {
+      const name = r >= 13 ? (d < 0.7 || rnd() < 0.5 ? 'crownA' : 'bushA') : r >= 10 ? (d < 0.6 ? 'bushA' : rnd() < 0.5 ? 'bushA' : 'bushB') : r >= 6 ? (rnd() < 0.6 ? 'bushB' : 'bushC') : 'bushC';
+      prop(name, px, py + PROPS[name].h / 2, { leaf, flip: rnd() < 0.5 });
     }
   };
-  /** A cloud: lobes of mixed sizes along the top, a flat bottom and a tinted underside. */
+  /** A hand-pixelled cloud, sized to the width asked for, with a tinted underside. */
   const pcloud = (x, y, w, tint = 'violet.3', s = 1, seed = Math.round(x + y * 7)) => {
-    const rnd = rand(seed);
-    const lobes = [];
-    for (let px = x + 5 * s; px < x + w - 5 * s;) { const r = (7 + rnd() * 9) * s * (1.25 - Math.abs(px - x - w / 2) / w * 1.5); lobes.push([px, y - r * 0.55, Math.max(3 * s, r)]); px += Math.max(3, r * (0.7 + rnd() * 0.5)); }
-    const inCloud = (X, Y) => Y <= y + 3 * s && lobes.some(([px, py, r]) => (X - px) ** 2 + (Y - py) ** 2 <= r * r) || (Y > y - 3 * s && Y <= y + 3 * s && X >= x + 2 && X <= x + w - 2);
-    for (let Y = Math.floor(y - 24 * s); Y <= y + 3 * s; Y++) for (let X = x - 2; X < x + w + 2; X++) {
-      if (!inCloud(X, Y)) continue;
-      const edgeP = !inCloud(X, Y - 1) || !inCloud(X - 1, Y) || !inCloud(X + 1, Y) || !inCloud(X, Y + 1);
-      let v = Y > y ? tint : Y > y - 2 * s && ((X + Y) & 1) === 0 ? tint : Y < y - 8 * s && ((X * 3 + Y) % 7 === 0) ? 'white' : 'white';
-      if (edgeP) v = Y > y - 3 * s ? dk(tint) : tint;
-      set(X, Y, v);
-    }
+    const name = w * s >= 56 ? 'cloudA' : w * s >= 36 ? 'cloudB' : 'cloudC';
+    prop(name, x + w / 2, y + 4, { accent: rampOf(tint), flip: seed % 2 === 1 });
   };
   /** Soft horizontal sky bands with dithered seams. */
   const bands = (colors, y0 = 0, y1 = HZ) => {
@@ -506,13 +485,13 @@ function kit() {
       blob(Math.round(cx), Math.round(cy), rx, ry, c, { seed: seed * 13 + i, line: null, shade: false, wob: 0.25 });
     }
   };
-  /** Grass blades in natural clumps (a few clusters, not an even sprinkle). */
+  /** Grass tufts (hand-pixelled) in natural clumps (a few clusters, not an even sprinkle). */
   const tufts = (y0, y1, c, n = 30, seed = 1) => {
-    const rnd = rand(seed * 59 + 3), clusters = [];
-    for (let i = 0; i < Math.max(3, n / 6); i++) clusters.push([rnd() * RW, y0 + rnd() * (y1 - y0)]);
-    for (let i = 0; i < n; i++) {
-      const [qx, qy] = clusters[i % clusters.length], x = Math.round(qx + (rnd() - 0.5) * 30), y = Math.round(qy + (rnd() - 0.5) * 12);
-      set(x, y, c); set(x - 1, y - 1, c); set(x - 2, y - 2, c); set(x + 1, y - 1, c); set(x + 1, y - 2, c); set(x + 3, y - 1, c); set(x + 3, y, c);
+    const rnd = rand(seed * 59 + 3), clusters = [], leaf = rampOf(c);
+    for (let i = 0; i < Math.max(3, n / 8); i++) clusters.push([rnd() * RW, y0 + rnd() * (y1 - y0)]);
+    for (let i = 0; i < n / 2; i++) {
+      const [qx, qy] = clusters[i % clusters.length];
+      prop(rnd() < 0.5 ? 'tuftA' : 'tuftB', qx + (rnd() - 0.5) * 34, qy + (rnd() - 0.5) * 12, { leaf, flip: rnd() < 0.5 });
     }
   };
   /** A dither that darkens a ground toward the bottom of the scene. */
@@ -558,10 +537,8 @@ function kit() {
   };
   const sparkle = (x, y, c = 'white') => { set(x, y, c); set(x - 1, y, c); set(x + 1, y, c); set(x, y - 1, c); set(x, y + 1, c); set(x, y - 2, c); set(x, y + 2, c); };
   const mushroom = (x, y, c = 'pink.2', s = 1) => {
-    shadow(x, y, 6 * s, dk('green.2'));
-    rect(x - 1 * s, y - 6 * s, 3 * s, 6 * s, 'cream.3');
-    ellipse(x, y - 7 * s, 6 * s, 4 * s, c, { outline: dk(c, 2), shade: true });
-    set(x - 2 * s, y - 9 * s, 'white'); set(x + 2 * s, y - 8 * s, 'white');
+    shadow(x, y, 5, dk('green.2'));
+    prop('mushroomA', x, y, { accent: rampOf(c), flip: Math.round(x) % 2 === 1 });
   };
   const rock = (x, y, r = 6, c = 'slate.3') => { shadow(x, y, r + 2); puff(x, y - r * 0.6, r, c); };
   /** A rounded, striped tall bush (the soft conifers that frame the scenes). */
@@ -621,7 +598,7 @@ function kit() {
   };
 
   return {
-    bm, front, layer, usedFront: () => frontUsed, set, blob, mist, roofCurve, trunk, trail, flowerPatch, rocks, tufts, groundShade, cloudBank, lightPool, beam, vignette, plant, hangingPlant, mobile, puff, canopy, pcloud, bands, mountain, river, mottle, star5, rainbow, sparkle, mushroom, rock, conifer, waterfall, get, rect, box, line, dither, block, flat, ellipse, disc, ball, shadow, sky, cloud, skyline, hills, grass, path,
+    bm, front, layer, usedFront: () => frontUsed, set, prop, blob, mist, roofCurve, trunk, trail, flowerPatch, rocks, tufts, groundShade, cloudBank, lightPool, beam, vignette, plant, hangingPlant, mobile, puff, canopy, pcloud, bands, mountain, river, mottle, star5, rainbow, sparkle, mushroom, rock, conifer, waterfall, get, rect, box, line, dither, block, flat, ellipse, disc, ball, shadow, sky, cloud, skyline, hills, grass, path,
     tiles, planks, cobbles, wall, floorShadow, tree, pine, bush, flower, flowers, pot, lamp, bench, window: window_, door, awning,
     shopFront, counter, shelf, table, chair, rug, frame, clock, water, star, curtain, bunting, stringLights,
   };
@@ -677,9 +654,9 @@ const SCENES = {
     // the pond, with reeds, lily pads and a little arched bridge
     k.blob(58, 162, 46, 13, 'sky.2', { seed: 3, line: 'sky.1', top: 'sky.1', hi: 'sky.3', wob: 0.1 });
     k.blob(50, 158, 24, 4, 'sky.3', { seed: 4, line: null, shade: false, wob: 0.2 });
-    for (const [x, y] of [[76, 166], [86, 160], [40, 168]]) { k.blob(x, y, 4, 2, 'green.2', { seed: x, wob: 0.2 }); }
-    k.puff(88, 158, 2, 'pink.3');
-    for (const x of [14, 17, 21, 98, 101]) { k.line(x, 168, x + (x % 3) - 1, 154 + (x % 4), 'green.1'); k.set(x + (x % 3) - 1, 153 + (x % 4), 'brown.1'); }
+    for (const [x, y] of [[78, 168], [88, 161], [42, 170]]) k.prop('lilypad', x, y);
+    k.puff(88, 157, 2, 'pink.3');
+    k.prop('reeds', 16, 170); k.prop('reeds', 102, 168, { flip: true });
     for (let i = 0; i < 40; i++) { const t = i / 39, x = 38 + i, y = 156 - Math.sin(t * Math.PI) * 9; k.rect(x, y, 1, 3, i % 5 ? 'brown.2' : 'brown.1'); k.set(x, y, 'brown.3'); }
     for (let i = 0; i <= 40; i += 8) { const y = 150 - Math.sin((i / 39) * Math.PI) * 9; k.rect(38 + i, y, 1, 6, 'brown.1'); }
     for (let i = 0; i < 40; i++) k.set(38 + i, 150 - Math.sin((i / 39) * Math.PI) * 9, 'brown.1');
@@ -1063,11 +1040,9 @@ const SCENES = {
     for (let a = 0; a < 11; a++) { const j = rnd(), x = 104 + Math.cos(a * 0.571 + j * 0.2) * (32 + j * 4), y = 176 + Math.sin(a * 0.571) * 9; k.mushroom(Math.round(x), Math.round(y), j < 0.3 ? 'pink.2' : 'red.2', 0.5 + j * 0.35); }
     // a mossy log, ferns, flowers and fireflies
     k.blob(32, 210, 30, 4, 'green.1', { seed: 12, line: null, shade: false });
-    k.block(4, 194, 56, 14, 'brown.1', { r: 6 }); for (let x = 10; x < 54; x += 9) k.line(x, 197, x + 2, 205, 'brown.0');
-    k.blob(58, 201, 6, 7, 'brown.2', { seed: 2 }); k.blob(58, 201, 3, 4, 'brown.0', { seed: 3, line: null, shade: false });
-    k.blob(22, 193, 12, 4, 'green.2', { seed: 13, wob: 0.3 });
-    const fern = (x, y, s = 1, c = 'green.1') => { for (const side of [-1, 1]) for (let f = 0; f < 3; f++) { const len = (14 - f * 3) * s, ang = side * (0.5 + f * 0.35); for (let i = 0; i < len; i++) { const px = x + Math.sin(ang) * i + side * i * i * 0.02, py = y - Math.cos(ang) * i * 0.9 + i * i * 0.018; k.set(px, py, c); if (i % 3 === 1) { k.set(px + side, py - 1, c); k.set(px - side, py - 1, lt(c)); } } } };
-    fern(150, 206); fern(160, 210, 0.8, 'green.2'); fern(244, 196, 1.1);
+    k.prop('log', 30, 208); k.prop('bushC', 18, 200, { leaf: 'green' });
+    const fern = (x, y, s = 1, c = 'green.1') => k.prop('fern', x, y, { leaf: rampOf(c), flip: x % 2 === 1 });
+    fern(150, 206); fern(162, 212, 0.8, 'lime.2'); fern(244, 196, 1.1); k.prop('stump', 92, 152);
     k.flowerPatch(128, 214, 5, ['violet.2', 'white']); k.flowerPatch(76, 152, 4, ['white', 'gold.2']);
     k.rocks(176, 214, 2, 'slate.3');
     for (let i = 0; i < 18; i++) { const x = rnd() * RW, y = 70 + rnd() * 140; k.set(x, y, 'gold.3'); k.set(x + 1, y, 'lime.3'); }
