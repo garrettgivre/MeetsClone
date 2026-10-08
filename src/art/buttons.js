@@ -1,7 +1,7 @@
 // The three device buttons under the screen, as pixel art in the game's own
 // palette: a gold dome with an ink outline, lit from the upper left, standing
-// on its darker side (UP), and pushed in (DOWN). Drafted with the mask and
-// shading helpers in tools/art-scripts/icon_kit.py; the grids here are the art.
+// on its darker side (UP), and pushed in (DOWN). The grids here are the art:
+// edit them by hand.
 import { HEX, C } from '../engine/palette.js';
 
 const KEY = { o: 'ink', u: 'gold.0', y: 'gold.1', x: 'gold.2', Y: 'gold.3', w: 'white' };
