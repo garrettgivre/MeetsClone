@@ -25,7 +25,7 @@ const DEV = params.has('dev');
 let installEvent = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
 window.addEventListener('appinstalled', () => { installEvent = null; app.toast('Installed! Look for MeetsClone with your apps.', 3600); });
-const standalone = () => window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+const standalone = () => ['standalone', 'fullscreen'].some(m => window.matchMedia?.(`(display-mode: ${m})`).matches) || navigator.standalone === true;
 
 const app = {
   /** 'app' (running installed), 'ready' (can be installed now) or 'no' (the browser hasn't offered it). */

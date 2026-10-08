@@ -635,6 +635,38 @@ const SCENES = {
     k.frame('left', 'green', { seed: 31 }); k.frame('right', 'green', { seed: 32, tall: false }); k.prop('flowersA', 60, 262, { accent: 'pink' });
     k.layer('back');
   },
+  cottages(k) {
+    // snug cottages on a hillside at sunset, where the town's old keepers put their feet up
+    k.bands(['violet.3', 'pink.3', 'gold.3', 'gold.3'], 0, 126);
+    k.sun(180, 62, 17);
+    k.pcloud(-10, 30, 84, 'pink.2'); k.pcloud(96, 18, 70, 'violet.2', 0.85); k.pcloud(214, 86, 44, 'pink.2', 0.8);
+    k.horizonClouds(104, 'pink.3', 9);
+    k.mountain(56, 124, 190, 34, 'violet.2', { seed: 41 }); k.mountain(214, 124, 150, 22, 'pink.2', { seed: 42 });
+    k.mist(110, 12, 'gold.3');
+    k.canopy(-24, 102, 304, 30, 'green.2', { seed: 71, r: 9 });
+    k.field(124, 'lime.3', { seed: 9, light: 'gold.3' });
+    k.mottle(126, 142, 'green.3', 5, 8);
+    k.tufts(132, 262, 'green.2', 44, 5);
+    // a path winding up to the middle cottage, and branching to the others
+    k.trail(170, RH, (y) => 128 + Math.sin(y / 18) * 7, (y) => 7 + (y - 170) * 0.16, 'cream.3', { seed: 6 });
+    // three cottages with trees behind
+    k.tree(14, 150, 1.0, 'green.2', { seed: 5 }); k.tree(244, 148, 1.05, 'green.2', { seed: 8 });
+    k.shadow(50, 168, 28, 'green.1'); k.prop('hut', 50, 168, { roof: 'red', glass: 'gold', wall: 'cream' });
+    k.shadow(206, 172, 28, 'green.1'); k.prop('hut', 206, 172, { roof: 'sky', glass: 'gold', wall: 'cream', flip: true });
+    k.shadow(128, 172, 28, 'green.1'); k.prop('mushroomHouse', 128, 172, { accent: 'pink' });
+    k.signpost(152, 196, 'COTTAGES');
+    // gardens: flower beds, a bench of a log, lanterns for the evening
+    k.prop('flowerBed', 40, 196, { accent: 'gold' }); k.prop('flowerBed', 216, 200, { accent: 'pink' });
+    k.flowerPatch(92, 150, 5, ['violet.2', 'white']); k.flowerPatch(170, 148, 5, ['pink.2', 'gold.2']);
+    k.bush(86, 172, 'green.2', 9, 3); k.bush(168, 176, 'lime.2', 9, 4);
+    k.shadow(180, 214, 16, 'green.1'); k.prop('log', 180, 214, { flip: true });
+    k.lamp(24, 232); k.lamp(232, 236);
+    k.rocks(150, 222, 2);
+    for (let i = 0; i < 12; i++) { const x = (i * 67 + 20) % RW, y = 132 + (i * 29) % 90; k.set(x, y, 'gold.3'); k.set(x + 1, y, 'white'); } // fireflies
+    k.layer('front');
+    k.frame('left', 'green', { seed: 51, tall: false }); k.frame('right', 'green', { seed: 52 }); k.prop('flowersA', 196, 262, { accent: 'gold' });
+    k.layer('back');
+  },
   playground(k) {
     k.bands(['sky.2', 'sky.3'], 0, 110);
     k.sun(222, 26, 12);

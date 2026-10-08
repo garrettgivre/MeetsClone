@@ -5,7 +5,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 83 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 85 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -110,11 +110,13 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 ## The town's generations: how it works (v0.15)
 
 - `src/game/town.js`, section "residents". Nothing is stepped: who keeps a place and how old they are is worked out from `game.simTime - town.epoch` plus a per-place `phase` (so handovers are spread through the week). `clockOf` gives `{ gen, pos }`.
-- A tenure is `TENURE` (6 days): a teen for `JUNIOR`, a child born at `HEIR_AT` (baby, child, then teen), old from `ELDER_AT`, then the child becomes the next keeper. `AGELESS` places (hidden village, Star Isle) never change.
+- A tenure is `TENURE` (14 days; the owner found 6 too short): a teen for `JUNIOR`, a child born at `HEIR_AT` (baby, child, then teen), old from `ELDER_AT`, then the child becomes the next keeper. `AGELESS` places (hidden village, Star Isle, the cottages) never change. The player's own pet has no old age: it stays an adult until it marries or is neglected.
 - `keeper(seed, locId, gen)` builds a family forward: generation 0 is the fixed resident every game shares; each later one is `inherit(parent, randomGenome)` from a seed that includes `town.seed`, so families differ per save but never change within one. Titles (`TITLES`) stay with the place.
 - `resident(locId)` with no game still returns the first keeper (the art tests and photos rely on it); `resident(locId, game)` returns today's keeper with `stage`, `junior`, `elder`, `heir` and `parent`.
 - `townState()` calls `turnTown`, which compares the clock with `town.gens` / `town.born`, files news (`town.news`, last 12, with `town.unread`) and halves the friendship at each handover. `town.met` drives the NEW marker on the map.
 - `PlaceScene` draws the keeper at their stage, the heir beside them, and a cane and a doze for elders. Debug > Town has "Age the town" (moves `town.epoch` only).
+- **Singles:** `sibling(seed, locId, gen)` is the keeper's brother or sister (same two parents; the out-of-town parent is kept as `spouse` on the keeper). `singles(game)` lists those whose keeper has taken over but has no child yet. `findMatch` (used by `MatchmakerScene`) wraps `findPartner` and swaps in a single about half the time; `weddingBells` (called before `marry`) records `town.wed`, adds two hearts and files news.
+- **Cottages:** `retirees(game)` is the previous keeper of every place (so each lives there for one tenure). `resident('cottages', game)` returns Gran Willow or the retiree picked by `town.cottage`; `nextCottager` steps on. The backdrop is `SCENES.cottages`.
 - Tests that count days at one place should call a helper like `freshKeeper` in `tests/town.test.js` first, or a handover can land in the middle.
 
 ## Updates: how the newest version always shows (v0.14.2)
@@ -125,7 +127,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.15.0, October 2026)
+## Status (v0.16.0, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -137,10 +139,10 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
   - Four minigames.
   - Matchmaker, wedding and generations.
   - Gene Book.
-  - The town: 22 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
+  - The town: 23 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
   - Town art: every town object is a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts) and added an escalator, a hospital bed, curtained windows and concert-hall fans.
   - Pet art: v0.13.0 proper wings and tendrils on every form; v0.13.1 signature head silhouettes and body textures in every form; v0.13.2 rounded lamb crowns, cloud-puff tails, swept hair tufts, domed nub ears.
-- **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations. Smaller ones: a daycare or sitter, mail and visitors, gardening, daily goals, and job-specific minigames. For the town: let residents' grown children turn up as matchmaker partners, retired keepers settle somewhere you can visit, and shops change a little with each keeper.
+- **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations. Smaller ones: a daycare or sitter, mail and visitors, gardening, daily goals, and job-specific minigames. For the town: shops that change a little with each keeper, visiting a retired keeper who is your pet's in-law, and a family tree per place.
 - **Known gap:** clothes from the wardrobe are stored and shown in menus but `pet-art.js` does not draw them on the pet.
 - **Confirmed by the owner on Android Chrome (October 2026):** Settings > Install app installs the game, and care alerts arrive. The browser pane here blocks notifications, so alert changes can only be tested with a stand-in; ask the owner to check on the phone.
 - **Pet-art candidates:** the baby and child shapes (plain blobs with a face; could carry more of the line), the egg, and the lamb cheeks on the small quad and serpent heads (still a little pointed).
@@ -152,6 +154,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Deploy list:** the Pages workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
 - **Menu icons:** `tools/art-scripts/icon_kit.py` rewrites `src/art/menu-icons.js` from masks (one function per icon). Hand edits made in the JS file are lost if the script is run again, so either edit the script or stop running it. Other UI sprites in `icons.js` are still 1x grids that `scr.draw` upscales; `hdSprite(rows, key)` is the way to draw one at full density.
 - **Installing on Android:** the owner also has Room for Two installed from the same site (`garrettgivre.github.io/Room-For-Two/`). Chrome's menu install then says MeetsClone is "already installed" and "could not open app". The likely cause is that Chrome's install sheet checks for an installed app per site, not per app (not confirmed). Changing the manifest `id` to `/MeetsClone/app` (v0.14.5) did not help; leave it as it is now, since a new id makes installed copies look like a different app. v0.14.6 added Settings > Install app, which keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. That worked, and the owner prefers it to the browser menu.
+- **Full screen:** the manifest asks for `display: fullscreen` (the game has its own clock in the status bar). An installed copy only picks up manifest changes when Chrome next refreshes it, which can take a day or a reinstall. `installState` in `main.js` treats both `fullscreen` and `standalone` as installed.
 - **App icons:** installers need PNGs, not the SVG. `badge.png` is the status-bar shape for care alerts: Android uses only its alpha, so it must stay a white silhouette on transparent. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
 - **Fonts:** the pixel font (`src/engine/font.js`, `glyphRows`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`.
 - **Town colours:** `rampOf()` in `town.js` maps neutral colours (white, mist, ink…) onto a ramp for prop roles.

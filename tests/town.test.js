@@ -7,6 +7,7 @@ import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, FRIEND_GIFTS,
   townState, districtLocked, buyPass, cantGo, resident, talk, doAction, dyeHair, buySale, saleOfDay, founderKin,
   retiresIn, isNewFace, townNews, TENURE, JUNIOR, HEIR_AT, ELDER_AT, DAY, AGELESS,
+  retirees, nextCottager, singles, findMatch, weddingBells,
 } from '../src/game/town.js';
 import { ageTown } from '../src/game/cheats.js';
 
@@ -30,7 +31,7 @@ function freshKeeper(g, locId) {
 }
 
 test('every place has a district, a resident and something to do', () => {
-  assert.equal(LOCATIONS.length, 22);
+  assert.equal(LOCATIONS.length, 23);
   for (const l of LOCATIONS) {
     assert.ok(DISTRICTS.some(d => d.id === l.district), l.id);
     assert.ok(l.resident && l.lines.length, l.id);
@@ -99,7 +100,7 @@ test('a keeper starts young, grows up, has a child, grows old and hands the plac
   assert.ok(old.elder && old.stage === 'adult');
   assert.equal(old.phenotype.hairColor, 'slate', 'gone grey');
   assert.equal(old.heir.stage, 'teen');
-  assert.ok(retiresIn(g, 'cafe') <= DAY);
+  assert.ok(retiresIn(g, 'cafe') <= TENURE - ELDER_AT);
   g.simTime += TENURE - ELDER_AT;
   const next = resident('cafe', g);
   assert.notEqual(next.name, first.name);
@@ -200,6 +201,62 @@ test('a wish on Star Isle gives the next egg a part the family has never seen', 
   marry(g, findPartner(g, rng), rng);
   assert.deepEqual(g.pet.genome[wish.gene], [wish.allele, wish.allele]);
   assert.equal(townState(g).wish, null);
+});
+
+test('retired keepers live at the cottages until the next handover at their old place', () => {
+  const { g, rng } = outing(25);
+  assert.deepEqual(retirees(g), [], 'nobody has retired yet');
+  assert.equal(resident('cottages', g).name, 'Gran Willow');
+  assert.equal(nextCottager(g).name, 'Gran Willow', 'only Gran to visit');
+  freshKeeper(g, 'toyshop'); // Pip has just handed the toy shop on
+  const pip = retirees(g).find(r => r.from === 'Toy Shop');
+  assert.equal(pip.name, 'Pip');
+  assert.equal(pip.successor, resident('toyshop', g).name);
+  assert.equal(retirees(g)[0].name, 'Pip', 'most recently retired first');
+  townState(g).cottage = 0;
+  const first = nextCottager(g);
+  assert.equal(first.name, 'Pip');
+  assert.ok(first.elder && first.retired.from === 'Toy Shop');
+  assert.equal(first.phenotype.hairColor, 'slate');
+  assert.ok(doAction(g, 'cottages', 'story', rng).ok);
+  assert.equal(doAction(g, 'cottages', 'story', rng).ok, false, 'one story a day');
+  assert.equal(g.pet.skills.smart, 1);
+  ageTown(g, TENURE);
+  assert.ok(!retirees(g).some(r => r.name === 'Pip'), 'a newer retiree has taken Pip\'s cottage');
+  assert.ok(resident('cottages', g).name, 'whoever is being visited still exists');
+});
+
+test('a keeper\'s brother or sister can turn up at the matchmaker, and marrying one ties the families', () => {
+  const { g } = outing(26, 'adult');
+  g.pet.adultMs = MARRY_AFTER;
+  assert.deepEqual(singles(g), [], 'the first keepers have no brothers or sisters');
+  freshKeeper(g, 'cafe');
+  const s = singles(g).find(x => x.locId === 'cafe');
+  assert.ok(s, 'the new chef has a sibling');
+  assert.equal(s.kin, 'Chef Momo');
+  assert.notEqual(s.name, resident('cafe', g).name.split(' ').pop());
+  g.pet.gender = s.gender === 'f' ? 'm' : 'f';
+  let match = null;
+  for (let seed = 1; seed < 400 && !match; seed++) {
+    g.matchmaker = { day: '', left: 3 };
+    townState(g).daily.counts = {};
+    const p = findMatch(g, makeRng(seed));
+    assert.notEqual(p.gender, g.pet.gender);
+    if (p.single === s.id) match = p;
+  }
+  assert.ok(match, 'they are introduced sooner or later');
+  assert.deepEqual(match.genome, s.genome);
+  const hearts = townState(g).friends.cafe || 0;
+  const name = g.pet.name;
+  weddingBells(g, match);
+  const egg = marry(g, match, makeRng(2));
+  assert.equal(egg.parents[1], match.name);
+  assert.equal(townState(g).friends.cafe, hearts + 2);
+  assert.ok(townNews(g)[0].msg.startsWith(`${name} married ${match.name}, Chef Momo's`));
+  assert.ok(!singles(g).some(x => x.id === s.id), 'spoken for');
+  assert.equal(resident('cafe', g).inLaw.name, match.name);
+  g.simTime += HEIR_AT;
+  assert.ok(!singles(g).some(x => x.locId === 'cafe'), 'that generation has settled down');
 });
 
 test('the forest and park turn up map pieces that open the hidden village', () => {

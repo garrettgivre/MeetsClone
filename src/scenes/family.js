@@ -4,7 +4,8 @@ import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, text, ListMenu } from '../ui.js';
 import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
 import { HEART, RING, SPARKLE } from '../art/icons.js';
-import { findPartner, marry } from '../game/pet.js';
+import { marry } from '../game/pet.js';
+import { findMatch, weddingBells } from '../game/town.js';
 
 const sym = (g) => (g === 'f' ? '♀' : '♂');
 
@@ -13,7 +14,7 @@ export class MatchmakerScene {
   constructor(app, partner = null) {
     this.app = app;
     this.t = 0;
-    this.partner = partner || findPartner(app.game);
+    this.partner = partner || findMatch(app.game);
   }
   enter() {
     if (!this.partner) {
@@ -36,7 +37,7 @@ export class MatchmakerScene {
     return true;
   }
   next() {
-    const p = findPartner(this.app.game);
+    const p = findMatch(this.app.game);
     if (!p) { this.app.sfx('nope'); this.app.toast('No one else today!'); return; }
     this.partner = p;
     this.t = 0;
@@ -64,7 +65,9 @@ export class MatchmakerScene {
     scr.draw(HEART, W / 2 - 4, floor - 30 - (Math.floor(this.t / 300) % 2), {});
     text(scr, `${pet.name} ${sym(pet.gender)}`, 34, floor + 8, COL.ink, { align: 'center' });
     text(scr, `${p.name} ${sym(p.gender)}`, 94, floor + 8, COL.ink, { align: 'center' });
-    text(scr, `MARRY ${p.name.toUpperCase()}?`, W / 2, floor + 22, COL.accent, { align: 'center' });
+    // where they come from: one of the town's families, or a stranger
+    text(scr, p.kin ? `${p.kin.toUpperCase()}'S ${p.gender === 'f' ? 'DAUGHTER' : 'SON'}` : 'FROM OUT OF TOWN', W / 2, floor + 17, p.kin ? COL.shade : COL.gray, { align: 'center' });
+    text(scr, `MARRY ${p.name.toUpperCase()}?`, W / 2, floor + 27, COL.accent, { align: 'center' });
     const left = this.app.game.matchmaker.left;
     const by = ry + rh - 22;
     scr.panel(6, by, 54, 16, C('white'), COL.ink);
@@ -92,6 +95,7 @@ class WeddingScene {
     this.done = true;
     const app = this.app;
     const old = app.game.pet.name;
+    weddingBells(app.game, this.partner);
     const egg = marry(app.game, this.partner);
     app.home();
     app.sfx('hatch');

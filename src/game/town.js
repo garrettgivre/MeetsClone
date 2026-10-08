@@ -9,7 +9,7 @@
 import { rand as defaultRng, makeRng, hash } from '../engine/rng.js';
 import { randomGenome, express, pureGenome, inherit, randomName, FOUNDERS } from './genetics.js';
 import { FOODS, TOYS, CLOTHES } from './items.js';
-import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT, train, skillLevel, SKILL_LABEL, SKILL_MAX } from './pet.js';
+import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT, train, skillLevel, SKILL_LABEL, SKILL_MAX, findPartner } from './pet.js';
 import { BOOK_GENES, entries, has } from './book.js';
 
 export const DISTRICTS = [
@@ -46,6 +46,8 @@ export const LOCATIONS = [
     lines: ['High score or bust!', 'Games keep you trim, you know.', 'Copy Me is my favourite.'] },
   { id: 'hospital', district: 'downtown', name: 'Hospital', resident: 'Dr. Fennel',
     lines: ['An apple a day... and a game or two.', 'Keep things clean and you\'ll stay well.', 'Sick? We can fix you right up.'] },
+  { id: 'cottages', district: 'downtown', name: 'Sunset Cottages', resident: 'Gran Willow',
+    lines: ['Everyone who retires in town ends up here sooner or later.', 'Sit down, dear. The kettle is on.', 'The old keepers love a visitor. Go and say hello!'] },
   // ---- uptown ----
   { id: 'dept', district: 'uptown', name: 'Department Store', resident: 'Clerk Nana',
     lines: ['Everything under one roof!', 'Check the daily sale!', 'Food, toys, clothes. All here.'] },
@@ -105,6 +107,8 @@ export function townState(game) {
   t.met ||= {};    // place -> the generation last chatted with
   t.news ||= [];   // [{ at, msg }], newest last
   t.unread ??= 0;
+  t.wed ||= {};    // 'place:generation' -> a sibling of that keeper married into your family
+  t.cottage ??= 0; // which neighbour is being visited at the cottages
   const day = new Date(game.simTime).toDateString();
   if (t.daily.day !== day) t.daily = { day, counts: {} };
   turnTown(game, t);
@@ -164,12 +168,13 @@ export function cantGo(game, locId = null) {
 // runs on its own phase, so the handovers are spread through the week.
 
 export const DAY = 24 * HOUR;
-export const TENURE = 6 * DAY;      // how long one resident runs a place
-export const JUNIOR = 2 * DAY;      // new at the job (a teen) for this long
-export const HEIR_AT = 3 * DAY;     // their child is born this far in
-export const ELDER_AT = 5 * DAY;    // old from here until they retire
-const HEIR_BABY = 6 * HOUR, HEIR_CHILD = 36 * HOUR; // the child's first stages
-export const AGELESS = ['hidden', 'starisle'];      // the Elder and the star spirit do not age
+export const TENURE = 14 * DAY;     // how long one resident runs a place
+export const JUNIOR = 3 * DAY;      // new at the job (a teen) for this long
+export const HEIR_AT = 7 * DAY;     // their child is born this far in
+export const ELDER_AT = 12 * DAY;   // old from here until they retire
+const HEIR_BABY = 1 * DAY, HEIR_CHILD = 4 * DAY;    // the child's first stages
+// the Elder and the star spirit do not age, and Gran Willow has always kept the cottages
+export const AGELESS = ['hidden', 'starisle', 'cottages'];
 
 // what a place's keeper is called: [she, he]
 const TITLES = {
@@ -199,14 +204,14 @@ function keeper(seed, locId, gen) {
   for (k = lines_.get(key(g)); g <= gen; g++) {
     if (!lines_.has(key(g))) {
       const rng = makeRng(hash(g ? `resident:${locId}:${seed}:${g}` : 'resident:' + locId));
-      let genome, name;
+      let genome, name, spouse = null;
       if (g === 0) genome = randomGenome(rng);
-      else genome = inherit(k.genome, randomGenome(rng), rng);
+      else { spouse = randomGenome(rng); genome = inherit(k.genome, spouse, rng); }
       const phenotype = express(genome, rng);
       const gender = rng.chance(0.5) ? 'f' : 'm';
       if (g === 0) name = LOCATION[locId].resident;
       else { const title = TITLES[locId]?.[gender === 'f' ? 0 : 1]; name = (title ? title + ' ' : '') + randomName(rng); }
-      lines_.set(key(g), { name, genome, phenotype, gender, parent: g ? k.name : null });
+      lines_.set(key(g), { name, genome, phenotype, gender, spouse, parent: g ? k.name : null });
     }
     k = lines_.get(key(g));
   }
@@ -226,24 +231,126 @@ export function resident(locId, game = null) {
     return { name: k.name, phenotype: k.phenotype, gender: k.gender };
   }
   const t = townState(game);
+  if (locId === 'cottages') return cottager(game, t);
   const { gen, pos } = clockOf(t, game.simTime, locId);
   const junior = pos !== null && pos < JUNIOR, elder = pos !== null && pos >= ELDER_AT;
   const heirAge = pos !== null && pos >= HEIR_AT ? pos - HEIR_AT : -1;
   const heirStage = heirAge < 0 ? null : heirAge < HEIR_BABY ? 'baby' : heirAge < HEIR_CHILD ? 'child' : 'teen';
-  const key = `${t.seed}:${locId}:${gen}:${junior}:${elder}:${heirStage}`;
+  const wed = !!t.wed[`${locId}:${gen}`]; // your family married their brother or sister
+  const key = `${t.seed}:${locId}:${gen}:${junior}:${elder}:${heirStage}:${wed}`;
   let r = faces_.get(key);
   if (!r) {
     const k = keeper(t.seed, locId, gen);
     let heir = null;
     if (heirStage) { const h = keeper(t.seed, locId, gen + 1); heir = { name: h.name.split(' ').pop(), phenotype: h.phenotype, gender: h.gender, stage: heirStage }; }
+    const sib = wed ? sibling(t.seed, locId, gen) : null;
     r = {
       name: k.name, gender: k.gender, generation: gen, parent: k.parent, junior, elder, heir,
+      inLaw: sib && { name: sib.name, word: sib.gender === 'f' ? 'sister' : 'brother' },
       stage: junior ? 'teen' : 'adult',
       phenotype: elder ? { ...k.phenotype, hairColor: 'slate' } : k.phenotype, // gone grey
     };
     faces_.set(key, r);
   }
   return r;
+}
+
+// ---------- the cottages: where keepers retire ----------
+// A keeper who hands their place on moves to the Sunset Cottages and lives there
+// until the next handover at their old place. Gran Willow looks after them all.
+
+/** Everyone living at the cottages, most recently retired first: [{ name, phenotype, gender, from, successor }]. */
+export function retirees(game) {
+  const t = townState(game), out = [];
+  for (const loc of LOCATIONS) {
+    if (AGELESS.includes(loc.id)) continue;
+    const { gen, pos } = clockOf(t, game.simTime, loc.id);
+    if (gen < 1) continue;
+    const old = keeper(t.seed, loc.id, gen - 1);
+    out.push({ key: `${loc.id}:${gen - 1}`, name: old.name, gender: old.gender, phenotype: old.phenotype, from: loc.name, successor: keeper(t.seed, loc.id, gen).name, since: pos });
+  }
+  return out.sort((a, b) => a.since - b.since);
+}
+
+/** Whoever is being visited at the cottages: Gran Willow, or one of the retired keepers (t.cottage picks). */
+function cottager(game, t) {
+  const list = retirees(game);
+  const i = (t.cottage || 0) % (list.length + 1);
+  const who = i === 0 ? null : list[i - 1];
+  const key = `${t.seed}:cottages:${who ? who.key : 'host'}`;
+  let r = faces_.get(key);
+  if (!r) {
+    const k = who || keeper(0, 'cottages', 0);
+    r = {
+      name: k.name, gender: k.gender, generation: 0, parent: null, junior: false, elder: true, heir: null, stage: 'adult',
+      phenotype: { ...k.phenotype, hairColor: 'slate' },
+      retired: who ? { from: who.from, successor: who.successor } : null,
+    };
+    faces_.set(key, r);
+  }
+  return r;
+}
+
+/** Move on to the next neighbour at the cottages. Returns who is at the door now. */
+export function nextCottager(game) {
+  const t = townState(game);
+  t.cottage = ((t.cottage || 0) + 1) % (retirees(game).length + 1);
+  return resident('cottages', game);
+}
+
+// ---------- brothers and sisters: the town's young singles ----------
+// The child who inherits a place has a brother or sister who doesn't. Once that
+// keeper has taken over, their sibling is grown and looking for a partner, and
+// may turn up at the matchmaker until the keeper starts a family of their own.
+
+function sibling(seed, locId, gen) {
+  const key = `${seed}:${locId}:${gen}:sib`;
+  let s = lines_.get(key);
+  if (!s) {
+    const k = keeper(seed, locId, gen), parent = keeper(seed, locId, gen - 1);
+    const rng = makeRng(hash(`sibling:${locId}:${seed}:${gen}`));
+    const genome = inherit(parent.genome, k.spouse, rng);
+    s = { name: randomName(rng), genome, phenotype: express(genome, rng), gender: rng.chance(0.5) ? 'f' : 'm' };
+    lines_.set(key, s);
+  }
+  return s;
+}
+
+/** Grown children of the town's families who are free to marry: [{ id, locId, name, gender, genome, phenotype, from, kin }]. */
+export function singles(game) {
+  const t = townState(game), out = [];
+  for (const loc of LOCATIONS) {
+    if (AGELESS.includes(loc.id)) continue;
+    const { gen, pos } = clockOf(t, game.simTime, loc.id);
+    const id = `${loc.id}:${gen}`;
+    if (gen < 1 || pos >= HEIR_AT || t.wed[id]) continue;
+    const s = sibling(t.seed, loc.id, gen);
+    out.push({ id, locId: loc.id, name: s.name, gender: s.gender, genome: s.genome, phenotype: s.phenotype, from: loc.name, kin: keeper(t.seed, loc.id, gen - 1).name });
+  }
+  return out;
+}
+
+/**
+ * The matchmaker's next introduction (three a day, as before). About half the
+ * time, if one is free, it is someone from a town family rather than a stranger.
+ */
+export function findMatch(game, rng = defaultRng) {
+  const partner = findPartner(game, rng);
+  if (!partner) return null;
+  const free = singles(game).filter(s => s.gender === partner.gender && !used(game, 'met:' + s.id));
+  if (!free.length || !rng.chance(0.5)) return partner;
+  const s = rng.pick(free);
+  use(game, 'met:' + s.id);
+  return { name: s.name, gender: s.gender, genome: s.genome, phenotype: s.phenotype, wear: {}, single: s.id, locId: s.locId, from: s.from, kin: s.kin };
+}
+
+/** Call just before marry(): a wedding into a town family is news, and makes friends at their place. */
+export function weddingBells(game, partner) {
+  if (!partner?.single) return;
+  const t = townState(game);
+  t.wed[partner.single] = true;
+  t.friends[partner.locId] = (t.friends[partner.locId] || 0) + 2;
+  report(game, t, `${game.pet.name} married ${partner.name}, ${partner.kin}'s ${partner.gender === 'f' ? 'daughter' : 'son'}!`);
 }
 
 /** Time until the keeper of a place retires (null for the ageless). */
@@ -282,7 +389,7 @@ function turnTown(game, t) {
     if (gen > t.gens[id]) {
       const old = keeper(t.seed, id, gen - 1), now = keeper(t.seed, id, gen);
       if (t.friends[id]) t.friends[id] = Math.floor(t.friends[id] / 2 ** (gen - t.gens[id]));
-      report(game, t, `${loc.name}: ${old.name} has retired. ${now.name} takes over.`);
+      report(game, t, `${loc.name}: ${old.name} has retired to the cottages. ${now.name} takes over.`);
       t.gens[id] = gen;
     }
     if (pos >= HEIR_AT && (t.born[id] ?? -1) < gen) {
@@ -303,6 +410,11 @@ export function townNews(game, read = false) {
 /** Something a keeper might say about their own life, or null. */
 function lifeLine(r, rng) {
   const say = [];
+  if (r.retired) {
+    say.push(`I kept the ${r.retired.from} for years. ${r.retired.successor} runs it now.`, `Go and see ${r.retired.successor} at the ${r.retired.from}. Say I sent you!`, 'Retirement suits me. I nap whenever I like.');
+    return rng.chance(0.8) ? rng.pick(say) : null;
+  }
+  if (r.inLaw) say.push(`My ${r.inLaw.word} ${r.inLaw.name} married into your family. We're kin now!`);
   if (r.junior) say.push(r.parent ? `I just took over from ${r.parent}. Wish me luck!` : 'I only just started here. Be patient with me!', 'Still learning the ropes!');
   if (r.elder) say.push('My knees aren\'t what they were...', r.heir ? `${r.heir.name} will take over from me soon.` : 'I\'ll be retiring before long.');
   if (r.heir?.stage === 'baby') say.push(`Have you met little ${r.heir.name}? Born just today!`);
@@ -414,6 +526,21 @@ export const ACTIONS = {
     { id: 'whichway', label: 'Which Way?', ui: 'game:whichway' },
     { id: 'catch', label: 'Snack Catch', ui: 'game:catch' },
     { id: 'copyme', label: 'Copy Me', ui: 'game:copyme' },
+  ],
+  cottages: [
+    { id: 'next', label: 'Next neighbour', run(game) {
+      const who = nextCottager(game);
+      return { ok: true, anim: 'talk', msg: who.retired ? `${who.name}, who kept the ${who.retired.from}.` : `${who.name}, who looks after everyone here.` };
+    } },
+    { id: 'story', label: 'Hear a story', run(game, rng) {
+      if (used(game, 'story')) return { ok: false, msg: 'One story a day. Come back tomorrow!' };
+      use(game, 'story');
+      const who = resident('cottages', game), pet = game.pet;
+      pet.happy = clamp4(pet.happy + 0.5);
+      train(pet, 'smart', 1);
+      const about = who.retired ? `my years at the ${who.retired.from}` : rng.pick(['the first families of this town', 'the night the stars fell on Star Isle', 'a map torn in three']);
+      return { ok: true, anim: 'happy', msg: `${who.name} tells a tale about ${about}. +1 Smarts` };
+    } },
   ],
   hospital: [
     { id: 'treat', label: 'Treatment', price: 40, needs: (game) => (game.pet.sick ? null : 'Not sick!'), run(game) {

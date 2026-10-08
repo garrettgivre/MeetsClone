@@ -12,7 +12,7 @@ import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, HAIR_DYES,
   townState, districtLocked, buyPass, cantGo, resident, talk, friendship, doAction,
   dishOfDay, saleOfDay, salePrice, buySale, dyeHair, founderKin,
-  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft, isNewFace, townNews,
+  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft, isNewFace, townNews, retirees,
 } from '../game/town.js';
 import { skillLevel, SKILL_LABEL } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
@@ -287,10 +287,11 @@ export class PlaceScene {
     text(scr, label, lx + 3, ry + 16, COL.ink);
     if (f) scr.draw(HEART, lx + lw - 11, ry + 15, {});
     // where they are in life
-    const tag = res.junior ? 'NEW HERE' : res.elder ? 'RETIRING SOON' : res.heir?.stage === 'baby' ? 'NEW BABY!' : '';
-    if (tag) { const tw = tag.length * 4 + 6; scr.panel(W - tw - 2, ry + 25, tw, 9, C('white'), COL.ink); text(scr, tag, W - tw + 1, ry + 27, res.elder ? COL.gray : COL.accent); }
-    // place info
+    const tag = res.retired ? `KEPT THE ${res.retired.from.toUpperCase()}` : this.loc.id === 'cottages' ? '' : res.junior ? 'NEW HERE' : res.elder ? 'RETIRING SOON' : res.heir?.stage === 'baby' ? 'NEW BABY!' : '';
     const info = placeInfo(g, this.loc.id);
+    // (it drops a line if the place's own note would be in the way)
+    if (tag) { const tw = tag.length * 4 + 6, ty = ry + (info && info.length * 4 + tw + 14 > W ? 35 : 25); scr.panel(W - tw - 2, ty, tw, 9, C('white'), COL.ink); text(scr, tag, W - tw + 1, ty + 2, res.elder ? COL.gray : COL.accent); }
+    // place info
     if (info) { scr.panel(3, ry + 25, info.length * 4 + 6, 9, C('white'), COL.ink); text(scr, info, 6, ry + 27, COL.accent); }
 
     // the buttons
@@ -316,6 +317,7 @@ function placeInfo(g, id) {
   if (id === 'forest' && t.mapPieces < MAP_PIECES && t.mapPieces > 0) return `MAP ${t.mapPieces}/${MAP_PIECES}`;
   if (id === 'starisle' && t.wish) return 'A WISH WAITS';
   if (id === 'school') return `CLASSES LEFT: ${classesLeft(g)}`;
+  if (id === 'cottages') { const n = retirees(g).length; return n ? `${n} RETIRED KEEPER${n > 1 ? 'S' : ''}` : 'NO ONE RETIRED YET'; }
   if (id === 'work' && g.pet.stage === 'adult') return `${jobOf(g.pet).name.toUpperCase()} ${'★'.repeat(jobRank(g.pet))}`.trim();
   return null;
 }
