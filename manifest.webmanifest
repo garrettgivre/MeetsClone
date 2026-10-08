@@ -2,7 +2,7 @@
   "name": "MeetsClone",
   "short_name": "MeetsClone",
   "description": "A pocket virtual pet: raise it, care for it and start a family.",
-  "id": "/MeetsClone/",
+  "id": "/MeetsClone/app",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
