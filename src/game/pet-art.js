@@ -55,7 +55,7 @@ function patternRemap(pattern, region, p, info) {
   if (!fn) return null;
   return (code, i, j) => {
     if (code !== C2 && code !== C3 && code !== C4) return code;
-    const r = fn(region, ((i + 0.5) / p.w) * 2 - 1, ((j + 0.5) / p.h) * 2 - 1, info);
+    const r = fn(region, ((i + 0.5) / p.w) * 2 - 1, ((j + 0.5) / p.h) * 2 - 1, { ...info, w: p.w, h: p.h });
     return r === 'accent' ? ACCENT[code] : r === 'bright' ? BRIGHT[code] : code;
   };
 }
@@ -66,7 +66,7 @@ function patternRemap(pattern, region, p, info) {
  * the darker shade, the way a pixel artist joins shapes by hand. Silhouette
  * edges, chins, faces and accent-coloured parts keep their lines.
  */
-function joinSeams(L, ramps, joins) {
+function joinSeams(L, ramps, joins, melt = new Set()) {
   const ink = C('ink');
   const info = new Map();
   for (const r of ramps) for (let k = 0; k < 4; k++) if (!info.has(ramp(r, k))) info.set(ramp(r, k), [r, k]);
@@ -81,7 +81,8 @@ function joinSeams(L, ramps, joins) {
       if (!ia || !ib || ia[1] === 0 || ib[1] === 0 || ia[0] !== ib[0]) continue;
       const pa = L.ids[a], pb = L.ids[b];
       if (pa === pb || !joins.has(pa + '-' + pb) || (L.ids[i] !== pa && L.ids[i] !== pb)) continue;
-      out[i] = ramp(ia[0], Math.max(1, Math.min(ia[1], ib[1]) - 1));
+      // a crease where parts join; where a one-piece form melts together, no line at all
+      out[i] = ramp(ia[0], melt.has(pa + '-' + pb) ? Math.min(ia[1], ib[1]) : Math.max(1, Math.min(ia[1], ib[1]) - 1));
       break;
     }
   }
@@ -103,7 +104,7 @@ function crop(L) {
 
 /** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
 function drawFace(L, p, stage, pose, ctx, [fx, fy], size) {
-  const lay = FACE_LAYOUT[size];
+  const lay = { ...FACE_LAYOUT[size], ...(FORMS[p.form]?.faceLayout || {}) };
   const simple = stage === 'baby';
   const eye = simple ? BABY_EYES : (EYES[p.eyes] || EYES.bead)[size];
   const spread = simple ? 3 : lay.spread;
@@ -220,7 +221,7 @@ export function composePetArt(p, stage, pose = {}) {
     };
     for (const step of F.order) steps[step]?.();
     drawArms((k) => k === 'up'); // raised arms go in front of the head
-    joinSeams(L, [p.color, p.hairColor || p.color], joinSet(F.merge ? ['1-2'] : []));
+    joinSeams(L, [p.color, p.hairColor || p.color], joinSet(F.merge ? ['1-2'] : []), F.merge ? new Set(['1-2', '2-1']) : undefined);
     face = drawFace(L, p, stage, pose, ctx, [fx, fy], faceSock[0]);
   }
 

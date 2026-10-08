@@ -8,15 +8,15 @@ import { part, ORANGE } from './part.js';
 
 export const EYES = {
   sly: {     // Kitsu: almond eyes with a flick at the outer corner
-    S: part(['k....', 'kkkkk', 'kwFEk', '.kkk.'], { pivot: [2, 2] }),
-    L: part(['k.....', 'kkkkkk', 'kwwFEk', 'kweEEk', '.kkkk.'], { pivot: [3, 3] }),
+    S: part(['k....', '.kkk.', 'kwFek', '.kkk.'], { pivot: [2, 2] }),
+    L: part(['k.....', '.kkkk.', 'kwFeek', 'kFeEEk', '.kkkk.'], { pivot: [3, 2] }),
   },
   jelly: {   // Gloop: big glossy eyes with two shines
     S: part(['.kk.', 'kwek', 'keek', 'kEwk', '.kk.'], { pivot: [2, 2] }),
     L: part(['.kkk.', 'kwwek', 'kweek', 'keeEk', 'kEEwk', '.kkk.'], { pivot: [2, 3] }),
   },
   sleepy: {  // Fleece: heavy-lidded and content
-    S: part(['kkkkk', 'kwEek', '.kkk.'], { pivot: [2, 1] }),
+    S: part(['kkkk', 'kwek', '.kk.'], { pivot: [2, 1] }),
     L: part(['.kkkk.', 'kkkkkk', 'kwFEEk', '.kkkk.'], { pivot: [3, 2] }),
   },
   glow: {    // Glimmer: lantern-light rings, no dark pupil
@@ -40,7 +40,7 @@ export const MOUTHS = {
   o:     { S: part(['.k.', 'kRk', '.k.'], { pivot: [1, 0] }), L: part(['.kk.', 'kRRk', 'kqqk', '.kk.'], { pivot: [2, 0] }) },             // Gloop
   baa:   { S: part(['k...k', '.kRk.'], { pivot: [2, 0] }), L: part(['k.....k', '.kRRRk.', '..kkk..'], { pivot: [3, 0] }) },             // Fleece
   dot:   { S: part(['k'], { pivot: [0, 0] }), L: part(['kk'], { pivot: [1, 0] }) },                                                       // Glimmer
-  munch: { S: part(['kkkkk', 'kwkwk', '.kkk.'], { pivot: [2, 0] }), L: part(['kkkkkkk', 'kwkwkwk', '.kkkkk.'], { pivot: [3, 0] }) },   // Inchy
+  munch: { S: part(['k...k', 'kwwwk', '.kkk.'], { pivot: [2, 0] }), L: part(['k.....k', 'kwwwwwk', '.kRRRk.', '..kkk..'], { pivot: [3, 0] }) },   // Inchy: a toothy chomp
   beak:  { S: part(['.a.', 'aNb', '.o.'], { pivot: [1, 0], key: ORANGE, bill: true }),                                                   // Hoolet
            L: part(['..a..', '.aNb.', 'aNnnb', '.onb.', '..o..'], { pivot: [2, 0], key: ORANGE, bill: true }) },
 };

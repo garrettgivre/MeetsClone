@@ -215,7 +215,7 @@ export const FOUNDERS = [
   { name: 'Gloop', line: 'cherry jelly', tier: 2, traits: {
     form: 'blob', head: 'gumdrop', body: 'jelly', eyes: 'jelly', ears: 'nubs', mouth: 'o', pattern: 'bubbles', mark: 'heart',
     topper: 'cherry', hair: 'drip',
-    color: 'mint', accent: 'cream', eyeColor: 'blue', hairColor: 'mint', taste: 'sweet', appetite: 'hearty' } },
+    color: 'mint', accent: 'cream', eyeColor: 'blue', hairColor: 'cream', taste: 'sweet', appetite: 'hearty' } },
   { name: 'Fleece', line: 'cloud lamb', tier: 1, traits: {
     form: 'quad', head: 'lamb', body: 'woolly', eyes: 'sleepy', ears: 'lamb', mouth: 'baa', pattern: 'sooty', mark: 'clover',
     tail: 'puff', topper: 'horns', feet: 'hooves', nose: 'snoot', hair: 'wool',

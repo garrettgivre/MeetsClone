@@ -5,7 +5,8 @@
 // pattern(region, u, v, info) -> 'accent' | 'bright' | null
 //   region  'head' | 'body'
 //   u, v    -1..1 across the part's bounding box
-//   info    { form, fu, fv }  fu/fv: the face centre on the head, in the same units
+//   info    { form, fu, fv, w, h }  fu/fv: the face centre on the head, in the same units;
+//           w/h: the part's size in pixels, for shapes that should stay round
 
 export const PATTERNS = {
   // Kitsu: a pale muzzle and chest
@@ -15,17 +16,18 @@ export const PATTERNS = {
     if (form === 'serpent') return Math.abs(u) < 0.32 && v < 0.2 ? 'accent' : null;
     return (u / 0.42) ** 2 + ((v + 0.05) / 0.62) ** 2 <= 1 ? 'accent' : null;
   },
-  // Gloop: little bubbles floating in the jelly
-  bubbles(region, u, v) {
+  // Gloop: little round bubbles floating in the jelly (sized in pixels, so they stay round)
+  bubbles(region, u, v, { w, h }) {
     const spots = region === 'head'
-      ? [[-0.55, -0.35, 0.11], [0.5, -0.55, 0.08], [0.62, 0.15, 0.1]]
-      : [[-0.45, 0.2, 0.12], [0.35, -0.2, 0.09], [0.1, 0.55, 0.08], [0.6, 0.45, 0.07]];
-    return spots.some(([x, y, r]) => (u - x) ** 2 + (v - y) ** 2 <= r * r) ? 'bright' : null;
+      ? [[-0.5, -0.3, 1.6], [0.55, -0.5, 1.1], [0.62, 0.2, 1.3]]
+      : [[-0.5, 0.15, 1.8], [0.4, -0.15, 1.2], [0.1, 0.55, 1.1], [0.65, 0.5, 0.9]];
+    return spots.some(([x, y, r]) => (((u - x) * w) / 2) ** 2 + (((v - y) * h) / 2) ** 2 <= r * r) ? 'bright' : null;
   },
   // Fleece: a sooty face and sooty legs, like a black-faced sheep
   sooty(region, u, v, { form, fu, fv }) {
-    if (region === 'head') return ((u - fu) / 0.62) ** 2 + ((v - fv - 0.12) / 0.62) ** 2 <= 1 ? 'accent' : null;
-    if (form === 'quad') return v > 0.25 ? 'accent' : null;
+    // the muzzle and the lower legs; the eyes stay on pale wool
+    if (region === 'head') return ((u - fu) / 0.5) ** 2 + ((v - fv - 0.62) / 0.42) ** 2 <= 1 ? 'accent' : null;
+    if (form === 'quad') return v > 0.45 ? 'accent' : null;
     return v > 0.5 ? 'accent' : null;
   },
   // Glimmer: glowing spots around the rim
@@ -38,9 +40,9 @@ export const PATTERNS = {
     }
     return null;
   },
-  // Inchy: bands around the body and a stripe over the crown
+  // Inchy: bands around the body
   bands(region, u, v, { form }) {
-    if (region === 'head') return v < -0.5 && v > -0.78 ? 'accent' : null;
+    if (region === 'head') return null; // a caterpillar's head stays plain
     const t = form === 'quad' ? u : v;
     return Math.floor((t + 1) * 3.2) % 2 === 1 ? 'accent' : null;
   },
