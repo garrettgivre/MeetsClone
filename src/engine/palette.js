@@ -94,6 +94,30 @@ export const HEX = COLORS.map(c => hex(c.slice(0, 3)));
 // Packed 32-bit pixels for ImageData (little-endian ABGR).
 export const PACKED = new Uint32Array(COLORS.map(([r, g, b, a]) => ((a << 24) | (b << 16) | (g << 8) | r) >>> 0));
 
+/**
+ * A table that maps every palette colour to a washed-out one: most of its
+ * colour drained, and lifted toward `paper` (the colour it sits on). Sprites
+ * drawn through it look greyed out, like a menu icon that isn't selected.
+ */
+export function mutedLut(paper = 'cream.3', drain = 1, lift = 0.3) {
+  const MUTED_TONES = ['shade', 'gray', 'silver', 'mist', 'white', 'slate.0', 'slate.1', 'slate.2', 'slate.3'].map(C);
+  const [pr, pg, pb] = COLORS[C(paper)];
+  const lut = new Uint8Array(COLORS.length);
+  for (let i = 1; i < COLORS.length; i++) {
+    const [r, g, b] = COLORS[i];
+    const grey = r * 0.3 + g * 0.59 + b * 0.11;
+    const want = [r, g, b].map((v, k) => (v + (grey - v) * drain) * (1 - lift) + [pr, pg, pb][k] * lift);
+    let best = i, bestD = Infinity;
+    // only greys and the slate ramp, so nothing picks up a stray tint
+    for (const j of MUTED_TONES) {
+      const d = (COLORS[j][0] - want[0]) ** 2 + (COLORS[j][1] - want[1]) ** 2 + (COLORS[j][2] - want[2]) ** 2;
+      if (d < bestD) { bestD = d; best = j; }
+    }
+    lut[i] = best;
+  }
+  return lut;
+}
+
 /** A darkened copy of the palette for lights-off / night tinting. */
 export function tinted(mulR, mulG, mulB) {
   return new Uint32Array(COLORS.map(([r, g, b, a]) =>

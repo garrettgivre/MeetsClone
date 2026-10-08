@@ -96,7 +96,8 @@ export class Screen {
   }
 
   /**
-   * Draw a sprite. opts: { frame, flip, ctx (colour context), solid (draw every pixel in one colour) }
+   * Draw a sprite. opts: { frame, flip, ctx (colour context), solid (draw every pixel in one colour),
+   * remap (a palette-to-palette table, e.g. mutedLut(), applied to every pixel) }
    */
   draw(spr, x, y, opts = {}) {
     if (!opts.chunky) return this.drawHD(spr, x, y, opts);
@@ -134,12 +135,12 @@ export class Screen {
     const hd = spr._hd;
     const frame = hd.frames[(opts.frame || 0) % hd.frames.length];
     const t = lut(hd, opts.ctx);
-    const solid = opts.solid;
+    const solid = opts.solid, remap = opts.remap;
     const X = Math.round(x * HD), Y = Math.round(y * HD);
     for (let j = 0; j < hd.h; j++) for (let i = 0; i < hd.w; i++) {
       const c = t[frame[j * hd.w + i]];
       if (!c) continue;
-      this.hpset(opts.flip ? X + hd.w - 1 - i : X + i, Y + j, solid || c);
+      this.hpset(opts.flip ? X + hd.w - 1 - i : X + i, Y + j, solid || (remap ? remap[c] : c));
     }
   }
 

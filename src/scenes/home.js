@@ -1,5 +1,5 @@
 // The main screen: status bar, two rows of menu icons, the room with the pet.
-import { C } from '../engine/palette.js';
+import { C, mutedLut } from '../engine/palette.js';
 import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
 import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BROOM_ICON, BATH_ICON, POTTY_ICON } from '../art/icons.js';
@@ -21,6 +21,8 @@ const LABEL = {
 };
 const STAGE_NAME = { egg: 'EGG', baby: 'BABY', child: 'CHILD', teen: 'TEEN', adult: 'ADULT' };
 const POOP_X = [104, 116, 92, 80];
+// menu icons are drawn washed out until the cursor is on them
+const MUTED = mutedLut('cream.3');
 const CELL = W / 5;
 // how far a small pet is lifted so it shows over the rim of the tub
 const BATH_LIFT = { baby: 17, child: 12, teen: 9, adult: 9 };
@@ -540,7 +542,7 @@ export class HomeScene {
         const cx = Math.round(i * CELL + CELL / 2);
         if (this.cursor === idx) scr.panel(Math.round(i * CELL) + 1, row.y + 1, Math.round(CELL) - 1, row.h - 2, COL.hi, COL.ink);
         const ic = ICONS[id];
-        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), {});
+        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), { remap: this.cursor === idx ? null : MUTED });
       });
     }
     // info bar

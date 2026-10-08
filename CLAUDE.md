@@ -129,7 +129,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.16.3, October 2026)
+## Status (v0.16.4, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -155,7 +155,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 
 - **Saves:** `src/game/save.js` `migrate` fills in new pet fields. Add defaults there whenever the pet shape changes, and keep old saves loading; `tests/save.test.js` covers this.
 - **Deploy list:** the Pages workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
-- **Menu icons:** `src/art/menu-icons.js` holds the ten home-screen icons, pixelled by hand in v0.16.3 as 28×28 hi-res grids (the header comment says what each one shows and why). Edit the grids directly; every row must be 28 characters. Other UI sprites in `icons.js` are still 1x grids that `scr.draw` upscales; `hdSprite(rows, key)` is the way to draw one at full density.
+- **Menu icons:** `src/art/menu-icons.js` holds the ten home-screen icons, pixelled by hand in v0.16.3 as 28×28 hi-res grids (the header comment says what each one shows and why). Edit the grids directly; every row must be 28 characters. On the home screen an icon is drawn through `mutedLut()` (greys only) until the cursor is on it, via the `remap` option of `scr.draw`. Other UI sprites in `icons.js` are still 1x grids that `scr.draw` upscales; `hdSprite(rows, key)` is the way to draw one at full density.
 - **Installing on Android:** the owner also has Room for Two installed from the same site (`garrettgivre.github.io/Room-For-Two/`). Chrome's menu install then says MeetsClone is "already installed" and "could not open app". The likely cause is that Chrome's install sheet checks for an installed app per site, not per app (not confirmed). Changing the manifest `id` to `/MeetsClone/app` (v0.14.5) did not help; leave it as it is now, since a new id makes installed copies look like a different app. v0.14.6 added Settings > Install app, which keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. That worked, and the owner prefers it to the browser menu.
 - **Full screen:** the manifest asks for `display: fullscreen` (the game has its own clock in the status bar). An installed copy only picks up manifest changes when Chrome next refreshes it, which can take a day or a reinstall. `installState` in `main.js` treats both `fullscreen` and `standalone` as installed.
 - **App icons:** installers need PNGs, not the SVG. `badge.png` is the status-bar shape for care alerts: Android uses only its alpha, so it must stay a white silhouette on transparent. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
