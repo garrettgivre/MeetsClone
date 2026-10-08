@@ -8,7 +8,7 @@
 
 import { sprite } from '../engine/sprite.js';
 
-const P = (rows, pivot, extra = {}) => ({ spr: sprite(rows), pivot, ...extra });
+const P = (rows, pivot, extra = {}) => ({ spr: sprite(rows), rows, pivot, ...extra });
 
 // ---------- Eyes (left eye; right eye is mirrored). Pivot = eye centre. ----------
 // Big glossy eyes: a large highlight at the top, a small one at the bottom.

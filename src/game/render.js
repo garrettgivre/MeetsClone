@@ -10,6 +10,8 @@
 import { C, ramp } from '../engine/palette.js';
 import { colors, lut } from '../engine/sprite.js';
 import { makeBitmap } from '../engine/screen.js';
+import { hdPart, scale2x, thinOutlines } from '../engine/upscale.js';
+import '../art/face-hd.js'; // hand-drawn hi-res faces
 import {
   EYES, BABY_EYES, LASH, MOUTHS, MOUTH_FX, EYE_FX, EARS, CRESTS, BACKS, FEET, CHEEKS, ARMS, BOWTIE, TIE, HAIR_PARTS, FACE, MARKS, NOSES,
 } from '../art/parts.js';
@@ -172,8 +174,8 @@ function faceLayout(w, h, eyeSet) {
   const low = eyeSet === 'low' ? Math.round(h * 0.08) : 0;
   const eyeY = Math.round(h * 0.5) + low;
   return {
-    eyeY, eyeDX: Math.max(3, Math.round(w * 0.21 * spread)),
-    mouthY: eyeY + Math.max(3, Math.round(h * 0.22)),
+    eyeY, eyeDX: Math.max(3 * S, Math.round(w * 0.21 * spread)),
+    mouthY: eyeY + Math.max(3 * S, Math.round(h * 0.22)),
   };
 }
 
@@ -182,8 +184,8 @@ function headBitmap(t, stage) {
   let b = cache.get(key);
   if (b) return b;
   const s = SHAPES[t.shape] || SHAPES.round;
-  const [hw, hh] = STAGE_SIZE[stage];
-  const d = stage === 'adult' ? SIZE_DELTA[t.size] || 0 : 0;
+  const [hw, hh] = STAGE_SIZE[stage].map(n => n * S);
+  const d = stage === 'adult' ? (SIZE_DELTA[t.size] || 0) * S : 0;
   const w = Math.round((hw + d) * s.aw), h = Math.round((hh + d) * s.ah);
   // hair is worked out per pixel (mirrored so both sides match) so it can be outlined
   const hm = new Uint8Array(w * h);
@@ -222,13 +224,13 @@ function torsoBitmap(t, stage) {
   const key = ['t', t.outfit, t.outfitColor, t.color, t.accent, t.build, t.belly, stage].join('|');
   let b = cache.get(key);
   if (b) return b;
-  const [, , tw, th] = STAGE_SIZE[stage];
+  const [, , tw, th] = STAGE_SIZE[stage].map(n => n * S);
   const k = stage === 'adult' ? 1 : 0.7; // teens get a gentler version of their build
   const B = BUILDS[t.build] || BUILDS.round;
   const dress = t.outfit === 'dress';
   const oc = t.outfitColor || t.accent;
   const s = { n: B.n, pear: dress ? 0.55 : B.pear };
-  const w = Math.round(tw + B.dw * k) + (dress ? 4 : 0), h = Math.round(th + B.dh * k);
+  const w = Math.round(tw + B.dw * k * S) + (dress ? 4 * S : 0), h = Math.round(th + B.dh * k * S);
   const white = C('white');
   // the bare body: base colour plus the belly gene
   const skin = (u, v) => {
@@ -254,8 +256,8 @@ function torsoBitmap(t, stage) {
       case 'apron': return Math.abs(u) < 0.48 && v > -0.4 ? white : skin(u, v);
       default: return skin(u, v);
     }
-  }, { shadeTop: 2 });
-  b = { ...r, sideL: r.rowSpan(3)[0], sideR: r.rowSpan(3)[1] };
+  }, { shadeTop: 2 * S });
+  b = { ...r, sideL: r.rowSpan(3 * S)[0], sideR: r.rowSpan(3 * S)[1] };
   cache.set(key, b);
   return b;
 }
@@ -290,7 +292,7 @@ function earBitmap(kind, headW, t) {
       break;
     }
     case 'bunny': {
-      w = Math.max(5, Math.round(headW * 0.26)); h = Math.round(headW * 0.72);
+      w = Math.max(5 * S, Math.round(headW * 0.26)); h = Math.round(headW * 0.72);
       fn = ellipse;
       paint = (u, v) => (Math.abs(u) < 0.36 && v > -0.72 && v < 0.7 ? inner : t.color);
       angle = 22; pivot = [w / 2, h * 0.86];
@@ -316,7 +318,7 @@ function snoutBitmap(headW, headH, t) {
   const key = ['s', headW, headH, t.accent, t.color].join('|');
   let b = cache.get(key);
   if (b) return b;
-  const w = Math.round(headW * 0.44) | 1, h = Math.max(6, Math.round(headH * 0.32));
+  const w = Math.round(headW * 0.44) | 1, h = Math.max(6 * S, Math.round(headH * 0.32));
   const fill = t.accent === t.color ? 'cream' : t.accent;
   b = raster(w, h, { n: 2.2 }, (u, v) => (Math.abs(u) < 0.22 && v < -0.2 ? C('ink') : fill));
   cache.set(key, b);
@@ -328,7 +330,7 @@ function billBitmap(headW, headH, open) {
   const key = ['b', headW, headH, open].join('|');
   let b = cache.get(key);
   if (b) return b;
-  const w = Math.round(headW * 0.52) | 1, h = Math.max(6, Math.round(headH * 0.3));
+  const w = Math.round(headW * 0.52) | 1, h = Math.max(6 * S, Math.round(headH * 0.3));
   b = raster(w, h, { n: 2.4 }, (u, v) => {
     if (Math.abs(v - 0.05) < 1 / h * 1.2 && Math.abs(u) < 0.8) return open ? C('red.0') : C('ink');
     if (open && v > 0.05 && v < 0.5 && Math.abs(u) < 0.55) return C('red.1');
@@ -347,6 +349,7 @@ function blitFlip(dst, src, x0, y0) {
 }
 
 function stamp(bm, part, ax, ay, ctx, flip = false, keep = null) {
+  part = hdPart(part);
   const spr = part.spr;
   const t = lut(spr, ctx);
   const f = spr.frames[0];
@@ -371,11 +374,15 @@ function blit(dst, src, x0, y0) {
 
 function put(bm, x, y, c) { if (x >= 0 && y >= 0 && x < bm.w && y < bm.h) bm.px[y * bm.w + x] = c; }
 
-export const CANVAS = 64; // composed character bitmap is CANVAS x CANVAS
-export const GROUND = 61; // y of the feet inside it
+// Pets are drawn at double density. CANVAS and GROUND are in screen pixels
+// (what scenes use to place a pet); the bitmap itself is S times larger.
+export const S = 2;
+export const CANVAS = 64; // composed character covers CANVAS x CANVAS screen pixels
+export const GROUND = 61; // y of the feet inside it, in screen pixels
+const HC = CANVAS * S, HG = GROUND * S;
 
 /**
- * Compose a pet.
+ * Compose a pet. Returns a double-density bitmap (bm.hd) of HC x HC pixels.
  * pose: {
  *   expr: 'idle'|'blink'|'happy'|'sad'|'eat'|'chew'|'sleep'|'sick'|'dizzy'|'wink',
  *   arms: 'down'|'up'|'out'|'wave', step: 0|1|2 (walking), bob: 0|1, gender: 'm'|'f', t: ms (sparkles),
@@ -393,80 +400,85 @@ export function composePet(phenotype, stage, pose = {}) {
   if (wear.back === 'cape') t.back = 'cape';
   const shoes = wear.feet === 'shoes' && t.feet !== 'float';
   if (shoes) t.feet = 'shoes';
-  const out = makeBitmap(CANVAS, CANVAS);
+  const out = makeBitmap(HC, HC, true);
   const head = headBitmap(t, stage);
   const hasTorso = STAGE_SIZE[stage][2] > 0;
   const torso = hasTorso ? torsoBitmap(t, stage) : null;
-  const feet = FEET[t.feet];
+  const feet = FEET[t.feet] ? hdPart(FEET[t.feet]) : null;
   const feetCtx = shoes ? itemCtx('shoes') : ctx;
-  const footH = feet ? feet.spr.h - 2 : 0;
-  const lift = t.feet === 'float' ? 3 : 0;
-  const bob = pose.bob ? 1 : 0;
+  const footH = feet ? feet.spr.h - 2 * S : 0;
+  const lift = t.feet === 'float' ? 3 * S : 0;
+  const bob = pose.bob ? S : 0;
   const step = pose.step || 0;
-  const cx = CANVAS / 2;
+  const cx = HC / 2;
 
   let ty = 0, tx = 0, hy;
   if (torso) {
-    ty = GROUND - footH - lift - torso.h + 1 + (step ? 0 : 0);
+    ty = HG - footH - lift - torso.h + S;
     tx = Math.round(cx - torso.w / 2);
-    hy = ty - head.h + 3 + bob;
+    hy = ty - head.h + 3 * S + bob;
   } else {
-    hy = GROUND - footH - lift - head.h + 2 + bob;
+    hy = HG - footH - lift - head.h + 2 * S + bob;
   }
   const hx = Math.round(cx - head.w / 2);
   const hcx = hx + Math.floor(head.w / 2);
   const even = head.w % 2 === 0;
 
-  // shadow under the pet
-  for (let i = -6; i <= 6; i++) if (lift ? (i & 1) === 0 : Math.abs(i) < 6) put(out, cx + i, GROUND, lift ? C('silver') : C('mist'));
+  // soft shadow under the pet
+  for (let i = -12; i <= 12; i++) {
+    if (lift) { if ((i & 3) === 0) { put(out, cx + i, HG, C('silver')); put(out, cx + i + 1, HG, C('silver')); } }
+    else if (Math.abs(i) < 11) { put(out, cx + i, HG, C('mist')); if (Math.abs(i) < 8) put(out, cx + i, HG + 1, C('mist')); }
+  }
 
   // ----- behind everything: back parts and hair behind the head -----
   const back = BACKS[t.back];
   const bodyL = torso ? tx + torso.sideL : hx + head.sideL;
   const bodyR = torso ? tx + torso.sideR : hx + head.sideR;
-  const bodyMidY = torso ? ty + 3 : hy + Math.round(head.h * 0.6);
+  const bodyMidY = torso ? ty + 3 * S : hy + Math.round(head.h * 0.6);
   if (back === 'cape' && torso) {
-    const top = ty + 1;
-    for (let y = top; y <= GROUND - 1; y++) {
-      const spread = 2 + Math.floor((y - top) / 3);
+    const top = ty + S;
+    for (let y = top; y <= HG - 1; y++) {
+      const spread = 2 * S + Math.floor((y - top) / 3);
       const l = tx + torso.sideL - spread, r = tx + torso.sideR + spread;
-      for (let x = l; x <= r; x++) put(out, x, y, x === l || x === r || y === GROUND - 1 ? C('ink') : ramp(CLOTHES.cape.color, x < cx - 4 ? 2 : 1));
+      for (let x = l; x <= r; x++) put(out, x, y, x === l || x === r || y === HG - 1 ? C('ink') : ramp(CLOTHES.cape.color, x < cx - 8 ? 2 : 1));
     }
   } else if (back?.pair) {
-    stamp(out, back, bodyL + 1, bodyMidY, ctx);
-    stamp(out, back, bodyR - 1, bodyMidY, ctx, true);
+    stamp(out, back, bodyL + S, bodyMidY, ctx);
+    stamp(out, back, bodyR - S, bodyMidY, ctx, true);
   } else if (back?.tail) {
-    stamp(out, back, bodyR - 1, torso ? ty + torso.h - 3 : bodyMidY + 2, ctx);
+    stamp(out, back, bodyR - S, torso ? ty + torso.h - 3 * S : bodyMidY + 2 * S, ctx);
   }
-  if (t.hair === 'curly') stamp(out, HAIR_PARTS.puff, hcx - (even ? 1 : 0), hy + head.top + 3, ctx);
-  if (t.hair === 'ponytail') stamp(out, HAIR_PARTS.ponytail, hx + head.sideR - 1, hy + Math.round(head.h * 0.22), ctx);
+  if (t.hair === 'curly') stamp(out, HAIR_PARTS.puff, hcx - (even ? 1 : 0), hy + head.top + 3 * S, ctx);
+  if (t.hair === 'ponytail') stamp(out, HAIR_PARTS.ponytail, hx + head.sideR - S, hy + Math.round(head.h * 0.22), ctx);
   if (t.hair === 'twintails') {
-    stamp(out, HAIR_PARTS.twintail, hx + head.sideL + 1, hy + Math.round(head.h * 0.25), ctx);
-    stamp(out, HAIR_PARTS.twintail, hx + head.sideR - 1, hy + Math.round(head.h * 0.25), ctx, true);
+    stamp(out, HAIR_PARTS.twintail, hx + head.sideL + S, hy + Math.round(head.h * 0.25), ctx);
+    stamp(out, HAIR_PARTS.twintail, hx + head.sideR - S, hy + Math.round(head.h * 0.25), ctx, true);
   }
 
   // ----- body -----
-  let armsY = torso ? ty + 4 : 0;
+  const armsY = torso ? ty + 4 * S : 0;
   // arms: lowered arms tuck behind the body (the body's outline joins them
   // cleanly); raised arms go in front so they aren't hidden by the big head
   const armPose = pose.arms || 'down';
   const [armL, armR] = armPose === 'wave' ? ['up', 'down'] : [armPose, armPose];
   const drawArm = (which, side) => {
     const a = ARMS[which] || ARMS.down;
-    if (side < 0) stamp(out, a, tx + torso.sideL + (which === 'up' ? 1 : 2), armsY, ctx);
-    else stamp(out, a, tx + torso.sideR - (which === 'up' ? 1 : 2), armsY, ctx, true);
+    const inset = (which === 'up' ? 1 : 2) * S;
+    if (side < 0) stamp(out, a, tx + torso.sideL + inset, armsY, ctx);
+    else stamp(out, a, tx + torso.sideR - inset, armsY, ctx, true);
   };
 
   if (torso) {
     // feet first so the body sits on them
-    if (feet) drawFeet(out, feet, feetCtx, cx, ty + torso.h - 2, Math.max(3, Math.round(torso.w * 0.22)), step, even);
+    if (feet) drawFeet(out, feet, feetCtx, cx, ty + torso.h - 2 * S, Math.max(3 * S, Math.round(torso.w * 0.22)), step, even);
     if (armL !== 'up') drawArm(armL, -1);
     if (armR !== 'up') drawArm(armR, 1);
     blit(out, torso.bm, tx, ty);
-    if (t.outfit === 'bowtie') stamp(out, BOWTIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx('bowtie'));
-    if (t.outfit === 'tie' || t.outfit === 'collar') stamp(out, TIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx(t.outfit));
+    const neck = Math.round(cx) - S + (torso.w % 2);
+    if (t.outfit === 'bowtie') stamp(out, BOWTIE, neck, ty + 3 * S, itemCtx('bowtie'));
+    if (t.outfit === 'tie' || t.outfit === 'collar') stamp(out, TIE, neck, ty + 3 * S, itemCtx(t.outfit));
   } else if (feet) {
-    drawFeet(out, feet, feetCtx, cx, hy + head.h - 3 - bob, Math.max(3, Math.round(head.w * 0.22)), step, even);
+    drawFeet(out, feet, feetCtx, cx, hy + head.h - 3 * S - bob, Math.max(3 * S, Math.round(head.w * 0.22)), step, even);
   }
 
   // ----- head -----
@@ -485,20 +497,20 @@ export function composePet(phenotype, stage, pose = {}) {
   const ears = SCALED_EARS.includes(t.ears) ? null : EARS[t.ears];
   if (ears) {
     const ey = ears.side ? hy + Math.round(head.h * 0.3) : hy + head.earY;
-    const exL = ears.side ? hx + head.sideL + 1 : hx + head.earX + 1;
+    const exL = ears.side ? hx + head.sideL + S : hx + head.earX + S;
     const exR = hx + head.w - 1 - (exL - hx);
     stamp(out, ears, exL, ey, ctx);
     stamp(out, ears, exR, ey, ctx, true);
   }
-  if (t.hair === 'spiky') stamp(out, HAIR_PARTS.spikes, hcx - (even ? 1 : 0), hy + head.top + 2, ctx);
+  if (t.hair === 'spiky') stamp(out, HAIR_PARTS.spikes, hcx - (even ? 1 : 0), hy + head.top + 2 * S, ctx);
   // a hat replaces the natural crest while it's worn
   const hat = wear.head && CRESTS[wear.head];
   const crest = hat || CRESTS[t.crest];
   const crestCtx = hat ? itemCtx(wear.head) : ctx;
-  const crestX = hcx - (even ? 1 : 0) + (crest?.offset || 0);
-  if (crest && !crest.front) stamp(out, crest, crestX, hy + head.top + 1, crestCtx);
+  const crestX = hcx - (even ? 1 : 0) + (crest?.offset || 0) * S;
+  if (crest && !crest.front) stamp(out, crest, crestX, hy + head.top + S, crestCtx);
   blit(out, head.bm, hx, hy);
-  if (crest && crest.front) stamp(out, crest, crestX, hy + head.top + 1, crestCtx);
+  if (crest && crest.front) stamp(out, crest, crestX, hy + head.top + S, crestCtx);
   frontEars?.();
   if (torso) { if (armL === 'up') drawArm('up', -1); if (armR === 'up') drawArm('up', 1); }
 
@@ -514,8 +526,8 @@ export function composePet(phenotype, stage, pose = {}) {
       const lx = x - hx, ly = y - hy;
       return head.m(lx, ly) && head.m(lx - 1, ly) && head.m(lx + 1, ly) && head.m(lx, ly + 1);
     };
-    const cy = ey + (big ? 4 : stage === 'baby' ? 2 : 3);
-    const off = big ? 3 : 1;
+    const cy = ey + (big ? 4 : stage === 'baby' ? 2 : 3) * S;
+    const off = (big ? 3 : 1) * S;
     stamp(out, cheeks, exL - off, cy, ctx, false, onFace);
     stamp(out, cheeks, exR + off, cy, ctx, true, onFace);
   }
@@ -524,7 +536,7 @@ export function composePet(phenotype, stage, pose = {}) {
   else if (expr === 'happy') eyeFx = EYE_FX.happy;
   else if (expr === 'sad' || expr === 'sick') eyeFx = EYE_FX.sad;
   else if (expr === 'dizzy') eyeFx = EYE_FX.dizzy;
-  const eye = t.eyes === 'baby' ? BABY_EYES : (EYES[t.eyes] || EYES.bean);
+  const eye = hdPart(t.eyes === 'baby' ? BABY_EYES : (EYES[t.eyes] || EYES.bean));
   if (eyeFx) {
     stamp(out, eyeFx, exL, ey, ctx);
     stamp(out, eyeFx, exR, ey, ctx, true);
@@ -541,46 +553,47 @@ export function composePet(phenotype, stage, pose = {}) {
     }
   }
   // forehead mark
-  const mark = MARKS[t.mark];
-  if (mark) stamp(out, mark, hcx - (even ? 1 : 0) + (mark.spr.w % 2 ? 0 : 1), ey - eye.pivot[1] - 3, ctx);
+  const mark = MARKS[t.mark] ? hdPart(MARKS[t.mark]) : null;
+  if (mark) stamp(out, mark, hcx - (even ? 1 : 0) + (mark.spr.w % 2 ? 0 : 1), ey - eye.pivot[1] - 3 * S, ctx);
 
   // face accessories (glasses go over the eyes, stickers on a cheek)
   const face = FACE[wear.face];
   const faceCtx = itemCtx(wear.face);
   if (face) {
     if (face.lens) {
-      stamp(out, face.lens, exL, ey, faceCtx);
+      const lens = hdPart(face.lens);
+      stamp(out, lens, exL, ey, faceCtx);
       if (!face.oneSide) {
-        stamp(out, face.lens, exR, ey, faceCtx, true);
-        const l = exL + face.lens.pivot[0] + 1, r = exR - face.lens.pivot[0] - 1;
-        for (let x = l; x <= r; x++) put(out, x, ey - 1, C(face.bridge));
+        stamp(out, lens, exR, ey, faceCtx, true);
+        const l = exL + lens.pivot[0] + 1, r = exR - lens.pivot[0] - 1;
+        for (let x = l; x <= r; x++) put(out, x, ey - S, C(face.bridge));
       } else if (face.chain) {
-        for (let i = 0; i < 6; i++) put(out, exL - 3 - (i >> 1), ey + 3 + i, C(i % 2 ? 'gold.1' : 'gold.3'));
+        for (let i = 0; i < 12; i++) put(out, exL - 6 - (i >> 1), ey + 6 + i, C((i >> 1) % 2 ? 'gold.1' : 'gold.3'));
       }
     }
-    if (face.cheek) stamp(out, face.cheek, exR + 3, ey + 5, faceCtx);
+    if (face.cheek) stamp(out, face.cheek, exR + 3 * S, ey + 5 * S, faceCtx);
   }
   // nose: snout and whiskers are drawn to scale, the rest are small sprites
   let mouthY = hy + head.mouthY;
   const nose = NOSES[t.nose];
   if (nose === 'snout' && t.mouth !== 'bill') { // a bill is its own snout
     const sn = snoutBitmap(head.w, head.h, t);
-    const sy = mouthY - 3;
+    const sy = mouthY - 3 * S;
     blit(out, sn.bm, Math.round(hcx - (even ? 0.5 : 0) - sn.w / 2 + 0.5), sy);
     mouthY = sy + Math.round(sn.h * 0.5);
   } else if (nose === 'whiskers') {
     for (const side of [-1, 1]) for (let i = 0; i < 3; i++) {
-      const x0 = hcx + side * (head.eyeDX + 3) - (side < 0 && even ? 1 : 0);
-      for (let k = 0; k < 4; k++) put(out, x0 + side * k, mouthY - 2 + i * 2 + (i === 1 ? 0 : Math.round((i - 1) * k / 3)), C('ink'));
+      const x0 = hcx + side * (head.eyeDX + 3 * S) - (side < 0 && even ? 1 : 0);
+      for (let k = 0; k < 4 * S; k++) put(out, x0 + side * k, mouthY - 2 * S + i * 2 * S + (i === 1 ? 0 : Math.round((i - 1) * k / 3)), C('ink'));
     }
-    put(out, hcx, mouthY - 2, C('pink.1')); put(out, hcx - (even ? 1 : 0), mouthY - 2, C('pink.1'));
+    for (let dx = -2; dx <= 1; dx++) put(out, hcx + dx, mouthY - 2 * S, C('pink.1'));
   } else if (nose) {
-    stamp(out, nose, hcx, mouthY - 3, ctx);
-    mouthY += 1;
+    stamp(out, nose, hcx, mouthY - 3 * S, ctx);
+    mouthY += S;
   }
   if (MOUTHS[t.mouth] === 'bill') {
     const bill = billBitmap(head.w, head.h, expr === 'eat' || expr === 'happy' || expr === 'wink');
-    blit(out, bill.bm, Math.round(hcx - (even ? 0.5 : 0) - bill.w / 2 + 0.5), mouthY - 3);
+    blit(out, bill.bm, Math.round(hcx - (even ? 0.5 : 0) - bill.w / 2 + 0.5), mouthY - 3 * S);
     return finish(out, t, pose, hcx, hy, head);
   }
   let mouth = MOUTHS[t.mouth] || MOUTHS.smile;
@@ -596,8 +609,6 @@ export function composePet(phenotype, stage, pose = {}) {
 
 /** Final touches shared by every face: the rare sparkle aura. */
 function finish(out, t, pose, hcx, hy, head) {
-
-  // rare aura: twinkling sparkles around the pet
   if (t.aura === 'sparkle') {
     const tick = Math.floor((pose.t || 0) / 160);
     const spots = [[-1.1, -0.2], [1.15, 0.1], [-0.6, -1.05], [0.75, -0.95], [-1.25, 0.8], [1.2, 0.85]];
@@ -605,42 +616,43 @@ function finish(out, t, pose, hcx, hy, head) {
       const phase = (tick + i * 2) % 6;
       if (phase > 2) return;
       const x = Math.round(hcx + sx * head.w / 2), y = Math.round(hy + head.h / 2 + sy * head.h / 2);
-      put(out, x, y, C('white'));
-      if (phase === 1) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) put(out, x + dx, y + dy, C('gold.3'));
+      put(out, x, y, C('white')); put(out, x + 1, y, C('white')); put(out, x, y + 1, C('white')); put(out, x + 1, y + 1, C('white'));
+      if (phase === 1) for (const [dx, dy] of [[2, 0], [-1, 0], [0, 2], [0, -1], [3, 0], [-2, 0], [0, 3], [0, -2]]) put(out, x + dx, y + dy, C('gold.3'));
     });
   }
   return out;
 }
 
 function drawFeet(out, feet, ctx, cx, fy, span, step, even) {
-  const lx = Math.round(cx) - 1 - span + (even ? 0 : 1);
+  const lx = Math.round(cx) - S - span + (even ? 0 : 1);
   const rx = Math.round(cx) + span - (even ? 1 : 0);
-  stamp(out, feet, lx, fy - (step === 1 ? 1 : 0), ctx);
-  stamp(out, feet, rx, fy - (step === 2 ? 1 : 0), ctx, true);
+  stamp(out, feet, lx, fy - (step === 1 ? S : 0), ctx);
+  stamp(out, feet, rx, fy - (step === 2 ? S : 0), ctx, true);
 }
 
 /** Egg sprite: its colours hint at the baby inside. */
 export function composeEgg(phenotype, crack = 0, wobble = 0) {
-  const w = 18, h = 22;
-  const out = makeBitmap(CANVAS, CANVAS);
-  const x0 = Math.round(CANVAS / 2 - w / 2) + wobble, y0 = GROUND - h + 1;
+  const w = 18 * S, h = 22 * S;
+  const out = makeBitmap(HC, HC, true);
+  const x0 = Math.round(HC / 2 - w / 2) + wobble * S, y0 = HG - h + S;
   const base = phenotype?.accent || 'cream', spot = phenotype?.color || 'gold';
-  for (let i = -6; i <= 6; i++) put(out, CANVAS / 2 + i, GROUND, C('mist'));
+  for (let i = -12; i <= 12; i++) { put(out, HC / 2 + i, HG, C('mist')); if (Math.abs(i) < 8) put(out, HC / 2 + i, HG + 1, C('mist')); }
   const r = raster(w, h, { n: 2, pear: -0.25 }, (u, v) => {
     const isSpot = [[-0.4, -0.25, 0.2], [0.38, 0.12, 0.22], [-0.12, 0.6, 0.18], [0.22, -0.62, 0.14]].some(([a, b, rr]) => (u - a) ** 2 + (v - b) ** 2 < rr * rr);
-    const band = Math.abs(v - 0.05 - 0.1 * (zig(u * 3) - 0.5)) < 0.08;
+    const band = Math.abs(v - 0.05 - 0.1 * (zig(u * 3) - 0.5)) < 0.07;
     return isSpot || band ? spot : base;
   });
   blit(out, r.bm, x0, y0);
-  const cracks = [[9, 3], [8, 4], [9, 5], [10, 6], [9, 7], [11, 4], [12, 5], [7, 6], [6, 7]];
-  for (let i = 0; i < Math.min(cracks.length, crack * 3); i++) put(out, x0 + cracks[i][0], y0 + cracks[i][1], C('ink'));
+  // a zig-zag crack spreading from the top
+  const cracks = [[18, 6], [17, 7], [16, 8], [17, 9], [18, 10], [19, 11], [18, 12], [20, 7], [21, 8], [22, 9], [23, 10], [15, 10], [14, 11], [13, 12], [12, 13], [24, 11], [25, 12]];
+  for (let i = 0; i < Math.min(cracks.length, crack * 6); i++) put(out, x0 + cracks[i][0], y0 + cracks[i][1], C('ink'));
   return out;
 }
 
 /** Ghost for a pet that has passed away. */
 export function composeGhost(frame = 0) {
-  const out = makeBitmap(CANVAS, CANVAS);
-  const rows = [
+  const out = makeBitmap(HC, HC, true);
+  const rows = thinOutlines(scale2x([
     '....oooooo....',
     '..oowwwwwwoo..',
     '.owwwwwwwwwwo.',
@@ -654,8 +666,8 @@ export function composeGhost(frame = 0) {
     'owwwwwwwwwwmmo',
     frame ? 'owowwowwowwomo' : 'owwowwowwowwoo',
     frame ? '.o.ooo.ooo.oo.' : 'o.ooo.ooo.oo..',
-  ];
-  const x0 = CANVAS / 2 - 7, y0 = GROUND - 28 - frame;
+  ]));
+  const x0 = HC / 2 - 14, y0 = HG - 56 - frame * S;
   const key = { o: C('ink'), k: C('ink'), w: C('white'), m: C('mist'), f: C('pink.2') };
   rows.forEach((row, y) => [...row].forEach((ch, x) => { if (key[ch]) put(out, x0 + x, y0 + y, key[ch]); }));
   return out;

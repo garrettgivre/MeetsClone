@@ -24,9 +24,9 @@ import { FOUNDERS, pureGenome, express, randomGenome, inherit, STARTER } from '.
 const out = document.getElementById('out');
 function show(bm, label, parent) {
   const c = document.createElement('canvas');
-  c.width = c.height = CANVAS;
+  c.width = c.height = CANVAS * 2; // pets are double density
   const ctx = c.getContext('2d');
-  const img = ctx.createImageData(CANVAS, CANVAS);
+  const img = ctx.createImageData(c.width, c.height);
   const u = new Uint32Array(img.data.buffer);
   for (let i = 0; i < bm.px.length; i++) u[i] = bm.px[i] ? PACKED[bm.px[i]] : 0;
   ctx.putImageData(img, 0, 0);

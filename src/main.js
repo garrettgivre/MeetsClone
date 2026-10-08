@@ -75,9 +75,9 @@ function resize() {
   const availW = Math.min(window.innerWidth - 16, 560) - bezel;
   const availH = window.innerHeight - btnSpace - bezel - 24;
   let s = Math.min(availW / W, availH / H);
-  // Whole-number scaling keeps pixels perfectly square; below 3x, use the
-  // largest size that fits so phones still get a big screen.
-  if (s >= 3) s = Math.floor(s);
+  // The real canvas is double density, so steps of 0.5 keep every hi-res
+  // pixel a whole number of CSS pixels. Small phones get the largest fit.
+  if (s >= 2) s = Math.floor(s * 2) / 2;
   s = Math.max(1, s);
   canvas.style.width = Math.floor(W * s) + 'px';
   canvas.style.height = Math.floor(H * s) + 'px';

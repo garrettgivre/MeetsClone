@@ -141,13 +141,13 @@ let rng = makeRng(1);
 // ---------- helpers ----------
 function canvasFor(pet, cls, stage = $('stage').value) {
   const c = document.createElement('canvas');
-  c.width = c.height = CANVAS;
+  c.width = c.height = CANVAS * 2; // pets are double density
   c.className = cls;
   // clothes are cosmetic: a stable random outfit per pet name, only when asked for
   const wear = $('dress').checked ? randomOutfit(outfitRng(hash(pet.name + JSON.stringify(pet.genome.color)))) : {};
   const bm = composePet(pet.phenotype, stage, { gender: pet.gender, t: 160, wear });
   const ctx = c.getContext('2d');
-  const img = ctx.createImageData(CANVAS, CANVAS);
+  const img = ctx.createImageData(c.width, c.height);
   const u = new Uint32Array(img.data.buffer);
   for (let i = 0; i < bm.px.length; i++) u[i] = bm.px[i] ? PACKED[bm.px[i]] : 0;
   ctx.putImageData(img, 0, 0);

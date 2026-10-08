@@ -118,7 +118,7 @@ export class ListMenu {
       if (selected) scr.panel(2, y, W - 4, this.rowH - 1, COL.hi, COL.ink);
       const color = it.disabled ? COL.silver : COL.ink;
       let x = 6;
-      if (it.icon) { scr.draw(it.icon, x, y + Math.floor((this.rowH - 1 - it.icon.h) / 2), { ctx: it.iconCtx }); x += 13; }
+      if (it.icon) { scr.draw(it.icon, x, y + Math.floor((this.rowH - 1 - it.icon.h) / 2), { ctx: it.iconCtx }); x += Math.max(13, it.icon.w + 3); }
       text(scr, it.label, x, y + 5, color);
       if (it.right !== undefined) text(scr, String(it.right), W - 8, y + 5, it.disabled ? COL.silver : COL.shade, { align: 'right' });
     }
