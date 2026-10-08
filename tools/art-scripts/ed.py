@@ -66,8 +66,9 @@ S_FORMS = ['quad', 'serpent']
 # ---- silhouette helpers: hand-specified row extents, house shading, then hand details
 def _draft():
     import os
-    src = open(os.path.join(os.path.dirname(__file__), 'draft.py'), encoding='utf8').read()
-    ns = {}
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'draft.py')
+    src = open(path, encoding='utf8').read()
+    ns = {'__file__': path}
     exec(src.split('# ---------------------------------------------------------------- heads')[0], ns)
     return ns
 
