@@ -51,9 +51,9 @@ export const MARKS = {
   flame:  { S: part(['.R.', 'RaR', 'aYa', '.a.'], { pivot: [1, 2] }), L: part(['..R..', '.RaR.', 'RaYaR', '.aYa.', '..a..'], { pivot: [2, 3] }) }, // Kitsu
   heart:  { S: part(['q.q', 'qqq', '.q.'], { pivot: [1, 1] }), L: part(['.q.q.', 'qQqqq', 'qqqqq', '.qqq.', '..q..'], { pivot: [2, 2] }) },        // Gloop
   clover: { S: part(['.L.', 'LlL', '.j.'], { pivot: [1, 1] }), L: part(['.l.l.', 'lLlLl', '.lLl.', '..j..'], { pivot: [2, 2] }) },                // Fleece
-  spark:  { S: part(['.Y.', 'YwY', '.Y.'], { pivot: [1, 1] }), L: part(['..Y..', '..Y..', 'YYwYY', '..Y..', '..Y..'], { pivot: [2, 2] }) },        // Glimmer
+  spark:  { S: part(['.y.', 'ywy', '.y.'], { pivot: [1, 1] }), L: part(['..y..', '..Y..', 'yYwYy', '..Y..', '..y..'], { pivot: [2, 2] }) },        // Glimmer
   dots:   { S: part(['7.7.7'], { pivot: [2, 0] }), L: part(['.7.7.', '7.7.7'], { pivot: [2, 1] }) },                                             // Inchy
-  moon:   { S: part(['.YY', 'Y..', '.YY'], { pivot: [1, 1] }), L: part(['..YY', '.Y..', 'Y...', '.Y..', '..YY'], { pivot: [2, 2] }) },             // Hoolet
+  moon:   { S: part(['.YY', 'Yu.', '.YY'], { pivot: [1, 1] }), L: part(['..YY', '.Yu.', 'Yu..', '.Yu.', '..YY'], { pivot: [2, 2] }) },             // Hoolet
 };
 
 // Noses (pivot = top centre)
