@@ -67,6 +67,7 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - **Hidden Village:** find three pieces of an old map in the park and forest. Its elder introduces you to a founder's family, for a partner with pure founder genes.
 - **Gene Book** (Family menu): every body plan, part and body colour, shown on a little pet, with silhouettes for ones not found yet. Your pets fill it in as they grow into their looks, and so do the partners they marry. Each find pays points, and finding every part of a founder's line pays a bonus.
 - **Saving:** automatic saves, catch-up for time spent away, and backup and restore codes.
+- **Updates:** the game checks for a newer release when it starts (and when you come back to it) and reloads into it, so you never play a stale copy. It also opens without a connection, using the last copy it fetched.
 
 ## Project layout
 
@@ -88,7 +89,7 @@ tools/props.html          the hand-pixelled town props, enlarged (?only=a,b&z=4)
 tools/art-scripts/        drafting helpers: town_kit.py for town props, draft.py / ed.py for pet parts
 tools/sketch.mjs          silhouette drafts for hand-pixelling new characters
 tools/dump.mjs            print a composed pet as text for pixel-level review
-sw.js                     service worker for care alerts (no caching)
+sw.js                     service worker: fetches files fresh (offline copy as a fallback) and shows care alerts
 docs/                     research notes and the build plan
 ```
 

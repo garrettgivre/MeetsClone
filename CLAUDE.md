@@ -26,7 +26,8 @@ index.html, style.css      device shell (portrait, phone-first, 3 buttons A/B/C)
 src/engine/                pixel engine: palette (64 colours, ramps like 'pink.0'..'pink.3'), screen, sprite, font, input, audio
 src/game/                  simulation (pet.js), genetics, items, save/migrate, Gene Book (book.js), town state (town.js), pet rendering (pet-art.js), alert wording (alerts.js), debug cheats (cheats.js)
 src/scenes/                home, room, menus, status, minigames, family, gene book, wardrobe, debug menu, town (TownScene / TravelScene / PlaceScene / PhotoScene)
-src/notify.js, sw.js       care alerts: browser notifications through a small service worker (no caching)
+src/notify.js, sw.js       care alerts: browser notifications through the service worker
+src/update.js, sw.js       update check at start; the service worker fetches files fresh and keeps an offline copy
 src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg
 src/art/props.js           hand-pixelled TOWN props (text grids with colour roles)
 src/art/town.js            the 22 town backdrops: a drawing kit + one function per place in SCENES
@@ -105,7 +106,15 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Alerts:** `alertFor(events, pet)` in `src/game/alerts.js` picks the most urgent event and words it; `src/notify.js` shows it through `sw.js`. `main.js` runs a slow timer while the page is hidden (the frame loop stops then) that advances the pet's clock, sends the alert and flags the tab title. There is no push server, so nothing arrives once the browser has closed or suspended the page.
 - **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. A cheat that returns events is played on the home screen by `done()`.
 
-## Status (v0.14.1, October 2026)
+## Updates: how the newest version always shows (v0.14.2)
+
+- There is no build step, so file names never change between releases and browsers would otherwise keep old copies (Pages lets them for ten minutes, and installed apps for longer).
+- `sw.js` answers every same-origin GET from the network first with `cache: 'no-cache'`, and keeps the last good copy in the `meetsclone-offline` cache for when there is no connection. It is registered at start-up for everyone.
+- `src/update.js` `checkForUpdate()` runs at boot and whenever the page becomes visible: it fetches `src/version.js` uncached, and if `VERSION` differs from the running one it saves the game and reloads once (a `sessionStorage` guard stops loops). After the reload the home screen says "Updated to vX".
+- **So every release must bump `src/version.js`**, or open games won't notice it.
+- The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
+
+## Status (v0.14.2, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.

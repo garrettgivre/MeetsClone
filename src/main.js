@@ -6,6 +6,8 @@ import { newGame, advance, needs, MIN } from './game/pet.js';
 import * as store from './game/save.js';
 import { alertFor } from './game/alerts.js';
 import * as notify from './notify.js';
+import { checkForUpdate, justUpdated } from './update.js';
+import { VERSION } from './version.js';
 import { HomeScene } from './scenes/home.js';
 import { dialog, LAYOUT } from './ui.js';
 
@@ -60,8 +62,12 @@ else {
 game.lastReal = Date.now();
 app.game = game;
 setMuted(!game.settings.sound);
-if (game.settings.alerts && notify.permission() === 'granted') notify.registerWorker();
+// the service worker keeps the game's files fresh (and shows care alerts)
+notify.registerWorker();
 app.push(new HomeScene(app));
+// ----- always the newest release: check at start, and again whenever the game comes back to the front -----
+if (justUpdated()) app.toast(`Updated to v${VERSION}!`, 2600);
+checkForUpdate(() => app.save());
 if (app.pendingEvents?.length) app.scene.handleEvents(app.pendingEvents, true);
 
 // ----- input -----
@@ -158,6 +164,7 @@ document.addEventListener('visibilitychange', () => {
   else {
     document.title = TITLE;
     notify.clear();
+    checkForUpdate(() => app.save());
     // catch up on time spent in the background
     const away = Date.now() - app.game.lastReal;
     if (away > 2000) {

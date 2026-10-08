@@ -4,7 +4,8 @@
 // There is no server, so alerts can only be sent while the game is still open
 // somewhere: a background tab, a minimised window or the installed app. A
 // service worker (sw.js) shows them, which phones require, and brings the
-// game to the front when one is tapped.
+// game to the front when one is tapped. (The same worker keeps the game's
+// files up to date, so it is registered at start-up whether alerts are on or not.)
 
 let registration = null;
 
