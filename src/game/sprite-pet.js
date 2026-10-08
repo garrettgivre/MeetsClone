@@ -1,29 +1,12 @@
-// Drawing and animating sprite-resolution pets: the hand-pixelled founders and
-// kit-built children share this pipeline. Each sprite pixel becomes a normal
-// screen pixel (2x2 at double density). Animation is layered on the frame:
+// Drawing and animating sprite-resolution pets built from the parts kit.
+// Each sprite pixel becomes a normal screen pixel (2x2 at double density). Animation is layered on the frame:
 //   breathing   the head (rows above `neck`) bobs down a pixel
 //   walking     a one-pixel hop
 //   expressions eyes are covered with the face colour and redrawn
 //               (blink, happy ^^, wink, sad, sleep, dizzy); mouths open to eat
 
 import { C } from '../engine/palette.js';
-import { lut, colors } from '../engine/sprite.js';
 import { makeBitmap } from '../engine/screen.js';
-import { FOUNDER_ART } from '../art/founders.js';
-import { CRESTS, FACE, BOWTIE, TIE } from '../art/parts.js';
-import { CLOTHES } from './items.js';
-
-export const hasFounderArt = (species) => !!FOUNDER_ART[species];
-
-// Where clothes sit on each founder: top of the head (for hats) and the neck.
-const FIT = {
-  Mogumo: { top: [18, 6], neck: [18, 27] },
-  Kometchi: { top: [19, 8], neck: [19, 29] },
-  Ducklet: { top: [19, 5], neck: [19, 26] },
-  Pipolin: { top: [19, 13], neck: [19, 33] },
-  Lumipom: { top: [20, 6], neck: [20, 29] },
-  Spookit: { top: [19, 9], neck: [19, 32] },
-};
 
 /**
  * Scale and animate a sprite-resolution pet.
@@ -111,54 +94,6 @@ export function animateSprite(src, pose, canvas, ground, scale) {
     }
   }
   return { out, at, ox, oy, bob };
-}
-
-/** Compose a hand-pixelled founder (with hats, glasses and ties when worn). */
-export function composeFounder(species, pose, canvas, ground, scale) {
-  const art = FOUNDER_ART[species];
-  const spr = art.spr, t = lut(spr), f = spr.frames[0];
-  const px = new Uint8Array(spr.w * spr.h);
-  for (let i = 0; i < f.length; i++) px[i] = t[f[i]];
-  const [ew, eh] = art.eyeSize;
-  const src = {
-    px, w: spr.w, h: spr.h, neck: art.neck, floats: art.floats, mouth: art.mouth,
-    faceColour: t[art.face.charCodeAt(0)], keepMouth: species === 'Ducklet',
-    eyeBoxes: art.eyes.map(([x, y]) => [x - Math.floor(ew / 2), y - Math.floor(eh / 2), ew, eh]),
-  };
-  const { out, at, ox, oy } = animateSprite(src, pose, canvas, ground, scale);
-
-  // clothes: hats, glasses, ties (other outfits don't fit hand-drawn bodies yet)
-  const wear = pose.wear || {};
-  const fit = FIT[species];
-  const itemCtx = (id) => colors('cream', CLOTHES[id]?.color || 'pink', 'ink', 'brown');
-  const stampPart = (part, ax, ay, ctx, flip = false) => {
-    const s = part.spr, lt = lut(s, ctx), fr = s.frames[0];
-    for (let j = 0; j < s.h; j++) for (let i = 0; i < s.w; i++) {
-      const c = lt[fr[j * s.w + i]];
-      if (!c) continue;
-      const x = flip ? ax + (s.w - 1 - part.pivot[0]) - i : ax - part.pivot[0] + i;
-      at(x, ay - part.pivot[1] + j, c);
-    }
-  };
-  if (fit && wear.head && CRESTS[wear.head]) stampPart(CRESTS[wear.head], fit.top[0], fit.top[1], itemCtx(wear.head));
-  if (fit && wear.face && FACE[wear.face]?.lens) {
-    art.eyes.forEach(([ex, ey], i) => stampPart(FACE[wear.face].lens, ex, ey, itemCtx(wear.face), i === 1));
-  }
-  if (fit && (wear.body === 'bowtie' || wear.body === 'tie')) {
-    const part = wear.body === 'bowtie' ? BOWTIE : TIE;
-    const s = part.spr, lt = lut(s, itemCtx(wear.body)), fr = s.frames[0];
-    const scaleBox = canvas / (canvas / scale); // = scale
-    for (let j = 0; j < s.h; j++) for (let i = 0; i < s.w; i++) {
-      const c = lt[fr[j * s.w + i]];
-      if (!c) continue;
-      const X = ox + fit.neck[0] - part.pivot[0] + i, Y = oy + fit.neck[1] - part.pivot[1] + j;
-      for (let b = 0; b < scaleBox; b++) for (let a = 0; a < scaleBox; a++) {
-        const xx = X * scaleBox + a, yy = Y * scaleBox + b;
-        if (xx >= 0 && yy >= 0 && xx < canvas && yy < canvas) out.px[yy * canvas + xx] = c;
-      }
-    }
-  }
-  return out;
 }
 
 /** Wrap a kit-built pet (from render-kit.js) for scaling and animation. */

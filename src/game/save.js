@@ -52,6 +52,12 @@ export function migrate(g) {
     if (asClothes('back', p.back)) p.back = 'none';
     if (asClothes('feet', p.feet)) p.feet = 'stubs';
     delete p.outfit; delete p.face;
+    // retired / renamed parts (v0.8)
+    const RENAMED = { ears: { flower: 'leaf', pigtail: 'puff' }, back: { shell: 'none' }, mouth: { beak: 'teeth' } };
+    for (const [gene, map] of Object.entries(RENAMED)) {
+      if (map[p[gene]]) p[gene] = map[p[gene]];
+      if (pet.genome?.[gene]) pet.genome[gene] = pet.genome[gene].map(a => map[a] || a);
+    }
     if (pet.genome) {
       delete pet.genome.outfit; delete pet.genome.face;
       const fix = { crest: 'none', back: 'none', feet: 'stubs' };

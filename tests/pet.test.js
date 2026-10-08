@@ -151,11 +151,3 @@ test('clothes are bought, worn and swapped, but not inherited', () => {
   assert.equal(g.album.at(-1).wear.body, 'scarf');
 });
 
-test('becoming a founder gifts its signature outfit', () => {
-  const rng = makeRng(11);
-  const g = newGame(NINE_AM, rng);
-  caredFor(g, 3 * MIN + HOUR + 48 * HOUR + 14 * HOUR, rng);
-  const f = FOUNDERS.find(f => f.name === g.pet.species);
-  for (const id of Object.values(f.wear)) assert.ok(g.wardrobe.includes(id), id);
-  assert.deepEqual(g.pet.wear, {}, 'hand-drawn founders start undressed');
-});

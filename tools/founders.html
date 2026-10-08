@@ -3,62 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Founder Sprites</title>
+<title>Founder Review</title>
 <style>
-  body { margin: 0; padding: 16px; font: 14px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
-  h1 { font-size: 18px; margin: 0 0 12px; }
-  .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 18px; }
-  figure { margin: 0; text-align: center; font-size: 12px; }
-  canvas { image-rendering: pixelated; background: #e9f6fb; border-radius: 10px; }
+  body { margin: 0; padding: 12px; font: 13px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
+  h2 { font-size: 15px; margin: 16px 0 2px; }
+  p { margin: 0 0 6px; font-size: 12px; opacity: .8; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; }
+  figure { margin: 0; text-align: center; font-size: 11px; }
+  canvas { image-rendering: pixelated; background: #e9f6fb; border-radius: 8px; }
+  label { margin-right: 10px; }
 </style>
 </head>
 <body>
-<h1>Founder Sprites (hand-pixelled)</h1>
+<label>Founder <select id="pick"><option value="">All</option></select></label>
+<label><input id="extra" type="checkbox" checked> Stages and expressions</label>
 <div id="out"></div>
 <script type="module">
+// One sheet per founder, built from the parts kit exactly as the game draws it.
 import { PACKED } from '../src/engine/palette.js';
-import { lut } from '../src/engine/sprite.js';
-import { FOUNDER_ART } from '../src/art/founders.js';
+import { makeRng } from '../src/engine/rng.js';
 import { composePet } from '../src/game/render.js';
 import { FOUNDERS, pureGenome, express } from '../src/game/genetics.js';
 
 const out = document.getElementById('out');
-function spriteCanvas(spr, scale) {
-  const c = document.createElement('canvas');
-  c.width = spr.w; c.height = spr.h;
-  c.style.width = spr.w * scale + 'px'; c.style.height = spr.h * scale + 'px';
-  const ctx = c.getContext('2d'); const img = ctx.createImageData(spr.w, spr.h); const u = new Uint32Array(img.data.buffer);
-  const t = lut(spr); const f = spr.frames[0];
-  for (let i = 0; i < f.length; i++) { const p = t[f[i]]; if (p) u[i] = PACKED[p]; }
-  ctx.putImageData(img, 0, 0);
-  return c;
-}
-function bitmapCanvas(bm, scale) {
+const pick = document.getElementById('pick');
+for (const f of FOUNDERS) pick.append(new Option(f.name, f.name));
+const params = new URLSearchParams(location.search);
+if (params.get('f')) pick.value = params.get('f');
+
+function show(bm, label, row, size) {
   const c = document.createElement('canvas'); c.width = bm.w; c.height = bm.h;
-  c.style.width = bm.w * scale + 'px'; c.style.height = bm.h * scale + 'px';
+  c.style.width = c.style.height = size + 'px';
   const ctx = c.getContext('2d'); const img = ctx.createImageData(bm.w, bm.h); const u = new Uint32Array(img.data.buffer);
   for (let i = 0; i < bm.px.length; i++) if (bm.px[i]) u[i] = PACKED[bm.px[i]];
   ctx.putImageData(img, 0, 0);
-  return c;
+  const f = document.createElement('figure'); f.append(c, document.createElement('br'), label); row.append(f);
 }
-const fig = (el, label) => { const f = document.createElement('figure'); f.append(el, document.createElement('br'), label); return f; };
-for (const [name, art] of Object.entries(FOUNDER_ART)) {
-  const row = document.createElement('div'); row.className = 'row';
-  const f = FOUNDERS.find(x => x.name === name);
-  row.append(fig(spriteCanvas(art.spr, 8), name + ' (new, 8x)'));
-  row.append(fig(spriteCanvas(art.spr, 3), 'new, game size'));
-  if (f) row.append(fig(bitmapCanvas(composePet(express(pureGenome(f.traits)), 'adult', {}), 1.5), 'kit-built from genes'));
-  out.append(row);
-  // expression and animation sheet, as the game draws it
-  const sheet = document.createElement('div'); sheet.className = 'row';
-  const p = f ? express(pureGenome(f.traits)) : null;
-  for (const [label, pose] of [['idle', {}], ['breathe', { bob: 1 }], ['hop', { step: 1 }], ['blink', { expr: 'blink' }], ['happy', { expr: 'happy' }],
-    ['wink', { expr: 'wink' }], ['eat', { expr: 'eat' }], ['sad', { expr: 'sad' }], ['sleep', { expr: 'sleep' }], ['dizzy', { expr: 'dizzy' }],
-    ['cap + glasses', { wear: { head: 'cap', face: 'glasses', body: 'bowtie' } }]]) {
-    sheet.append(fig(bitmapCanvas(composePet(p, 'adult', { species: name, ...pose }), 1.5), label));
+function render() {
+  out.innerHTML = '';
+  const list = pick.value ? FOUNDERS.filter(f => f.name === pick.value) : FOUNDERS;
+  const big = +params.get('s') || (list.length === 1 ? 384 : 256);
+  if (params.has('grid')) {
+    // everyone side by side, to compare the founders as a set
+    const r = document.createElement('div'); r.className = 'row'; out.append(r);
+    for (const f of list) show(composePet(express(pureGenome(f.traits), makeRng(1)), 'adult', { gender: 'f' }), f.name, r, +params.get('s') || 190);
+    return;
   }
-  out.append(sheet);
+  for (const f of list) {
+    const p = express(pureGenome(f.traits), makeRng(1));
+    const h = document.createElement('h2'); h.textContent = `${f.name}, the ${f.line} line`;
+    const d = document.createElement('p');
+    d.textContent = Object.entries(f.traits).filter(([, v]) => v !== 'none').map(([k, v]) => `${k} ${v}`).join(' · ');
+    const r = document.createElement('div'); r.className = 'row';
+    out.append(h, d, r);
+    show(composePet(p, 'adult', { gender: 'f' }), 'adult', r, big);
+    show(composePet(p, 'adult', { gender: 'f' }), '1x', r, 64);
+    if (!document.getElementById('extra').checked) continue;
+    for (const s of ['baby', 'child', 'teen']) show(composePet(p, s, { gender: 'f' }), s, r, 128);
+    for (const e of ['happy', 'blink', 'sad', 'eat', 'dizzy']) show(composePet(p, 'adult', { expr: e, gender: 'm' }), e, r, 128);
+    show(composePet(p, 'adult', { arms: 'wave', step: 1, gender: 'm' }), 'wave', r, 128);
+  }
 }
+pick.onchange = () => { history.replaceState(null, '', pick.value ? '?f=' + pick.value : '?'); render(); };
+document.getElementById('extra').onchange = render;
+render();
 </script>
 </body>
 </html>

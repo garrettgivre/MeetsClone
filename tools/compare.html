@@ -40,12 +40,8 @@ function section(title) {
 function render() {
   out.innerHTML = '';
   const rng = makeRng(+document.getElementById('seed').value || 1);
-  let r = section('Founders: hand-drawn vs built from their genes');
-  for (const f of FOUNDERS) {
-    const p = express(pureGenome(f.traits), rng);
-    show(composePet(p, 'adult', { species: f.name, gender: 'f' }), f.name, r);
-    show(composePet(p, 'adult', { gender: 'f' }), 'kit', r);
-  }
+  let r = section('Founders');
+  for (const f of FOUNDERS) show(composePet(express(pureGenome(f.traits), rng), 'adult', { gender: 'f' }), f.name, r);
   r = section('Children of founder pairs');
   for (let i = 0; i < 12; i++) {
     const a = rng.pick(FOUNDERS), b = rng.pick(FOUNDERS.filter(x => x !== a));

@@ -132,7 +132,7 @@ import { randomOutfit } from '../src/game/pet.js';
 import { makeRng as outfitRng } from '../src/engine/rng.js';
 import { hash } from '../src/engine/rng.js';
 import {
-  FOUNDERS, ALL_GENES, GENES, GENE_LABELS, pureGenome, randomGenome, express, inherit, childOdds, carried, randomName, founderOf,
+  FOUNDERS, ALL_GENES, GENES, GENE_LABELS, pureGenome, randomGenome, express, inherit, childOdds, carried, randomName, lineOf,
 } from '../src/game/genetics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -166,7 +166,7 @@ function genotypeTable(pet) {
     const [a, b] = pet.genome[g] || ['?', '?'];
     const shown = pet.phenotype[g];
     const cls = (x) => (x === shown ? 'dom' : 'rec carried');
-    const tag = (x) => (founderOf(g, x) ? `<span class="fo" title="Founder-only: from ${founderOf(g, x)}">${x}◆</span>` : x);
+    const tag = (x) => (lineOf(g, x) ? `<span class="fo" title="From the ${lineOf(g, x)} line">${x}</span>` : x);
     const blended = shown !== a && shown !== b ? ` → <span class="dom">${shown}</span>` : '';
     return `<tr><td>${GENE_LABELS[g]}</td><td><span class="${cls(a)}">${tag(a)}</span> / <span class="${cls(b)}">${tag(b)}</span>${blended}</td></tr>`;
   }).join('');
@@ -199,7 +199,7 @@ function parentPanel(which) {
   const body = document.createElement('div');
   body.className = 'pet';
   const info = document.createElement('div');
-  info.innerHTML = `<b>${pet.name} ${sym(pet.gender)}</b><br><span class="muted">bold = showing, purple = carried, ◆ = founder-only</span>${genotypeTable(pet)}`;
+  info.innerHTML = `<b>${pet.name} ${sym(pet.gender)}</b><br><span class="muted">bold = showing, purple = carried; hover a part to see its founder line</span>${genotypeTable(pet)}`;
   body.append(canvasFor(pet, 'big'), info);
   el.append(top, body);
 }

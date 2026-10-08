@@ -1,12 +1,11 @@
-// Pet rendering entry point. Every pet is sprite-resolution pixel art:
-//   - generation-1 adult founders use their hand-pixelled sprites (src/art/founders.js)
-//   - everyone else is assembled from the hand-pixelled parts kit (src/art/kit.js)
-// Both are scaled and animated by src/game/founder-render.js.
+// Pet rendering entry point. Every pet, founders included, is sprite-resolution
+// pixel art assembled from the hand-pixelled parts kit (src/art/kit.js) by
+// src/game/render-kit.js, then scaled and animated by src/game/sprite-pet.js.
 
 import { C } from '../engine/palette.js';
 import { makeBitmap } from '../engine/screen.js';
 import { scale2x, thinOutlines } from '../engine/upscale.js';
-import { composeFounder, hasFounderArt, composeKitSprite } from './founder-render.js';
+import { composeKitSprite } from './sprite-pet.js';
 import { composeKit, composeKitEgg } from './render-kit.js';
 
 // Pets are drawn into a double-density bitmap. CANVAS and GROUND are in
@@ -21,11 +20,10 @@ const HC = CANVAS * S, HG = GROUND * S;
  * pose: {
  *   expr: 'idle'|'blink'|'happy'|'sad'|'eat'|'chew'|'sleep'|'sick'|'dizzy'|'wink',
  *   arms: 'down'|'up'|'out'|'wave', step: 0|1|2 (walking), bob: 0|1, gender: 'm'|'f', t: ms,
- *   wear: clothing ids (hats, glasses, ties on founders), species: founder name
+ *   wear: clothing ids (not drawn yet)
  * }
  */
 export function composePet(phenotype, stage, pose = {}) {
-  if (stage === 'adult' && pose.species && hasFounderArt(pose.species)) return composeFounder(pose.species, pose, HC, HG, S);
   return composeKitSprite(composeKit(phenotype, stage, pose), pose, HC, HG, S);
 }
 

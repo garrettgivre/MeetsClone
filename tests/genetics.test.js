@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRng } from '../src/engine/rng.js';
 import {
-  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS, carried, childOdds, drift, FOUNDER_ONLY, founderOf, PART_GENES,
+  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS, carried, childOdds, drift, LINEAGE, lineOf, PART_GENES,
 } from '../src/game/genetics.js';
 
 test('random genomes have two valid alleles per gene', () => {
@@ -107,7 +107,7 @@ test('childOdds sums to 1 for every gene', () => {
 });
 
 // Placements and temperament aren't body parts; "none" means the part is absent.
-const NOT_PARTS = ['size', 'eyeSet', 'appetite', 'energy', 'taste', 'aura', 'pattern'];
+const NOT_PARTS = ['size', 'eyeSet', 'appetite', 'energy', 'taste'];
 
 test('no two founders share a body part', () => {
   for (const gene of PART_GENES.filter(g => !NOT_PARTS.includes(g))) {
@@ -121,40 +121,18 @@ test('no two founders share a body part', () => {
   }
 });
 
-test('founder-only parts belong to the right founder and never appear in the wild', () => {
-  for (const [gene, map] of Object.entries(FOUNDER_ONLY)) {
-    for (const [allele, name] of Object.entries(map)) {
-      const f = FOUNDERS.find(f => f.name === name);
-      assert.ok(f, name);
-      assert.equal(f.traits[gene], allele, `${name} should carry ${gene}: ${allele}`);
-      assert.ok(allele in GENES[gene], `${gene}: ${allele} is a real allele`);
+test('every part belongs to exactly one founder', () => {
+  for (const gene of PART_GENES.filter(g => !NOT_PARTS.includes(g))) {
+    for (const allele of Object.keys(GENES[gene])) {
+      if (allele === 'none' || (gene === 'feet' && allele === 'float' && false)) continue;
+      const owners = FOUNDERS.filter(f => (f.traits[gene] ?? 'none') === allele).map(f => f.name);
+      assert.equal(owners.length, 1, `${gene}: ${allele} belongs to ${owners.join(', ') || 'nobody'}`);
+      assert.equal(lineOf(gene, allele), owners[0]);
     }
-  }
-  const rng = makeRng(12);
-  for (let i = 0; i < 2000; i++) {
-    const g = randomGenome(rng);
-    for (const gene of Object.keys(FOUNDER_ONLY)) for (const a of g[gene]) assert.equal(founderOf(gene, a), null, `${gene}: ${a}`);
   }
 });
 
-test('founder-only parts are passed down to children', () => {
-  const rng = makeRng(13);
-  const duck = pureGenome(FOUNDERS.find(f => f.name === 'Ducklet').traits);
-  let bills = 0;
-  for (let i = 0; i < 200; i++) if (inherit(duck, randomGenome(rng), rng).mouth.includes('bill')) bills++;
-  assert.ok(bills > 180, `every child should carry the bill (mutations aside): ${bills}`);
-});
-
-test("a founder's signature parts show in its first-generation children", () => {
-  const rng = makeRng(14);
-  const duck = pureGenome(FOUNDERS.find(f => f.name === 'Ducklet').traits);
-  const mole = pureGenome(FOUNDERS.find(f => f.name === 'Mogumo').traits);
-  for (let i = 0; i < 50; i++) {
-    const kid = inherit(duck, mole, rng);
-    if (kid.mouth.includes('bill') && kid.nose.includes('snout')) {
-      const p = express(kid, rng);
-      assert.equal(p.mouth, 'bill');
-      assert.equal(p.nose, 'snout');
-    }
-  }
+test('every founder has its own body colour', () => {
+  const colours = FOUNDERS.map(f => f.traits.color);
+  assert.equal(new Set(colours).size, colours.length);
 });

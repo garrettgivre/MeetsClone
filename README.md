@@ -39,17 +39,14 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Attention calls and care mistakes.
   - Toothaches from too many snacks.
 - **Pets can die or run away:** from untreated illness or starvation, or from long unhappiness.
-- **Generation 1:** the quality of your care decides which of 6 original founder characters your pet becomes. Founders are hand-pixelled sprites with breathing, blinking and expression animation. Their children are built from a hand-pixelled parts kit in the same style, and founder parts are transcribed from the founders themselves (see `docs/STYLE.md`).
-- **Founders:**
-  - No two founders share a body part.
-  - Each brings founder-only parts that exist nowhere else: Ducklet's bill, flippers and bib; Mogumo's muzzle, droopy eyes, stout build and heart belly; Kometchi's comet and star mark; Pipolin's twin tails, tiny feet and heart cheeks; Lumipom's pom-poms and fairy wings; Spookit's horns, moon mark and devil tail.
-  - Founder-only parts are dominant, so they're passed down family lines and never appear on matchmaker partners.
+- **Generation 1:** the quality of your care decides which of 14 original founder characters your pet becomes (Mogumo the sleepy bear, Kometchi the comet kitty, Ducklet, Pipolin the bunny idol, Lumipom the pom-pom fairy, Spookit the little imp, Fawnly the forest fawn, Pupplo the puppy, Hamuchi the hamster, Gillybop the axolotl, Sproutle the plant sprite, Drakko the baby dragon, Bolto the robot and Nocti the night bat). Every pet is hand-pixel art built from the parts kit, with breathing, blinking and expression animation (see `docs/STYLE.md`).
+- **Founders are the genetic lines:** every body part in the game belongs to exactly one founder, and no two founders share a part. The Pairing Lab shows which line each part comes from.
 - **Genetics:** every trait has two alleles with dominance, so recessive traits can skip a generation.
   - Size blends (small × large = medium), colours can blend or drift around the colour wheel, and rare mutations happen.
   - Looks: head shape, size, eyes, eye spacing, mouth, nose, forehead mark, hair, ears (drawn to scale with the head), top, back, body build, belly, feet, markings, cheeks, a very rare sparkle aura, and body, accent, eye and hair colour.
   - Temperament genes (appetite, energy, taste) change how the pet plays.
   - The status screen shows the hidden genes a pet carries.
-- **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu). Each founder arrives with a signature outfit.
+- **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu).
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
 - **Economy:** Gotchi Points, a food and toy shop, favourite foods and toys, and the Jump Rope minigame.
 - **Family:** a matchmaker (3 partners a day), a wedding, the next-generation egg, and a family album.
@@ -65,10 +62,10 @@ src/game/                 simulation, genetics, rendering, items, saving
 src/scenes/               home, menus, status, minigames, family, endings
 tests/                    node --test unit tests for game logic
 tools/sprite-editor/      in-browser editor for the sprite format
-tools/gallery.html        preview founders, growth stages, expressions and poses
+tools/gallery.html        preview growth stages, expressions, poses and every part
 tools/lab.html            Pairing Lab: breed any two pets, inspect genes, odds, random pairings, lineages
-tools/founders.html       hand-pixelled founders at 8x, game size, and their expression sheets
-tools/compare.html        art review: founders vs their kit-built twins, children, wild pets, growth, expressions
+tools/founders.html       founder review sheets (?f=Name&s=560 for one, ?grid for the set)
+tools/compare.html        art review: founders, children, wild pets, growth, expressions
 tools/sketch.mjs          silhouette drafts for hand-pixelling new characters
 docs/                     research notes and the build plan
 ```
