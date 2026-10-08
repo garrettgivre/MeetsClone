@@ -3,7 +3,7 @@
 // rim shade, glossy eyes, blush and hair.
 //
 // Babies are a round head only; kids gain feet; teens a little body and arms;
-// adults get outfits, headgear and back parts.
+// adults get headgear and back parts. Clothes (pose.wear) fit teens and adults.
 // The result is composed into an off-screen bitmap so it can be flipped
 // or drawn as a silhouette.
 
@@ -11,9 +11,10 @@ import { C, ramp } from '../engine/palette.js';
 import { colors, lut } from '../engine/sprite.js';
 import { makeBitmap } from '../engine/screen.js';
 import {
-  EYES, BABY_EYES, LASH, MOUTHS, MOUTH_FX, EYE_FX, EARS, CRESTS, BACKS, FEET, CHEEKS, ARMS, BOWTIE, TIE, HAIR_PARTS,
+  EYES, BABY_EYES, LASH, MOUTHS, MOUTH_FX, EYE_FX, EARS, CRESTS, BACKS, FEET, CHEEKS, ARMS, BOWTIE, TIE, HAIR_PARTS, FACE,
 } from '../art/parts.js';
 import { stageTraits } from './genetics.js';
+import { CLOTHES } from './items.js';
 
 const SHAPES = {
   round:   { aw: 1.0,  ah: 1.0,  n: 2.0 },
@@ -143,19 +144,22 @@ function headBitmap(t, stage) {
 }
 
 function torsoBitmap(t, stage) {
-  const key = ['t', t.outfit, t.color, t.accent, t.pattern, stage].join('|');
+  const key = ['t', t.outfit, t.outfitColor, t.color, t.accent, t.pattern, stage].join('|');
   let b = cache.get(key);
   if (b) return b;
   const [, , tw, th] = STAGE_SIZE[stage];
   const dress = t.outfit === 'dress';
+  const oc = t.outfitColor || t.accent;
   const s = { n: 2.6, pear: dress ? 0.55 : 0.3 };
   const w = tw + (dress ? 4 : 0), h = th;
   const white = C('white');
-  const r = raster(w, h, s, (u, v) => {
+  const r = raster(w, h, s, (u, v, x, y) => {
     switch (t.outfit) {
-      case 'dress': return v > 0.6 ? (v > 0.75 ? white : C('mist')) : v > -0.45 ? t.accent : t.color;
-      case 'overalls': return v > -0.05 || (Math.abs(Math.abs(u) - 0.42) < 0.14) ? t.accent : t.color;
-      case 'scarf': return v < -0.3 ? t.accent : t.color;
+      case 'sweater': return y % 3 === 2 && v > -0.5 ? C('white') : oc;
+      case 'sash': return Math.abs(u + v * 0.9) < 0.24 ? oc : t.color;
+      case 'dress': return v > 0.6 ? (v > 0.75 ? white : C('mist')) : v > -0.45 ? oc : t.color;
+      case 'overalls': return v > -0.05 || (Math.abs(Math.abs(u) - 0.42) < 0.14) ? oc : t.color;
+      case 'scarf': return v < -0.3 ? oc : t.color;
       case 'collar': return v < -0.1 && Math.abs(u) > (v + 0.9) * 0.55 ? white : t.color;
       case 'apron': return Math.abs(u) < 0.48 && v > -0.4 ? white : t.color;
       default: return (t.pattern === 'socks' || t.pattern === 'mask') && (u / 0.5) ** 2 + ((v - 0.25) / 0.7) ** 2 <= 1 ? t.accent : t.color; // belly
@@ -198,17 +202,27 @@ export const GROUND = 61; // y of the feet inside it
  * Compose a pet.
  * pose: {
  *   expr: 'idle'|'blink'|'happy'|'sad'|'eat'|'chew'|'sleep'|'sick'|'dizzy'|'wink',
- *   arms: 'down'|'up'|'out'|'wave', step: 0|1 (walking), bob: 0|1, gender: 'm'|'f'
+ *   arms: 'down'|'up'|'out'|'wave', step: 0|1|2 (walking), bob: 0|1, gender: 'm'|'f', t: ms (sparkles),
+ *   wear: { head, face, body, back, feet } clothing item ids
  * }
  */
 export function composePet(phenotype, stage, pose = {}) {
   const t = stageTraits(phenotype, stage);
   const ctx = colors(t.color, t.accent, t.eyeColor, t.hairColor || 'brown');
+  // clothes: only teens and adults dress up; each item has its own colour
+  const wear = stage === 'teen' || stage === 'adult' ? (pose.wear || {}) : {};
+  const itemCtx = (id) => colors(t.color, CLOTHES[id]?.color || t.accent, t.eyeColor, t.hairColor || 'brown');
+  t.outfit = wear.body || 'none';
+  t.outfitColor = CLOTHES[wear.body]?.color;
+  if (wear.back === 'cape') t.back = 'cape';
+  const shoes = wear.feet === 'shoes' && t.feet !== 'float';
+  if (shoes) t.feet = 'shoes';
   const out = makeBitmap(CANVAS, CANVAS);
   const head = headBitmap(t, stage);
   const hasTorso = STAGE_SIZE[stage][2] > 0;
   const torso = hasTorso ? torsoBitmap(t, stage) : null;
   const feet = FEET[t.feet];
+  const feetCtx = shoes ? itemCtx('shoes') : ctx;
   const footH = feet ? feet.spr.h - 2 : 0;
   const lift = t.feet === 'float' ? 3 : 0;
   const bob = pose.bob ? 1 : 0;
@@ -240,7 +254,7 @@ export function composePet(phenotype, stage, pose = {}) {
     for (let y = top; y <= GROUND - 1; y++) {
       const spread = 2 + Math.floor((y - top) / 3);
       const l = tx + torso.sideL - spread, r = tx + torso.sideR + spread;
-      for (let x = l; x <= r; x++) put(out, x, y, x === l || x === r || y === GROUND - 1 ? C('ink') : C(x < cx - 4 ? 'red.2' : 'red.1'));
+      for (let x = l; x <= r; x++) put(out, x, y, x === l || x === r || y === GROUND - 1 ? C('ink') : ramp(CLOTHES.cape.color, x < cx - 4 ? 2 : 1));
     }
   } else if (back?.pair) {
     stamp(out, back, bodyL + 1, bodyMidY, ctx);
@@ -259,13 +273,13 @@ export function composePet(phenotype, stage, pose = {}) {
   let armsY = 0;
   if (torso) {
     // feet first so the body sits on them
-    if (feet) drawFeet(out, feet, ctx, cx, ty + torso.h - 2, Math.max(3, Math.round(torso.w * 0.22)), step, even);
+    if (feet) drawFeet(out, feet, feetCtx, cx, ty + torso.h - 2, Math.max(3, Math.round(torso.w * 0.22)), step, even);
     blit(out, torso.bm, tx, ty);
-    if (t.outfit === 'bowtie') stamp(out, BOWTIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, ctx);
-    if (t.outfit === 'tie' || t.outfit === 'collar') stamp(out, TIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, ctx);
+    if (t.outfit === 'bowtie') stamp(out, BOWTIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx('bowtie'));
+    if (t.outfit === 'tie' || t.outfit === 'collar') stamp(out, TIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx(t.outfit));
     armsY = ty + 4;
   } else if (feet) {
-    drawFeet(out, feet, ctx, cx, hy + head.h - 3 - bob, Math.max(3, Math.round(head.w * 0.22)), step, even);
+    drawFeet(out, feet, feetCtx, cx, hy + head.h - 3 - bob, Math.max(3, Math.round(head.w * 0.22)), step, even);
   }
 
   // arms are drawn in front, after the head
@@ -287,11 +301,14 @@ export function composePet(phenotype, stage, pose = {}) {
     stamp(out, ears, exR, ey, ctx, true);
   }
   if (t.hair === 'spiky') stamp(out, HAIR_PARTS.spikes, hcx - (even ? 1 : 0), hy + head.top + 2, ctx);
-  const crest = CRESTS[t.crest];
+  // a hat replaces the natural crest while it's worn
+  const hat = wear.head && CRESTS[wear.head];
+  const crest = hat || CRESTS[t.crest];
+  const crestCtx = hat ? itemCtx(wear.head) : ctx;
   const crestX = hcx - (even ? 1 : 0) + (crest?.offset || 0);
-  if (crest && !crest.front) stamp(out, crest, crestX, hy + head.top + 1, ctx);
+  if (crest && !crest.front) stamp(out, crest, crestX, hy + head.top + 1, crestCtx);
   blit(out, head.bm, hx, hy);
-  if (crest && crest.front) stamp(out, crest, crestX, hy + head.top + 1, ctx);
+  if (crest && crest.front) stamp(out, crest, crestX, hy + head.top + 1, crestCtx);
   if (torso) { drawArm(armL, -1); drawArm(armR, 1); }
 
   // ----- face -----
@@ -332,6 +349,22 @@ export function composePet(phenotype, stage, pose = {}) {
       stamp(out, LASH, exR + eye.pivot[0], top, ctx, true);
     }
   }
+  // face accessories (glasses go over the eyes, stickers on a cheek)
+  const face = FACE[wear.face];
+  const faceCtx = itemCtx(wear.face);
+  if (face) {
+    if (face.lens) {
+      stamp(out, face.lens, exL, ey, faceCtx);
+      if (!face.oneSide) {
+        stamp(out, face.lens, exR, ey, faceCtx, true);
+        const l = exL + face.lens.pivot[0] + 1, r = exR - face.lens.pivot[0] - 1;
+        for (let x = l; x <= r; x++) put(out, x, ey - 1, C(face.bridge));
+      } else if (face.chain) {
+        for (let i = 0; i < 6; i++) put(out, exL - 3 - (i >> 1), ey + 3 + i, C(i % 2 ? 'gold.1' : 'gold.3'));
+      }
+    }
+    if (face.cheek) stamp(out, face.cheek, exR + 3, ey + 5, faceCtx);
+  }
   let mouth = MOUTHS[t.mouth] || MOUTHS.smile;
   const beak = mouth === MOUTHS.beak;
   if (expr === 'eat') mouth = beak ? mouth : MOUTH_FX.open;
@@ -340,6 +373,19 @@ export function composePet(phenotype, stage, pose = {}) {
   else if (expr === 'sad' || expr === 'sick') mouth = beak ? mouth : MOUTH_FX.sad;
   else if (expr === 'sleep') mouth = beak ? mouth : MOUTHS.tiny;
   stamp(out, mouth, hcx, hy + head.mouthY, ctx);
+
+  // rare aura: twinkling sparkles around the pet
+  if (t.aura === 'sparkle') {
+    const tick = Math.floor((pose.t || 0) / 160);
+    const spots = [[-1.1, -0.2], [1.15, 0.1], [-0.6, -1.05], [0.75, -0.95], [-1.25, 0.8], [1.2, 0.85]];
+    spots.forEach(([sx, sy], i) => {
+      const phase = (tick + i * 2) % 6;
+      if (phase > 2) return;
+      const x = Math.round(hcx + sx * head.w / 2), y = Math.round(hy + head.h / 2 + sy * head.h / 2);
+      put(out, x, y, C('white'));
+      if (phase === 1) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) put(out, x + dx, y + dy, C('gold.3'));
+    });
+  }
   return out;
 }
 

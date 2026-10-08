@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRng } from '../src/engine/rng.js';
 import {
-  newGame, advance, feed, clean, medicine, toggleLights, buy, findPartner, marry, canMarry,
+  newGame, advance, feed, clean, medicine, toggleLights, buy, findPartner, marry, canMarry, toggleWear,
   MIN, HOUR, STAGE_LENGTH, MARRY_AFTER,
 } from '../src/game/pet.js';
 import { FOUNDERS } from '../src/game/genetics.js';
@@ -128,4 +128,34 @@ test('the shop spends points', () => {
   assert.ok(buy(g, 'food', 'cookie').ok);
   assert.equal(g.points, 85);
   assert.equal(buy(g, 'toy', 'plushie').ok, false);
+});
+
+test('clothes are bought, worn and swapped, but not inherited', () => {
+  const rng = makeRng(10);
+  const g = newGame(NINE_AM, rng);
+  g.points = 1000;
+  assert.ok(buy(g, 'clothes', 'cap').ok);
+  assert.equal(buy(g, 'clothes', 'cap').ok, false, 'cannot buy twice');
+  advance(g, STAGE_LENGTH.egg + MIN, rng);
+  assert.equal(toggleWear(g, 'cap').ok, false, 'babies are too little');
+  g.pet.stage = 'adult';
+  assert.ok(toggleWear(g, 'cap').worn);
+  assert.ok(toggleWear(g, 'bow').worn, 'bow replaces the cap in the head slot');
+  assert.equal(g.pet.wear.head, 'bow');
+  assert.equal(toggleWear(g, 'bow').worn, false);
+  assert.equal(g.pet.wear.head, undefined);
+  toggleWear(g, 'scarf');
+  g.pet.adultMs = MARRY_AFTER;
+  const egg = marry(g, findPartner(g, rng), rng);
+  assert.deepEqual(egg.wear, {});
+  assert.equal(g.album.at(-1).wear.body, 'scarf');
+});
+
+test('becoming a founder gifts its signature outfit', () => {
+  const rng = makeRng(11);
+  const g = newGame(NINE_AM, rng);
+  caredFor(g, 3 * MIN + HOUR + 48 * HOUR + 14 * HOUR, rng);
+  const f = FOUNDERS.find(f => f.name === g.pet.species);
+  for (const id of Object.values(f.wear)) assert.ok(g.wardrobe.includes(id), id);
+  assert.deepEqual(g.pet.wear, f.wear);
 });

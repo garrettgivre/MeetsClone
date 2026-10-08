@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRng } from '../src/engine/rng.js';
 import {
-  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS,
+  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS, carried, childOdds, drift,
 } from '../src/game/genetics.js';
 
 test('random genomes have two valid alleles per gene', () => {
@@ -38,7 +38,7 @@ test('children get one allele from each parent (apart from mutations)', () => {
   let fromBoth = 0, total = 0;
   for (let i = 0; i < 300; i++) {
     const c = inherit(mom, dad, rng);
-    for (const gene of ['eyes', 'ears', 'crest', 'outfit']) {
+    for (const gene of ['eyes', 'ears', 'crest', 'hair']) {
       total++;
       if (c[gene][0] === mom[gene][0] && c[gene][1] === dad[gene][0]) fromBoth++;
     }
@@ -71,5 +71,37 @@ test('accent colour never matches body colour', () => {
   for (let i = 0; i < 300; i++) {
     const p = express(randomGenome(rng), rng);
     assert.notEqual(p.color, p.accent);
+  }
+});
+
+test('size is incompletely dominant: small x large gives medium', () => {
+  const rng = makeRng(8);
+  const g = pureGenome({});
+  g.size = ['small', 'large'];
+  for (let i = 0; i < 30; i++) assert.equal(express(g, rng).size, 'medium');
+  g.size = ['small', 'small'];
+  assert.equal(express(g, rng).size, 'small');
+});
+
+test('colours sometimes drift one step around the wheel', () => {
+  const rng = makeRng(9);
+  for (let i = 0; i < 20; i++) assert.ok(['red', 'gold'].includes(drift('orange', rng)));
+  assert.equal(drift('cream', rng), 'cream');
+});
+
+test('carried() lists hidden alleles only', () => {
+  const g = pureGenome({ crest: 'none', color: 'pink', accent: 'cream' });
+  g.crest = ['none', 'crown'];
+  const p = express(g, makeRng(10));
+  const hidden = carried(g, p);
+  assert.deepEqual(hidden, [{ gene: 'crest', allele: 'crown' }]);
+});
+
+test('childOdds sums to 1 for every gene', () => {
+  const rng = makeRng(11);
+  const odds = childOdds(randomGenome(rng), randomGenome(rng), 200, rng);
+  for (const gene of ALL_GENES) {
+    const total = odds[gene].reduce((a, [, p]) => a + p, 0);
+    assert.ok(Math.abs(total - 1) < 1e-9, gene);
   }
 });

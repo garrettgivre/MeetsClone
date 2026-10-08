@@ -8,7 +8,7 @@ import { rand as defaultRng, hash } from '../engine/rng.js';
 import {
   express, inherit, starterGenome, pureGenome, founderFor, randomGenome, randomName,
 } from './genetics.js';
-import { FOODS, TOYS, COLOR_FOOD_MEALS } from './items.js';
+import { FOODS, TOYS, CLOTHES, SLOTS, COLOR_FOOD_MEALS } from './items.js';
 
 export const MIN = 60 * 1000;
 export const HOUR = 60 * MIN;
@@ -42,6 +42,7 @@ export function newGame(now = Date.now(), rng = defaultRng) {
     points: 100,
     inventory: { cookie: 3, omelette: 2, juice: 2 },
     toys: ['ball'],
+    wardrobe: ['bow', 'scarf'],
     settings: { sound: true, speed: 1 },
     generation: 1,
     album: [],
@@ -85,6 +86,7 @@ export function newPet({ generation, genome, parents = null, name }, now, rng = 
     colorMeals: {},
     paused: false,
     pettedAt: 0,
+    wear: {},            // clothing: { head, face, body, back, feet } -> item id
     bornAt: now,
   };
 }
@@ -240,6 +242,9 @@ function grow(game, pet, events, rng) {
     pet.genome = { ...pureGenome(f.traits), ...keep };
     pet.phenotype = express(pet.genome, rng);
     pet.species = f.name;
+    // the founder's signature outfit is a gift
+    for (const id of Object.values(f.wear || {})) if (!game.wardrobe.includes(id)) game.wardrobe.push(id);
+    pet.wear = { ...f.wear };
   }
   if (from === 'egg') emit(events, 'hatch');
   else emit(events, 'grow', { stage: pet.stage });
@@ -249,7 +254,7 @@ function grow(game, pet, events, rng) {
 function retire(game, pet, fate, extra = {}) {
   game.album.push({
     name: pet.name, gender: pet.gender, generation: pet.generation, phenotype: pet.phenotype,
-    stage: pet.stage, species: pet.species || null, fate, ageMs: pet.ageMs, endedAt: game.simTime, ...extra,
+    stage: pet.stage, species: pet.species || null, wear: { ...(pet.wear || {}) }, fate, ageMs: pet.ageMs, endedAt: game.simTime, ...extra,
   });
 }
 
@@ -362,14 +367,40 @@ export function canAct(pet) { return pet && !pet.gone && pet.stage !== 'egg'; }
 export function earn(game, n) { game.points = Math.min(999999, game.points + Math.max(0, Math.floor(n))); }
 
 export function buy(game, kind, id) {
-  const item = kind === 'food' ? FOODS[id] : TOYS[id];
+  const item = kind === 'food' ? FOODS[id] : kind === 'toy' ? TOYS[id] : CLOTHES[id];
   if (!item) return { ok: false };
-  if (kind === 'toy' && game.toys.includes(id)) return { ok: false, msg: 'Already owned!' };
+  const owned = kind === 'toy' ? game.toys : kind === 'clothes' ? game.wardrobe : null;
+  if (owned?.includes(id)) return { ok: false, msg: 'Already owned!' };
   if (game.points < item.price) return { ok: false, msg: 'Not enough points!' };
   game.points -= item.price;
   if (kind === 'food') game.inventory[id] = (game.inventory[id] || 0) + 1;
-  else game.toys.push(id);
+  else owned.push(id);
   return { ok: true };
+}
+
+/** Clothes fit teens and adults. */
+export function canDress(pet) { return canAct(pet) && (pet.stage === 'teen' || pet.stage === 'adult'); }
+
+/** Put an owned item on (or take it off if it's already worn). */
+export function toggleWear(game, id) {
+  const pet = game.pet, item = CLOTHES[id];
+  if (!item || !game.wardrobe.includes(id)) return { ok: false };
+  if (!canDress(pet)) return { ok: false, msg: 'Too little for clothes!' };
+  pet.wear = pet.wear || {};
+  if (pet.wear[item.slot] === id) { delete pet.wear[item.slot]; return { ok: true, worn: false }; }
+  pet.wear[item.slot] = id;
+  return { ok: true, worn: true };
+}
+
+/** A random outfit for matchmaker partners (0-3 items). */
+export function randomOutfit(rng = defaultRng) {
+  const wear = {};
+  const n = rng.int(4);
+  for (let i = 0; i < n; i++) {
+    const id = rng.pick(Object.keys(CLOTHES));
+    wear[CLOTHES[id].slot] = id;
+  }
+  return wear;
 }
 
 // ---------- Marriage ----------
@@ -388,6 +419,7 @@ export function findPartner(game, rng = defaultRng) {
     gender: game.pet.gender === 'm' ? 'f' : 'm',
     genome,
     phenotype: express(genome, rng),
+    wear: randomOutfit(rng),
   };
 }
 
@@ -396,7 +428,7 @@ export function marry(game, partner, rng = defaultRng) {
   const pet = game.pet;
   const [mom, dad] = pet.gender === 'f' ? [pet, partner] : [partner, pet];
   const genome = inherit(mom.genome, dad.genome, rng);
-  retire(game, pet, 'married', { partner: { name: partner.name, phenotype: partner.phenotype } });
+  retire(game, pet, 'married', { partner: { name: partner.name, phenotype: partner.phenotype, wear: partner.wear || {} } });
   game.generation = pet.generation + 1;
   game.pet = newPet({ generation: game.generation, genome, parents: [pet.name, partner.name] }, game.simTime, rng);
   return game.pet;

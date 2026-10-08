@@ -5,8 +5,9 @@ import { LAYOUT, COL, titleBar, heartRow, text } from '../ui.js';
 import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
 import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry } from '../game/pet.js';
 import { TOYS } from '../game/items.js';
+import { carried, GENE_LABELS } from '../game/genetics.js';
 
-const PAGES = ['PROFILE', 'NEEDS', 'PERSONALITY', 'LOOKS'];
+const PAGES = ['PROFILE', 'NEEDS', 'PERSONALITY', 'LOOKS', 'HIDDEN GENES'];
 
 function age(ms) {
   const h = Math.floor(ms / HOUR);
@@ -34,7 +35,7 @@ export class StatusScene {
     // portrait
     scr.panel(W / 2 - 30, ry + 15, 60, 52, C('sky.3'), COL.ink);
     const bm = pet.stage === 'egg' ? composeEgg(pet.generation > 1 ? pet.phenotype : null)
-      : composePet(pet.phenotype, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender });
+      : composePet(pet.phenotype, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender, wear: pet.wear });
     scr.setClip(W / 2 - 29, ry + 16, 58, 50);
     scr.bitmap(bm, W / 2 - CANVAS / 2, ry + 64 - GROUND);
     scr.noClip();
@@ -71,11 +72,22 @@ export class StatusScene {
         break;
       case 'LOOKS':
         if (pet.stage === 'egg') { line('???', 'HATCH FIRST!'); break; }
-        for (const [k, label] of [['shape', 'HEAD'], ['eyes', 'EYES'], ['mouth', 'MOUTH'], ['ears', 'EARS'], ['crest', 'TOP'], ['outfit', 'OUTFIT'], ['back', 'BACK'], ['feet', 'FEET'], ['color', 'COLOUR']]) {
+        for (const [k, label] of [['shape', 'HEAD'], ['eyes', 'EYES'], ['hair', 'HAIR'], ['ears', 'EARS'], ['crest', 'TOP'], ['back', 'BACK'], ['feet', 'FEET'], ['size', 'SIZE'], ['color', 'COLOUR']]) {
           if (y > ry + rh - 8) break;
           line(label, p[k]);
         }
         break;
+      case 'HIDDEN GENES': {
+        // recessive alleles this pet carries and could pass on
+        if (pet.stage === 'egg') { line('???', 'HATCH FIRST!'); break; }
+        const hidden = carried(pet.genome, p);
+        if (!hidden.length) { text(scr, 'NOTHING HIDDEN:', W / 2, y, COL.gray, { align: 'center' }); y += 9; text(scr, 'WHAT YOU SEE IS', W / 2, y, COL.gray, { align: 'center' }); y += 9; text(scr, 'WHAT IT PASSES ON', W / 2, y, COL.gray, { align: 'center' }); break; }
+        for (const h of hidden) {
+          if (y > ry + rh - 8) { text(scr, `+${hidden.length - hidden.indexOf(h)} MORE`, W / 2, y, COL.gray, { align: 'center' }); break; }
+          line(GENE_LABELS[h.gene].toUpperCase(), h.allele, C('violet.1'));
+        }
+        break;
+      }
     }
   }
 }

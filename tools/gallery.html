@@ -42,6 +42,8 @@ function render() {
   out.innerHTML = '';
   let r = section('Founders (generation 1 adults)');
   const founders = FOUNDERS.map(f => ({ ...f, p: express(pureGenome(f.traits)) }));
+  founders.forEach((f, i) => show(composePet(f.p, 'adult', { gender: i % 2 ? 'm' : 'f', wear: f.wear }), f.name, r));
+  r = section('Founders without clothes (genes only)');
   founders.forEach((f, i) => show(composePet(f.p, 'adult', { gender: i % 2 ? 'm' : 'f' }), f.name, r));
   r = section('Growth: egg, baby, child, teen, adult');
   const p = express(randomGenome());

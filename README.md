@@ -11,7 +11,14 @@ A mobile-first virtual pet for the browser, inspired by the gameplay of *Tamagot
 python -m http.server 5173
 ```
 
-Add `?dev` to the URL for developer options in Settings: a time speed-up and free points.
+Add `?dev` to the URL for developer options in Settings: a time speed-up, free points, and links to the Pairing Lab and Gallery.
+
+**Pairing Lab:** open `tools/lab.html` (also on the live site) to test genetics.
+- **One pair:** choose two parents (random or founders), see a litter of children with any new traits starred, inspect any child's genes, and use it as a new parent. Shows the odds of every trait from 500 simulated children.
+- **Random pairings:** many random couples and their kids at once.
+- **Lineage:** follow one family line across several generations.
+
+The seed makes results repeatable, and "Random clothes" previews outfits.
 
 ## Controls
 
@@ -33,9 +40,12 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Toothaches from too many snacks.
 - **Pets can die or run away:** from untreated illness or starvation, or from long unhappiness.
 - **Generation 1:** the quality of your care decides which of 6 original founder characters your pet becomes.
-- **Genetics:** every trait has two alleles with dominance, so recessive traits can skip a generation. Colours can blend and rare mutations happen.
-  - Looks: head shape, size, eyes, mouth, ears, top, back, outfit, feet, markings, cheeks, body colour, accent colour and eye colour.
+- **Genetics:** every trait has two alleles with dominance, so recessive traits can skip a generation.
+  - Size blends (small × large = medium), colours can blend or drift around the colour wheel, and rare mutations happen.
+  - Looks: head shape, size, eyes, mouth, hair, ears, top, back, feet, markings, cheeks, a very rare sparkle aura, and body, accent, eye and hair colour.
   - Temperament genes (appetite, energy, taste) change how the pet plays.
+  - The status screen shows the hidden genes a pet carries.
+- **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu). Each founder arrives with a signature outfit.
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
 - **Economy:** Gotchi Points, a food and toy shop, favourite foods and toys, and the Jump Rope minigame.
 - **Family:** a matchmaker (3 partners a day), a wedding, the next-generation egg, and a family album.
@@ -51,7 +61,8 @@ src/game/                 simulation, genetics, rendering, items, saving
 src/scenes/               home, menus, status, minigames, family, endings
 tests/                    node --test unit tests for game logic
 tools/sprite-editor/      in-browser editor for the sprite format
-tools/gallery.html        preview founders, growth stages and random genetics
+tools/gallery.html        preview founders, growth stages, expressions and poses
+tools/lab.html            Pairing Lab: breed any two pets, inspect genes, odds, random pairings, lineages
 docs/                     research notes and the build plan
 ```
 

@@ -1,13 +1,14 @@
 // Menus opened from the home screen icons.
 import { ListMenu } from '../ui.js';
 import { FOOD_ART, TOY_ART, ICONS } from '../art/icons.js';
-import { FOODS, TOYS } from '../game/items.js';
+import { FOODS, TOYS, CLOTHES, SLOTS, SLOT_LABEL } from '../game/items.js';
 import { buy, canMarry, MARRY_AFTER, HOUR } from '../game/pet.js';
 import { setMuted } from '../engine/audio.js';
 import { exportCode, importCode } from '../game/save.js';
 import { StatusScene } from './status.js';
 import { JumpRopeScene } from './jumprope.js';
 import { MatchmakerScene, AlbumScene } from './family.js';
+import { WardrobeScene, clothesIcon } from './wardrobe.js';
 
 export function openMenu(app, name, home) {
   const menus = { status, food, games, items, shop, family, settings };
@@ -45,10 +46,14 @@ function games(app) {
 
 function items(app, home) {
   const g = app.game;
-  app.push(new ListMenu(app, 'TOYS', g.toys.map(id => ({
+  const toys = () => app.push(new ListMenu(app, 'TOYS', g.toys.map(id => ({
     label: TOYS[id].name, icon: TOY_ART[id],
     action: () => { app.home(); home.doPlay(id); },
   })), { footer: 'BUY MORE IN THE SHOP' }));
+  app.push(new ListMenu(app, 'ITEMS', [
+    { label: 'Toys', icon: TOY_ART.ball, right: g.toys.length, action: toys },
+    { label: 'Wardrobe', icon: ICONS.items, right: g.wardrobe.length, action: () => app.push(new WardrobeScene(app)) },
+  ]));
 }
 
 function shop(app) {
@@ -75,9 +80,22 @@ function shop(app) {
     })), { footer: () => `POINTS: ${g.points}` });
     app.push(m);
   };
+  const clothesList = () => {
+    const ids = Object.keys(CLOTHES).sort((a, b) => SLOTS.indexOf(CLOTHES[a].slot) - SLOTS.indexOf(CLOTHES[b].slot) || CLOTHES[a].price - CLOTHES[b].price);
+    app.push(new ListMenu(app, 'CLOTHES SHOP', ids.map(id => ({
+      label: CLOTHES[id].name, ...clothesIcon(id),
+      right: g.wardrobe.includes(id) ? 'OWNED' : CLOTHES[id].price,
+      action: (_, item) => {
+        const r = buy(g, 'clothes', id);
+        if (r.ok) { app.sfx('coin'); item.right = 'OWNED'; app.toast(`Bought the ${CLOTHES[id].name}! Try it on in Items.`, 1800); app.save(); }
+        else { app.sfx('nope'); app.toast(r.msg); }
+      },
+    })), { footer: () => `POINTS: ${g.points}` }));
+  };
   app.push(new ListMenu(app, 'SHOP', [
     { label: 'Food', icon: ICONS.food, right: '▶', action: foodList },
-    { label: 'Toys', icon: ICONS.items, right: '▶', action: toyList },
+    { label: 'Toys', icon: TOY_ART.ball, right: '▶', action: toyList },
+    { label: 'Clothes', icon: ICONS.items, right: '▶', action: clothesList },
   ], { footer: () => `POINTS: ${g.points}` }));
 }
 
@@ -136,6 +154,8 @@ function settings(app) {
       it.right = 'x' + g.settings.speed;
     } });
     items.push({ label: 'Dev +500 pts', action: () => { g.points += 500; app.toast('+500'); } });
+    items.push({ label: 'Pairing Lab', right: '▶', action: () => window.open('tools/lab.html', '_blank') });
+    items.push({ label: 'Gallery', right: '▶', action: () => window.open('tools/gallery.html', '_blank') });
   }
   app.push(new ListMenu(app, 'SETTINGS', items));
 }

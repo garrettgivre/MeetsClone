@@ -15,7 +15,7 @@ const BOTTOM = ['games', 'items', 'shop', 'family', 'settings'];
 const ALL = [...TOP, ...BOTTOM];
 const LABEL = {
   status: 'STATUS', food: 'FOOD', clean: 'CLEAN UP', medicine: 'MEDICINE', lights: 'LIGHTS',
-  games: 'GAMES', items: 'TOYS', shop: 'SHOP', family: 'FAMILY', settings: 'SETTINGS',
+  games: 'GAMES', items: 'ITEMS', shop: 'SHOP', family: 'FAMILY', settings: 'SETTINGS',
 };
 const STAGE_NAME = { egg: 'EGG', baby: 'BABY', child: 'CHILD', teen: 'TEEN', adult: 'ADULT' };
 const POOP_X = [104, 116, 92, 80];
@@ -316,7 +316,7 @@ export class HomeScene {
           break;
       }
     }
-    const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender });
+    const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear });
     const x = Math.round(this.petX - CANVAS / 2);
     if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
     else scr.bitmap(bm, x, baseY + dy, flip, solid);

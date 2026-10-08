@@ -35,3 +35,32 @@ export const TOYS = {
 };
 
 export const COLOR_FOOD_MEALS = 5;
+
+// Clothing is bought and worn, never inherited. Teens and adults can dress up.
+// `color` is the item's own colour ramp (the id doubles as the art key).
+export const SLOTS = ['head', 'face', 'body', 'back', 'feet'];
+export const SLOT_LABEL = { head: 'HEAD', face: 'FACE', body: 'BODY', back: 'BACK', feet: 'FEET' };
+export const CLOTHES = {
+  bow:      { name: 'Bow',          slot: 'head', price: 60,  color: 'pink' },
+  ribbon:   { name: 'Side Ribbon',  slot: 'head', price: 60,  color: 'red' },
+  cap:      { name: 'Cap',          slot: 'head', price: 80,  color: 'blue' },
+  beret:    { name: 'Beret',        slot: 'head', price: 90,  color: 'red' },
+  tiara:    { name: 'Tiara',        slot: 'head', price: 250, color: 'sky' },
+  crown:    { name: 'Crown',        slot: 'head', price: 300, color: 'gold' },
+  glasses:  { name: 'Glasses',      slot: 'face', price: 80,  color: 'slate' },
+  shades:   { name: 'Shades',       slot: 'face', price: 100, color: 'slate' },
+  monocle:  { name: 'Monocle',      slot: 'face', price: 150, color: 'gold' },
+  bandaid:  { name: 'Bandage',      slot: 'face', price: 20,  color: 'cream' },
+  sticker:  { name: 'Star Sticker', slot: 'face', price: 30,  color: 'gold' },
+  bowtie:   { name: 'Bow Tie',      slot: 'body', price: 70,  color: 'red' },
+  tie:      { name: 'Necktie',      slot: 'body', price: 70,  color: 'indigo' },
+  scarf:    { name: 'Scarf',        slot: 'body', price: 80,  color: 'orange' },
+  sweater:  { name: 'Sweater',      slot: 'body', price: 110, color: 'green' },
+  overalls: { name: 'Overalls',     slot: 'body', price: 120, color: 'blue' },
+  dress:    { name: 'Dress',        slot: 'body', price: 140, color: 'pink' },
+  collar:   { name: 'Sailor Top',   slot: 'body', price: 100, color: 'blue' },
+  apron:    { name: 'Apron',        slot: 'body', price: 60,  color: 'gold' },
+  sash:     { name: 'Sash',         slot: 'body', price: 90,  color: 'violet' },
+  cape:     { name: 'Cape',         slot: 'back', price: 160, color: 'red' },
+  shoes:    { name: 'Shoes',        slot: 'feet', price: 70,  color: 'red' },
+};

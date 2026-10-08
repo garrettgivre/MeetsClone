@@ -75,6 +75,9 @@ export const EARS = {
   leaf:    P(['..oo', '.olo', 'olLo', 'oLo.', '.o..'], [2, 4]),
   pigtail: P(['..oo.', '.o77o', 'o777o', 'o767o', '.o66o', '..oo.'], [4, 1], { side: true }),
   puff:    P(['.oo.oo.', 'o77o77o', 'o777777o', '.o7777o'], [5, 3]),
+  flower:  P(['.o.o.', 'ofofo', '.oYo.', 'ofofo', '.o.o.'], [3, 4]),
+  wings:   P(['oo....', 'owoo..', 'owwwoo', '.owmmo', '..ooo.'], [5, 2], { side: true }),
+  antlers: P(['n.n..', 'nnn.n', '.nnnn', '..nn.', '..n..'], [3, 4]),
 };
 
 // ---------- Crests (centred on top of the head) ----------
@@ -85,8 +88,11 @@ export const CRESTS = {
   sprout:  P(['oo...oo', 'olo.olo', '.olLlo.', '..oLo..', '...o...'], [3, 4]),
   bow:     P(['.oo...oo.', 'oPfo.ofPo', 'oPffoffPo', 'oPfo.ofPo', '.oo...oo.'], [4, 2], { front: true }),
   ribbon:  P(['oo.oo', 'o7o7o', '.o6o.', 'o7o7o', 'oo.oo'], [2, 3], { front: true, offset: 6 }),
-  cap:     P(['...ooooo...', '..o77777o..', '.o7777777o.', 'o766666667o', 'ooooooooooo'], [5, 3], { front: true }),
-  beret:   P(['....o....', '..ooooo..', '.o77777o.', 'o7777777o', '.ooooooo.'], [4, 3], { front: true }),
+  cap:     P(['....ooooooo....', '...o7777777o...', '..o778777777o..', '.o77777777777o.', 'o6666666666666o', 'ooooooooooooooo'], [7, 4], { front: true }),
+  beret:   P(['.....o.....', '...ooooo...', '.oo77777oo.', 'o777787777o', 'o666666666o', '.ooooooooo.'], [5, 4], { front: true }),
+  bobble:  P(['.ooo.', 'oPPfo', 'oPffo', '.ooo.', '..o..', '..o..'], [2, 5]),
+  swirl:   P(['...o..', '..o3o.', '.o3oo.', 'o3o3o.', 'o333oo', '.o3333o'], [3, 5]),
+  tiara:   P(['...o...', '..oBo..', '.oyoyo.', 'oyyoyyo', '.ooooo.'], [3, 3], { front: true }),
   horn:    P(['.o.', 'oPo', 'oGo', 'oPo', 'oGo'], [1, 4]),
   crown:   P(['o..o..o', 'oyoyoyo', 'oyYyYyo', 'oyyyyyo', 'ooooooo'], [3, 3], { front: true }),
   flame:   P(['..o..', '.oao.', 'oaAao', 'oAyAo', '.ooo.'], [2, 4]),
@@ -101,6 +107,7 @@ export const BACKS = {
   wings:    P(['..ooo', '.owwo', 'owwmo', 'owmmo', '.ooo.'], [4, 2], { pair: true }),
   bat:      P(['o.o..', 'o6o.o', 'o666o', '.o66o', '..ooo'], [4, 2], { pair: true }),
   fairy:    P(['.oo..', 'oBso.', 'osBo.', '.oBo.', '..oo.'], [3, 2], { pair: true }),
+  butterfly: P(['.ooo..', 'oPPfo.', 'oPYPfo', '.oPffo', '.ofo.o', '..oo..'], [5, 2], { pair: true }),
   pomtail:  P(['.oo.', 'o78o', 'o77o', '.oo.'], [0, 2], { tail: true }),
   longtail: P(['...oo', '..o3o', '.o3o.', 'o3o..', 'o3o..'], [0, 4], { tail: true }),
   fishtail: P(['o...', 'oo..', 'o7o.', 'o77o', 'o7o.', 'oo..', 'o...'], [0, 3], { tail: true }),
@@ -139,6 +146,16 @@ export const HAIR_PARTS = {
   twintail: P(['..oo', '.o0o', 'o00o', 'o90o', 'o90o', 'o99o', '.o9o', '..oo'], [3, 1]),
   // a big curly puff behind the head
   puff: P(['..oooooooo..', '.o00000000o.', 'o0000000000o', 'o0000000000o', 'o9000000009o', 'o99......99o'], [6, 2]),
+};
+
+// ---------- Face accessories (adults) ----------
+// lens: drawn around each eye (left, mirrored); bridge joins the two.
+export const FACE = {
+  glasses: { lens: P(['.ooooo.', 'o.....o', 'o.....o', 'o.....o', 'o.....o', 'o.....o', 'o.....o', '.ooooo.'], [3, 4]), bridge: 'ink' },
+  shades:  { lens: P(['ooooooo', 'oKKKKKo', 'oKmKKKo', 'oKKKKKo', '.ooooo.'], [3, 2]), bridge: 'ink', hidesEyes: true },
+  monocle: { lens: P(['.oyyyo.', 'oy...yo', 'y.....y', 'y.....y', 'y.....y', 'oy...yo', '.oyyyo.'], [3, 3]), oneSide: true, chain: true },
+  bandaid: { cheek: P(['.oooo.', 'oTwwTo', '.oooo.'], [3, 1]) },
+  sticker: { cheek: P(['..o..', '.oYo.', 'oYYYo', '.oYo.'], [2, 1]) },
 };
 
 // ---------- Cheeks (left, mirrored) ----------

@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pairing Lab</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --ink: #262459; --muted: #7a7894; --line: #e3ddd0;
+    --accent: #e0609a; --accent-soft: #fde3ef; --dom: #262459; --rec: #a8a5bd;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  header { position: sticky; top: 0; z-index: 2; background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; }
+  label { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+  input, select, button { font: inherit; color: var(--ink); }
+  input, select { padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  input[type=number] { width: 64px; }
+  button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tabs { display: flex; gap: 4px; }
+  .tabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+  h2 { font-size: 15px; margin: 22px 0 8px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .parents { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; }
+  .heart { font-size: 26px; color: var(--accent); align-self: center; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+  .pet { display: flex; gap: 10px; align-items: flex-start; }
+  canvas { image-rendering: pixelated; background: #eaf6fc; border-radius: 8px; flex: none; }
+  .big { width: 192px; height: 192px; }
+  .med { width: 128px; height: 128px; }
+  .small { width: 96px; height: 96px; }
+  table { border-collapse: collapse; font-size: 12px; width: 100%; }
+  td { padding: 1px 6px 1px 0; vertical-align: top; white-space: nowrap; }
+  td:first-child { color: var(--muted); }
+  .dom { color: var(--dom); font-weight: 600; }
+  .rec { color: var(--rec); }
+  .rec.carried { color: #8a4fc4; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .kids { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 8px; }
+  .kid { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 4px; text-align: center; cursor: pointer; }
+  .kid.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .kid .tag { font-size: 11px; color: var(--muted); }
+  .kid .new { color: var(--accent); font-weight: 700; }
+  .odds { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+  .odds .card { padding: 8px 10px; }
+  .bar { display: grid; grid-template-columns: 78px 1fr 38px; gap: 6px; align-items: center; font-size: 12px; }
+  .bar i { display: block; height: 8px; border-radius: 4px; background: var(--accent); }
+  .pairs .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
+  .pairs .x { font-size: 18px; color: var(--accent); margin: 0 2px; }
+  .pairs .arrow { color: var(--muted); margin: 0 6px; }
+  .lineage .gen { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .lineage .gen b { width: 34px; font-size: 12px; color: var(--muted); }
+  #detail { position: sticky; top: 64px; }
+  .layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+    .parents { grid-template-columns: 1fr; }
+    .heart { justify-self: center; }
+    .big { width: 144px; height: 144px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pairing Lab</h1>
+  <div class="tabs" id="tabs">
+    <button data-tab="pair" class="on">One pair</button>
+    <button data-tab="random">Random pairings</button>
+    <button data-tab="lineage">Lineage</button>
+  </div>
+  <label>Seed <input id="seed" type="number" value="1"></label>
+  <button id="reseed" title="New random seed">New seed</button>
+  <label>Show as <select id="stage"><option>adult</option><option>teen</option><option>child</option><option>baby</option></select></label>
+  <label>Kids <input id="kidCount" type="number" value="12" min="1" max="60"></label>
+  <label><input type="checkbox" id="dress"> Random clothes <span class="muted">(not genetic)</span></label>
+</header>
+
+<main>
+  <section id="tab-pair">
+    <div class="layout">
+      <div>
+        <div class="parents">
+          <div class="card" id="parentA"></div>
+          <div class="heart">♥</div>
+          <div class="card" id="parentB"></div>
+        </div>
+        <h2>Children <span class="muted">click one to inspect it; <b class="new" style="font-weight:700">★</b> = visible traits neither parent shows</span></h2>
+        <div class="tools">
+          <button class="primary" id="moreKids">New litter</button>
+          <button id="swap">Swap parents</button>
+        </div>
+        <div class="kids" id="kids"></div>
+        <h2>Odds for this pair <span class="muted">(500 simulated children)</span></h2>
+        <div class="odds" id="odds"></div>
+      </div>
+      <aside>
+        <div class="card" id="detail"><span class="muted">Select a child to see its genes.</span></div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="tab-random" hidden>
+    <div class="tools">
+      <button class="primary" id="rerollPairs">New random pairings</button>
+      <label>Pairs <input id="pairCount" type="number" value="8" min="1" max="30"></label>
+      <label>Kids each <input id="pairKids" type="number" value="4" min="1" max="10"></label>
+      <label><input type="checkbox" id="useFounders"> parents from founders only</label>
+    </div>
+    <div class="pairs" id="pairs"></div>
+  </section>
+
+  <section id="tab-lineage" hidden>
+    <div class="tools">
+      <button class="primary" id="rerollLineage">New lineage</button>
+      <label>Generations <input id="genCount" type="number" value="8" min="2" max="30"></label>
+      <span class="muted">Each generation: one random child marries a random matchmaker partner.</span>
+    </div>
+    <div class="lineage" id="lineage"></div>
+  </section>
+</main>
+
+<script type="module">
+import { PACKED } from '../src/engine/palette.js';
+import { makeRng } from '../src/engine/rng.js';
+import { composePet, CANVAS } from '../src/game/render.js';
+import { randomOutfit } from '../src/game/pet.js';
+import { makeRng as outfitRng } from '../src/engine/rng.js';
+import { hash } from '../src/engine/rng.js';
+import {
+  FOUNDERS, ALL_GENES, GENES, GENE_LABELS, pureGenome, randomGenome, express, inherit, childOdds, carried, randomName,
+} from '../src/game/genetics.js';
+
+const $ = (id) => document.getElementById(id);
+let rng = makeRng(1);
+
+// ---------- helpers ----------
+function canvasFor(pet, cls, stage = $('stage').value) {
+  const c = document.createElement('canvas');
+  c.width = c.height = CANVAS;
+  c.className = cls;
+  // clothes are cosmetic: a stable random outfit per pet name, only when asked for
+  const wear = $('dress').checked ? randomOutfit(outfitRng(hash(pet.name + JSON.stringify(pet.genome.color)))) : {};
+  const bm = composePet(pet.phenotype, stage, { gender: pet.gender, t: 160, wear });
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(CANVAS, CANVAS);
+  const u = new Uint32Array(img.data.buffer);
+  for (let i = 0; i < bm.px.length; i++) u[i] = bm.px[i] ? PACKED[bm.px[i]] : 0;
+  ctx.putImageData(img, 0, 0);
+  return c;
+}
+
+function makePet(genome, gender, name) {
+  return { genome, phenotype: express(genome, rng), gender: gender || (rng.chance(0.5) ? 'f' : 'm'), name: name || randomName(rng) };
+}
+
+function randomParent(gender) { return makePet(randomGenome(rng), gender); }
+function founderParent(f, gender) { return makePet(pureGenome(f.traits), gender, f.name); }
+
+function genotypeTable(pet) {
+  const rows = ALL_GENES.map(g => {
+    const [a, b] = pet.genome[g] || ['?', '?'];
+    const shown = pet.phenotype[g];
+    const cls = (x) => (x === shown ? 'dom' : 'rec carried');
+    const blended = shown !== a && shown !== b ? ` → <span class="dom">${shown}</span>` : '';
+    return `<tr><td>${GENE_LABELS[g]}</td><td><span class="${cls(a)}">${a}</span> / <span class="${cls(b)}">${b}</span>${blended}</td></tr>`;
+  }).join('');
+  return `<table>${rows}</table>`;
+}
+
+const sym = (g) => (g === 'f' ? '♀' : '♂');
+
+// ---------- one pair ----------
+const state = { A: null, B: null, kids: [], sel: -1 };
+
+function parentPanel(which) {
+  const el = $('parent' + which);
+  const pet = state[which];
+  el.innerHTML = '';
+  const top = document.createElement('div');
+  top.className = 'tools';
+  const sel = document.createElement('select');
+  sel.innerHTML = `<option value="">Random genome</option>` + FOUNDERS.map((f, i) => `<option value="${i}">Founder: ${f.name}</option>`).join('');
+  sel.value = pet.founder ?? '';
+  sel.onchange = () => {
+    const g = which === 'A' ? 'f' : 'm';
+    state[which] = sel.value === '' ? randomParent(g) : Object.assign(founderParent(FOUNDERS[+sel.value], g), { founder: sel.value });
+    refreshPair();
+  };
+  const reroll = document.createElement('button');
+  reroll.textContent = 'Re-roll';
+  reroll.onclick = () => { state[which] = randomParent(which === 'A' ? 'f' : 'm'); refreshPair(); };
+  top.append(sel, reroll);
+  const body = document.createElement('div');
+  body.className = 'pet';
+  const info = document.createElement('div');
+  info.innerHTML = `<b>${pet.name} ${sym(pet.gender)}</b><br><span class="muted">bold = showing, purple = carried</span>${genotypeTable(pet)}`;
+  body.append(canvasFor(pet, 'big'), info);
+  el.append(top, body);
+}
+
+function litter() {
+  const n = Math.max(1, Math.min(60, +$('kidCount').value || 12));
+  state.kids = Array.from({ length: n }, () => {
+    const genome = inherit(state.A.genome, state.B.genome, rng);
+    return makePet(genome);
+  });
+  state.sel = -1;
+}
+
+function novel(kid) {
+  // traits the child shows that neither parent shows
+  const looks = ALL_GENES.filter(g => !['appetite', 'energy', 'taste'].includes(g));
+  return looks.filter(g => kid.phenotype[g] !== state.A.phenotype[g] && kid.phenotype[g] !== state.B.phenotype[g]);
+}
+
+function renderKids() {
+  const el = $('kids');
+  el.innerHTML = '';
+  state.kids.forEach((k, i) => {
+    const d = document.createElement('div');
+    d.className = 'kid' + (i === state.sel ? ' sel' : '');
+    const nov = novel(k);
+    d.append(canvasFor(k, 'med'));
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = `${k.name} ${sym(k.gender)}${nov.length ? ` <span class="new" title="${nov.map(g => GENE_LABELS[g] + ': ' + k.phenotype[g]).join(', ')}">★${nov.length}</span>` : ''}${k.phenotype.aura === 'sparkle' ? ' ✨' : ''}`;
+    d.append(tag);
+    d.onclick = () => { state.sel = i; renderKids(); renderDetail(); };
+    el.append(d);
+  });
+}
+
+function renderDetail() {
+  const el = $('detail');
+  const k = state.kids[state.sel];
+  if (!k) { el.innerHTML = '<span class="muted">Select a child to see its genes.</span>'; return; }
+  el.innerHTML = '';
+  const nov = novel(k);
+  const head = document.createElement('div');
+  head.innerHTML = `<b>${k.name} ${sym(k.gender)}</b>`;
+  const row = document.createElement('div');
+  row.className = 'tools';
+  for (const s of ['baby', 'child', 'teen', 'adult']) {
+    const c = canvasFor(k, 'small', s);
+    c.title = s;
+    c.style.width = c.style.height = '60px';
+    row.append(c);
+  }
+  const btns = document.createElement('div');
+  btns.className = 'tools';
+  const asA = document.createElement('button'); asA.textContent = 'Use as parent A';
+  const asB = document.createElement('button'); asB.textContent = 'Use as parent B';
+  asA.onclick = () => { state.A = { ...k, gender: 'f', founder: undefined }; refreshPair(); };
+  asB.onclick = () => { state.B = { ...k, gender: 'm', founder: undefined }; refreshPair(); };
+  btns.append(asA, asB);
+  const info = document.createElement('div');
+  const hidden = carried(k.genome, k.phenotype);
+  info.innerHTML = genotypeTable(k)
+    + (nov.length ? `<p class="muted"><b class="new">★ New:</b> ${nov.map(g => `${GENE_LABELS[g]} (${k.phenotype[g]})`).join(', ')}</p>` : '')
+    + `<p class="muted">Carries ${hidden.length} hidden allele${hidden.length === 1 ? '' : 's'}.</p>`;
+  el.append(head, row, btns, info);
+}
+
+function renderOdds() {
+  const odds = childOdds(state.A.genome, state.B.genome, 500, rng);
+  const el = $('odds');
+  el.innerHTML = '';
+  for (const g of ALL_GENES) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<b>${GENE_LABELS[g]}</b>` + odds[g].slice(0, 5).map(([v, p]) =>
+      `<div class="bar"><span>${v}</span><i style="width:${Math.max(2, p * 100)}%"></i><span>${Math.round(p * 100)}%</span></div>`).join('')
+      + (odds[g].length > 5 ? `<div class="muted">+${odds[g].length - 5} rarer outcomes</div>` : '');
+    el.append(card);
+  }
+}
+
+function refreshPair(newLitter = true) {
+  parentPanel('A');
+  parentPanel('B');
+  if (newLitter) litter();
+  renderKids();
+  renderDetail();
+  renderOdds();
+}
+
+$('moreKids').onclick = () => { litter(); renderKids(); renderDetail(); };
+$('swap').onclick = () => { [state.A, state.B] = [state.B, state.A]; state.A.gender = 'f'; state.B.gender = 'm'; refreshPair(); };
+
+// ---------- random pairings ----------
+function renderPairs() {
+  const el = $('pairs');
+  el.innerHTML = '';
+  const n = Math.max(1, Math.min(30, +$('pairCount').value || 8));
+  const kidsEach = Math.max(1, Math.min(10, +$('pairKids').value || 4));
+  for (let i = 0; i < n; i++) {
+    const A = $('useFounders').checked ? founderParent(rng.pick(FOUNDERS), 'f') : randomParent('f');
+    const B = $('useFounders').checked ? founderParent(rng.pick(FOUNDERS), 'm') : randomParent('m');
+    const row = document.createElement('div');
+    row.className = 'row';
+    const x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
+    const arrow = document.createElement('span'); arrow.className = 'arrow'; arrow.textContent = '→';
+    const open = document.createElement('button');
+    open.textContent = 'Open in pair view';
+    open.onclick = () => { state.A = A; state.B = B; showTab('pair'); refreshPair(); };
+    row.append(canvasFor(A, 'med'), x, canvasFor(B, 'med'), arrow);
+    for (let k = 0; k < kidsEach; k++) row.append(canvasFor(makePet(inherit(A.genome, B.genome, rng)), 'small'));
+    row.append(open);
+    el.append(row);
+  }
+}
+$('rerollPairs').onclick = renderPairs;
+
+// ---------- lineage ----------
+function renderLineage() {
+  const el = $('lineage');
+  el.innerHTML = '';
+  const gens = Math.max(2, Math.min(30, +$('genCount').value || 8));
+  let pet = randomParent();
+  for (let g = 1; g <= gens; g++) {
+    const mate = randomParent(pet.gender === 'f' ? 'm' : 'f');
+    const row = document.createElement('div');
+    row.className = 'gen';
+    const label = document.createElement('b');
+    label.textContent = 'G' + g;
+    row.append(label, canvasFor(pet, 'small'), Object.assign(document.createElement('span'), { className: 'muted', textContent: '♥' }), canvasFor(mate, 'small'));
+    el.append(row);
+    pet = makePet(inherit(pet.genome, mate.genome, rng));
+  }
+}
+$('rerollLineage').onclick = renderLineage;
+
+// ---------- tabs, seed, stage ----------
+function showTab(name) {
+  for (const b of document.querySelectorAll('#tabs button')) b.classList.toggle('on', b.dataset.tab === name);
+  for (const t of ['pair', 'random', 'lineage']) $('tab-' + t).hidden = t !== name;
+  if (name === 'random') renderPairs();
+  if (name === 'lineage') renderLineage();
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+function restart() {
+  rng = makeRng(+$('seed').value || 1);
+  state.A = randomParent('f');
+  state.B = randomParent('m');
+  refreshPair();
+  const tab = document.querySelector('#tabs button.on').dataset.tab;
+  if (tab !== 'pair') showTab(tab);
+}
+$('seed').onchange = restart;
+$('reseed').onclick = () => { $('seed').value = Math.floor(Math.random() * 1e6); restart(); };
+$('stage').onchange = () => { refreshPair(false); const tab = document.querySelector('#tabs button.on').dataset.tab; if (tab !== 'pair') showTab(tab); };
+$('kidCount').onchange = () => { litter(); renderKids(); renderDetail(); };
+$('dress').onchange = $('stage').onchange;
+
+restart();
+</script>
+</body>
+</html>
