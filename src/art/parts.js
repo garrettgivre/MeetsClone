@@ -24,7 +24,8 @@ export const EYES = {
   cat:     P(['.kkk.', 'keFek', 'kekek', 'kekek', 'keeek', '.kkk.'], [2, 3]),
   star:    P(['..o..', '.oYo.', 'oYYYo', '.oYo.', 'oo.oo'], [2, 2]),
   gem:     P(['..k..', '.kFk.', 'kFwek', 'keeEk', '.kek.', '..k..'], [2, 3]),
-  heart:   P(['.k.k.', 'kqkqk', 'kqqqk', '.kqk.', '..k..'], [2, 2], { key: true }),
+  heart:   P(['.k.k.', 'kqkqk', 'kqqqk', '.kqk.', '..k..'], [2, 2]),
+  droopy:  P(['kk...', '.kkkk', 'kkwkk', 'kkkkk', '.kkk.'], [2, 2]),
 };
 // Small eyes used by babies (big heads come later).
 export const BABY_EYES = P(['kk', 'wk', 'kk', 'kk'], [1, 2]);
@@ -43,6 +44,8 @@ export const MOUTHS = {
   ooh:    P(['.k.', 'kqk', '.k.'], [1, 0]),
   flat:   P(['kkk'], [1, 0]),
   wobble: P(['.k.k.', 'k.k.k'], [2, 0]),
+  smirk:  P(['....k', 'k..k.', '.kk..'], [2, 0]),
+  bill:   'bill', // drawn to scale by the renderer
 };
 // Expression mouths shared by every pet.
 export const MOUTH_FX = {
@@ -70,7 +73,7 @@ export const EARS = {
   floppy:  P(['.ooo..', 'o3333o', 'o3333o', 'o2333o', '.o233o', '..o23o', '...oo.'], [4, 0], { side: true }),
   mouse:   P(['.oooo.', 'o3333o', 'o3PP3o', 'o3PP3o', 'o3333o', '.oooo.'], [4, 5]),
   antenna: P(['.oo..', 'oYxo.', '.oo..', '..o..', '...o.', '...o.'], [3, 5]),
-  horns:   P(['o...', 'oo..', 'oGo.', 'oGGo'], [3, 3]),
+  horns:   P(['o.....', 'oo....', 'oqo...', 'oqqo..', '.oqqo.', '.oRqqo', '..oRqo'], [4, 6]),
   fins:    P(['oo....', 'o7o...', 'o77oo.', 'o7777o'], [5, 3], { side: true }),
   leaf:    P(['..oo', '.olo', 'olLo', 'oLo.', '.o..'], [2, 4]),
   pigtail: P(['..oo.', '.o77o', 'o777o', 'o767o', '.o66o', '..oo.'], [4, 1], { side: true }),
@@ -91,6 +94,9 @@ export const CRESTS = {
   cap:     P(['....ooooooo....', '...o7777777o...', '..o778777777o..', '.o77777777777o.', 'o6666666666666o', 'ooooooooooooooo'], [7, 4], { front: true }),
   beret:   P(['.....o.....', '...ooooo...', '.oo77777oo.', 'o777787777o', 'o666666666o', '.ooooooooo.'], [5, 4], { front: true }),
   bobble:  P(['.ooo.', 'oPPfo', 'oPffo', '.ooo.', '..o..', '..o..'], [2, 5]),
+  bud:     P(['..o.o..', '.ofofo.', 'ofPfPfo', '.ofPfo.', '..oLo..', '..oLo..'], [3, 5]),
+  // a shooting star riding the head, its trail streaming behind
+  comet:   P(['........o...', '.......oYo..', 'xx...ooYYYoo', '.xxxxoYYyYYo', '..xxx.oYYYo.', '.....oYo.oYo', '.....oo...oo'], [8, 6], { offset: 1 }),
   swirl:   P(['...o..', '..o3o.', '.o3oo.', 'o3o3o.', 'o333oo', '.o3333o'], [3, 5]),
   tiara:   P(['...o...', '..oBo..', '.oyoyo.', 'oyyoyyo', '.ooooo.'], [3, 3], { front: true }),
   horn:    P(['.o.', 'oPo', 'oGo', 'oPo', 'oGo'], [1, 4]),
@@ -112,6 +118,7 @@ export const BACKS = {
   longtail: P(['...oo', '..o3o', '.o3o.', 'o3o..', 'o3o..'], [0, 4], { tail: true }),
   fishtail: P(['o...', 'oo..', 'o7o.', 'o77o', 'o7o.', 'oo..', 'o...'], [0, 3], { tail: true }),
   shell:    P(['.ooo.', 'oNnNo', 'oNdNo', 'onNno', '.ooo.'], [0, 2], { tail: true }),
+  devil:    P(['....ooo', '...oqqo', '...oqo.', '..o3o..', '.o3o...', 'o3o....', 'oo.....'], [0, 6], { tail: true }),
   cape:     'cape', // drawn procedurally
 };
 
@@ -129,11 +136,32 @@ export const FEET = {
   paws:  P(['.ooo.', 'o777o', 'o7777o', 'o7o7o.', '.o.o..'], [2, 0]),
   legs:  P(['o3o.', 'o3o.', 'o3o.', 'o33oo', 'ooooo'], [1, 0]),
   shoes: P(['.o3o.', '.o3o.', 'oo66o.', 'o6666o', '.oooo.'], [2, 0]),
+  flippers: P(['.o3o..', 'ooaao.', 'oaAaaao', 'oaoaoao', '.o.o.o.'], [2, 0]),
+  tiny:  P(['.oo.', 'o23o', '.oo.'], [1, 0]),
 };
 
 // ---------- Outfits are drawn procedurally; bowtie sprite used at the neck ----------
 export const BOWTIE = P(['oo.oo', 'o6o6o', 'o666o', 'o6o6o', 'oo.oo'], [2, 2]);
 export const TIE = P(['.o.', 'o6o', 'o6o', 'o66o'.slice(0, 3), '.o.'], [1, 0]);
+
+// ---------- Forehead marks (centred above the eyes) ----------
+export const MARKS = {
+  none: null,
+  star:    P(['..y..', '.yYy.', 'yyYyy', '.y.y.'], [2, 2]),
+  heart:   P(['.q.q.', 'qQqqq', '.qqq.', '..q..'], [2, 2]),
+  moon:    P(['.YY', 'Y..', 'Y..', '.YY'], [1, 2]),
+  drop:    P(['.B.', 'BsB', 'BBB', '.B.'], [1, 2]),
+  diamond: P(['.V.', 'VfV', '.V.'], [1, 1]),
+};
+
+// ---------- Noses (centred between eyes and mouth). Snout and whiskers are drawn to scale. ----------
+export const NOSES = {
+  none: null,
+  dot:    P(['kk'], [1, 0]),
+  button: P(['.kk.', 'kqQk', '.kk.'], [2, 0]),
+  snout: 'snout',
+  whiskers: 'whiskers',
+};
 
 // ---------- Hair pieces drawn outside the head shape ----------
 // (The fringe itself is painted onto the head by the renderer.)

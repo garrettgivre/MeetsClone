@@ -10,15 +10,20 @@ import { rand as defaultRng } from '../engine/rng.js';
 
 // dominance: 3 = common/dominant, 2 = normal, 1 = rare/recessive
 export const GENES = {
-  shape:   { round: 3, mochi: 3, bean: 2, egg: 2, tall: 2, pear: 2, bun: 2, onigiri: 1, drop: 1, blocky: 1 },
+  shape:   { round: 3, mochi: 3, bean: 2, egg: 2, tall: 2, pear: 2, bun: 2, onigiri: 1, drop: 1, blocky: 1, heart: 1 },
   size:    { medium: 3, small: 1, large: 1 },
-  eyes:    { bean: 3, button: 3, dot: 2, wide: 2, sparkle: 2, shiny: 2, sleepy: 2, arc: 1, cat: 1, star: 1, gem: 1, heart: 1 },
-  mouth:   { smile: 3, open: 3, tiny: 2, cat: 2, ooh: 2, flat: 2, beak: 1, fang: 1, blep: 1, wobble: 1 },
+  eyes:    { bean: 3, button: 3, dot: 2, wide: 2, sparkle: 2, shiny: 2, sleepy: 2, droopy: 2, arc: 1, cat: 1, star: 1, gem: 1, heart: 1 },
+  eyeSet:  { normal: 3, wide: 2, close: 2, low: 1 },
+  mouth:   { smile: 3, open: 3, tiny: 2, cat: 2, ooh: 2, flat: 2, smirk: 2, beak: 1, bill: 1, fang: 1, blep: 1, wobble: 1 },
+  nose:    { none: 3, dot: 2, button: 2, snout: 1, whiskers: 1 },
+  mark:    { none: 3, star: 1, heart: 1, moon: 1, drop: 1, diamond: 1 },
   hair:    { none: 3, bangs: 2, bob: 2, spiky: 1, ponytail: 1, twintails: 1, curly: 1 },
   ears:    { none: 3, bear: 2, cat: 2, floppy: 2, bunny: 2, mouse: 2, pigtail: 2, flower: 2, puff: 1, horns: 1, fins: 1, antenna: 1, leaf: 1, wings: 1, antlers: 1 },
-  crest:   { none: 3, tuft: 2, curl: 2, sprout: 2, bobble: 2, swirl: 2, horn: 1, flame: 1, halo: 1, star: 1 },
-  back:    { none: 3, pomtail: 2, longtail: 2, wings: 1, bat: 1, fairy: 1, butterfly: 1, fishtail: 1, shell: 1 },
-  feet:    { stubs: 3, float: 2, paws: 2, legs: 1 },
+  crest:   { none: 3, tuft: 2, curl: 2, sprout: 2, bobble: 2, swirl: 2, bud: 2, horn: 1, flame: 1, halo: 1, star: 1, comet: 1 },
+  back:    { none: 3, pomtail: 2, longtail: 2, wings: 1, bat: 1, fairy: 1, butterfly: 1, fishtail: 1, shell: 1, devil: 1 },
+  build:   { round: 3, chubby: 2, slim: 2, bell: 1, long: 1, stout: 1 },
+  belly:   { none: 3, patch: 2, suit: 1, bib: 1, heart: 1 },
+  feet:    { stubs: 3, float: 2, paws: 2, legs: 1, flippers: 1, tiny: 1 },
   pattern: { none: 3, socks: 2, tips: 2, mask: 1, spots: 1, stripes: 1, twotone: 1 },
   cheeks:  { blush: 3, none: 2, dots: 2, freckles: 1, hearts: 1 },
   aura:    { none: 3, sparkle: 1 }, // very rare: a twinkling pet
@@ -42,12 +47,42 @@ function choices(gene) {
   if (gene === 'eyeColor') return EYE_COLORS;
   return Object.keys(GENES[gene]);
 }
-function dom(gene, allele) { return GENES[gene]?.[allele] ?? 2; }
+// The GENES numbers are how common an allele is in the wild. Dominance mostly
+// follows them, with two exceptions: founder-only alleles are dominant (a
+// founder's signature always shows in its children), and having no ears, top,
+// nose and so on doesn't beat having one.
+const NONE_TIES = ['hair', 'ears', 'crest', 'back', 'nose', 'mark', 'belly'];
+function dom(gene, allele) {
+  if (founderOf(gene, allele)) return 4;
+  if (allele === 'none' && NONE_TIES.includes(gene)) return 2;
+  return GENES[gene]?.[allele] ?? 2;
+}
 
-/** A random allele, common ones more likely. */
+/**
+ * Founder-only alleles: each founder brings signature parts into the gene pool
+ * that exist nowhere else. Random pets, matchmaker partners and mutations never
+ * have them, so the only way to get one is to inherit it down a founder's line.
+ */
+export const FOUNDER_ONLY = {
+  ears:   { puff: 'Lumipom', horns: 'Spookit' },
+  back:   { fairy: 'Lumipom', devil: 'Spookit' },
+  crest:  { comet: 'Kometchi' },
+  mark:   { star: 'Kometchi', moon: 'Spookit' },
+  cheeks: { hearts: 'Pipolin' },
+  feet:   { tiny: 'Pipolin', flippers: 'Ducklet' },
+  hair:   { twintails: 'Pipolin' },
+  mouth:  { bill: 'Ducklet' },
+  belly:  { bib: 'Ducklet', heart: 'Mogumo' },
+  nose:   { snout: 'Mogumo' },
+  eyes:   { droopy: 'Mogumo' },
+  build:  { stout: 'Mogumo' },
+};
+export const founderOf = (gene, allele) => FOUNDER_ONLY[gene]?.[allele] || null;
+
+/** A random allele, common ones more likely. Never a founder-only allele. */
 export function randomAllele(gene, rng = defaultRng) {
   if (!GENES[gene]) return rng.pick(choices(gene));
-  return rng.weighted(Object.entries(GENES[gene]).map(([a, d]) => [a, d * d]));
+  return rng.weighted(Object.entries(GENES[gene]).filter(([a]) => !founderOf(gene, a)).map(([a, d]) => [a, d * d]));
 }
 
 /**
@@ -69,7 +104,7 @@ export function randomGenome(rng = defaultRng) {
 export function pureGenome(traits) {
   const g = {};
   for (const gene of ALL_GENES) {
-    const v = traits[gene] ?? choices(gene)[0];
+    const v = traits[gene] ?? (gene === 'hairColor' ? 'brown' : choices(gene)[0]);
     g[gene] = [v, v];
   }
   return g;
@@ -167,7 +202,7 @@ export function childOdds(mom, dad, n = 400, rng = defaultRng) {
 
 export const GENE_LABELS = {
   shape: 'Head', size: 'Size', eyes: 'Eyes', mouth: 'Mouth', hair: 'Hair', ears: 'Ears', crest: 'Top',
-  back: 'Back', feet: 'Feet', pattern: 'Markings', cheeks: 'Cheeks', aura: 'Aura',
+  back: 'Back', feet: 'Feet', eyeSet: 'Eye spacing', nose: 'Nose', mark: 'Forehead', build: 'Build', belly: 'Belly', pattern: 'Markings', cheeks: 'Cheeks', aura: 'Aura',
   appetite: 'Appetite', energy: 'Energy', taste: 'Taste',
   color: 'Body colour', accent: 'Accent colour', eyeColor: 'Eye colour', hairColor: 'Hair colour',
 };
@@ -193,12 +228,24 @@ export const STARTER = {
 // Each tier has one boy-leaning and one girl-leaning design, but any pet can become any founder.
 // `wear` is the signature outfit gifted when a pet becomes that founder (clothes aren't genes).
 export const FOUNDERS = [
-  { name: 'Lumipom', tier: 0, wear: { head: 'ribbon', body: 'dress', feet: 'shoes' }, traits: { hair: 'bangs', hairColor: 'gold', shape: 'mochi', eyes: 'sparkle', mouth: 'open', ears: 'puff', crest: 'none', back: 'fairy', feet: 'stubs', pattern: 'none', cheeks: 'blush', color: 'cream', accent: 'pink', eyeColor: 'sky', taste: 'sweet', energy: 'calm' } },
-  { name: 'Kometchi', tier: 0, wear: { body: 'bowtie' }, traits: { shape: 'mochi', eyes: 'bean', mouth: 'open', ears: 'cat', crest: 'star', back: 'none', feet: 'stubs', pattern: 'none', cheeks: 'blush', color: 'sky', accent: 'red', eyeColor: 'ink', taste: 'savory', energy: 'lively' } },
-  { name: 'Pipolin', tier: 1, wear: { head: 'bow', body: 'collar' }, traits: { hair: 'twintails', hairColor: 'violet', shape: 'round', eyes: 'shiny', mouth: 'cat', ears: 'bunny', crest: 'none', back: 'pomtail', feet: 'stubs', pattern: 'none', cheeks: 'hearts', color: 'pink', accent: 'violet', eyeColor: 'violet', taste: 'fruity' } },
-  { name: 'Ducklet', tier: 1, wear: { body: 'scarf', feet: 'shoes' }, traits: { shape: 'bun', eyes: 'dot', mouth: 'beak', ears: 'none', crest: 'tuft', back: 'none', feet: 'stubs', pattern: 'none', cheeks: 'none', color: 'lime', accent: 'orange', eyeColor: 'ink', taste: 'savory', appetite: 'hearty' } },
-  { name: 'Mogumo', tier: 2, wear: { body: 'overalls' }, traits: { shape: 'onigiri', eyes: 'sleepy', mouth: 'blep', ears: 'bear', crest: 'none', back: 'none', feet: 'stubs', pattern: 'none', cheeks: 'dots', color: 'brown', accent: 'blue', eyeColor: 'ink', taste: 'sweet', energy: 'calm' } },
-  { name: 'Spookit', tier: 2, wear: { body: 'tie' }, traits: { hair: 'spiky', hairColor: 'indigo', shape: 'drop', eyes: 'wide', mouth: 'fang', ears: 'horns', crest: 'none', back: 'bat', feet: 'float', pattern: 'mask', cheeks: 'none', color: 'violet', accent: 'indigo', eyeColor: 'red', taste: 'spicy' } },
+  // A pom-pom fairy: bob hair, pink pom-poms, wide sparkly eyes, a bell-shaped body and fairy wings.
+  { name: 'Lumipom', tier: 0, wear: { body: 'dress', feet: 'shoes' },
+    traits: { shape: 'mochi', hair: 'bob', hairColor: 'gold', ears: 'puff', eyes: 'sparkle', eyeSet: 'wide', mouth: 'open', nose: 'none', mark: 'none', crest: 'none', back: 'fairy', build: 'bell', belly: 'none', feet: 'stubs', pattern: 'none', cheeks: 'blush', color: 'cream', accent: 'pink', eyeColor: 'sky', taste: 'sweet', energy: 'calm' } },
+  // A comet kid: big pointed ears, a shooting star riding on top, a star on the forehead, long legs and a tail.
+  { name: 'Kometchi', tier: 0, wear: { body: 'bowtie' },
+    traits: { shape: 'round', ears: 'cat', crest: 'comet', mark: 'star', eyes: 'bean', eyeSet: 'normal', mouth: 'smile', nose: 'none', back: 'longtail', build: 'slim', belly: 'patch', feet: 'legs', pattern: 'none', cheeks: 'none', color: 'sky', accent: 'gold', eyeColor: 'ink', taste: 'savory', energy: 'lively' } },
+  // A little bunny idol: tall ears, twin tails, glossy eyes, a button nose, heart cheeks and tiny feet.
+  { name: 'Pipolin', tier: 1, wear: { head: 'bow', body: 'collar' },
+    traits: { shape: 'egg', size: 'small', ears: 'bunny', hair: 'twintails', hairColor: 'violet', eyes: 'shiny', eyeSet: 'close', mouth: 'cat', nose: 'button', mark: 'none', crest: 'none', back: 'pomtail', build: 'round', belly: 'none', feet: 'tiny', pattern: 'none', cheeks: 'hearts', color: 'pink', accent: 'violet', eyeColor: 'violet', taste: 'fruity' } },
+  // A chubby duckling: a huge bill, a cowlick, a bib, flippers and wide-set dot eyes.
+  { name: 'Ducklet', tier: 1, wear: { body: 'scarf' },
+    traits: { shape: 'bun', ears: 'none', crest: 'tuft', eyes: 'dot', eyeSet: 'wide', mouth: 'bill', nose: 'none', mark: 'none', back: 'none', build: 'chubby', belly: 'bib', feet: 'flippers', pattern: 'none', cheeks: 'none', color: 'lime', accent: 'cream', eyeColor: 'ink', taste: 'savory', appetite: 'hearty' } },
+  // A sleepy bear-mole: big muzzle, drowsy eyes, round ears, a stout body with a heart belly, and paws.
+  { name: 'Mogumo', tier: 2, wear: { body: 'overalls' },
+    traits: { shape: 'onigiri', size: 'large', ears: 'bear', eyes: 'droopy', eyeSet: 'close', mouth: 'tiny', nose: 'snout', mark: 'none', crest: 'none', back: 'none', build: 'stout', belly: 'heart', feet: 'paws', pattern: 'none', cheeks: 'dots', color: 'brown', accent: 'cream', eyeColor: 'ink', taste: 'sweet', energy: 'calm' } },
+  // A spooky imp: horns, spiky hair, a moon mark, red eyes, a fang, a devil tail and a two-tone suit.
+  { name: 'Spookit', tier: 2, wear: {},
+    traits: { shape: 'drop', ears: 'horns', hair: 'spiky', hairColor: 'indigo', eyes: 'wide', eyeSet: 'low', mouth: 'fang', nose: 'none', mark: 'moon', crest: 'none', back: 'devil', build: 'long', belly: 'suit', feet: 'float', pattern: 'none', cheeks: 'none', color: 'violet', accent: 'indigo', eyeColor: 'red', taste: 'spicy' } },
 ];
 
 export function founderFor(careMistakes, rng = defaultRng) {
@@ -213,15 +260,19 @@ export function starterGenome(rng = defaultRng) {
   return g;
 }
 
+/** Ears drawn in proportion to the head (others are fixed-size sprites). */
+export const SCALED_EARS = ['bear', 'mouse', 'cat', 'bunny', 'floppy'];
+
 /** Which visible traits a stage shows. Babies are simple; adults show everything. */
 export function stageTraits(p, stage) {
   const t = { ...p };
   if (stage === 'baby') {
-    Object.assign(t, { eyes: 'baby', mouth: 'open', hair: 'none', ears: 'none', crest: 'none', back: 'none', feet: 'float', pattern: 'none', cheeks: 'blush', size: 'medium' });
+    Object.assign(t, { eyes: 'baby', eyeSet: 'normal', mouth: p.mouth === 'bill' ? 'bill' : 'open', nose: 'none', mark: 'none', hair: 'none', ears: 'none', crest: 'none', back: 'none', feet: 'float', pattern: 'none', cheeks: 'blush', size: 'medium' });
   } else if (stage === 'child') {
-    Object.assign(t, { hair: p.hair === 'bangs' || p.hair === 'bob' ? 'bangs' : 'none', ears: 'none', crest: 'none', back: 'none', feet: 'stubs', size: 'medium' });
+    // kids already show their ear shape (drawn to scale), their nose and the start of their hair
+    Object.assign(t, { hair: p.hair === 'bangs' || p.hair === 'bob' ? 'bangs' : 'none', ears: SCALED_EARS.includes(p.ears) ? p.ears : 'none', mark: 'none', crest: 'none', back: 'none', feet: p.feet === 'flippers' ? 'flippers' : 'stubs', size: 'medium' });
   } else if (stage === 'teen') {
-    Object.assign(t, { crest: 'none', back: 'none', feet: p.feet === 'float' ? 'float' : 'stubs', size: 'medium' });
+    Object.assign(t, { crest: 'none', back: 'none', feet: ['float', 'flippers'].includes(p.feet) ? p.feet : 'stubs', size: 'medium' });
   }
   return t;
 }

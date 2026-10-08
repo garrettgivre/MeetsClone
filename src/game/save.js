@@ -33,7 +33,7 @@ export function migrate(g) {
   if (g.pet) {
     const pet = g.pet;
     pet.wear = pet.wear || {};
-    const fill = { hair: 'none', hairColor: 'brown', aura: 'none' };
+    const fill = { hair: 'none', hairColor: 'brown', aura: 'none', eyeSet: 'normal', nose: 'none', mark: 'none', build: 'round', belly: 'none' };
     for (const [gene, v] of Object.entries(fill)) {
       if (pet.phenotype && !pet.phenotype[gene]) pet.phenotype[gene] = v;
       if (pet.genome && !pet.genome[gene]) pet.genome[gene] = [v, v];

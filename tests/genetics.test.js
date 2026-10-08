@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRng } from '../src/engine/rng.js';
 import {
-  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS, carried, childOdds, drift,
+  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS, carried, childOdds, drift, FOUNDER_ONLY, founderOf, PART_GENES,
 } from '../src/game/genetics.js';
 
 test('random genomes have two valid alleles per gene', () => {
@@ -48,16 +48,16 @@ test('children get one allele from each parent (apart from mutations)', () => {
 
 test('recessive traits can skip a generation and come back', () => {
   const rng = makeRng(5);
-  const a = pureGenome({ crest: 'crown' }); // recessive
-  const b = pureGenome({ crest: 'none' });  // dominant
+  const a = pureGenome({ crest: 'horn' }); // recessive
+  const b = pureGenome({ crest: 'tuft' }); // dominant
   const kids = Array.from({ length: 40 }, () => inherit(a, b, rng));
-  const crownedKids = kids.filter(k => express(k, rng).crest === 'crown' && k.crest.includes('none')).length;
-  assert.equal(crownedKids, 0, 'carriers do not show the recessive crown');
-  // carriers marrying each other can have a crowned grandchild (about 1 in 4)
-  const carriers = kids.filter(k => k.crest.includes('crown') && k.crest.includes('none'));
-  let crowned = 0;
-  for (let i = 0; i < 400; i++) if (express(inherit(carriers[0], carriers[1], rng), rng).crest === 'crown') crowned++;
-  assert.ok(crowned > 50 && crowned < 160, `crowned grandkids: ${crowned}`);
+  const hornedKids = kids.filter(k => express(k, rng).crest === 'horn' && k.crest.includes('tuft')).length;
+  assert.equal(hornedKids, 0, 'carriers do not show the recessive horn');
+  // carriers marrying each other can have a horned grandchild (about 1 in 4)
+  const carriers = kids.filter(k => k.crest.includes('horn') && k.crest.includes('tuft'));
+  let horned = 0;
+  for (let i = 0; i < 400; i++) if (express(inherit(carriers[0], carriers[1], rng), rng).crest === 'horn') horned++;
+  assert.ok(horned > 50 && horned < 160, `horned grandkids: ${horned}`);
 });
 
 test('colour blending lands between the parents on the wheel', () => {
@@ -90,11 +90,11 @@ test('colours sometimes drift one step around the wheel', () => {
 });
 
 test('carried() lists hidden alleles only', () => {
-  const g = pureGenome({ crest: 'none', color: 'pink', accent: 'cream' });
-  g.crest = ['none', 'crown'];
+  const g = pureGenome({ crest: 'tuft', color: 'pink', accent: 'cream' });
+  g.crest = ['tuft', 'horn'];
   const p = express(g, makeRng(10));
   const hidden = carried(g, p);
-  assert.deepEqual(hidden, [{ gene: 'crest', allele: 'crown' }]);
+  assert.deepEqual(hidden, [{ gene: 'crest', allele: 'horn' }]);
 });
 
 test('childOdds sums to 1 for every gene', () => {
@@ -103,5 +103,58 @@ test('childOdds sums to 1 for every gene', () => {
   for (const gene of ALL_GENES) {
     const total = odds[gene].reduce((a, [, p]) => a + p, 0);
     assert.ok(Math.abs(total - 1) < 1e-9, gene);
+  }
+});
+
+// Placements and temperament aren't body parts; "none" means the part is absent.
+const NOT_PARTS = ['size', 'eyeSet', 'appetite', 'energy', 'taste', 'aura', 'pattern'];
+
+test('no two founders share a body part', () => {
+  for (const gene of PART_GENES.filter(g => !NOT_PARTS.includes(g))) {
+    const seen = new Map();
+    for (const f of FOUNDERS) {
+      const v = f.traits[gene] ?? 'none';
+      if (v === 'none') continue;
+      assert.ok(!seen.has(v), `${f.name} and ${seen.get(v)} both have ${gene}: ${v}`);
+      seen.set(v, f.name);
+    }
+  }
+});
+
+test('founder-only parts belong to the right founder and never appear in the wild', () => {
+  for (const [gene, map] of Object.entries(FOUNDER_ONLY)) {
+    for (const [allele, name] of Object.entries(map)) {
+      const f = FOUNDERS.find(f => f.name === name);
+      assert.ok(f, name);
+      assert.equal(f.traits[gene], allele, `${name} should carry ${gene}: ${allele}`);
+      assert.ok(allele in GENES[gene], `${gene}: ${allele} is a real allele`);
+    }
+  }
+  const rng = makeRng(12);
+  for (let i = 0; i < 2000; i++) {
+    const g = randomGenome(rng);
+    for (const gene of Object.keys(FOUNDER_ONLY)) for (const a of g[gene]) assert.equal(founderOf(gene, a), null, `${gene}: ${a}`);
+  }
+});
+
+test('founder-only parts are passed down to children', () => {
+  const rng = makeRng(13);
+  const duck = pureGenome(FOUNDERS.find(f => f.name === 'Ducklet').traits);
+  let bills = 0;
+  for (let i = 0; i < 200; i++) if (inherit(duck, randomGenome(rng), rng).mouth.includes('bill')) bills++;
+  assert.ok(bills > 180, `every child should carry the bill (mutations aside): ${bills}`);
+});
+
+test("a founder's signature parts show in its first-generation children", () => {
+  const rng = makeRng(14);
+  const duck = pureGenome(FOUNDERS.find(f => f.name === 'Ducklet').traits);
+  const mole = pureGenome(FOUNDERS.find(f => f.name === 'Mogumo').traits);
+  for (let i = 0; i < 50; i++) {
+    const kid = inherit(duck, mole, rng);
+    if (kid.mouth.includes('bill') && kid.nose.includes('snout')) {
+      const p = express(kid, rng);
+      assert.equal(p.mouth, 'bill');
+      assert.equal(p.nose, 'snout');
+    }
   }
 });

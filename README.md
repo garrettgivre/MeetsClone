@@ -4,14 +4,14 @@ A mobile-first virtual pet for the browser, inspired by the gameplay of *Tamagot
 
 ## Play
 
-- **Online:** https://garrettgivre.github.io/MeetsClone/ (once GitHub Pages is turned on, see below)
+- **Online:** https://garrettgivre.github.io/MeetsClone/
 - **Locally:** run a static server from the project folder, then open http://localhost:5173
 
 ```bash
 python -m http.server 5173
 ```
 
-Add `?dev` to the URL for developer options in Settings: a time speed-up, free points, and links to the Pairing Lab and Gallery.
+**Settings → Debug** links to the Pairing Lab, Character Gallery and Sprite Editor. Add `?dev` to the URL to also unlock cheats there (time speed-up, free points). The version number is at the bottom of Settings.
 
 **Pairing Lab:** open `tools/lab.html` (also on the live site) to test genetics.
 - **One pair:** choose two parents (random or founders), see a litter of children with any new traits starred, inspect any child's genes, and use it as a new parent. Shows the odds of every trait from 500 simulated children.
@@ -40,9 +40,13 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Toothaches from too many snacks.
 - **Pets can die or run away:** from untreated illness or starvation, or from long unhappiness.
 - **Generation 1:** the quality of your care decides which of 6 original founder characters your pet becomes.
+- **Founders:**
+  - No two founders share a body part.
+  - Each brings founder-only parts that exist nowhere else: Ducklet's bill, flippers and bib; Mogumo's muzzle, droopy eyes, stout build and heart belly; Kometchi's comet and star mark; Pipolin's twin tails, tiny feet and heart cheeks; Lumipom's pom-poms and fairy wings; Spookit's horns, moon mark and devil tail.
+  - Founder-only parts are dominant, so they're passed down family lines and never appear on matchmaker partners.
 - **Genetics:** every trait has two alleles with dominance, so recessive traits can skip a generation.
   - Size blends (small × large = medium), colours can blend or drift around the colour wheel, and rare mutations happen.
-  - Looks: head shape, size, eyes, mouth, hair, ears, top, back, feet, markings, cheeks, a very rare sparkle aura, and body, accent, eye and hair colour.
+  - Looks: head shape, size, eyes, eye spacing, mouth, nose, forehead mark, hair, ears (drawn to scale with the head), top, back, body build, belly, feet, markings, cheeks, a very rare sparkle aura, and body, accent, eye and hair colour.
   - Temperament genes (appetite, energy, taste) change how the pet plays.
   - The status screen shows the hidden genes a pet carries.
 - **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu). Each founder arrives with a signature outfit.

@@ -39,6 +39,7 @@
   .dom { color: var(--dom); font-weight: 600; }
   .rec { color: var(--rec); }
   .rec.carried { color: #8a4fc4; }
+  .fo { text-decoration: underline dotted #e0a400; text-underline-offset: 2px; }
   .tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
   .kids { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 8px; }
   .kid { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 4px; text-align: center; cursor: pointer; }
@@ -131,7 +132,7 @@ import { randomOutfit } from '../src/game/pet.js';
 import { makeRng as outfitRng } from '../src/engine/rng.js';
 import { hash } from '../src/engine/rng.js';
 import {
-  FOUNDERS, ALL_GENES, GENES, GENE_LABELS, pureGenome, randomGenome, express, inherit, childOdds, carried, randomName,
+  FOUNDERS, ALL_GENES, GENES, GENE_LABELS, pureGenome, randomGenome, express, inherit, childOdds, carried, randomName, founderOf,
 } from '../src/game/genetics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -165,8 +166,9 @@ function genotypeTable(pet) {
     const [a, b] = pet.genome[g] || ['?', '?'];
     const shown = pet.phenotype[g];
     const cls = (x) => (x === shown ? 'dom' : 'rec carried');
+    const tag = (x) => (founderOf(g, x) ? `<span class="fo" title="Founder-only: from ${founderOf(g, x)}">${x}◆</span>` : x);
     const blended = shown !== a && shown !== b ? ` → <span class="dom">${shown}</span>` : '';
-    return `<tr><td>${GENE_LABELS[g]}</td><td><span class="${cls(a)}">${a}</span> / <span class="${cls(b)}">${b}</span>${blended}</td></tr>`;
+    return `<tr><td>${GENE_LABELS[g]}</td><td><span class="${cls(a)}">${tag(a)}</span> / <span class="${cls(b)}">${tag(b)}</span>${blended}</td></tr>`;
   }).join('');
   return `<table>${rows}</table>`;
 }
@@ -197,7 +199,7 @@ function parentPanel(which) {
   const body = document.createElement('div');
   body.className = 'pet';
   const info = document.createElement('div');
-  info.innerHTML = `<b>${pet.name} ${sym(pet.gender)}</b><br><span class="muted">bold = showing, purple = carried</span>${genotypeTable(pet)}`;
+  info.innerHTML = `<b>${pet.name} ${sym(pet.gender)}</b><br><span class="muted">bold = showing, purple = carried, ◆ = founder-only</span>${genotypeTable(pet)}`;
   body.append(canvasFor(pet, 'big'), info);
   el.append(top, body);
 }

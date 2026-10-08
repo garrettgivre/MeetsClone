@@ -9,6 +9,7 @@ import { StatusScene } from './status.js';
 import { JumpRopeScene } from './jumprope.js';
 import { MatchmakerScene, AlbumScene } from './family.js';
 import { WardrobeScene, clothesIcon } from './wardrobe.js';
+import { VERSION } from '../version.js';
 
 export function openMenu(app, name, home) {
   const menus = { status, food, games, items, shop, family, settings };
@@ -147,15 +148,29 @@ function settings(app) {
       if (window.confirm('Erase everything and start with a new egg?')) { app.reset(); app.toast('A new egg appeared!'); }
     } },
   ];
+  items.push({ label: 'Debug', right: '▶', action: () => debug(app) });
+  items.push({ label: 'Version', right: VERSION, action: () => app.toast(`MeetsClone v${VERSION}`) });
+  app.push(new ListMenu(app, 'SETTINGS', items));
+}
+
+/** Debug tools. Cheats (time speed, points) only appear with ?dev in the URL. */
+function debug(app) {
+  const g = app.game;
+  const open = (path) => () => window.open(path, '_blank');
+  const items = [
+    { label: 'Pairing Lab', right: '▶', action: open('tools/lab.html') },
+    { label: 'Character Gallery', right: '▶', action: open('tools/gallery.html') },
+    { label: 'Sprite Editor', right: '▶', action: open('tools/sprite-editor/') },
+  ];
   if (app.dev) {
-    items.push({ label: 'Dev speed', right: 'x' + (g.settings.speed || 1), action: (_, it) => {
+    items.push({ label: 'Time speed', right: 'x' + (g.settings.speed || 1), action: (_, it) => {
       const speeds = [1, 60, 600, 3600];
       g.settings.speed = speeds[(speeds.indexOf(g.settings.speed || 1) + 1) % speeds.length];
       it.right = 'x' + g.settings.speed;
     } });
-    items.push({ label: 'Dev +500 pts', action: () => { g.points += 500; app.toast('+500'); } });
-    items.push({ label: 'Pairing Lab', right: '▶', action: () => window.open('tools/lab.html', '_blank') });
-    items.push({ label: 'Gallery', right: '▶', action: () => window.open('tools/gallery.html', '_blank') });
+    items.push({ label: '+500 points', action: () => { g.points += 500; app.toast('+500'); } });
+  } else {
+    items.push({ label: 'Cheats', right: 'OFF', disabled: true, why: 'Add ?dev to the address to enable.' });
   }
-  app.push(new ListMenu(app, 'SETTINGS', items));
+  app.push(new ListMenu(app, 'DEBUG', items, { footer: `VERSION ${VERSION}` }));
 }
