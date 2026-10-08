@@ -92,24 +92,27 @@ function joinSeams(L, ramps, joins, melt = new Set()) {
 /**
  * Crop the working canvas to the output size: centred, feet near the bottom.
  * The ground is the lowest pixel of the body and feet; a tail or wing that
- * dangles lower doesn't lift the pet off the floor.
+ * dangles lower doesn't lift the pet off the floor. A floater has no floor, so
+ * all of it counts (its tendrils must stay on the canvas).
  */
-function crop(L) {
+function crop(L, floats = false) {
   let x0 = TW, y0 = TH, x1 = -1, y1 = -1, ground = -1;
   for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
     const i = y * TW + x;
     if (!L.px[i]) continue;
     x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-    if (L.ids[i] !== PART.tail && L.ids[i] !== PART.wings) ground = Math.max(ground, y);
+    if (floats || (L.ids[i] !== PART.tail && L.ids[i] !== PART.wings)) ground = Math.max(ground, y);
   }
   if (ground < 0) ground = y1;
   const dx = Math.floor((PW - (x1 - x0 + 1)) / 2) - x0, dy = PH - 3 - ground;
   const px = new Uint8Array(PW * PH);
+  const seen = {}; // visible pixels per part, so tests can check nothing is hidden or cut off
+  const names = Object.fromEntries(Object.entries(PART).map(([k, v]) => [v, k]));
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const c = L.px[y * TW + x], X = x + dx, Y = y + dy;
-    if (c && X >= 0 && Y >= 0 && X < PW && Y < PH) px[Y * PW + X] = c;
+    const i = y * TW + x, c = L.px[i], X = x + dx, Y = y + dy;
+    if (c && X >= 0 && Y >= 0 && X < PW && Y < PH) { px[Y * PW + X] = c; const n = names[L.ids[i]]; if (n) seen[n] = (seen[n] || 0) + 1; }
   }
-  return { px, dx, dy, overflow: x1 - x0 + 1 > PW || ground - y0 + 4 > PH };
+  return { px, dx, dy, seen, overflow: x1 - x0 + 1 > PW || ground - y0 + 4 > PH };
 }
 
 /** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
@@ -235,10 +238,10 @@ export function composePetArt(p, stage, pose = {}) {
     face = drawFace(L, p, stage, pose, ctx, [fx, fy], faceSock[0]);
   }
 
-  const { px, dx, dy, overflow } = crop(L);
+  const { px, dx, dy, seen, overflow } = crop(L, !!F.floats);
   const sh = ([x, y]) => [x + dx, y + dy];
   return {
-    px, w: PW, h: PH, overflow,
+    px, w: PW, h: PH, overflow, seen,
     eyes: face.eyes.map(sh), eyeSize: [face.eye.w, face.eye.h], eyePivot: face.eye.pivot, eyeSkin: face.eyeSkin,
     mouth: sh(face.mouth), faceColour: ramp(p.color, 2), neck: neckY + dy,
     floats: !!F.floats,

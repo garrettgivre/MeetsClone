@@ -60,3 +60,17 @@ test('founders, mixed children and wild pets all render and fit the canvas', () 
     }
   }
 });
+
+test('every part a founder has is visible in its adult and teen pictures', () => {
+  const rng = makeRng(31);
+  for (const f of FOUNDERS) {
+    const p = express(pureGenome(f.traits), rng);
+    for (const stage of ['adult', 'teen']) {
+      const { seen } = composePetArt(p, stage, {});
+      const need = { head: 40, body: 10, ears: 3 };
+      for (const [gene, part] of [['tail', 'tail'], ['hair', 'hair'], ['feet', 'feet']]) if (p[gene] !== 'none') need[part] = 3;
+      if (stage === 'adult') for (const gene of ['topper', 'wings']) if (p[gene] !== 'none') need[gene] = 3;
+      for (const [part, n] of Object.entries(need)) assert.ok((seen[part] || 0) >= n, `${f.name} ${stage}: only ${seen[part] || 0} pixels of ${part} show`);
+    }
+  }
+});

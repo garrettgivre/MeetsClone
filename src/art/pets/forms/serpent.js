@@ -518,5 +518,5 @@ export default {
     ]),
   },
   face: 'S',
-  order: ['tail', 'wings', 'body', 'feet', 'ears', 'head', 'hair', 'topper'], // little legs along the coil's outer edges
+  order: ['wings', 'body', 'tail', 'feet', 'ears', 'head', 'hair', 'topper'], // the tail tip and little legs sit over the coil
 };
