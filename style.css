@@ -57,18 +57,21 @@ body {
   min-height: 0;
 }
 
+/* --px is the size of one game pixel on the page; main.js sets it whenever the
+   screen is sized, so the buttons are drawn at the same pixel scale as the game. */
 #buttons {
   display: flex;
-  gap: 20px;
+  gap: calc(var(--px, 3px) * 13);
   align-items: center;
 }
 
 /* Pixel-art buttons: the pictures (up, and pressed) are painted in by
-   src/art/buttons.js, 32 x 36 pixels shown at exactly three times their size
-   (twice on a short screen). */
+   src/art/buttons.js, 32 x 36 pixels, each one game pixel in size. The outer
+   two sit higher than the middle one. */
 .btn {
-  width: 96px;
-  height: 108px;
+  width: calc(var(--px, 3px) * 32);
+  height: calc(var(--px, 3px) * 36);
+  transform: translateY(calc(var(--px, 3px) * -5));
   border: none;
   padding: 0;
   background: transparent no-repeat center / 100% 100%;
@@ -77,10 +80,5 @@ body {
   cursor: pointer;
   touch-action: none;
 }
-.btn[data-btn="B"] { transform: translateY(12px); }
+.btn[data-btn="B"] { transform: translateY(calc(var(--px, 3px) * 5)); }
 .btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-@media (max-height: 640px) {
-  .btn { width: 64px; height: 72px; }
-  .btn[data-btn="B"] { transform: translateY(8px); }
-}

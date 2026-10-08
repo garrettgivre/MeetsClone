@@ -102,17 +102,21 @@ setupInput({
 });
 
 // ----- sizing: the screen fills the page from the top edge down, as wide as it can go -----
+const BUTTON_ROWS = 36 + 10 + 2;
 function resize() {
   const device = document.getElementById('device');
   const inset = parseFloat(getComputedStyle(document.getElementById('bezel')).paddingTop) || 0; // a phone's notch
-  const btnSpace = window.innerHeight < 640 ? 92 : 136; // the strip of buttons underneath
   const availW = device.clientWidth;
-  const availH = window.innerHeight - inset - btnSpace;
+  const availH = window.innerHeight - inset;
+  // The buttons are pixel art at the game's own scale, so the strip under the
+  // screen grows with it: BUTTON_ROWS game pixels (a button, the drop of the
+  // middle one, and some air) plus a small fixed margin.
   // Whichever runs out first, width or height, the screen takes all of it
   // (so the scale is rarely a whole number; the canvas is double density, which keeps it crisp).
-  const s = Math.max(1, Math.min(availW / W, availH / H));
+  const s = Math.max(1, Math.min(availW / W, (availH - 12) / (H + BUTTON_ROWS)));
   canvas.style.width = Math.round(W * s) + 'px';
   canvas.style.height = Math.round(H * s) + 'px';
+  document.documentElement.style.setProperty('--px', s + 'px'); // one game pixel, for the buttons
 }
 window.addEventListener('resize', resize);
 resize();

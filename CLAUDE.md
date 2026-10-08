@@ -41,6 +41,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 
 ## Screen and coordinates
 
+- **Pixel scales (the owner wants one scale everywhere):** there are two inside the game. The room, town, pets and menu icons are hi-res (256×448, one unit per pixel). Text, the status bar, list menus, hearts, poop, food, toys and other small sprites are low-res (128×224, each pixel two units; sprites go through Scale2x). Since v0.16.6 the page buttons match the low-res scale: `resize()` sets `--px` to one game pixel and `style.css` sizes them from it. Bringing the low-res layer up to hi-res (a hi-res font and redrawn UI sprites, by hand) has been offered but not done.
 - **Logical screen:** 128×224. The page has no bezel: `resize()` in `main.js` scales the canvas to fill the width (or the height above the button strip, whichever runs out first), so on a short viewport thin strips of shell show at the sides. Pets and town art are drawn at double density (HD = 2) on a 256×448 layer.
 - **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `src/game/pet-art.js`), feet 3 rows above the bottom. Adults are roughly 40 to 50 px tall, so a part has very few pixels to make its point.
 - **Town backdrops** (and the home room): each is a 256×312 hi-res bitmap (`RW`, `RH`).
@@ -129,7 +130,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.16.5, October 2026)
+## Status (v0.16.6, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
