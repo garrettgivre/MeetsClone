@@ -10,7 +10,8 @@
 // Light comes from the upper left. `at` is the anchor: the point that sits on
 // the ground (usually the bottom centre).
 //
-// Draw one with stampProp(set, name, x, y, { leaf, wood, accent, stone, flip }).
+// Draw one with stampProp(set, name, x, y, { leaf, wood, accent, stone, flip, halo }).
+// `halo` adds a bright outline just outside the silhouette (the sticker look).
 
 export const PROPS = {};
 
@@ -27,10 +28,18 @@ function prop(name, rows, { at = null, ramps = {} } = {}) {
 }
 
 /** Stamp a prop with its anchor at (x, y). set(x, y, colourName) draws one hi-res pixel. */
-export function stampProp(set, name, x, y, { flip = false, ...ramps } = {}) {
+export function stampProp(set, name, x, y, { flip = false, halo = null, ...ramps } = {}) {
   const p = PROPS[name];
   if (!p) throw new Error(`no prop ${name}`);
   const r = { ...DEFAULT_RAMPS, ...p.ramps, ...ramps };
+  if (halo) {
+    // a sticker halo: a bright line just outside the silhouette, so the prop pops off the scene
+    const filled = (i, j) => i >= 0 && j >= 0 && i < p.w && j < p.h && p.rows[j][i] !== '.';
+    for (let j = -1; j <= p.h; j++) for (let i = -1; i <= p.w; i++) {
+      if (filled(i, j)) continue;
+      if (filled(i - 1, j) || filled(i + 1, j) || filled(i, j - 1) || filled(i, j + 1)) set(x - p.at[0] + (flip ? p.w - 1 - i : i), y - p.at[1] + j, halo);
+    }
+  }
   for (let j = 0; j < p.h; j++) for (let i = 0; i < p.w; i++) {
     const ch = p.rows[j][i];
     if (ch === '.') continue;
@@ -663,6 +672,109 @@ prop('shrubShort', [
   '144422244444444442222221',
   '142224444433334444322221',
   '111111111111111111111111',
+]);
+
+// ---------------------------------------------------------------- whimsy
+prop('mushroomHouse', [
+  '.............................aa.............................',
+  '.....................adddddcccccccbbb.a.....................',
+  '..................addwdddcccccwccccbbbbb.a..................',
+  '................adddwdddcccwwwwwwmccbbbbbb.a................',
+  '..............addwwwdddcccwwwwwwwmmccbbbbbbb.a..............',
+  '.............addwddddddcccwwwwwwwmmcccbbbbbbbba.............',
+  '...........addwwddddddccccwwwwwwwmmccccbbbbbbbb.a...........',
+  '..........addddddddddccccwwwwwwwwmmmcccbbbbbbbbb.a..........',
+  '.........addddddwddddcccccwwwwwwwmmcccccbbbbbbbbbba.........',
+  '........adddddwwwwmdccccccwwwwwwwmmccccccbbbwbbbbbba........',
+  '.......adddddwwwwwmmccccccwwwwwwwmmccccccbwwwwmbbbbba.......',
+  '......addddddwwwwwmmcccccccwwwwwwmcccccccwwwwwmmbbbb.a......',
+  '.....addddddwwwwwwmmmcccccccccwccccccccccwwwwwmmbbbbb.a.....',
+  '.....adddddddwwwwwmmccccccccccccccccccccwwwwwwmmmbbbbba.....',
+  '....addddddddwwwwwmmcccccccccccccccccccccwwwwwmmbbbbbbba....',
+  '...addddddddddwwwwmccccccccccccccccccccccwwwwwmmbbbbbbb.a...',
+  '...addddddddddddwdccccccccccccccccccccccccwwwwmbbbbbbbbba...',
+  '..adddddddddddddddcccccccccccccccccccccccccbwbbbbbbbbbbb.a..',
+  '..adddddddddddddddcccccwccccccccccccccccccccbbbbbbbbbbbbba..',
+  '.addddddddddddddddcccwwwwmcccccccccccccwccccbbbbbbbbbbbbb.a.',
+  '.addddddwddddddddccccwwwwmcccccccccccwwwwmccbbbbbbbbwbbbbba.',
+  '.adddddwwmdddddddcccwwwwwmmccccccccccwwwwmccbbbbbbbwwmbbbba.',
+  'acccccwwwmmccccccccccwwwwmccccccccccwwwwwmmcbbbbbbwwwmmbbb.a',
+  'accccccwwmcccccccccccwwwwmcccccccccccwwwwmccbbbbbbbwwmbbbb.a',
+  'acccccccwccccccccccccccwcccccccccccccwwwwmcccbbbbbbbwbbbbbba',
+  'abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbwbbbbbbbbbbbbbbbbbbba',
+  'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.',
+  'abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba',
+  'aaaaabbaaaabbaaaabbaaaabbaaaabbaaaabbaaaabbaaaabbaaaabbaaaaa',
+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  '.aaaa..aaaaDDaaaaDDaaaaCCaaaaCCaaaaCCaaaaBBaaaaBBaaaa..aaaa.',
+  '..........ADDDDDDDDDDCCCCCCCCCCCCCCCCCCCCBBBBBBBBA..........',
+  '..........ADDDDDDDDDDCCCCCCCCCCCCCCCCCCCCBBBBBBBB.A.........',
+  '.........ADDDDDDDDDDDCCCCCCCCCCCCCCCCCCCCBBBBBBBB.A.........',
+  '.........ADDDDDDDDDDDCCCCCCCCCCCCCCCCCCCCBBBBBBBB.A.........',
+  '.........ADDDDDD5555CCCCCCCCCCCCCCCCCCCC5555BBBBBBA.........',
+  '.........ADDDD55588555CCCCCCCCCCCCCCCC55588555BBBBA.........',
+  '.........ADDDD58zz7z75CCCCCCCCCCCCCCCC58zz7z75BBBBA.........',
+  '........ADDDD55zzz7zz55CCCCCCCCCCCCCC55zzz7zz55BBB.A........',
+  '........ADDDD58zzz7zz75CCCCCCCCCCCCCC58zzz7zz75BBB.A........',
+  '........ADDDD5777777775CCCCC6666CCCCC5777777775BBB.A........',
+  '........ADDDD55zzz7zz55CCCCC66666CCCC55zzz7zz55BBB.A........',
+  '........ADDDDD57zz7z65CCCCC6666666CCCC57zz7z65BBBB.A........',
+  '........ADDDDD55567555CCCCC66666666CCC55567555BBBB.A........',
+  '........ADDDDDDD5555CCCCC56666666665CCCC5555BBBBBBBA........',
+  '........ADDDDbDcDbDcCCCCC58888888865CbCcCbBcBBBBBB.A........',
+  '........ADDD5555555555555587777777655555555555555B.A........',
+  '........ADDD5666666666665587777777655666666666665B.A........',
+  '........ADDD5555555555555587777777655555555555555B.A........',
+  '........ADDDDDDDDDDDCCCCC58777777765CCCCCCBBBBBBBB.A........',
+  '........ADDDDDDDDDDDCCCCC58777777765CCCCCCBBBBBBBB.A........',
+  '.........ADDDDDDDDDDCCCCC58777777765CCCCCCBBBBBBBBA.........',
+  '.........ADDDDDDDDDDCCCCC58777777765CCCCCCBBBBBBBBA.........',
+  '.........ADDDDDDDDDDCCCCC58777777h65CCCCCCBBBBBBBBA.........',
+  '.........ADDDDDDDDDDDCCCC58777777765CCCCCBBBBBBBB.A.........',
+  '.........ADDDDDDDDDDDCCCC58777777765CCCCCBBBBBBBB.A.........',
+  '..........ADDDDDDDDDDCCCC58777777765CCCCCBBBBBBBB.A.........',
+  '..........ADDDDDDDDDDCCCC58777777765CCCCCBBBBBBBBA..........',
+  '..........ADDDDDDDDDDCCCC58777777765CCCCCBBBBBBBBA..........',
+  '..........ADDDDDDDDDDCCCC58777777765CCCCCBBBBBBB.A..........',
+  '..........ADDDDDDDDDDCCCC56666666665CCCCCBBBBBBB.A..........',
+  '..........AAAAAAAAAAAAAAA55555555555AAAAAAAAAAAAAAA.........',
+]);
+prop('coneTree', [
+  '...........d..........',
+  '.........dcd..........',
+  '........1443321.......',
+  '........1443321.......',
+  '.......1.43332.1......',
+  '.......144333221......',
+  '......1.4433322.1.....',
+  '......14443333221.....',
+  '.....1.41w433212.1....',
+  '.....1414433322121....',
+  '....1.41443332212.1...',
+  '....141444333322121...',
+  '.....1.444333322.1....',
+  '.....14443333d2221....',
+  '....144414433212221...',
+  '...1.4414433323122.1..',
+  '...1441b443332221221..',
+  '..1441444433332221221.',
+  '...11.44c33333222.1...',
+  '....1444433333w2221...',
+  '...14444433333322221..',
+  '..14444433d3333322221.',
+  '.1444w4433333333222221',
+  '1444444333333333b22222',
+  '.1..1..1..1..1..1..1..',
+  '.........5555.........',
+  '.........5865.........',
+  '.........5865.........',
+  '.........5865.........',
+  '.........5865.........',
+  '.........5865.........',
+  '.........5665.........',
+  '.........5555.........',
 ]);
 
 // ---------------------------------------------------------------- structures

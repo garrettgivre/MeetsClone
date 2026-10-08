@@ -10,6 +10,7 @@ import { C, RAMP_NAMES } from '../engine/palette.js';
 import { W, HD, makeBitmap } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
 import { PROPS, stampProp } from './props.js';
+import { glyphRows } from '../engine/font.js';
 
 export const RW = W * HD;               // 256
 export const RH = LAYOUT.room.h * HD;   // 312
@@ -378,9 +379,10 @@ function kit() {
     rect(x, y, w, 2, dk(c1)); rect(x, y - 2, w, 2, 'ink');
   };
   /** A hand-pixelled shopfront: wall colour, awning colour (awn[0]) and its sign. */
-  const shopFront = (x, y, w, h, wallC, awn, { sign = null } = {}) => {
+  const shopFront = (x, y, w, h, wallC, awn, { sign: label = null, signC = 'brown.1', halo = null } = {}) => {
     shadow(x + w / 2, y, w / 2, 'shade', 3);
-    prop('shop', x + w / 2, y, { wall: rampOf(wallC), accent: rampOf(awn[0]), flip: x > RW / 2 });
+    prop('shop', x + w / 2, y, { wall: rampOf(wallC), accent: rampOf(awn[0]), flip: x > RW / 2, halo });
+    if (typeof label === 'string' && label.length > 1) sign(x + w / 2 + (x > RW / 2 ? 2 : -2), y - 66, label, { bg: signC, pad: 2 });
   };
   /** A hand-pixelled counter; long ones are two counters side by side. */
   const counter = (x, y, w, c = 'brown.2', top = 'cream.3') => {
@@ -631,8 +633,53 @@ function kit() {
     [-18, -6, 6, 18].forEach((dx, i) => { const len = 10 + (i % 2) * 8; line(x + dx, y, x + dx, y + len, 'ink'); star5(x + dx, y + len + 5, 5, colors[i % colors.length]); });
   };
 
+  // ---- charm: lettering, faces, marquee bulbs, hanging stars ----
+  /** A lettered sign board centred on x (top at y), in the game's own pixel font. */
+  const sign = (x, y, str, { fg = 'white', bg = 'pink.1', pad = 3, board = true } = {}) => {
+    const gl = [...str].map((ch) => glyphRows(ch));
+    const w = gl.reduce((a, g) => a + (g[0] || '').length + 1, -1), h = 5;
+    const x0 = Math.round(x - w / 2);
+    if (board) {
+      block(x0 - pad, y - pad, w + pad * 2, h + pad * 2 + 1, bg, { r: 2 });
+      rect(x0 - pad + 2, y - pad + 1, w + pad * 2 - 4, 1, lt(bg));
+    }
+    let cx = x0;
+    for (const g of gl) {
+      g.forEach((row, j) => [...row].forEach((c, i) => { if (c === '#') { set(cx + i + 1, y + j + 1, dk(bg, 2)); set(cx + i, y + j, fg); } }));
+      cx += (g[0] || '').length + 1;
+    }
+    return w + pad * 2;
+  };
+  /** The Tamagotchi face: two dot eyes with a glint, rosy cheeks, a little open mouth. */
+  const face = (x, y, s = 1, { ink = 'ink', cheek = 'pink.2', mouth = 'red.1', gap = 5 } = {}) => {
+    for (const d of [-1, 1]) {
+      const ex = x + d * gap * s;
+      rect(ex - s, y - s, 2 * s, 3 * s, ink); set(ex - s, y - s, 'white');
+      rect(ex + d * 3 * s - s, y + 3 * s, 2 * s, s, cheek);
+    }
+    rect(x - s, y + 3 * s, 2 * s, s, ink); rect(x - s, y + 4 * s, 2 * s, s, mouth);
+  };
+  /** Marquee bulbs along a line, alternating warm colours, each with a glint. */
+  const bulbs = (x0, y0, x1, y1, step = 6, colors = ['gold.3', 'orange.2']) => {
+    const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / step));
+    for (let i = 0; i <= n; i++) {
+      const x = Math.round(x0 + ((x1 - x0) * i) / n), y = Math.round(y0 + ((y1 - y0) * i) / n), c = colors[i % colors.length];
+      set(x - 1, y, dk(c)); set(x + 1, y, dk(c)); set(x, y - 1, c); set(x, y + 1, dk(c)); set(x, y, 'white');
+    }
+  };
+  /** A sagging string of hanging stars across the top of a scene. */
+  const starString = (y, { sag = 10, x0 = 0, x1 = RW, every = 30, string = 'brown.1', colors = ['gold.3', 'pink.3', 'sky.3', 'mint.3'] } = {}) => {
+    const at = (x) => y + Math.round(Math.sin(((x - x0) / (x1 - x0)) * Math.PI) * sag);
+    for (let x = x0; x < x1; x++) set(x, at(x), string);
+    for (let x = x0 + every / 2, i = 0; x < x1; x += every, i++) {
+      const len = 6 + (i % 3) * 5, yy = at(x);
+      for (let j = 1; j < len; j++) set(x, yy + j, string);
+      star5(x, yy + len + 4, 5, colors[i % colors.length]); set(x - 1, yy + len + 2, 'white');
+    }
+  };
+
   return {
-    bm, front, layer, usedFront: () => frontUsed, set, field, horizonClouds, frame, prop, blob, mist, roofCurve, trunk, trail, flowerPatch, rocks, tufts, groundShade, cloudBank, lightPool, beam, vignette, plant, hangingPlant, mobile, puff, canopy, pcloud, bands, mountain, river, mottle, star5, rainbow, sparkle, mushroom, rock, conifer, waterfall, get, rect, box, line, dither, block, flat, ellipse, disc, ball, shadow, sky, cloud, skyline, hills, grass, path,
+    bm, front, layer, usedFront: () => frontUsed, set, sign, face, bulbs, starString, field, horizonClouds, frame, prop, blob, mist, roofCurve, trunk, trail, flowerPatch, rocks, tufts, groundShade, cloudBank, lightPool, beam, vignette, plant, hangingPlant, mobile, puff, canopy, pcloud, bands, mountain, river, mottle, star5, rainbow, sparkle, mushroom, rock, conifer, waterfall, get, rect, box, line, dither, block, flat, ellipse, disc, ball, shadow, sky, cloud, skyline, hills, grass, path,
     tiles, planks, cobbles, wall, floorShadow, tree, pine, bush, flower, flowers, pot, lamp, bench, window: window_, door, awning,
     shopFront, counter, shelf, table, chair, rug, clock, water, star, curtain, bunting, stringLights, pictureFrame,
   };
@@ -645,16 +692,20 @@ const SCENES = {
     k.bands(['sky.2', 'sky.2', 'sky.3'], 0, HZ);
     k.pcloud(30, 34, 60, 'violet.3'); k.pcloud(182, 48, 56, 'pink.3', 0.9);
     k.skyline(HZ - 60, 'sky.2', 3);
-    k.canopy(-8, HZ - 92, 44, 40, 'green.2', { seed: 21, r: 9 }); k.canopy(222, HZ - 98, 44, 42, 'green.2', { seed: 22, r: 9 });
-    k.shopFront(4, HZ, 72, 74, 'pink.3', ['pink.2', 'white'], { sign: 'pink.1' });
-    k.shopFront(180, HZ, 72, 80, 'gold.3', ['sky.2', 'white'], { sign: 'sky.1' });
-    k.prop('townhall', 128, HZ, { roof: 'red', accent: 'red' });
+    // rows of little cone trees peeking over the roofs
+    for (const [x, y, l] of [[6, HZ - 62, 'green'], [22, HZ - 70, 'mint'], [86, HZ - 40, 'green'], [170, HZ - 40, 'mint'], [234, HZ - 72, 'green'], [250, HZ - 62, 'mint']]) k.prop('coneTree', x, y, { leaf: l, halo: 'white' });
+    k.shopFront(4, HZ, 72, 74, 'pink.3', ['pink.2', 'white'], { sign: 'SWEETS', signC: 'pink.1', halo: 'white' });
+    k.shopFront(180, HZ, 72, 80, 'gold.3', ['sky.2', 'white'], { sign: 'GIFTS', signC: 'sky.1', halo: 'white' });
+    k.prop('townhall', 128, HZ, { roof: 'red', accent: 'red', halo: 'white' });
+    // the clock wears a face, and the hall has its name over the windows
+    k.disc(128, 59, 6, 'cream.3'); k.face(128, 57, 1, { gap: 3 });
+    k.sign(128, 83, 'TOWN HALL', { bg: 'red.1', pad: 2 });
     k.cobbles(HZ, 'slate.3');
     k.bunting(8, 14);
     k.shadow(128, 252, 54, 'slate.1', 6);
     k.prop('fountain', 128, 252);
     k.lamp(26, 246); k.lamp(230, 246);
-    k.pot(56, 214, 'green.2', 'brown.2'); k.pot(200, 214, 'green.2', 'brown.2');
+    for (const [x, l] of [[56, 'green'], [200, 'mint']]) { k.shadow(x, 214, 9); k.prop('coneTree', x, 214, { leaf: l }); }
     k.layer('front');
     for (const [x, f] of [[14, false], [242, true]]) { k.prop('shrubShort', x, 244, { leaf: 'green', flip: f }); k.block(x - 14, 240, 28, 22, 'cream.3', { r: 2 }); k.rect(x - 15, 239, 30, 3, 'cream.2'); k.prop('flowersB', x + (f ? -6 : 6), 239, { accent: f ? 'gold' : 'pink' }); }
     k.layer('back');
@@ -812,7 +863,9 @@ const SCENES = {
   arcade(k) {
     k.rect(0, 0, RW, HZ + 32, 'indigo.0');
     for (let i = 0; i < 50; i++) k.star((i * 61) % RW, (i * 37) % 60, i % 3 ? 'violet.2' : 'sky.2');
-    k.flat(84, 8, 88, 18, 'night', 'pink.2'); for (let i = 0; i < 5; i++) k.rect(92 + i * 16, 14, 10, 6, ['pink.2', 'sky.2', 'gold.2', 'mint.2', 'violet.2'][i]);
+    k.block(80, 4, 96, 22, 'violet.0'); k.rect(83, 7, 90, 16, 'indigo.0');
+    k.bulbs(80, 4, 176, 4, 6); k.bulbs(80, 25, 176, 25, 6); k.bulbs(80, 4, 80, 25, 7); k.bulbs(176, 4, 176, 25, 7);
+    k.sign(128, 12, 'ARCADE', { fg: 'pink.3', bg: 'indigo.0', board: false }); k.star5(94, 14, 3, 'gold.3'); k.star5(162, 14, 3, 'gold.3');
     k.rect(0, 30, RW, 1, 'pink.2'); k.rect(0, 32, RW, 1, 'sky.2'); // neon strips
     for (const [x, c] of [[8, 'red'], [64, 'sky'], [148, 'gold'], [204, 'green']]) {
       k.shadow(x + 22, 206, 26, 'night');
@@ -1052,6 +1105,7 @@ const SCENES = {
     k.bands(['sky.2', 'pink.3', 'gold.3'], 0, HZ);
     k.pcloud(150, 24, 60, 'pink.2'); k.pcloud(14, 150, 40, 'violet.3', 0.7);
     k.canopy(110, 118, 60, 46, 'green.2', { seed: 25, r: 9 });
+    for (const [x, l] of [[104, 'green'], [118, 'mint'], [160, 'green']]) k.prop('coneTree', x, HZ, { leaf: l, halo: 'white' });
     // ferris wheel
     const cx = 64, cy = 88, R = 54;
     k.disc(cx, cy, R, 'pink.3', { outline: 'red.1' }); k.disc(cx, cy, R - 4, 'pink.3', { outline: 'red.2' });
@@ -1060,7 +1114,8 @@ const SCENES = {
       k.line(cx, cy, ex, ey, 'red.1');
       if (a % 2 === 0) { k.rect(ex - 1, ey, 2, 4, 'ink'); k.block(ex - 7, ey + 4, 14, 10, ['sky.2', 'gold.2', 'mint.2', 'violet.2', 'red.2', 'sky.1'][a / 2]); }
     }
-    k.disc(cx, cy, 6, 'gold.2', { outline: 'gold.0' });
+    for (let a = 0; a < 36; a++) { const t = (a / 36) * Math.PI * 2; k.bulbs(cx + Math.cos(t) * R, cy + Math.sin(t) * R, cx + Math.cos(t) * R, cy + Math.sin(t) * R, 6, [a % 2 ? 'gold.3' : 'pink.3']); }
+    k.disc(cx, cy, 6, 'gold.2', { outline: 'gold.0' }); k.face(cx, cy - 1, 1, { gap: 3 });
     k.line(cx - 4, cy, cx - 24, HZ, 'slate.1'); k.line(cx + 4, cy, cx + 24, HZ, 'slate.1'); k.line(cx - 3, cy, cx - 23, HZ, 'slate.2'); k.line(cx + 3, cy, cx + 23, HZ, 'slate.2');
     // coaster track on stilts
     for (let x = 134; x < RW; x++) {
@@ -1077,7 +1132,7 @@ const SCENES = {
       k.blob(x + 4, HZ + 4, 28, 4, 'green.2', { seed: x, line: null, shade: false });
       k.prop('tent', x, HZ + 2, { accent: c, wall: 'cream', flip: x > 200 });
     }
-    k.shadow(26, 226, 18); k.block(10, 192, 32, 30, 'red.2'); k.flat(14, 180, 24, 12, 'sky.3', 'slate.1'); for (const [x, y] of [[18, 184], [24, 182], [30, 185], [21, 188], [28, 188]]) k.disc(x, y, 2, 'cream.3'); k.disc(16, 224, 4, 'ink'); k.disc(36, 224, 4, 'ink');
+    k.sign(26, 168, 'POP', { bg: 'red.1', pad: 2 }); k.shadow(26, 226, 18); k.block(10, 192, 32, 30, 'red.2'); k.bulbs(10, 192, 42, 192, 5); k.flat(14, 180, 24, 12, 'sky.3', 'slate.1'); for (const [x, y] of [[18, 184], [24, 182], [30, 185], [21, 188], [28, 188]]) k.disc(x, y, 2, 'cream.3'); k.disc(16, 224, 4, 'ink'); k.disc(36, 224, 4, 'ink');
     k.layer('front');
     for (let i = 0; i < 4; i++) { const x = 228 + i * 7; k.line(x, 236, x - 3 + i, 196 - (i % 2) * 8, 'ink'); k.ball(x - 3 + i, 190 - (i % 2) * 8, 6, ['red.2', 'gold.2', 'violet.2', 'sky.2'][i]); }
     k.frame('left', 'green', { seed: 26, tall: false });
@@ -1092,6 +1147,8 @@ const SCENES = {
       for (let x = cx - half; x < cx + half; x++) if (((x + y) & 1) === 0) k.set(x, y, 'gold.3');
     }
     k.curtain(0, 46, HZ + 14); k.curtain(RW - 46, 46, HZ + 14);
+    k.bulbs(49, 32, 49, HZ + 6, 8); k.bulbs(RW - 50, 32, RW - 50, HZ + 6, 8); k.bulbs(49, 32, RW - 50, 32, 8);
+    k.sign(128, 36, '★ SHOWTIME ★', { fg: 'gold.3', bg: 'red.0', pad: 3 });
     k.rect(0, 0, RW, 16, 'red.1'); for (let x = 0; x < RW; x += 16) { k.ellipse(x + 8, 16, 8, 6, 'red.1', { outline: 'red.0' }); k.rect(x + 7, 20, 2, 6, 'gold.2'); k.puff(x + 8, 27, 2, 'gold.2'); }
     k.rect(0, 0, RW, 3, 'gold.2'); k.rect(0, 3, RW, 1, 'gold.0');
     k.planks(HZ, 'brown.2');
@@ -1130,7 +1187,9 @@ const SCENES = {
     // aurora ribbons
     for (let x = 0; x < RW; x++) for (let j = 0; j < 10; j++) { const y = 46 + Math.sin(x / 26) * 10 + j - x * 0.05; if (((x + j) & 1) === 0) k.set(x, y, j < 4 ? 'mint.3' : 'sky.3'); }
     // a big moon with craters, and two little floating islands
-    k.disc(52, 40, 20, 'gold.3', { outline: 'gold.2', shade: true }); k.disc(46, 36, 4, 'gold.2'); k.disc(60, 48, 3, 'gold.2'); k.disc(58, 30, 2, 'gold.2');
+    k.disc(52, 40, 20, 'gold.3', { outline: 'gold.2', shade: true }); k.disc(40, 30, 2, 'gold.2'); k.disc(62, 30, 3, 'gold.2'); k.disc(64, 50, 2, 'gold.2');
+    k.face(52, 41, 1, { ink: 'orange.1', cheek: 'pink.3', mouth: 'orange.2' });
+    k.starString(0, { sag: 12, x0: 86, x1: RW + 4, every: 34, string: 'violet.3' });
     for (const [x, y, w] of [[220, 92, 30], [28, 122, 22]]) {
       k.blob(x, y + 6, w / 2, w / 3, 'violet.2', { seed: x, wob: 0.25 }); // the rocky underside
       k.blob(x, y, w / 2 + 1, 4, 'mint.2', { seed: x + 1, wob: 0.1, line: 'mint.0' });
@@ -1193,6 +1252,8 @@ const SCENES = {
     // ladders down to the ground
     for (const x of [52, 232]) for (let y = 120; y < 150; y += 5) { k.rect(x, y, 8, 1, 'brown.1'); }
     for (const x of [52, 59, 232, 239]) k.rect(x, 116, 1, 34, 'brown.0');
+    k.shadow(78, 178, 30, 'green.1'); k.prop('mushroomHouse', 78, 178, { accent: 'red' });
+    k.shadow(184, 174, 26, 'green.1'); k.prop('mushroomHouse', 184, 174, { accent: 'orange', flip: true });
     // a campfire with log seats
     k.shadow(128, 186, 30, 'green.1'); k.lightPool(128, 184, 40, 10, 'gold.3');
     for (let a = 0; a < 8; a++) k.puff(128 + Math.cos(a * 0.785) * 12, 182 + Math.sin(a * 0.785) * 4, 3, 'slate.3');

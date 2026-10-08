@@ -77,6 +77,9 @@ function glyph(ch) {
   return GLYPHS[ch] || GLYPHS[ch.toUpperCase()] || FALLBACK;
 }
 
+/** A character's pixel rows ('#' = ink), for drawing lettering into art (shop signs). */
+export function glyphRows(ch) { return glyph(ch).rows; }
+
 export function measure(str) {
   let w = 0;
   for (const ch of str) w += glyph(ch).w + 1;
