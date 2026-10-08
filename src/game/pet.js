@@ -9,6 +9,7 @@ import {
   express, inherit, starterGenome, pureGenome, founderFor, randomGenome, randomName,
 } from './genetics.js';
 import { FOODS, TOYS, CLOTHES, SLOTS, COLOR_FOOD_MEALS } from './items.js';
+import { discover } from './book.js';
 
 export const MIN = 60 * 1000;
 export const HOUR = 60 * MIN;
@@ -34,6 +35,22 @@ export const ATTENTION_GRACE = 15 * MIN;
 export const LIGHTS_GRACE = 60 * MIN;
 export const MAX_CRITICAL = 4;
 
+// Weight (grams): meals and snacks add to it, games burn it off. Each stage
+// has a base weight; well over it a pet is chubby and gets sick more easily.
+export const BASE_WEIGHT = { egg: 5, baby: 5, child: 10, teen: 20, adult: 30 };
+export const MEAL_WEIGHT = 1, SNACK_WEIGHT = 2, GAME_WEIGHT = 1;
+export const isChubby = (pet) => pet.weight >= Math.round(BASE_WEIGHT[pet.stage] * 1.5);
+const minWeight = (stage) => Math.round(BASE_WEIGHT[stage] * 0.8);
+
+// Discipline (0-4): children, teens and (less often) adults throw whims, calling
+// for attention they don't need or refusing a meal. Scolding a whim teaches
+// manners; comforting it makes the pet happier but spoils it. A pet with full
+// discipline stops fussing. In generation 1, an unruly pet grows into a
+// lower-tier founder.
+export const MAX_DISCIPLINE = 4;
+const WHIM_EVERY = { child: 3 * HOUR, teen: 4 * HOUR, adult: 8 * HOUR };
+const REFUSE_GAP = 2 * HOUR;
+
 export function newGame(now = Date.now(), rng = defaultRng) {
   return {
     version: 2, // keep in step with SAVE_VERSION in save.js
@@ -47,6 +64,9 @@ export function newGame(now = Date.now(), rng = defaultRng) {
     generation: 1,
     album: [],
     matchmaker: { day: '', left: 3 },
+    book: {},            // Gene Book: { gene: [alleles found] }
+    bookNews: [],        // discoveries waiting to be announced
+    bookSeeded: true,
     pet: newPet({ generation: 1 }, now, rng),
   };
 }
@@ -86,6 +106,11 @@ export function newPet({ generation, genome, parents = null, name }, now, rng = 
     colorMeals: {},
     paused: false,
     pettedAt: 0,
+    weight: BASE_WEIGHT.baby,
+    discipline: 0,
+    whim: false,         // fussing for no reason (scold it)
+    whimIn: WHIM_EVERY.child,
+    refusedAt: 0,
     wear: {},            // clothing: { head, face, body, back, feet } -> item id
     bornAt: now,
   };
@@ -139,7 +164,7 @@ function stepPet(game, pet, dt, events, rng) {
 
   // --- sleep ---
   const bed = isBedtime(pet.stage, t);
-  if (bed && !pet.asleep) { pet.asleep = true; pet.lightsOnMs = 0; emit(events, 'sleep'); }
+  if (bed && !pet.asleep) { pet.asleep = true; pet.lightsOnMs = 0; pet.whim = false; emit(events, 'sleep'); }
   if (!bed && pet.asleep) { pet.asleep = false; pet.lights = true; emit(events, 'wake'); }
 
   const h = dt / HOUR;
@@ -173,6 +198,7 @@ function stepPet(game, pet, dt, events, rng) {
     if (pet.hunger <= 0) p += 0.004;
     if (pet.happy <= 0) p += 0.002;
     if (pet.stage === 'baby') p *= 0.3;
+    if (isChubby(pet)) p *= 2;
     if (rng.chance(p * (dt / MIN))) makeSick(pet, 'cold', events, rng);
   } else {
     pet.sickMs += dt;
@@ -193,6 +219,15 @@ function stepPet(game, pet, dt, events, rng) {
   pet.unhappyMs = pet.happy <= 0 && !pet.asleep ? pet.unhappyMs + dt : (pet.happy > 0 ? 0 : pet.unhappyMs);
   if (pet.unhappyMs >= UNHAPPY_TO_RUNAWAY) return runAway(game, pet, events);
 
+  // --- whims ---
+  if (WHIM_EVERY[pet.stage] && !pet.asleep && !pet.whim && pet.discipline < MAX_DISCIPLINE) {
+    pet.whimIn -= dt;
+    if (pet.whimIn <= 0) {
+      resetWhim(pet, rng);
+      if (!needs(pet)) { pet.whim = true; emit(events, 'whim'); }
+    }
+  }
+
   // --- attention calls ---
   const reason = needs(pet);
   if (!reason) pet.attention = null;
@@ -201,7 +236,11 @@ function stepPet(game, pet, dt, events, rng) {
     emit(events, 'attention', { reason });
   } else {
     pet.attention.ms += dt;
-    if (!pet.attention.counted && pet.attention.ms >= ATTENTION_GRACE && reason !== 'lights') {
+    if (reason === 'whim' && pet.attention.ms >= ATTENTION_GRACE) {
+      // an ignored whim blows over: no harm done, but no lesson learned either
+      pet.whim = false;
+      pet.attention = null;
+    } else if (!pet.attention.counted && pet.attention.ms >= ATTENTION_GRACE && reason !== 'lights') {
       pet.attention.counted = true;
       pet.careMistakes++;
       emit(events, 'mistake', { reason });
@@ -220,7 +259,12 @@ export function needs(pet) {
   if (pet.sick) return 'sick';
   if (pet.hunger <= 0) return 'hungry';
   if (pet.happy <= 0) return 'unhappy';
+  if (pet.whim) return 'whim';
   return null;
+}
+
+function resetWhim(pet, rng) {
+  pet.whimIn = (WHIM_EVERY[pet.stage] || WHIM_EVERY.child) * rng.range(0.6, 1.4) * (1 + pet.discipline * 0.5);
 }
 
 function makeSick(pet, kind, events, rng) {
@@ -234,9 +278,10 @@ function grow(game, pet, events, rng) {
   const from = pet.stage;
   pet.stage = NEXT_STAGE[from];
   pet.stageMs = 0;
+  pet.weight = Math.max(minWeight(pet.stage), (pet.weight ?? BASE_WEIGHT[from]) + BASE_WEIGHT[pet.stage] - BASE_WEIGHT[from]);
   if (pet.stage === 'adult' && pet.generation === 1) {
-    // Generation 1: care decides who your pet becomes.
-    const f = founderFor(pet.careMistakes, rng);
+    // Generation 1: care decides who your pet becomes, and an unruly pet counts as worse care.
+    const f = founderFor(pet.careMistakes + Math.max(0, 2 - pet.discipline), rng);
     const keep = {};
     for (const g of ['appetite', 'energy', 'taste']) keep[g] = pet.genome[g];
     pet.genome = { ...pureGenome(f.traits), ...keep };
@@ -249,6 +294,8 @@ function grow(game, pet, events, rng) {
   }
   if (from === 'egg') emit(events, 'hatch');
   else emit(events, 'grow', { stage: pet.stage });
+  // the Gene Book records every part a pet shows once it's grown into its looks
+  if (pet.stage === 'teen' || pet.stage === 'adult') discover(game, pet.phenotype);
   if (pet.stage !== 'adult') pet.careMistakes = from === 'egg' ? 0 : pet.careMistakes;
 }
 
@@ -283,8 +330,16 @@ export function feed(game, foodId, rng = defaultRng) {
   if (pet.sick && food.kind === 'snack') return { ok: false, refuse: true, msg: "Doesn't feel well." };
   if (food.kind === 'meal' && pet.hunger >= 4) return { ok: false, refuse: true, msg: 'Full!' };
   if (food.kind === 'snack' && pet.happy >= 4 && pet.hunger >= 4) return { ok: false, refuse: true, msg: 'Not now!' };
+  // an unruly pet sometimes turns its nose up at a meal: that's a whim to scold
+  if (food.kind === 'meal' && WHIM_EVERY[pet.stage] && game.simTime - pet.refusedAt >= REFUSE_GAP
+    && rng.chance((MAX_DISCIPLINE - pet.discipline) * 0.06)) {
+    pet.refusedAt = game.simTime;
+    pet.whim = true;
+    return { ok: false, refuse: true, whim: true, msg: "Hmph! Won't eat!" };
+  }
 
   if (!food.free) game.inventory[foodId]--;
+  pet.weight += food.kind === 'meal' ? MEAL_WEIGHT : SNACK_WEIGHT;
   const fav = food.taste === pet.phenotype.taste;
   let liked = fav;
   let disliked = foodId === 'riceball' && pet.stage === 'adult' && !fav;
@@ -344,6 +399,45 @@ export function medicine(game) {
   pet.critical = false;
   pet.sickMs = 0;
   return { ok: true, cured: true, msg: 'All better!' };
+}
+
+/** Scold: the right answer to a whim. Scolding a pet that did nothing wrong just upsets it. */
+export function scold(game) {
+  const pet = game.pet;
+  if (!canAct(pet) || pet.asleep) return { ok: false };
+  if (!pet.whim) {
+    pet.happy = Math.max(0, pet.happy - 1);
+    return { ok: true, fair: false, msg: 'Huh? It did nothing wrong...' };
+  }
+  pet.whim = false;
+  pet.attention = null;
+  pet.discipline = Math.min(MAX_DISCIPLINE, pet.discipline + 1);
+  return { ok: true, fair: true, discipline: pet.discipline, msg: pet.discipline >= MAX_DISCIPLINE ? 'Perfectly behaved!' : 'It listened!' };
+}
+
+/** Comfort a fussing pet: happier now, but it learns that fussing works. */
+export function comfort(game) {
+  const pet = game.pet;
+  if (!canAct(pet) || pet.asleep || !pet.whim) return { ok: false };
+  pet.whim = false;
+  pet.attention = null;
+  pet.happy = Math.min(4, pet.happy + 1);
+  pet.discipline = Math.max(0, pet.discipline - 1);
+  return { ok: true, msg: 'All better... for now.' };
+}
+
+/**
+ * After a minigame: points, a little happiness for a good effort, and some
+ * weight burned off. Returns the points earned.
+ */
+export function finishGame(game, { points = 0, good = false } = {}) {
+  const pet = game.pet;
+  earn(game, points);
+  if (canAct(pet)) {
+    if (good) pet.happy = Math.min(4, pet.happy + 1);
+    pet.weight = Math.max(minWeight(pet.stage), pet.weight - GAME_WEIGHT);
+  }
+  return points;
 }
 
 export function toggleLights(game) {
@@ -429,6 +523,7 @@ export function marry(game, partner, rng = defaultRng) {
   const pet = game.pet;
   const [mom, dad] = pet.gender === 'f' ? [pet, partner] : [partner, pet];
   const genome = inherit(mom.genome, dad.genome, rng);
+  discover(game, partner.phenotype);
   retire(game, pet, 'married', { partner: { name: partner.name, phenotype: partner.phenotype, wear: partner.wear || {} } });
   game.generation = pet.generation + 1;
   game.pet = newPet({ generation: game.generation, genome, parents: [pet.name, partner.name] }, game.simTime, rng);

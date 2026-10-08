@@ -7,6 +7,9 @@ import { setMuted } from '../engine/audio.js';
 import { exportCode, importCode } from '../game/save.js';
 import { StatusScene } from './status.js';
 import { JumpRopeScene } from './jumprope.js';
+import { WhichWayScene, SnackCatchScene, CopyMeScene } from './minigames.js';
+import { GeneBookScene } from './genebook.js';
+import { foundTotal, BOOK_SIZE } from '../game/book.js';
 import { MatchmakerScene, AlbumScene } from './family.js';
 import { WardrobeScene, clothesIcon } from './wardrobe.js';
 import { VERSION } from '../version.js';
@@ -41,8 +44,10 @@ function food(app, home) {
 function games(app) {
   app.push(new ListMenu(app, 'GAMES', [
     { label: 'Jump Rope', right: '▶', icon: TOY_ART.yoyo, action: () => app.push(new JumpRopeScene(app)) },
-    { label: 'More soon!', disabled: true, why: 'More games unlock later.' },
-  ]));
+    { label: 'Which Way?', right: '▶', icon: TOY_ART.ball, action: () => app.push(new WhichWayScene(app)) },
+    { label: 'Snack Catch', right: '▶', icon: FOOD_ART.cookie, action: () => app.push(new SnackCatchScene(app)) },
+    { label: 'Copy Me', right: '▶', icon: TOY_ART.drum, action: () => app.push(new CopyMeScene(app)) },
+  ], { footer: 'GAMES BURN OFF WEIGHT' }));
 }
 
 function items(app, home) {
@@ -112,6 +117,7 @@ function family(app) {
   app.push(new ListMenu(app, 'FAMILY', [
     { label: 'Matchmaker', right: ready ? '♥' : '', disabled: !ready, why, icon: ICONS.family, action: () => app.push(new MatchmakerScene(app)) },
     { label: 'Family Album', right: g.album.length, icon: ICONS.status, action: () => app.push(new AlbumScene(app)) },
+    { label: 'Gene Book', right: `${foundTotal(g)}/${BOOK_SIZE}`, icon: ICONS.status, action: () => app.push(new GeneBookScene(app)) },
   ]));
 }
 

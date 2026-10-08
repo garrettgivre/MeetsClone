@@ -3,7 +3,7 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, heartRow, text } from '../ui.js';
 import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
-import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry } from '../game/pet.js';
+import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry, isChubby, MAX_DISCIPLINE } from '../game/pet.js';
 import { TOYS } from '../game/items.js';
 import { carried, GENE_LABELS } from '../game/genetics.js';
 
@@ -60,6 +60,8 @@ export class StatusScene {
       case 'NEEDS':
         text(scr, 'HUNGER', 8, y + 1, COL.gray); heartRow(scr, W - 44, y, hearts(pet.hunger), 'rice'); y += 12;
         text(scr, 'HAPPY', 8, y + 1, COL.gray); heartRow(scr, W - 44, y, hearts(pet.happy)); y += 12;
+        text(scr, 'DISCIPLINE', 8, y + 1, COL.gray); meter(scr, W - 44, y, pet.discipline || 0, MAX_DISCIPLINE); y += 12;
+        line('WEIGHT', `${pet.weight}G${isChubby(pet) ? ' CHUBBY' : ''}`, isChubby(pet) ? COL.bad : COL.ink);
         line('HEALTH', pet.critical ? 'CRITICAL!' : pet.sick ? pet.sick : 'GOOD', pet.sick ? COL.bad : COL.good);
         line('CARE MISSES', pet.careMistakes, pet.careMistakes > 4 ? COL.bad : COL.ink);
         line('MEALS TO TINT', colorHint(pet));
@@ -90,6 +92,14 @@ export class StatusScene {
         break;
       }
     }
+  }
+}
+
+/** A row of segments, like the discipline meter on the original device. */
+function meter(scr, x, y, value, max) {
+  const w = Math.floor(35 / max);
+  for (let i = 0; i < max; i++) {
+    scr.panel(x + i * w, y, w - 1, 6, i < value ? C('gold.2') : COL.mist, COL.ink);
   }
 }
 

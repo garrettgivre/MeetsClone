@@ -4,8 +4,8 @@ import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
 import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE } from '../art/icons.js';
 import { composePet, composeEgg, composeGhost, CANVAS, GROUND } from '../game/render.js';
-import { LAYOUT, ROOM_FLOOR, COL, dialog } from '../ui.js';
-import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat } from '../game/pet.js';
+import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
+import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD } from './room.js';
@@ -57,6 +57,7 @@ export class HomeScene {
         case 'sick': if (!away) app.sfx('alert'); app.toast(`${name} feels sick...`); break;
         case 'critical': app.sfx('alert'); app.toast(`${name} is very sick! Medicine!`, 3500); break;
         case 'attention': if (!away) app.sfx('alert'); break;
+        case 'whim': if (!away) app.toast(`${name} is fussing! Tap it to scold or comfort.`, 3000); break;
         case 'sleep': app.toast('Sleepy... Turn off the lights.', 3000); break;
         case 'wake': if (!away) app.toast('Good morning!'); break;
         case 'death':
@@ -109,11 +110,28 @@ export class HomeScene {
     const app = this.app, pet = this.pet;
     if (!canAct(pet)) return;
     if (pet.asleep) { app.toast('Zzz...'); return; }
+    if (pet.whim) { this.discipline(); return; }
     const r = pat(this.game);
     if (!r.ok) return;
     app.sfx('happy');
     this.play({ type: 'pat', dur: 900 });
     for (let i = 0; i < 3; i++) this.fx.push({ spr: HEART, x: this.petX - 10 + i * 8, y: ROOM_FLOOR - 36, vy: -0.025 - i * 0.004, life: 900 });
+  }
+
+  /** A fussing pet: scold it (discipline) or comfort it (happiness, but spoiled). */
+  discipline() {
+    const app = this.app;
+    const done = (r, anim) => {
+      app.home();
+      if (!r.ok) return;
+      app.sfx(anim === 'happy' ? 'happy' : 'back');
+      this.play({ type: anim, dur: 1000, done: () => app.toast(r.msg) });
+      app.save();
+    };
+    app.push(new ListMenu(app, `${this.pet.name.toUpperCase()} IS FUSSING`, [
+      { label: 'Scold', right: 'MANNERS', action: () => done(scold(this.game), 'scold') },
+      { label: 'Comfort', right: 'HAPPY', action: () => done(comfort(this.game), 'happy') },
+    ], { footer: 'SCOLDING TEACHES DISCIPLINE' }));
   }
 
   /** Run a care action with its animation. Used by menus too. */
@@ -123,6 +141,7 @@ export class HomeScene {
     if (!r.ok) {
       app.sfx('nope');
       if (r.refuse) this.play({ type: 'refuse', dur: 1000 });
+      if (r.whim) { app.toast(`${r.msg} Tap ${this.pet.name} to scold it.`, 3000); return; }
       if (r.msg) app.toast(r.msg);
       return;
     }
@@ -194,6 +213,12 @@ export class HomeScene {
       }
     }
     this.fx = this.fx.filter(f => (f.life -= dt) > 0);
+    // Gene Book finds, announced one at a time once nothing else is showing
+    const news = this.game.bookNews;
+    if (news?.length && !this.anim && this.app.scene === this && !this.app.toasts.length) {
+      this.app.toast(news.shift(), 2600);
+      this.app.sfx('coin');
+    }
     for (const f of this.fx) f.y += f.vy * dt;
     if (!canAct(pet) || pet.asleep || this.anim) return;
 
@@ -286,6 +311,10 @@ export class HomeScene {
           flip = false;
           arms = 'out';
           expr = Math.floor(a.t / 280) % 2 ? 'chew' : 'eat';
+          break;
+        case 'scold':
+          expr = 'sad';
+          dy = Math.floor(a.t / 120) % 2;
           break;
         case 'refuse':
           expr = 'sad';

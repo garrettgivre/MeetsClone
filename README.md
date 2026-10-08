@@ -38,6 +38,8 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Hunger and happiness hearts, poop, sickness, bedtime and lights.
   - Attention calls and care mistakes.
   - Toothaches from too many snacks.
+  - **Discipline:** children, teens and (less often) adults throw whims, calling for nothing or refusing a meal. Tap a fussing pet to scold it (builds discipline) or comfort it (happier, but spoiled). A fully disciplined pet stops fussing, and an unruly generation-1 pet grows into a lower-tier founder.
+  - **Weight:** meals add a gram, snacks two, and every game burns one off. A chubby pet gets sick more easily.
 - **Pets can die or run away:** from untreated illness or starvation, or from long unhappiness.
 - **Generation 1:** the quality of your care decides which of 6 original founders your pet becomes: Kitsu the ember fox, Gloop the cherry jelly, Fleece the cloud lamb, Glimmer the lantern jellyfish, Inchy the garden caterpillar or Hoolet the moon owlet. Every pet is hand-pixel art with breathing, blinking and expression animation (see `docs/STYLE.md`).
 - **Six body plans:** biped, blob, four-legged, floater, serpent and bird. A pet's form is a gene, and every body part is drawn separately for every form, so a lamb-line child with a jellyfish's body plan still looks hand-made.
@@ -49,8 +51,10 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - The status screen shows the hidden genes a pet carries.
 - **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu).
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
-- **Economy:** Gotchi Points, a food and toy shop, favourite foods and toys, and the Jump Rope minigame.
+- **Economy:** Gotchi Points, a food and toy shop, and favourite foods and toys.
+- **Minigames:** Jump Rope, Which Way? (guess where your pet hops), Snack Catch (catch treats, dodge rocks) and Copy Me (repeat your pet's left/right dance).
 - **Family:** a matchmaker (3 partners a day), a wedding, the next-generation egg, and a family album.
+- **Gene Book** (Family menu): every body plan, part and body colour, shown on a little pet, with silhouettes for ones not found yet. Your pets fill it in as they grow into their looks, and so do the partners they marry. Each find pays points, and finding every part of a founder's line pays a bonus.
 - **Saving:** automatic saves, catch-up for time spent away, and backup and restore codes.
 
 ## Project layout

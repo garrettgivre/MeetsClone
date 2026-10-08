@@ -4,7 +4,7 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, text, dialog } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
-import { earn } from '../game/pet.js';
+import { finishGame } from '../game/pet.js';
 
 const GOAL = 30;
 
@@ -58,13 +58,11 @@ export class JumpRopeScene {
     }
   }
   finish(won) {
-    const app = this.app, pet = this.pet;
+    const app = this.app;
     this.state = 'over';
     this.t = 0;
     this.won = won;
-    this.reward = this.count * 2 + (won ? 30 : 0);
-    earn(app.game, this.reward);
-    if (this.count >= 5 && pet) pet.happy = Math.min(4, pet.happy + 1);
+    this.reward = finishGame(app.game, { points: this.count * 2 + (won ? 30 : 0), good: this.count >= 5 });
     app.sfx(won ? 'happy' : 'fail');
     app.save();
   }
