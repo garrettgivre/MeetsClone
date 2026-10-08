@@ -22,8 +22,8 @@ const z = +params.get('z') || 5, only = params.get('only');
 const WAYS = [{}, { leaf: 'mint' }, { leaf: 'orange', accent: 'gold' }, { leaf: 'lime', accent: 'violet' }];
 const out = document.getElementById('out');
 for (const p of Object.values(PROPS)) {
-  if (only && p.name !== only) continue;
-  for (const way of only ? WAYS : WAYS.slice(0, 2)) {
+  if (only && !only.split(',').includes(p.name)) continue;
+  for (const way of only && !only.includes(',') ? WAYS : WAYS.slice(0, 1)) {
     const c = document.createElement('canvas'); c.width = p.w + 4; c.height = p.h + 4;
     c.style.width = c.width * z + 'px'; c.style.height = c.height * z + 'px';
     const ctx = c.getContext('2d'), img = ctx.createImageData(c.width, c.height), u = new Uint32Array(img.data.buffer);

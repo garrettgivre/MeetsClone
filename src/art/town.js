@@ -786,16 +786,9 @@ const SCENES = {
     for (let i = 0; i < 40; i++) k.set(30 + (i * 47) % 196, 200 + (i * 13) % 40, 'gold.2');
     // swing set
     const gy = 196;
-    k.shadow(62, gy, 46, 'green.2');
-    for (const x of [20, 102]) { k.line(x, gy, x + 6, gy - 96, 'red.1'); k.line(x + 1, gy, x + 7, gy - 96, 'red.2'); k.line(x + 14, gy, x + 8, gy - 96, 'red.1'); k.line(x + 15, gy, x + 9, gy - 96, 'red.0'); }
-    k.block(20, gy - 100, 98, 6, 'red.2');
-    for (const sx of [40, 76]) { k.rect(sx, gy - 94, 1, 60, 'slate.1'); k.rect(sx + 14, gy - 94, 1, 60, 'slate.1'); k.block(sx - 2, gy - 34, 19, 5, 'sky.2'); }
+    k.shadow(66, gy, 50, 'green.2'); k.prop('swingSet', 66, gy, { accent: 'red', wood: 'brown' });
     // slide with a ladder
-    k.shadow(200, gy + 2, 34, 'green.2');
-    k.rect(166, gy - 96, 3, 96, 'sky.1'); k.rect(186, gy - 96, 3, 96, 'sky.1');
-    for (let y = gy - 86; y < gy; y += 10) k.rect(166, y, 22, 2, 'sky.2');
-    k.block(162, gy - 102, 30, 8, 'sky.2');
-    for (let i = 0; i < 64; i++) { const x = 190 + i * 0.85, y = gy - 96 + i * 1.5; k.rect(x, y, 13, 2, 'gold.2'); k.set(x, y, 'gold.1'); k.set(x + 12, y + 1, 'gold.1'); }
+    k.shadow(204, gy + 2, 36, 'green.2'); k.prop('slide', 200, gy, { accent: 'sky', wall: 'gold' });
     k.block(120, 226, 12, 10, 'red.2'); k.rect(122, 223, 8, 1, 'ink'); k.line(140, 234, 148, 222, 'slate.1');
     k.layer('front');
     k.frame('left', 'green', { seed: 7, tall: false }); k.frame('right', 'lime', { seed: 8 });
@@ -820,7 +813,7 @@ const SCENES = {
     k.counter(92, HZ + 18, 72, 'pink.2', 'white');
     k.block(100, HZ - 22, 16, 14, 'slate.2'); k.rect(104, HZ - 10, 6, 2, 'ink'); k.face(108, HZ - 18, 1, { gap: 3, cheek: 'pink.3' }); for (let j = 0; j < 6; j++) k.set(108 + Math.sin(j) * 2, HZ - 26 - j * 2, 'mist');
     k.ellipse(146, HZ - 9, 10, 2, 'white', { outline: 'mist' }); k.ellipse(146, HZ - 14, 7, 5, 'pink.3', { outline: 'pink.1', shade: true }); k.set(146, HZ - 20, 'red.2');
-    for (const x of [20, 196]) { k.table(x, 248, 40, 'white'); k.disc(x + 14, 222, 3, 'white', { outline: 'mist' }); k.rect(x + 12, 219, 4, 1, 'brown.1'); }
+    for (const x of [40, 216]) { k.shadow(x, 248, 18); k.prop('cafeTable', x, 248, { wall: 'cream', glass: 'pink', flip: x > 128 }); }
     k.layer('front');
     k.plant(16, 262, 1.1, 'green.2', 'pink.2', 3); k.plant(242, 262, 1, 'green.2', 'pink.2', 4);
     k.layer('back');
@@ -855,20 +848,24 @@ const SCENES = {
     k.mobile(128, 30);
     k.sign(128, 78, 'TOY SHOP', { bg: 'red.1', pad: 2 });
     k.bunting(2, 6, ['red.2', 'gold.2', 'sky.2', 'mint.2', 'violet.2']);
-    k.blob(128, 120, 22, 30, 'white', { seed: 2, wob: 0, flat: 18, line: 'sky.1' }); k.blob(128, 120, 17, 25, 'sky.3', { seed: 2, wob: 0, flat: 16, line: null, shade: false });
-    k.canopy(112, 116, 32, 20, 'green.2', { seed: 9, r: 6 }); k.rect(128, 96, 1, 40, 'white'); k.rect(112, 120, 33, 1, 'white');
+    for (let y = 92; y < 148; y++) for (let x = 104; x < 152; x++) {
+      const inArch = y > 114 || ((x - 128) / 24) ** 2 + ((y - 114) / 22) ** 2 <= 1;
+      const inGlass = (y > 114 && x > 107 && x < 149 && y < 145) || (((x - 128) / 20) ** 2 + ((y - 114) / 18) ** 2 <= 1 && y <= 114);
+      if (inArch) k.set(x, y, inGlass ? (y > 130 ? 'sky.2' : 'sky.3') : 'white');
+    }
+    for (const [x, y, r] of [[116, 136, 7], [128, 132, 8], [141, 137, 7]]) k.puff(x, y, r, 'green.2');
+    k.rect(108, 141, 40, 4, 'green.1');
+    k.rect(127, 96, 2, 49, 'white'); k.rect(108, 118, 40, 2, 'white');
+    for (let i = 0; i < 6; i++) k.set(112 + i, 108 - i, 'white');
+    k.rect(100, 146, 56, 3, 'white'); k.rect(100, 149, 56, 1, 'sky.1');
     k.vignette('sky.1', 34);
     k.tiles(HZ, 'pink.3', 'white', 16); k.floorShadow();
     k.rug(128, 232, 60, 11, 'sky.2', 'gold.3');
     k.lightPool(128, HZ + 30, 60, 12, 'white');
     // a rocking horse
-    k.shadow(128, 200, 28);
-    for (let i = 0; i < 50; i++) k.set(104 + i, 198 - Math.sin((i / 49) * Math.PI) * -4, 'brown.1');
-    k.block(112, 170, 32, 14, 'red.2'); k.block(136, 158, 12, 16, 'red.2'); k.puff(148, 158, 6, 'red.2'); k.set(150, 156, 'ink');
-    for (let j = 0; j < 8; j++) k.rect(132 + j * 0.5, 152 + j, 3, 1, 'gold.2'); // mane
-    for (const x of [116, 138]) k.rect(x, 184, 3, 12, 'red.1');
+    k.shadow(128, 200, 28); k.prop('rockingHorse', 128, 200, { accent: 'red', wall: 'gold' });
     k.layer('front');
-    k.shadow(26, 260, 22); k.block(6, 236, 16, 16, 'red.2'); k.block(24, 240, 14, 12, 'sky.2'); k.block(12, 222, 14, 14, 'gold.2'); for (const [x, y] of [[10, 240], [27, 243], [15, 226]]) k.rect(x + 2, y + 2, 4, 4, 'white');
+    k.shadow(24, 260, 22); k.prop('giftBox', 14, 260, { accent: 'red', wall: 'cream' }); k.prop('giftBox', 31, 260, { accent: 'sky', wall: 'gold' }); k.prop('giftBox', 22, 245, { accent: 'gold', wall: 'pink' });
     k.shadow(58, 254, 12); k.ellipse(58, 240, 10, 13, 'pink.3', { outline: 'pink.1', shade: true }); k.face(58, 238, 1, { gap: 3 }); k.puff(52, 228, 2, 'white');
     k.shadow(236, 262, 14); k.puff(236, 236, 11, 'brown.2'); k.puff(227, 226, 5, 'brown.2'); k.puff(245, 226, 5, 'brown.2'); k.puff(236, 252, 13, 'brown.2'); k.set(232, 234, 'ink'); k.set(240, 234, 'ink'); k.puff(236, 240, 3, 'cream.3');
     k.layer('back');
@@ -879,11 +876,7 @@ const SCENES = {
     k.starString(0, { sag: 8, every: 28, string: 'pink.1', colors: ['pink.2', 'red.2', 'white', 'violet.3'], hearts: true });
     k.rect(18, 66, 108, 3, 'slate.1');
     for (const x of [22, 122]) k.rect(x, 66, 3, 104, 'slate.1');
-    for (let i = 0; i < 6; i++) {
-      const x = 28 + i * 16, c = ['red.2', 'sky.2', 'gold.2', 'violet.2', 'green.2', 'pink.1'][i];
-      k.line(x + 6, 69, x + 6, 72, 'ink'); k.line(x, 76, x + 6, 72, 'ink'); k.line(x + 12, 76, x + 6, 72, 'ink');
-      k.block(x, 76, 13, 34 + (i % 2) * 8, c);
-    }
+    ['pink', 'sky', 'gold', 'violet', 'mint'].forEach((c, i) => k.prop(i % 2 ? 'shirt' : 'dress', 36 + i * 19, i % 2 ? 93 : 105, { accent: c }));
     k.ellipse(208, 88, 28, 52, 'gold.1', { outline: 'gold.0' }); k.ellipse(208, 88, 23, 47, 'sky.3'); k.dither(186, 100, 44, 32, C('sky.2'));
     for (let i = 0; i < 18; i++) k.set(198 + i * 0.6, 60 + i, 'white');
     k.sparkle(222, 64); k.sparkle(196, 112); k.bulbs(208, 34, 208, 34, 6, ['gold.3']); k.heart(208, 32, 'pink.2', 3);
@@ -930,8 +923,7 @@ const SCENES = {
     k.shadow(212, HZ + 4, 40);
     k.prop('bed', 212, 184, { wall: 'cream', glass: 'sky', accent: 'sky', stone: 'slate' });
     k.rect(154, 90, 2, 84, 'slate.1'); k.block(148, 84, 14, 18, 'sky.3'); k.line(155, 102, 168, 140, 'mist');
-    k.block(10, 104, 52, 64, 'slate.3'); k.rect(36, 105, 1, 62, 'slate.1');
-    k.shelf(14, 126, 20, 'bottles', ['red.2', 'sky.2', 'gold.2']); k.shelf(40, 126, 20, 'bottles', ['mint.2', 'pink.2']);
+    k.shadow(36, 170, 28); k.prop('medCabinet', 36, 170, { accent: 'red', stone: 'slate', wall: 'cream' });
     k.vignette('mint.2', 30);
     k.tiles(HZ, 'mint.3', 'white', 20); k.floorShadow('mint.1');
     k.beam(86, HZ, 46, 250, 'white', 0.3);
@@ -948,17 +940,31 @@ const SCENES = {
     k.sign(128, 18, 'DEPT STORE', { fg: 'gold.3', bg: 'red.0', board: false });
     k.bulbs(84, 10, 172, 10, 6); k.bulbs(84, 31, 172, 31, 6);
     for (let i = 0; i < 3; i++) { k.shelf(6, 64 + i * 30, 66, 'boxes'); k.shelf(184, 64 + i * 30, 66, 'boxes', ['red.2', 'blue.2', 'gold.2']); }
-    for (let i = 0; i < 14; i++) { k.rect(92 + i * 5, 168 - i * 8, 22, 3, 'slate.2'); k.rect(92 + i * 5, 171 - i * 8, 22, 1, 'slate.0'); }
-    k.line(88, 166, 158, 54, 'slate.0'); k.line(116, 172, 184, 60, 'slate.0');
-    k.line(88, 160, 158, 48, 'sky.3'); k.line(116, 166, 184, 54, 'sky.3');
+    // a grand staircase up to the next floor
+    for (let i = 13; i >= 0; i--) {
+      const x = 92 + i * 5, y = 164 - i * 8;
+      k.rect(x, y, 26, 8, 'gold.2'); k.rect(x, y, 26, 2, 'cream.3'); k.rect(x, y + 2, 26, 1, 'gold.3'); k.rect(x, y + 7, 26, 1, 'gold.1');
+      k.set(x, y, 'gold.1'); k.set(x + 25, y, 'gold.1');
+    }
+    k.rect(92, 172, 26, 2, 'gold.1');
+    // glass balustrades, then the handrails on top
+    for (const off of [-2, 26]) for (let i = 0; i < 70; i++) {
+      const x = 90 + off + i, top = 156 - i * 1.6;
+      for (let j = 0; j < 12; j++) if (((x + j) & 1) === 0 || j === 0) k.set(x, top + j, j === 0 ? 'white' : 'sky.3');
+    }
+    for (const off of [-2, 26]) for (let i = 0; i < 72; i++) {
+      const x = 89 + off + i, y = 155 - i * 1.6;
+      k.set(x, y - 1, 'slate.0'); k.set(x, y, 'red.2'); k.set(x, y + 1, 'red.1'); k.set(x, y + 2, 'slate.0');
+    }
+    for (const off of [-2, 26]) { k.rect(88 + off, 152, 3, 22, 'slate.1'); k.disc(89 + off, 151, 2, 'gold.2', { outline: 'gold.0' }); }
     k.vignette('gold.2', 30);
     k.plant(66, HZ - 2, 0.9, 'green.2', 'gold.2', 21); k.plant(190, HZ - 2, 0.9, 'green.2', 'gold.2', 22);
     k.tiles(HZ, 'white', 'mist', 24); k.floorShadow('silver');
     for (const x of [40, 128, 216]) k.lightPool(x, HZ + 24, 30, 6, 'white');
     k.shadow(220, 236, 24); k.block(196, 210, 48, 10, 'white'); k.rect(200, 220, 4, 16, 'slate.1'); k.rect(236, 220, 4, 16, 'slate.1');
-    for (const [x, c] of [[204, 'pink.2'], [218, 'sky.2'], [230, 'gold.2']]) k.block(x, 200, 10, 10, c);
+    for (const [x, c] of [[205, 'pink'], [220, 'sky'], [234, 'gold']]) k.prop('giftBox', x, 210, { accent: c, wall: c === 'gold' ? 'pink' : 'cream' });
     k.layer('front');
-    for (const [x, c] of [[8, 'red.2'], [22, 'violet.2']]) { k.shadow(x + 7, 262, 9); k.block(x, 240, 15, 20, c); k.ellipse(x + 7, 240, 5, 5, c, { outline: dk(c, 2) }); k.rect(x + 3, 246, 9, 2, 'white'); }
+    for (const [x, c] of [[14, 'red'], [30, 'violet']]) { k.shadow(x, 262, 9); k.prop('shoppingBag', x, 262, { accent: c }); }
     k.plant(240, 262, 1.1, 'green.2', 'gold.2', 11);
     k.layer('back');
   },
@@ -999,7 +1005,7 @@ const SCENES = {
     for (const x of [18, 186]) { k.shadow(x + 26, 244, 30); k.prop('desk', x + 26, 244, { accent: x < 128 ? 'red' : 'violet', glass: 'sky' }); }
     k.layer('front');
     k.plant(240, 262, 1.1, 'green.2', 'red.2', 17);
-    k.shadow(16, 262, 12); k.block(4, 242, 24, 18, 'sky.2'); k.rect(8, 238, 16, 4, 'sky.1'); k.rect(10, 248, 12, 2, 'white'); // a schoolbag
+    k.shadow(18, 262, 13); k.prop('backpack', 18, 262, { accent: 'sky', wall: 'gold' });
     k.layer('back');
   },
   work(k) {
@@ -1045,7 +1051,12 @@ const SCENES = {
     k.planks(HZ, 'pink.3'); k.floorShadow();
     // coloured light from the window
     for (const [x, c] of [[98, 'pink.2'], [116, 'violet.3'], [134, 'gold.3'], [152, 'mint.3']]) k.lightPool(x, HZ + 18, 10, 5, c);
-    for (let y = HZ; y < RH; y++) { const half = 10 + (y - HZ) * 0.3; k.rect(128 - half, y, half * 2, 1, 'red.1'); }
+    for (let y = HZ; y < RH; y++) {
+      const half = 10 + (y - HZ) * 0.3;
+      k.rect(128 - half, y, half * 2, 1, 'red.1'); k.rect(128 - half + 3, y, half * 2 - 6, 1, 'red.2');
+      k.set(128 - half, y, 'gold.1'); k.set(128 - half + 1, y, 'gold.3'); k.set(128 + half - 1, y, 'gold.1'); k.set(128 + half - 2, y, 'gold.2');
+    }
+    for (let i = 0; i < 14; i++) { const y = HZ + 12 + i * 9, x = 128 + Math.sin(i * 2.3) * (6 + i * 1.5); k.set(x, y, 'pink.3'); k.set(x + 1, y, 'white'); }
     for (let i = 0; i < 16; i++) k.set(122 + (i * 7) % 14, HZ + 8 + i * 8, 'pink.3');
     for (const x of [4, 182]) for (let r = 0; r < 2; r++) k.prop('pew', x + 35, 207 + r * 34);
     k.layer('front');
@@ -1063,11 +1074,7 @@ const SCENES = {
     k.sign(128, 2, '★ PHOTO ★', { bg: 'red.1', pad: 2 });
     for (const [x, y] of [[80, 40], [178, 56], [140, 30]]) k.star5(x, y, 4, 'white'); // backdrop decals
     k.rect(0, 216, RW, RH - 216, 'slate.1');
-    for (const x of [18, 238]) {
-      k.rect(x - 1, 70, 3, 146, 'ink'); for (const dx of [-8, 8]) k.line(x, 214, x + dx, 222, 'ink');
-      for (let j = 0; j < 26; j++) k.rect(x - 14, 34 + j, 28, 1, j < 3 || j > 22 ? 'gray' : 'white');
-      k.box(x - 14, 34, 28, 26, 'ink');
-    }
+    for (const x of [20, 236]) { k.shadow(x, 222, 14, 'slate.0'); k.prop('softbox', x, 222, { stone: 'slate' }); }
     k.lightPool(128, 216, 70, 10, 'white');
     k.shadow(128, 224, 16, 'slate.0'); k.ellipse(128, 194, 13, 4, 'red.2', { outline: 'red.0' }); for (const dx of [-9, 0, 9]) k.rect(128 + dx, 197, 2, 26, 'slate.2');
     k.prop('camera', 128, 222, { stone: 'slate', glass: 'sky' });
@@ -1102,9 +1109,7 @@ const SCENES = {
     k.block(150, 214, 44, 14, 'sky.2'); for (let x = 152; x < 192; x += 6) k.rect(x, 215, 3, 12, 'white');
     // a sandcastle: a lumpy mound with two towers, a moat and a flag
     k.blob(114, 186, 22, 5, 'sky.2', { seed: 6, line: 'gold.1', wob: 0.15 });
-    k.blob(114, 176, 18, 9, 'gold.2', { seed: 7, line: 'gold.0', wob: 0.18 });
-    for (const [x, h] of [[106, 14], [122, 11]]) { k.blob(x, 168 - h / 2, 5, h / 2 + 2, 'gold.2', { seed: x, line: 'gold.0', wob: 0.12 }); for (const dx of [-3, 0, 3]) k.set(x + dx, 166 - h, 'gold.0'); }
-    k.rect(106, 146, 1, 8, 'ink'); k.rect(107, 146, 5, 3, 'red.2'); k.puff(118, 180, 2, 'pink.3');
+    k.prop('sandcastle', 114, 188, { wall: 'gold', accent: 'red' });
     k.star5(140, 204, 6, 'orange.2'); k.face(140, 203, 1, { gap: 2, cheek: 'pink.3' });
     k.signpost(150, 168, 'BEACH');
     k.puff(64, 214, 3, 'pink.3');
@@ -1173,7 +1178,7 @@ const SCENES = {
       k.rect(x, y, 1, 2, 'sky.1'); k.set(x, y + 4, 'sky.1');
       if (x % 10 === 0) { k.rect(x, y + 4, 2, HZ - y - 4, 'slate.2'); k.set(x, y + 4, 'slate.0'); }
     }
-    k.block(196, 34, 22, 12, 'red.2'); k.disc(200, 47, 2, 'ink'); k.disc(214, 47, 2, 'ink');
+    k.prop('coasterCar', 207, 47, { accent: 'red', wall: 'gold' });
     k.field(HZ, 'green.3', { seed: 10, light: 'lime.3' });
     k.trail(HZ, RH, (y) => 128 + Math.sin((y - HZ) / 26) * 10, (y) => 22 + (y - HZ) * 0.5, 'pink.3', { seed: 9, pebbles: false });
     k.stringLights(12, 10);
@@ -1182,7 +1187,7 @@ const SCENES = {
       k.blob(x + 4, HZ + 4, 28, 4, 'green.2', { seed: x, line: null, shade: false });
       k.prop('tent', x, HZ + 2, { accent: c, wall: 'cream', flip: x > 200 });
     }
-    k.sign(26, 168, 'POP', { bg: 'red.1', pad: 2 }); k.shadow(26, 226, 18); k.block(10, 192, 32, 30, 'red.2'); k.bulbs(10, 192, 42, 192, 5); k.flat(14, 180, 24, 12, 'sky.3', 'slate.1'); for (const [x, y] of [[18, 184], [24, 182], [30, 185], [21, 188], [28, 188]]) k.disc(x, y, 2, 'cream.3'); k.disc(16, 224, 4, 'ink'); k.disc(36, 224, 4, 'ink');
+    k.shadow(26, 228, 20); k.prop('popcornCart', 26, 228, { accent: 'red', glass: 'sky' }); k.sign(26, 158, 'POP', { bg: 'red.1', pad: 2 });
     k.layer('front');
     for (let i = 0; i < 4; i++) { const x = 228 + i * 7; k.line(x, 236, x - 3 + i, 196 - (i % 2) * 8, 'ink'); k.ball(x - 3 + i, 190 - (i % 2) * 8, 6, ['red.2', 'gold.2', 'violet.2', 'sky.2'][i]); }
     k.frame('left', 'green', { seed: 26, tall: false });
