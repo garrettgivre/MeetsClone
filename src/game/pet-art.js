@@ -212,7 +212,7 @@ export function composePetArt(p, stage, pose = {}) {
         L.stamp(head, hx0 + head.pivot[0], hy0 + head.pivot[1], ctx, false, patternRemap(p.pattern, 'head', head, headInfo));
         // the forehead mark goes on with the head, so hair and toppers can sit over it
         const lay = { ...FACE_LAYOUT[faceSock[0]], ...(F.faceLayout || {}) };
-        const mark = MARKS[p.mark]?.[faceSock[0]];
+        const mark = MARKS[p.mark]?.[lay.markSize || faceSock[0]];
         if (mark) { L.part('face'); L.stamp(mark, fx, fy + lay.mark, ctx); L.part('head'); }
         if (ears?.front) drawEars();
       },
