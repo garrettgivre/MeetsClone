@@ -48,7 +48,7 @@ export const BABY_MOUTH = part(['.k.', 'kRk', '.k.'], { pivot: [1, 0] });
 
 // Forehead marks (pivot = centre)
 export const MARKS = {
-  flame:  { S: part(['.R.', 'RaR', 'aYa', '.a.'], { pivot: [1, 2] }), L: part(['..R..', '.RaR.', 'RaYaR', '.aYa.', '..a..'], { pivot: [2, 3] }) }, // Kitsu
+  flame:  { S: part(['..R', '.Rq', 'RqY', '.RR'], { pivot: [1, 2] }), L: part(['...R.', '..Rq.', '.RqYR', 'RqYyR', '.RRR.'], { pivot: [2, 2] }) }, // Kitsu
   heart:  { S: part(['q.q', 'qqq', '.q.'], { pivot: [1, 1] }), L: part(['.q.q.', 'qQqqq', 'qqqqq', '.qqq.', '..q..'], { pivot: [2, 2] }) },        // Gloop
   clover: { S: part(['.L.', 'LlL', '.j.'], { pivot: [1, 1] }), L: part(['.l.l.', 'lLlLl', '.lLl.', '..j..'], { pivot: [2, 2] }) },                // Fleece
   spark:  { S: part(['.y.', 'ywy', '.y.'], { pivot: [1, 1] }), L: part(['..y..', '..Y..', 'yYwYy', '..Y..', '..y..'], { pivot: [2, 2] }) },        // Glimmer
