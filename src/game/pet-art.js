@@ -118,10 +118,10 @@ function crop(L, floats = false) {
 /** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
 function drawFace(L, p, stage, pose, ctx, [fx, fy], size, on = {}) {
   // layout: house defaults, then the form's, then the part's own (a small head can set a closer eye spread)
-  const lay = { ...FACE_LAYOUT[size], ...(FORMS[p.form]?.faceLayout || {}), ...(on.spread ? { spread: on.spread } : {}) };
+  const lay = { ...FACE_LAYOUT[size], ...(FORMS[p.form]?.faceLayout || {}) };
   const simple = stage === 'baby';
   const eye = simple ? BABY_EYES : (EYES[p.eyes] || EYES.bead)[size];
-  const spread = simple ? 3 : lay.spread;
+  const spread = on.spread || (simple ? 3 : lay.spread);
   const exL = fx - spread, exR = fx + spread;
   const skinAt = (x, y) => { const c = L.px[y * TW + x]; return c && c !== C('ink') && c !== C('white') ? c : null; };
   // the skin on the inner side of each eye, to paint over closed eyes (a mask or patch keeps its colour)
@@ -139,18 +139,21 @@ function drawFace(L, p, stage, pose, ctx, [fx, fy], size, on = {}) {
   else L.stamp(eye, exR + 2 * eye.pivot[0] - eye.w + 1, fy, ctx);
   // eye pixels on empty space or over the head's outline mean the eyes don't fit the head
   const edge = new Set([0, C('ink'), ramp(p.color, 0)]);
-  let offFace = 0;
-  for (let i = 0; i < before.length; i++) if (L.px[i] !== before[i] && edge.has(before[i])) offFace++;
+  const off = [];
+  for (let i = 0; i < before.length; i++) if (L.px[i] !== before[i] && edge.has(before[i])) off.push(i);
   if (pose.gender === 'f' && !simple) {
     // a single lash at the outer top of each eye
     L.set(exL - eye.pivot[0] - 1, fy - eye.pivot[1], C('ink'));
     L.set(exR + eye.pivot[0] + 1, fy - eye.pivot[1], C('ink'));
   }
+  const withEyes = L.px.slice();
   if (!simple && p.nose && p.nose !== 'none') L.stamp(NOSES[p.nose]?.[size], fx, fy + lay.nose, ctx);
   const mouth = simple ? BABY_MOUTH : (MOUTHS[p.mouth] || MOUTHS.o)[size];
-  const my = fy + (mouth.bill ? 1 : lay.mouth);
+  const my = fy + (mouth.bill ? 1 : simple ? 2 : lay.mouth);
   L.stamp(mouth, fx, my, ctx);
-  return { offFace, eyes: [[exL, fy], [exR, fy]], eye, mouth: [fx, my + (mouth.bill ? mouth.h - 1 : 0)], bill: !!mouth.bill, eyeSkin };
+  // nose and mouth pixels that cover an eye or miss the head
+  for (let i = 0; i < before.length; i++) if (L.px[i] !== withEyes[i] && (withEyes[i] !== before[i] || edge.has(before[i]))) off.push(i);
+  return { off, eyes: [[exL, fy], [exR, fy]], eye, mouth: [fx, my + (mouth.bill ? mouth.h - 1 : 0)], bill: !!mouth.bill, eyeSkin };
 }
 
 /**
@@ -258,7 +261,8 @@ export function composePetArt(p, stage, pose = {}) {
   const { px, dx, dy, seen, overflow } = crop(L, !!F.floats);
   const sh = ([x, y]) => [x + dx, y + dy];
   return {
-    px, w: PW, h: PH, overflow, seen, offFace: face.offFace,
+    px, w: PW, h: PH, overflow, seen,
+    offFace: face.off.length, offFacePx: face.off.map(i => [(i % TW) + dx, Math.floor(i / TW) + dy]),
     eyes: face.eyes.map(sh), eyeSize: [face.eye.w, face.eye.h], eyePivot: face.eye.pivot, eyeSkin: face.eyeSkin,
     mouth: sh(face.mouth), faceColour: ramp(p.color, 2), neck: neckY + dy,
     floats: !!F.floats,

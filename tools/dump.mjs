@@ -31,3 +31,4 @@ for (let y = y0; y <= y1; y++) {
 }
 console.log([...used].map(([c, ch]) => `${ch}=${NAMES[c] ?? c}`).join(' '));
 console.log(JSON.stringify({ form: p.form, head: p.head, body: p.body, eyes: k.eyes.map(([x, y]) => [x - x0, y - y0]), mouth: [k.mouth[0] - x0, k.mouth[1] - y0] }));
+if (k.offFace) console.log('face pixels over the outline or an eye:', JSON.stringify(k.offFacePx.map(([x, y]) => [x - x0, y - y0])));

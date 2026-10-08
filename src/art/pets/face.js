@@ -44,7 +44,7 @@ export const MOUTHS = {
   beak:  { S: part(['.a.', 'aNb', '.o.'], { pivot: [1, 0], key: ORANGE, bill: true }),                                                   // Hoolet
            L: part(['..a..', '.aNb.', 'aNnnb', '.onb.', '..o..'], { pivot: [2, 0], key: ORANGE, bill: true }) },
 };
-export const BABY_MOUTH = part(['.k.', 'kRk', '.k.'], { pivot: [1, 0] });
+export const BABY_MOUTH = part(['k.k', '.k.'], { pivot: [1, 0] }); // a little :3 smile, two rows under the eyes
 
 // Forehead marks (pivot = centre)
 export const MARKS = {

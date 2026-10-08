@@ -105,15 +105,16 @@ test('pattern zones, where a part has them, match the part size', () => {
   }
 });
 
-test('eyes fit inside every head and child shape, in every form', () => {
+test('faces fit: eyes, nose and mouth stay inside every head and child shape, in every form', () => {
   const rng = makeRng(51);
   const misses = [];
-  for (const form of Object.keys(FORMS)) for (const head of Object.keys(GENES.head)) for (const eyes of Object.keys(GENES.eyes)) {
-    const p = express(pureGenome({ ...STARTER, form, head, eyes, hair: 'none' }), rng);
-    for (const stage of ['child', 'teen']) {
+  for (const form of Object.keys(FORMS)) for (const head of Object.keys(GENES.head)) for (const eyes of Object.keys(GENES.eyes)) for (const mouth of Object.keys(GENES.mouth)) {
+    const p = express(pureGenome({ ...STARTER, form, head, eyes, mouth, nose: 'snoot', hair: 'none' }), rng);
+    for (const stage of ['baby', 'child', 'teen']) {
+      if (stage === 'baby' && (eyes !== 'bead' || mouth !== 'o' || head !== 'gumdrop')) continue; // babies all share one face
       const { offFace } = composePetArt(p, stage, { gender: 'f' });
-      if (offFace) misses.push(`${form} ${head} ${eyes} ${stage} (${offFace}px over the edge)`);
+      if (offFace) misses.push(`${form} ${head} ${eyes} ${mouth} ${stage} (${offFace}px)`);
     }
   }
-  assert.deepEqual(misses, [], 'eyes spill over the outline');
+  assert.deepEqual(misses, [], 'face parts over the outline or over each other');
 });
