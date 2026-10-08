@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRng } from '../src/engine/rng.js';
-import { GENES, FOUNDERS, randomGenome, inherit, express, pureGenome, starterGenome } from '../src/game/genetics.js';
+import { GENES, FOUNDERS, STARTER, randomGenome, inherit, express, pureGenome, starterGenome } from '../src/game/genetics.js';
 import { FORMS, FORM_SECTIONS, EYES, MOUTHS, MARKS, NOSES, PATTERNS } from '../src/art/pets/index.js';
 import { composePetArt } from '../src/game/pet-art.js';
 
@@ -73,4 +73,21 @@ test('every part a founder has is visible in its adult and teen pictures', () =>
       for (const [part, n] of Object.entries(need)) assert.ok((seen[part] || 0) >= n, `${f.name} ${stage}: only ${seen[part] || 0} pixels of ${part} show`);
     }
   }
+});
+
+test('every optional part and every ear shows in every form', () => {
+  const rng = makeRng(41);
+  const failures = [];
+  for (const form of Object.keys(FORMS)) {
+    for (const gene of ['ears', 'tail', 'topper', 'feet', 'wings', 'hair']) {
+      for (const allele of Object.keys(GENES[gene])) {
+        if (allele === 'none') continue;
+        const p = express(pureGenome({ ...STARTER, form, [gene]: allele }), rng);
+        const { seen } = composePetArt(p, 'adult', {});
+        const part = gene === 'ears' ? 'ears' : gene;
+        if ((seen[part] || 0) < 3) failures.push(`${form} ${gene}:${allele} (${seen[part] || 0}px)`);
+      }
+    }
+  }
+  assert.deepEqual(failures, [], 'hidden parts');
 });
