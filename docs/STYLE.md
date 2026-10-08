@@ -14,7 +14,7 @@ Pets are hand-pixelled characters in a classic colour-screen virtual pet style, 
 
 - **Every part belongs to one founder's line** (`LINEAGE` / `lineOf` in `src/game/genetics.js`); there is one founder per form.
 - **Every part is drawn for every form.** The art lives in `src/art/pets/forms/<form>.js`: heads, bodies, ears, hair, toppers, tails, feet and wings, plus the form's baby and child shapes and its arms. Face parts (eyes, mouths, marks, noses) are shared, drawn in two sizes (S and L) in `src/art/pets/face.js`. Patterns are recolour maps in `src/art/pets/patterns.js` that keep the hand-drawn shading.
-- `tests/art.test.js` fails if any allele is missing for any form, if a head or body lacks a socket, or if any founder, child or wild pet overflows the canvas.
+- `tests/art.test.js` fails if any allele is missing for any form, if a head or body lacks a socket, if any founder, child or wild pet overflows the canvas, or if a part ends up hidden (the renderer reports visible pixels per part, and every founder part and every optional part in every form must show).
 
 ## The founders
 
@@ -37,21 +37,23 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - **Light from the upper left.** Lit outline in the darkest shade of the part's own colour (`1`), ink (`o`) on the shadow side; a light rim (`4`) just inside the lit edge, a shadow band (`2`) inside the lower right, and one white glint with a soft halo on heads.
 - **One-pixel lines with no doubles**, and curves that step evenly.
 - **Both eyes keep their glint on the upper left.** The right eye is drawn the same way round; only eyes marked `mirror` are flipped.
+- **Grounded:** a pet stands on its body and feet; a tail or wing that dangles lower never lifts it off the floor (floaters count everything, so their tendrils stay on the canvas).
 - **Joined seams:** where connected parts of the body or hair colour meet (ears and head, tail and body, shoulders, toppers), the renderer turns the outline into a soft crease. One-piece forms (blob, avian) also melt the head into the body.
 - **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).
 
 ## Life stages
 - **Baby:** the form's simple baby shape with baby eyes and a little mouth.
-- **Child:** the form's child shape with the pet's own eyes, mouth and markings.
+- **Child:** the form's child shape with the pet's own eyes, mouth, markings and (small) ears, so the line already shows.
 - **Teen:** the full pet, without topper or wings (those grow in).
 - **Adult:** everything.
 
 ## Tools
-- `tools/founders.html`: each founder's sheet (`?f=Name&s=560`), the set (`?grid`), silhouettes (`?grid&sil`).
+- `tools/founders.html`: each founder's sheet (`?f=Name&s=560`), the set (`?grid`, any stage with `&stage=teen`), silhouettes (`?grid&sil`), and each founder's parts drawn in every form (`?forms`).
 - `tools/parts.html`: every part, one row per allele and one column per form (`?gene=ears`).
 - `tools/gallery.html`: every option of each gene on a plain pet (`?gene=tail&form=quad`).
 - `tools/compare.html`: founders, children of founder pairs, wild pets, growth and expressions.
 - `tools/lab.html`: the Pairing Lab.
+- `node tools/dump.mjs <Founder|random:seed> [stage] [expr]`: prints a composed pet as characters, for pixel-level review.
 
 ## Adding things
 - **A new part:** add the allele to `GENES`, give it to a founder, draw it in every form file. The tests list anything missing.
