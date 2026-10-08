@@ -73,7 +73,7 @@ Tap your pet to give it a pat, and tap poop to clean it up.
 ## Project layout
 
 ```
-index.html, style.css     device shell (portrait, phone-first)
+index.html, style.css     page shell: the screen, and a black strip with the three buttons (left A, middle B, right C)
 src/engine/               pixel engine: palette, screen, sprites, font, input, audio
 src/art/                  all pixel art (sprites as text grids); pets in src/art/pets/forms/
 src/game/                 simulation, genetics, rendering, items, saving

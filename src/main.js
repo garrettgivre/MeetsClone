@@ -8,6 +8,7 @@ import { alertFor } from './game/alerts.js';
 import * as notify from './notify.js';
 import { checkForUpdate, justUpdated } from './update.js';
 import { VERSION } from './version.js';
+import { paintButtons } from './art/buttons.js';
 import { HomeScene } from './scenes/home.js';
 import { dialog, LAYOUT } from './ui.js';
 
@@ -89,6 +90,8 @@ if (justUpdated()) app.toast(`Updated to v${VERSION}!`, 2600);
 checkForUpdate(() => app.save());
 if (app.pendingEvents?.length) app.scene.handleEvents(app.pendingEvents, true);
 
+paintButtons();
+
 // ----- input -----
 setupInput({
   canvas,
@@ -102,7 +105,7 @@ setupInput({
 function resize() {
   const device = document.getElementById('device');
   const inset = parseFloat(getComputedStyle(document.getElementById('bezel')).paddingTop) || 0; // a phone's notch
-  const btnSpace = window.innerHeight < 640 ? 84 : 112; // the strip of buttons underneath
+  const btnSpace = window.innerHeight < 640 ? 76 : 100; // the strip of buttons underneath
   const availW = device.clientWidth;
   const availH = window.innerHeight - inset - btnSpace;
   // Whichever runs out first, width or height, the screen takes all of it
