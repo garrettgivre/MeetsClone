@@ -24,7 +24,9 @@ import { composePet, composeEgg } from '../src/game/render.js';
 import { FOUNDERS, pureGenome, express, randomGenome, inherit } from '../src/game/genetics.js';
 
 const out = document.getElementById('out');
-function show(bm, label, row) {
+// hover a picture to see the pet's genes
+const genes = (g) => Object.entries(g).filter(([, v]) => typeof v === 'string').map(([k, v]) => `${k} ${v}`).join(' · ');
+function show(bm, label, row, g) {
   const size = +document.getElementById('size').value;
   const c = document.createElement('canvas'); c.width = bm.w; c.height = bm.h;
   c.style.width = c.style.height = size + 'px';
@@ -32,6 +34,7 @@ function show(bm, label, row) {
   for (let i = 0; i < bm.px.length; i++) if (bm.px[i]) u[i] = PACKED[bm.px[i]];
   ctx.putImageData(img, 0, 0);
   const f = document.createElement('figure'); f.append(c, document.createElement('br'), label); row.append(f);
+  if (g) f.title = genes(g);
 }
 function section(title) {
   const h = document.createElement('h2'); h.textContent = title; out.append(h);
@@ -46,12 +49,13 @@ function render() {
   for (let i = 0; i < 12; i++) {
     const a = rng.pick(FOUNDERS), b = rng.pick(FOUNDERS.filter(x => x !== a));
     const kid = express(inherit(pureGenome(a.traits), pureGenome(b.traits), rng), rng);
-    show(composePet(kid, 'adult', { gender: rng.chance(0.5) ? 'f' : 'm' }), `${a.name} x ${b.name}`, r);
+    show(composePet(kid, 'adult', { gender: rng.chance(0.5) ? 'f' : 'm' }), `${a.name} x ${b.name}`, r, kid);
   }
   r = section('Random wild pets');
-  for (let i = 0; i < 12; i++) show(composePet(express(randomGenome(rng), rng), 'adult', { gender: i % 2 ? 'f' : 'm' }), '#' + (i + 1), r);
-  r = section('Growth');
+  for (let i = 0; i < 12; i++) { const w = express(randomGenome(rng), rng); show(composePet(w, 'adult', { gender: i % 2 ? 'f' : 'm' }), '#' + (i + 1), r, w); }
   const g = express(inherit(pureGenome(FOUNDERS[0].traits), pureGenome(FOUNDERS[3].traits), rng), rng);
+  r = section('Growth');
+  out.lastElementChild.previousElementSibling.append(Object.assign(document.createElement('small'), { textContent: '  ' + genes(g) }));
   show(composeEgg(g, 0), 'egg', r);
   for (const s of ['baby', 'child', 'teen', 'adult']) show(composePet(g, s, { gender: 'f' }), s, r);
   r = section('Expressions');

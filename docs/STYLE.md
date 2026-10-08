@@ -13,7 +13,7 @@ Pets are hand-pixelled characters in a classic colour-screen virtual pet style, 
 | Temperament | `appetite`, `energy`, `taste` | not drawn |
 
 - **Every part belongs to one founder's line** (`LINEAGE` / `lineOf` in `src/game/genetics.js`); there is one founder per form.
-- **Every part is drawn for every form.** The art lives in `src/art/pets/forms/<form>.js`: heads, bodies, ears, hair, toppers, tails, feet and wings, plus the form's baby and child shapes and its arms. Face parts (eyes, mouths, marks, noses) are shared, drawn in two sizes (S and L) in `src/art/pets/face.js`. Patterns are recolour maps in `src/art/pets/patterns.js` that keep the hand-drawn shading.
+- **Every part is drawn for every form.** The art lives in `src/art/pets/forms/<form>.js`: heads, bodies, ears, hair, toppers, tails, feet and wings, plus the form's baby and child shapes and its arms. Face parts (eyes, mouths, marks, noses) are shared, drawn in two sizes (S and L) in `src/art/pets/face.js`. Patterns are recolour maps in `src/art/pets/patterns.js` that keep the hand-drawn shading. A part can also carry a hand-painted `zones` grid (same size as the part) that patterns read as `info.zone`, so a marking can follow the drawing; the serpent coil uses it so Inchy's bands wrap round each segment.
 - `tests/art.test.js` fails if any allele is missing for any form, if a head or body lacks a socket, if any founder, child or wild pet overflows the canvas, or if a part ends up hidden (the renderer reports visible pixels per part, and every founder part and every optional part in every form must show).
 
 ## The founders
@@ -39,6 +39,7 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - **Both eyes keep their glint on the upper left.** The right eye is drawn the same way round; only eyes marked `mirror` are flipped.
 - **Grounded:** a pet stands on its body and feet; a tail or wing that dangles lower never lifts it off the floor (floaters count everything, so their tendrils stay on the canvas).
 - **Joined seams:** where connected parts of the body or hair colour meet (ears and head, tail and body, shoulders, toppers), the renderer turns the outline into a soft crease. One-piece forms (blob, avian) also melt the head into the body.
+- **Faces fit their heads:** a head with a large face (`*`) should be about as wide as its siblings in that form at the face row; put the face socket on the widest rows.
 - **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).
 
 ## Life stages
@@ -51,10 +52,11 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - `tools/founders.html`: each founder's sheet (`?f=Name&s=560`), the set (`?grid`, any stage with `&stage=teen`), silhouettes (`?grid&sil`), and each founder's parts drawn in every form (`?forms`).
 - `tools/parts.html`: every part, one row per allele and one column per form (`?gene=ears`).
 - `tools/gallery.html`: every option of each gene on a plain pet (`?gene=tail&form=quad`).
-- `tools/compare.html`: founders, children of founder pairs, wild pets, growth and expressions.
+- `tools/compare.html`: founders, children of founder pairs, wild pets, growth and expressions (hover a picture for its genes).
 - `tools/lab.html`: the Pairing Lab.
-- `node tools/dump.mjs <Founder|random:seed> [stage] [expr]`: prints a composed pet as characters, for pixel-level review.
-- `tools/art-scripts/ed.py`: Python helpers to read and rewrite any part's grid by name (`show`, `rows_of`, `setpart`, `setall`), and to block in a silhouette from row extents with the house shading (`from_extents`, `paint`). `draft.py` holds the shape and shading tools the forms were first drafted with (it won't overwrite the finished grids unless given `--force`).
+- `node tools/dump.mjs <Founder|random:seed|Founder+gene=allele,...> [stage] [expr]`: prints a composed pet as characters, for pixel-level review (e.g. `Glimmer+head=lamb,accent=red`).
+- `node tools/seen.mjs [Founder]`: how many pixels of each part show in each founder's adult picture.
+- `tools/art-scripts/ed.py`: Python helpers to read and rewrite any part's grid by name (`show`, `rows_of`, `setpart`, `setall`), and to block in a silhouette from row extents with the house shading (`from_extents`, `paint`), widen a part about its middle (`widen`), and paint pattern zones along a body's spine (`spine_zones`, `setzones`). `draft.py` holds the shape and shading tools the forms were first drafted with (it won't overwrite the finished grids unless given `--force`).
 
 ## Adding things
 - **A new part:** add the allele to `GENES`, give it to a founder, draw it in every form file. The tests list anything missing.

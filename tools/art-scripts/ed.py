@@ -132,3 +132,20 @@ def setzones(form, section, key, zones):
     assert block.rstrip().endswith(']),'), 'setzones only handles parts without other options'
     block = block.rstrip()[:-2] + f", {{ zones: [\n{z}\n{indent}  ] }}),\n"
     open(_path(form), 'w', encoding='utf8').write(s[:i] + block + s[k:])
+
+def widen_rows(rows, at=None, n=2):
+    """Insert n copies of column `at` (default: the middle) into every row, half on
+    each side so whatever sits in that column stays centred; socket markers in the
+    copies become plain fill so each socket stays single."""
+    at = len(rows[0]) // 2 if at is None else at
+    markers = '@*^=[]<>()!?~#'
+    out = []
+    for r in rows:
+        c = r[at]
+        fill = '3' if c in markers else c
+        out.append(r[:at] + fill * (n // 2) + c + fill * (n - n // 2) + r[at + 1:])
+    return out
+
+def widen(form, section, key, at=None, n=2, opts=None):
+    """Widen a part in place by repeating its middle column (see widen_rows)."""
+    setpart(form, section, key, widen_rows(rows_of(form, section, key), at, n), opts)
