@@ -21,13 +21,14 @@ export const PATTERNS = {
   // Gloop: little round bubbles floating in the jelly (sized in pixels, so they stay round)
   bubbles(region, u, v, { w, h }) {
     const spots = region === 'head'
-      ? [[-0.5, -0.3, 1.4], [0.6, 0.25, 1.0]]
-      : [[-0.55, 0.2, 1.6], [0.45, -0.1, 1.1], [0.62, 0.55, 0.9]];
-    // a bubble is a pale ring around a bright centre
+      ? [[-0.5, -0.3, 1.8], [0.6, 0.25, 1.3]]
+      : [[-0.55, 0.2, 2.2], [0.45, -0.1, 1.5], [0.62, 0.55, 1.2]];
+    // a bubble is a hollow pale ring with a glint on its upper left; the jelly shows through the middle
     for (const [x, y, r] of spots) {
-      const d = Math.hypot(((u - x) * w) / 2, ((v - y) * h) / 2);
-      if (d <= r * 0.5) return 'bright';
-      if (d <= r + 0.4) return 'accent';
+      const dx = ((u - x) * w) / 2, dy = ((v - y) * h) / 2, d = Math.hypot(dx, dy);
+      if (d > r + 0.5) continue;
+      if (d >= r - 0.5) return 'accent';
+      return dx < -0.2 && dy < -0.2 && d > r * 0.3 ? 'bright' : null;
     }
     return null;
   },
