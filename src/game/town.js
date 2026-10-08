@@ -9,7 +9,7 @@
 import { rand as defaultRng, makeRng, hash } from '../engine/rng.js';
 import { randomGenome, express, pureGenome, FOUNDERS } from './genetics.js';
 import { FOODS, TOYS, CLOTHES } from './items.js';
-import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT } from './pet.js';
+import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT, train, skillLevel, SKILL_LABEL, SKILL_MAX } from './pet.js';
 import { BOOK_GENES, entries, has } from './book.js';
 
 export const DISTRICTS = [
@@ -52,9 +52,9 @@ export const LOCATIONS = [
   { id: 'salon', district: 'uptown', name: 'Beauty Salon', resident: 'Stylist Ruru',
     lines: ['A new hair colour? Let\'s do it!', 'Dye doesn\'t pass to your children, sweetie.', 'Sit down, relax.'] },
   { id: 'school', district: 'uptown', name: 'School', resident: 'Teacher Oak',
-    lines: ['Good manners start in class.', 'One lesson a day is plenty.', 'Grown-ups have graduated already!'] },
+    lines: ['Good manners start in class.', 'Two classes a day is plenty.', 'Grown-ups can take a night class for a small fee.'] },
   { id: 'work', district: 'uptown', name: 'Workshop', resident: 'Boss Bolt',
-    lines: ['Need work? Grown-ups only!', 'An honest shift, an honest wage.', 'Take breaks. Rest matters.'] },
+    lines: ['Need work? Grown-ups only!', 'Check the job board. Skills open doors!', 'Three good shifts earn a promotion.'] },
   { id: 'chapel', district: 'uptown', name: 'Wedding Chapel', resident: 'Matchmaker Hana',
     lines: ['Love is in the air!', 'I know someone perfect for you.', 'Every egg starts with a wedding.'] },
   { id: 'studio', district: 'uptown', name: 'Photo Studio', resident: 'Flash',
@@ -165,6 +165,7 @@ export function talk(game, locId, rng = defaultRng) {
   t.friends[locId] = f;
   const gift = FRIEND_GIFTS[f];
   if (gift) gain(game, gift);
+  train(game.pet, 'charm', 1); // a good chat is practice
   return { ok: true, friendship: f, gift, msg: `${loc.resident}: "${line}"${gift ? ` A gift for a good friend! +${gift}` : ''}` };
 }
 
@@ -274,26 +275,14 @@ export const ACTIONS = {
   ],
   salon: [{ id: 'dye', label: 'Hair dye', price: 80, ui: 'dye' }],
   school: [
-    { id: 'lesson', label: 'Attend a lesson', needs: (game) => (game.pet.stage === 'adult' ? 'Already graduated!' : null), run(game) {
-      if (used(game, 'lesson')) return { ok: false, msg: 'Class is over for today.' };
-      use(game, 'lesson');
-      const pet = game.pet;
-      pet.whim = false;
-      pet.discipline = Math.min(MAX_DISCIPLINE, pet.discipline + 1);
-      gain(game, 10);
-      return { ok: true, anim: 'happy', msg: `Learned good manners! Discipline ${pet.discipline}/${MAX_DISCIPLINE}. +10` };
-    } },
+    { id: 'lesson', label: 'Manners', price: nightFee, run: (game) => lesson(game, null) },
+    { id: 'reading', label: 'Reading', price: nightFee, run: (game) => lesson(game, 'smart') },
+    { id: 'art', label: 'Art class', price: nightFee, run: (game) => lesson(game, 'creative') },
+    { id: 'gym', label: 'Gym class', price: nightFee, run: (game) => lesson(game, 'fit') },
   ],
   work: [
-    { id: 'shift', label: 'Work a shift', needs: (game) => (game.pet.stage !== 'adult' ? 'Grown-ups only!' : null), run(game) {
-      const t = townState(game), pet = game.pet;
-      if (game.simTime - t.lastWork < 4 * HOUR) return { ok: false, msg: 'Rest a while before the next shift.' };
-      t.lastWork = game.simTime;
-      pet.hunger = clamp4(pet.hunger - 1);
-      pet.happy = clamp4(pet.happy - 1);
-      gain(game, 60);
-      return { ok: true, anim: 'happy', msg: 'Hard work! Earned 60 points.' };
-    } },
+    { id: 'shift', label: 'Work a shift', needs: (game) => (game.pet.stage !== 'adult' ? 'Grown-ups only!' : null), run: (game) => workShift(game) },
+    { id: 'jobs', label: 'Job board', ui: 'jobs', needs: (game) => (game.pet.stage !== 'adult' ? 'Grown-ups only!' : null) },
   ],
   chapel: [{ id: 'match', label: 'Matchmaker', ui: 'matchmaker', needs: (game) => marryWhy(game.pet) }],
   studio: [
@@ -317,6 +306,7 @@ export const ACTIONS = {
       const pet = game.pet;
       pet.happy = clamp4(pet.happy + 1);
       pet.weight = Math.max(Math.round(BASE_WEIGHT[pet.stage] * 0.8), pet.weight - 2);
+      train(pet, 'fit', 1);
       return { ok: true, anim: 'happy', msg: 'Splash! Great exercise.' };
     } },
     { id: 'shells', label: 'Look for shells', run(game) {
@@ -351,6 +341,7 @@ export const ACTIONS = {
       const fans = Math.floor(score / 10);
       t.fans += fans;
       gain(game, score);
+      train(pet, 'charm', score >= 55 ? 2 : 1);
       const verdict = score >= 85 ? 'A standing ovation!' : score >= 55 ? 'Big applause!' : 'A polite clap...';
       return { ok: true, anim: score >= 55 ? 'happy' : 'sad', msg: `${verdict} +${score} points, +${fans} fans (${t.fans} in all).` };
     } },
@@ -385,6 +376,89 @@ export const ACTIONS = {
   ],
 };
 
+// ---------- school ----------
+
+export const CLASSES_PER_DAY = 2;
+export const NIGHT_CLASS = 30; // what a grown-up pays per class
+function nightFee(game) { return game.pet.stage === 'adult' ? NIGHT_CLASS : 0; }
+export const classesLeft = (game) => Math.max(0, CLASSES_PER_DAY - used(game, 'lesson'));
+
+/**
+ * A class at school: two a day. Manners (skill null) teaches discipline; the
+ * others are worth a whole skill level. Children and teens go free; adults pay
+ * for a night class.
+ */
+function lesson(game, skill) {
+  const pet = game.pet;
+  if (used(game, 'lesson') >= CLASSES_PER_DAY) return { ok: false, msg: 'Class is over for today.' };
+  const adult = pet.stage === 'adult';
+  if (adult && !spend(game, NIGHT_CLASS)) return { ok: false, msg: `A night class costs ${NIGHT_CLASS} points.` };
+  use(game, 'lesson');
+  if (!skill) {
+    pet.whim = false;
+    pet.discipline = Math.min(MAX_DISCIPLINE, pet.discipline + 1);
+    if (!adult) gain(game, 10);
+    return { ok: true, anim: 'happy', msg: `Learned good manners! Discipline ${pet.discipline}/${MAX_DISCIPLINE}.${adult ? '' : ' +10'}` };
+  }
+  if (skill === 'fit') pet.weight = Math.max(Math.round(BASE_WEIGHT[pet.stage] * 0.8), pet.weight - 1);
+  const r = train(pet, skill, 3);
+  const name = SKILL_LABEL[skill];
+  return { ok: true, anim: 'happy', msg: r.level >= SKILL_MAX ? `${name} mastered! Level ${SKILL_MAX}.` : `Good class! ${name} is now level ${r.level}.` };
+}
+
+// ---------- jobs ----------
+// Anyone grown can help out at the workshop. Better jobs ask for a skill level,
+// and every third shift in the same job earns a promotion (up to MAX_RANK).
+
+export const JOBS = [
+  { id: 'helper',    name: 'Helper',       skill: null,       need: 0, pay: 60 },
+  { id: 'tutor',     name: 'Tutor',        skill: 'smart',    need: 2, pay: 100 },
+  { id: 'professor', name: 'Professor',    skill: 'smart',    need: 4, pay: 160 },
+  { id: 'painter',   name: 'Sign Painter', skill: 'creative', need: 2, pay: 100 },
+  { id: 'designer',  name: 'Designer',     skill: 'creative', need: 4, pay: 160 },
+  { id: 'coach',     name: 'Swim Coach',   skill: 'fit',      need: 2, pay: 100 },
+  { id: 'athlete',   name: 'Athlete',      skill: 'fit',      need: 4, pay: 160 },
+  { id: 'host',      name: 'Cafe Host',    skill: 'charm',    need: 2, pay: 100 },
+  { id: 'star',      name: 'Stage Star',   skill: 'charm',    need: 4, pay: 160 },
+];
+export const JOB = Object.fromEntries(JOBS.map(j => [j.id, j]));
+export const SHIFT_REST = 4 * HOUR;
+export const SHIFTS_PER_RANK = 3;
+export const MAX_RANK = 3;
+export const RANK_PAY = 20;
+
+/** The pet's job (a helper until it's hired for something better). */
+export const jobOf = (pet) => JOB[pet.job?.id] || JOB.helper;
+export const jobRank = (pet) => Math.min(MAX_RANK, Math.floor((pet.job?.shifts || 0) / SHIFTS_PER_RANK));
+export const jobPay = (pet) => jobOf(pet).pay + jobRank(pet) * RANK_PAY;
+
+/** Apply for a job: an interview on the spot. Hired if the skill is there, turned down if not. */
+export function applyJob(game, jobId) {
+  const pet = game.pet, job = JOB[jobId];
+  if (!job || !canAct(pet)) return { ok: false };
+  if (pet.stage !== 'adult') return { ok: false, msg: 'Grown-ups only!' };
+  if (jobOf(pet).id === jobId) return { ok: false, msg: "That's your job already!" };
+  if (job.skill && skillLevel(pet, job.skill) < job.need) {
+    return { ok: false, rejected: true, msg: `Not this time. A ${job.name} needs ${SKILL_LABEL[job.skill]} level ${job.need}.` };
+  }
+  pet.job = { id: jobId, shifts: 0 };
+  return { ok: true, msg: `Hired! ${pet.name} is now a ${job.name}. ${job.pay} points a shift.` };
+}
+
+function workShift(game) {
+  const t = townState(game), pet = game.pet;
+  if (game.simTime - t.lastWork < SHIFT_REST) return { ok: false, msg: 'Rest a while before the next shift.' };
+  t.lastWork = game.simTime;
+  const job = jobOf(pet), pay = jobPay(pet), before = jobRank(pet);
+  pet.job = { id: job.id, shifts: (pet.job?.shifts || 0) + 1 };
+  pet.hunger = clamp4(pet.hunger - 1);
+  pet.happy = clamp4(pet.happy - 1);
+  gain(game, pay);
+  if (job.skill) train(pet, job.skill, 1);
+  const promoted = jobRank(pet) > before;
+  return { ok: true, anim: 'happy', promoted, msg: promoted ? `Earned ${pay} points. Promoted! ${jobPay(pet)} a shift from now on.` : `Hard work! Earned ${pay} points.` };
+}
+
 function marryWhy(pet) {
   if (canMarry(pet)) return null;
   if (pet.stage !== 'adult') return 'Only adults can marry.';
@@ -399,6 +473,7 @@ function play(game, msg) {
   const pet = game.pet;
   pet.happy = clamp4(pet.happy + 1);
   pet.weight = Math.max(Math.round(BASE_WEIGHT[pet.stage] * 0.8), pet.weight - 1);
+  train(pet, 'fit', 1);
   return { ok: true, anim: 'happy', msg };
 }
 

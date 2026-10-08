@@ -45,6 +45,11 @@ export function migrate(g) {
     if (typeof pet.whim !== 'boolean') pet.whim = false;
     if (typeof pet.whimIn !== 'number') pet.whimIn = 3 * 60 * 60 * 1000;
     if (typeof pet.refusedAt !== 'number') pet.refusedAt = 0;
+    if (typeof pet.dirt !== 'number') pet.dirt = 0;
+    if (typeof pet.squirm !== 'boolean') pet.squirm = false;
+    if (typeof pet.potty !== 'number') pet.potty = 0;
+    pet.skills = { smart: 0, creative: 0, fit: 0, charm: 0, ...pet.skills };
+    if (pet.job === undefined) pet.job = null;
     // genes added after this save was made: absent ancillaries, a default for the rest
     for (const gene of Object.keys(GENES)) {
       const v = 'none' in GENES[gene] ? 'none' : Object.keys(GENES[gene])[0];

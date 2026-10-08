@@ -11,7 +11,7 @@ A mobile-first virtual pet for the browser, inspired by the gameplay of *Tamagot
 python -m http.server 5173
 ```
 
-**Settings → Debug** links to the Pairing Lab, Character Gallery and Sprite Editor. Add `?dev` to the URL to also unlock cheats there (time speed-up, free points). The version number is at the bottom of Settings.
+**Settings → Debug** has the review pages (Pairing Lab, Character Gallery, Sprite Editor and the art sheets) and, once you switch **Cheats** on there (or add `?dev` to the URL), menus for testing: grow or change the pet, set its needs, illness, dirt and training, skip time, open the town, fill the toy box, and send a test alert. The version number is at the bottom of Settings.
 
 **Pairing Lab:** open `tools/lab.html` (also on the live site) to test genetics.
 - **One pair:** choose two parents (random or founders), see a litter of children with any new traits starred, inspect any child's genes, and use it as a new parent. Shows the odds of every trait from 500 simulated children.
@@ -40,6 +40,11 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Toothaches from too many snacks.
   - **Discipline:** children, teens and (less often) adults throw whims, calling for nothing or refusing a meal. Tap a fussing pet to scold it (builds discipline) or comfort it (happier, but spoiled). A fully disciplined pet stops fussing, and an unruly generation-1 pet grows into a lower-tier founder.
   - **Weight:** meals add a gram, snacks two, and every game burns one off. A chubby pet gets sick more easily.
+  - **Baths:** a pet gets grubby through the day (faster with poop on the floor), and it shows as mud on its coat. A dirty pet falls ill more easily and a filthy one calls for a bath. **Clean** on the top row sweeps the floor, runs a bath or sends the pet to the toilet.
+  - **Toilet training:** a pet squirms for a few minutes before it poops. Tap it (or use Clean → Toilet) to get it there in time. After four catches it is toilet trained: it goes by itself from then on, and learns a point of discipline.
+- **Skills:** Smarts, Arts, Sports and Charm, each with five levels (Status → Training). School teaches two classes a day (Manners, Reading, Art or Gym; free for children and teens, a small fee for adults), a good minigame gives a point in its skill, and so do chatting with residents, swimming, the playground and performing. A child starts with a third of what its parent learned.
+- **Jobs:** any adult can help out at the Workshop. Its job board has eight better jobs that ask for a skill level; apply without it and you're turned down. Every third shift in the same job earns a promotion and a raise.
+- **Care alerts** (Settings → Care alerts): browser notifications when your pet is hungry, sad, sick, filthy, needs the toilet, falls asleep with the lights on, hatches or grows. The game has no server, so alerts only arrive while it is still open somewhere: a background tab, a minimised window or the installed app. On an iPhone, add the game to the Home Screen first.
 - **Pets can die or run away:** from untreated illness or starvation, or from long unhappiness.
 - **Generation 1:** the quality of your care decides which of 6 original founders your pet becomes: Kitsu the ember fox, Gloop the cherry jelly, Fleece the cloud lamb, Glimmer the lantern jellyfish, Inchy the garden caterpillar or Hoolet the moon owlet. Every pet is hand-pixel art with breathing, blinking and expression animation (see `docs/STYLE.md`).
 - **Six body plans:** biped, blob, four-legged, floater, serpent and bird. A pet's form is a gene, and every body part is drawn separately for every form, so a lamb-line child with a jellyfish's body plan still looks hand-made.
@@ -52,11 +57,11 @@ Tap your pet to give it a pat, and tap poop to clean it up.
 - **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu).
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
 - **Economy:** Gotchi Points, shops in town for food, toys and clothes, and favourite foods and toys.
-- **Minigames:** Jump Rope, Which Way? (guess where your pet hops), Snack Catch (catch treats, dodge rocks) and Copy Me (repeat your pet's left/right dance).
+- **Minigames:** Jump Rope and Snack Catch (Sports), Which Way? (guess where your pet hops; Smarts) and Copy Me (repeat your pet's left/right dance; Arts).
 - **Family:** a matchmaker (3 partners a day, each a wild pet from one of the founder lines with a twist or two), a wedding, the next-generation egg, and a family album.
 - **Town** (bottom row): 22 places to visit, each with its own backdrop and a resident who becomes a friend the more you chat (with gifts at 3 and 7 hearts).
   - **Downtown** (walk): Town Square (fountain fortunes), Park (daily stroll finds), Playground, Cafe (dish of the day), Bakery, Toy Shop, Boutique, Arcade (all the minigames) and Hospital (treatment and check-ups).
-  - **Uptown** (Bus Pass): Department Store (with a daily sale), Beauty Salon (hair dye, not inherited), School (a daily lesson in manners), Workshop (adult shifts for pay), Wedding Chapel (the matchmaker) and Photo Studio (a photo album).
+  - **Uptown** (Bus Pass): Department Store (with a daily sale), Beauty Salon (hair dye, not inherited), School (two classes a day), Workshop (shifts and the job board), Wedding Chapel (the matchmaker) and Photo Studio (a photo album).
   - **Seaside** (Train Pass): Beach (swimming and shells), Forest (foraging), Amusement Park and Concert Hall (daily shows and fans).
   - **Far Away** (Balloon Ticket): Royal Castle (well-mannered pets only, and a crown on the first visit) and Star Isle (a wish gives your next egg a part you've never found).
   - **Hidden Village:** find three pieces of an old map in the park and forest. Its elder introduces you to a founder's family, for a partner with pure founder genes.
@@ -83,6 +88,7 @@ tools/props.html          the hand-pixelled town props, enlarged (?only=a,b&z=4)
 tools/art-scripts/        drafting helpers: town_kit.py for town props, draft.py / ed.py for pet parts
 tools/sketch.mjs          silhouette drafts for hand-pixelling new characters
 tools/dump.mjs            print a composed pet as text for pixel-level review
+sw.js                     service worker for care alerts (no caching)
 docs/                     research notes and the build plan
 ```
 

@@ -51,6 +51,46 @@ export const MAX_DISCIPLINE = 4;
 const WHIM_EVERY = { child: 3 * HOUR, teen: 4 * HOUR, adult: 8 * HOUR };
 const REFUSE_GAP = 2 * HOUR;
 
+// Hygiene (0-4 grime): a pet gets grubby while it's awake, faster with poop on
+// the floor. A dirty pet (3+) falls ill more easily, and a filthy one (4) calls
+// for a bath.
+export const MAX_DIRT = 4;
+export const DIRTY_AT = 3;
+const DIRT_PER_HOUR = 0.2, POOP_DIRT_PER_HOUR = 0.15;
+export const isDirty = (pet) => (pet.dirt || 0) >= DIRTY_AT;
+
+// Toilet training: a pet squirms for a few minutes before it poops. Catch it and
+// send it to the toilet, and after a few goes it learns to use it on its own.
+export const TOILET_WARN = 3 * MIN;
+export const POTTY_TRAINED = 4;
+export const isPottyTrained = (pet) => (pet.potty || 0) >= POTTY_TRAINED;
+
+// Skills: raised by school classes, good minigames and time around town. Each
+// level takes a few points; better jobs ask for a level (see JOBS in town.js).
+export const SKILLS = ['smart', 'creative', 'fit', 'charm'];
+export const SKILL_LABEL = { smart: 'Smarts', creative: 'Arts', fit: 'Sports', charm: 'Charm' };
+export const SKILL_MAX = 5;
+export const SKILL_STEP = 3; // points per level
+const noSkills = () => ({ smart: 0, creative: 0, fit: 0, charm: 0 });
+export const skillLevel = (pet, skill) => Math.min(SKILL_MAX, Math.floor((pet.skills?.[skill] || 0) / SKILL_STEP));
+
+/** What the last minigame taught, as a line for its result screen ('' if nothing). */
+export function learnedLine(game) {
+  const l = game.learned;
+  if (!l) return '';
+  return l.up ? `${SKILL_LABEL[l.skill]} level ${l.level}!` : `+1 ${SKILL_LABEL[l.skill]}`;
+}
+
+/** Add skill points. Returns { skill, level, up } (up: it just reached a new level). */
+export function train(pet, skill, points = 1) {
+  if (!SKILLS.includes(skill) || !canAct(pet)) return null;
+  pet.skills ||= noSkills();
+  const before = skillLevel(pet, skill);
+  pet.skills[skill] = Math.min(SKILL_MAX * SKILL_STEP, (pet.skills[skill] || 0) + points);
+  const level = skillLevel(pet, skill);
+  return { skill, level, up: level > before };
+}
+
 export function newGame(now = Date.now(), rng = defaultRng) {
   return {
     version: 2, // keep in step with SAVE_VERSION in save.js
@@ -60,7 +100,7 @@ export function newGame(now = Date.now(), rng = defaultRng) {
     inventory: { cookie: 3, omelette: 2, juice: 2 },
     toys: ['ball'],
     wardrobe: ['bow', 'scarf'],
-    settings: { sound: true, speed: 1 },
+    settings: { sound: true, speed: 1, alerts: false, cheats: false },
     generation: 1,
     album: [],
     matchmaker: { day: '', left: 3 },
@@ -71,7 +111,7 @@ export function newGame(now = Date.now(), rng = defaultRng) {
   };
 }
 
-export function newPet({ generation, genome, parents = null, name }, now, rng = defaultRng) {
+export function newPet({ generation, genome, parents = null, name, skills = null }, now, rng = defaultRng) {
   genome = genome || starterGenome(rng);
   const phenotype = express(genome, rng);
   return {
@@ -111,6 +151,11 @@ export function newPet({ generation, genome, parents = null, name }, now, rng = 
     whim: false,         // fussing for no reason (scold it)
     whimIn: WHIM_EVERY.child,
     refusedAt: 0,
+    dirt: 0,             // grime, 0-4 (bathe it)
+    squirm: false,       // about to poop (send it to the toilet)
+    potty: 0,            // toilet catches so far; trained at POTTY_TRAINED
+    skills: { ...noSkills(), ...skills },
+    job: null,           // { id, shifts } once hired (see JOBS in town.js)
     wear: {},            // clothing: { head, face, body, back, feet } -> item id
     bornAt: now,
   };
@@ -164,7 +209,7 @@ function stepPet(game, pet, dt, events, rng) {
 
   // --- sleep ---
   const bed = isBedtime(pet.stage, t);
-  if (bed && !pet.asleep) { pet.asleep = true; pet.lightsOnMs = 0; pet.whim = false; emit(events, 'sleep'); }
+  if (bed && !pet.asleep) { pet.asleep = true; pet.lightsOnMs = 0; pet.whim = false; pet.squirm = false; emit(events, 'sleep'); }
   if (!bed && pet.asleep) { pet.asleep = false; pet.lights = true; emit(events, 'wake'); }
 
   const h = dt / HOUR;
@@ -187,8 +232,22 @@ function stepPet(game, pet, dt, events, rng) {
     pet.poopIn -= dt;
     if (pet.poopIn <= 0) {
       if (pet.poop < 4) { pet.poop++; emit(events, 'poop'); }
+      pet.squirm = false;
       pet.poopIn = POOP_EVERY[pet.stage] * rng.range(0.7, 1.3);
+    } else if (pet.poopIn <= TOILET_WARN && !pet.squirm && pet.poop < 4) {
+      if (isPottyTrained(pet)) {
+        // a trained pet takes itself to the toilet
+        pet.poopIn = POOP_EVERY[pet.stage] * rng.range(0.7, 1.3);
+        emit(events, 'toilet');
+      } else {
+        pet.squirm = true;
+        emit(events, 'squirm');
+      }
     }
+
+    const wasDirty = isDirty(pet);
+    pet.dirt = Math.min(MAX_DIRT, (pet.dirt || 0) + (DIRT_PER_HOUR + pet.poop * POOP_DIRT_PER_HOUR) * h);
+    if (!wasDirty && isDirty(pet)) emit(events, 'dirty');
   }
 
   // --- sickness ---
@@ -197,6 +256,7 @@ function stepPet(game, pet, dt, events, rng) {
     if (pet.poop >= 3) p += 0.006; else if (pet.poop > 0) p += 0.0005;
     if (pet.hunger <= 0) p += 0.004;
     if (pet.happy <= 0) p += 0.002;
+    if (isDirty(pet)) p += pet.dirt >= MAX_DIRT ? 0.003 : 0.001;
     if (pet.stage === 'baby') p *= 0.3;
     if (isChubby(pet)) p *= 2;
     if (rng.chance(p * (dt / MIN))) makeSick(pet, 'cold', events, rng);
@@ -259,6 +319,7 @@ export function needs(pet) {
   if (pet.sick) return 'sick';
   if (pet.hunger <= 0) return 'hungry';
   if (pet.happy <= 0) return 'unhappy';
+  if ((pet.dirt || 0) >= MAX_DIRT) return 'dirty';
   if (pet.whim) return 'whim';
   return null;
 }
@@ -388,6 +449,37 @@ export function clean(game) {
   return { ok: true };
 }
 
+/** A bath washes the grime off. A clean pet won't get in the tub. */
+export function bathe(game) {
+  const pet = game.pet;
+  if (!canAct(pet) || pet.asleep) return { ok: false };
+  if (pet.sick) return { ok: false, refuse: true, msg: "Doesn't feel well." };
+  if ((pet.dirt || 0) < 1) return { ok: false, refuse: true, msg: 'Already squeaky clean!' };
+  const dirty = isDirty(pet);
+  pet.dirt = 0;
+  pet.happy = Math.min(4, pet.happy + (dirty ? 1 : 0.5));
+  return { ok: true, msg: dirty ? 'So fresh and clean!' : 'Splish splash!' };
+}
+
+/**
+ * Send a squirming pet to the toilet: no mess, and one step closer to being
+ * toilet trained (which also teaches a little discipline).
+ */
+export function toilet(game, rng = defaultRng) {
+  const pet = game.pet;
+  if (!canAct(pet) || pet.asleep) return { ok: false };
+  if (!pet.squirm) return { ok: false, refuse: true, msg: isPottyTrained(pet) ? 'It goes by itself now!' : "Doesn't need to go!" };
+  pet.squirm = false;
+  pet.poopIn = POOP_EVERY[pet.stage] * rng.range(0.7, 1.3);
+  pet.potty = Math.min(POTTY_TRAINED, (pet.potty || 0) + 1);
+  pet.happy = Math.min(4, pet.happy + 0.5);
+  if (isPottyTrained(pet)) {
+    pet.discipline = Math.min(MAX_DISCIPLINE, pet.discipline + 1);
+    return { ok: true, trained: true, msg: 'Toilet trained! It will go by itself from now on.' };
+  }
+  return { ok: true, msg: `Made it in time! (${pet.potty}/${POTTY_TRAINED})` };
+}
+
 export function medicine(game) {
   const pet = game.pet;
   if (!canAct(pet)) return { ok: false };
@@ -430,12 +522,14 @@ export function comfort(game) {
  * After a minigame: points, a little happiness for a good effort, and some
  * weight burned off. Returns the points earned.
  */
-export function finishGame(game, { points = 0, good = false } = {}) {
+export function finishGame(game, { points = 0, good = false, skill = null } = {}) {
   const pet = game.pet;
   earn(game, points);
+  game.learned = null; // what the last game taught: { skill, level, up }
   if (canAct(pet)) {
     if (good) pet.happy = Math.min(4, pet.happy + 1);
     pet.weight = Math.max(minWeight(pet.stage), pet.weight - GAME_WEIGHT);
+    if (good && skill) game.learned = train(pet, skill, 1);
   }
   return points;
 }
@@ -458,6 +552,22 @@ export function pat(game) {
 }
 
 export function canAct(pet) { return pet && !pet.gone && pet.stage !== 'egg'; }
+
+// ---------- Hooks for the debug menu (src/game/cheats.js) ----------
+
+/** Grow to the next stage right now. Returns the events. */
+export function growNow(game, rng = defaultRng) {
+  const events = [], pet = game.pet;
+  if (pet && !pet.gone && NEXT_STAGE[pet.stage]) grow(game, pet, events, rng);
+  return events;
+}
+
+/** Make the pet ill ('cold' or 'toothache'). Returns the events. */
+export function sicken(game, kind = 'cold', rng = defaultRng) {
+  const events = [];
+  if (canAct(game.pet) && !game.pet.sick) makeSick(game.pet, kind, events, rng);
+  return events;
+}
 
 export function earn(game, n) { game.points = Math.min(999999, game.points + Math.max(0, Math.floor(n))); }
 
@@ -530,7 +640,10 @@ export function marry(game, partner, rng = defaultRng) {
   discover(game, partner.phenotype);
   retire(game, pet, 'married', { partner: { name: partner.name, phenotype: partner.phenotype, wear: partner.wear || {} } });
   game.generation = pet.generation + 1;
-  game.pet = newPet({ generation: game.generation, genome, parents: [pet.name, partner.name] }, game.simTime, rng);
+  // a third of what the parent learned is passed down
+  const skills = {};
+  for (const s of SKILLS) skills[s] = Math.floor((pet.skills?.[s] || 0) / 3);
+  game.pet = newPet({ generation: game.generation, genome, parents: [pet.name, partner.name], skills }, game.simTime, rng);
   return game.pet;
 }
 

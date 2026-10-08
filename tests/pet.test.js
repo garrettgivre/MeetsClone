@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRng } from '../src/engine/rng.js';
 import {
-  newGame, advance, feed, clean, medicine, toggleLights, buy, findPartner, marry, canMarry, toggleWear, scold,
+  newGame, advance, feed, clean, medicine, toggleLights, buy, findPartner, marry, canMarry, toggleWear, scold, bathe, isDirty,
   MIN, HOUR, STAGE_LENGTH, MARRY_AFTER,
 } from '../src/game/pet.js';
 import { FOUNDERS } from '../src/game/genetics.js';
@@ -26,6 +26,7 @@ function caredFor(game, ms, rng) {
     while (pet.hunger < 3) feed(game, 'riceball', rng);
     if (pet.happy < 3) pet.happy = 4;
     if (pet.poop) clean(game);
+    if (isDirty(pet)) bathe(game);
     while (pet.sick) medicine(game);
   }
   return events;

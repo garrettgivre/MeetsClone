@@ -3,11 +3,13 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, heartRow, text } from '../ui.js';
 import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
-import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry, isChubby, MAX_DISCIPLINE } from '../game/pet.js';
+import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry, isChubby, isDirty, MAX_DISCIPLINE, POTTY_TRAINED, SKILLS, SKILL_LABEL, SKILL_MAX, skillLevel } from '../game/pet.js';
+import { jobOf, jobRank } from '../game/town.js';
 import { TOYS } from '../game/items.js';
 import { carried, GENE_LABELS } from '../game/genetics.js';
 
-const PAGES = ['PROFILE', 'NEEDS', 'PERSONALITY', 'LOOKS', 'HIDDEN GENES'];
+const PAGES = ['PROFILE', 'NEEDS', 'TRAINING', 'PERSONALITY', 'LOOKS', 'HIDDEN GENES'];
+const GRIME = ['SPOTLESS', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
 
 function age(ms) {
   const h = Math.floor(ms / HOUR);
@@ -60,11 +62,19 @@ export class StatusScene {
       case 'NEEDS':
         text(scr, 'HUNGER', 8, y + 1, COL.gray); heartRow(scr, W - 44, y, hearts(pet.hunger), 'rice'); y += 12;
         text(scr, 'HAPPY', 8, y + 1, COL.gray); heartRow(scr, W - 44, y, hearts(pet.happy)); y += 12;
-        text(scr, 'DISCIPLINE', 8, y + 1, COL.gray); meter(scr, W - 44, y, pet.discipline || 0, MAX_DISCIPLINE); y += 12;
+        line('CLEAN', GRIME[Math.min(4, Math.floor(pet.dirt || 0))], isDirty(pet) ? COL.bad : COL.ink);
         line('WEIGHT', `${pet.weight}G${isChubby(pet) ? ' CHUBBY' : ''}`, isChubby(pet) ? COL.bad : COL.ink);
         line('HEALTH', pet.critical ? 'CRITICAL!' : pet.sick ? pet.sick : 'GOOD', pet.sick ? COL.bad : COL.good);
         line('CARE MISSES', pet.careMistakes, pet.careMistakes > 4 ? COL.bad : COL.ink);
         line('MEALS TO TINT', colorHint(pet));
+        break;
+      case 'TRAINING':
+        text(scr, 'DISCIPLINE', 8, y + 1, COL.gray); meter(scr, W - 44, y, pet.discipline || 0, MAX_DISCIPLINE); y += 11;
+        text(scr, 'TOILET', 8, y + 1, COL.gray); meter(scr, W - 44, y, pet.potty || 0, POTTY_TRAINED); y += 11;
+        for (const s of SKILLS) {
+          text(scr, SKILL_LABEL[s].toUpperCase(), 8, y + 1, COL.gray); meter(scr, W - 44, y, skillLevel(pet, s), SKILL_MAX, C('sky.1')); y += 11;
+        }
+        if (pet.stage === 'adult') line('JOB', `${jobOf(pet).name} ${'★'.repeat(jobRank(pet))}`);
         break;
       case 'PERSONALITY':
         line('APPETITE', p.appetite);
@@ -96,10 +106,10 @@ export class StatusScene {
 }
 
 /** A row of segments, like the discipline meter on the original device. */
-function meter(scr, x, y, value, max) {
+function meter(scr, x, y, value, max, fill = C('gold.2')) {
   const w = Math.floor(35 / max);
   for (let i = 0; i < max; i++) {
-    scr.panel(x + i * w, y, w - 1, 6, i < value ? C('gold.2') : COL.mist, COL.ink);
+    scr.panel(x + i * w, y, w - 1, 6, i < value ? fill : COL.mist, COL.ink);
   }
 }
 

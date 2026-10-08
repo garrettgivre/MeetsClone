@@ -5,7 +5,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 63 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 80 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -14,7 +14,7 @@ npm start         # static server on http://localhost:5173 (http-server, cache o
   { "version": "0.0.1", "configurations": [ { "name": "game", "runtimeExecutable": "npx",
     "runtimeArgs": ["-y", "http-server", "-p", "5173", "-c-1", "--silent"], "port": 5173 } ] }
   ```
-  If port 5173 is already served by another chat's server, don't fight it: open `http://localhost:5173/...` directly in the browser pane (the server has caching off, so edits show on reload).
+  If port 5173 is already served by another chat's server, the browser tools in this chat can't reach it: add a second configuration on another port (same command with `-p 5174`, `"port": 5174`) and start that one. A different port has its own `localStorage`, so it starts a fresh game.
 - **Deploy:** every push to `main` runs the tests and deploys to Pages (`.github/workflows/pages.yml`). The owner wants each finished update **committed and pushed straight to `main`**; no PRs are needed. The `gh` CLI is not installed here, so check the Actions tab on GitHub if you need the deploy status.
 - **Version:** bump `src/version.js` with every release (`VERSION` plus the one-line history in the comment above it). Settings shows the version number. Patch for art and polish, minor for a mechanics change.
 - **Commits:** end every commit message with `Co-Authored-By: Claude <noreply@anthropic.com>` (use the current model name). Write the message to a file and use `git commit -F`; see the Git Bash gotcha below.
@@ -24,12 +24,13 @@ npm start         # static server on http://localhost:5173 (http-server, cache o
 ```
 index.html, style.css      device shell (portrait, phone-first, 3 buttons A/B/C)
 src/engine/                pixel engine: palette (64 colours, ramps like 'pink.0'..'pink.3'), screen, sprite, font, input, audio
-src/game/                  simulation (pet.js), genetics, items, save/migrate, Gene Book (book.js), town state (town.js), pet rendering (pet-art.js)
-src/scenes/                home, room, menus, status, minigames, family, gene book, wardrobe, town (TownScene / TravelScene / PlaceScene / PhotoScene)
+src/game/                  simulation (pet.js), genetics, items, save/migrate, Gene Book (book.js), town state (town.js), pet rendering (pet-art.js), alert wording (alerts.js), debug cheats (cheats.js)
+src/scenes/                home, room, menus, status, minigames, family, gene book, wardrobe, debug menu, town (TownScene / TravelScene / PlaceScene / PhotoScene)
+src/notify.js, sw.js       care alerts: browser notifications through a small service worker (no caching)
 src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg
 src/art/props.js           hand-pixelled TOWN props (text grids with colour roles)
 src/art/town.js            the 22 town backdrops: a drawing kit + one function per place in SCENES
-tests/                     unit tests (art coverage, genetics, pet sim, save, town, book, discipline)
+tests/                     unit tests (art coverage, genetics, pet sim, save, town, book, discipline, care: baths, toilet, skills, jobs, alerts, cheats)
 tools/                     review pages + art scripts (see below)
 docs/STYLE.md              art rules for pets AND town (read before drawing anything)
 docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  notes on the original device
@@ -95,10 +96,21 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Light from the upper left.** Shading is hue-shifted (cool shadows, warm lights), with outlines in a darker shade of the object's own colour.
 - **Process:** after art changes, look at the result in the review pages (screenshot and zoom) before pushing. For big redesigns, outline the plan first. The owner asks for broad passes ("improve all the art", "continue improving the pet art"): pick the weakest pieces by looking, fix them in batches, verify, push, and say what's left.
 
-## Status (v0.13.2, October 2026)
+## Care, skills and alerts: how it works (v0.14)
+
+- **Hygiene** (`pet.dirt`, 0 to 4): rises while awake, faster with poop about. `isDirty` at 3 (more illness), and at 4 `needs()` returns `'dirty'`, an attention call. `bathe()` clears it. The home screen paints mud splats onto the pet's own silhouette (`drawDirt` in `home.js`) and plays the tub animation (`TUB`, `SUDS`, `BUBBLE` in `icons.js`).
+- **Toilet** (`pet.squirm`, `pet.potty`): `TOILET_WARN` minutes before a poop the pet squirms (a `squirm` event). `toilet()` saves the mess and counts a catch; at `POTTY_TRAINED` the pet goes by itself (a `toilet` event, no poop). The Clean icon opens a menu (sweep, bath, toilet); tapping a squirming pet is the shortcut.
+- **Skills** (`pet.skills`, four of them, `SKILL_STEP` points per level, `SKILL_MAX` levels): `train(pet, skill, points)`. Sources: school classes (`lesson` in `town.js`, two a day), `finishGame({ skill })`, chatting, swimming, the playground, performing and work shifts. `marry` passes a third to the egg.
+- **Jobs** (`JOBS` in `town.js`, `pet.job = { id, shifts }`): `applyJob` checks the skill level, `workShift` pays `jobPay` and promotes every `SHIFTS_PER_RANK` shifts. A pet with no job is a Helper.
+- **Alerts:** `alertFor(events, pet)` in `src/game/alerts.js` picks the most urgent event and words it; `src/notify.js` shows it through `sw.js`. `main.js` runs a slow timer while the page is hidden (the frame loop stops then) that advances the pet's clock, sends the alert and flags the tab title. There is no push server, so nothing arrives once the browser has closed or suspended the page.
+- **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. A cheat that returns events is played on the home screen by `done()`.
+
+## Status (v0.14.0, October 2026)
 
 - **Done:**
-  - Pet life cycle, care, discipline and weight.
+  - Pet life cycle, care, discipline, weight, baths and toilet training.
+  - Skills, school classes and jobs with promotions.
+  - Care alerts (browser notifications) and a debug menu of cheats.
   - Genetics with six body plans and six founders (see "Genetics" above; v0.13 fixed the `none` dominance bug and made wild pets line-based).
   - Wardrobe, shops and points.
   - Four minigames.
@@ -107,13 +119,15 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
   - The town: 22 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
   - Town art: every town object is a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts) and added an escalator, a hospital bed, curtained windows and concert-hall fans.
   - Pet art: v0.13.0 proper wings and tendrils on every form; v0.13.1 signature head silhouettes and body textures in every form; v0.13.2 rounded lamb crowns, cloud-puff tails, swept hair tufts, domed nub ears.
-- **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations.
+- **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations. Smaller ones: a daycare or sitter, mail and visitors, gardening, daily goals, and job-specific minigames.
+- **Not verified:** a real notification on a phone. The browser pane blocks notifications, so only the path up to the browser call was tested (with a stand-in).
 - **Pet-art candidates:** the baby and child shapes (plain blobs with a face; could carry more of the line), the egg, and the lamb cheeks on the small quad and serpent heads (still a little pointed).
 - **Town-art candidates:** the home room in `src/scenes/room.js` (its window, shelf, plant and lamp are drawn in code; note its window sky changes with the time of day, so a prop would need a glass ramp per sky state), the salon mirrors, the boutique clothes rack and the school blackboard.
 
 ## Gotchas
 
 - **Saves:** `src/game/save.js` `migrate` fills in new pet fields. Add defaults there whenever the pet shape changes, and keep old saves loading; `tests/save.test.js` covers this.
+- **Deploy list:** the Pages workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
 - **Fonts:** the pixel font (`src/engine/font.js`, `glyphRows`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`.
 - **Town colours:** `rampOf()` in `town.js` maps neutral colours (white, mist, ink…) onto a ramp for prop roles.
 - **Git Bash heredocs mangle backslashes:** a `python - <<'EOF'` script containing `\\` (Windows paths, regex) fails with a unicode-escape error, and `git commit -m` with a heredoc is unreliable. Write Python scripts and commit messages to files (the scratchpad is fine) and run them by path.

@@ -14,6 +14,8 @@ import { foundTotal, BOOK_SIZE } from '../game/book.js';
 import { MatchmakerScene, AlbumScene } from './family.js';
 import { WardrobeScene, clothesIcon } from './wardrobe.js';
 import { VERSION } from '../version.js';
+import { debugMenu } from './debug.js';
+import * as notify from '../notify.js';
 
 export function openMenu(app, name, home) {
   const menus = { status, food, games, items, town, family, settings };
@@ -127,6 +129,20 @@ function settings(app) {
     { label: 'Sound', right: g.settings.sound ? 'ON' : 'OFF', action: (_, it) => {
       g.settings.sound = !g.settings.sound; setMuted(!g.settings.sound); it.right = g.settings.sound ? 'ON' : 'OFF'; app.sfx('select');
     } },
+    { label: 'Care alerts', right: g.settings.alerts ? 'ON' : 'OFF', action: async (_, it) => {
+      if (g.settings.alerts) { g.settings.alerts = false; app.toast('Care alerts are off.'); } else {
+        const p = await notify.enable();
+        if (p === 'granted') {
+          g.settings.alerts = true;
+          app.toast(`Alerts on! Leave the game open in the background and ${g.pet.name} will call you.`, 4200);
+        } else {
+          app.sfx('nope');
+          app.toast(p === 'unsupported' ? "This browser can't show alerts." : p === 'denied' ? 'Alerts are blocked. Allow them in your browser settings.' : 'Alerts were not allowed.', 3600);
+        }
+      }
+      it.right = g.settings.alerts ? 'ON' : 'OFF';
+      app.save();
+    } },
     { label: 'Pause pet', right: g.pet.paused ? 'ON' : 'OFF', action: (_, it) => {
       g.pet.paused = !g.pet.paused; it.right = g.pet.paused ? 'ON' : 'OFF';
       app.toast(g.pet.paused ? 'Time is paused for your pet.' : 'Unpaused!');
@@ -154,29 +170,8 @@ function settings(app) {
       if (window.confirm('Erase everything and start with a new egg?')) { app.reset(); app.toast('A new egg appeared!'); }
     } },
   ];
-  items.push({ label: 'Debug', right: '▶', action: () => debug(app) });
+  items.push({ label: 'Debug', right: '▶', action: () => debugMenu(app) });
   items.push({ label: 'Version', right: VERSION, action: () => app.toast(`MeetsClone v${VERSION}`) });
   app.push(new ListMenu(app, 'SETTINGS', items));
 }
 
-/** Debug tools. Cheats (time speed, points) only appear with ?dev in the URL. */
-function debug(app) {
-  const g = app.game;
-  const open = (path) => () => window.open(path, '_blank');
-  const items = [
-    { label: 'Pairing Lab', right: '▶', action: open('tools/lab.html') },
-    { label: 'Character Gallery', right: '▶', action: open('tools/gallery.html') },
-    { label: 'Sprite Editor', right: '▶', action: open('tools/sprite-editor/') },
-  ];
-  if (app.dev) {
-    items.push({ label: 'Time speed', right: 'x' + (g.settings.speed || 1), action: (_, it) => {
-      const speeds = [1, 60, 600, 3600];
-      g.settings.speed = speeds[(speeds.indexOf(g.settings.speed || 1) + 1) % speeds.length];
-      it.right = 'x' + g.settings.speed;
-    } });
-    items.push({ label: '+500 points', action: () => { g.points += 500; app.toast('+500'); } });
-  } else {
-    items.push({ label: 'Cheats', right: 'OFF', disabled: true, why: 'Add ?dev to the address to enable.' });
-  }
-  app.push(new ListMenu(app, 'DEBUG', items, { footer: `VERSION ${VERSION}` }));
-}

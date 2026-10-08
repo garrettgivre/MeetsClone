@@ -2,10 +2,11 @@
 import { C } from '../engine/palette.js';
 import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
-import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE } from '../art/icons.js';
+import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BATH_ICON, POTTY_ICON } from '../art/icons.js';
+import { hash } from '../engine/rng.js';
 import { composePet, composeEgg, composeGhost, CANVAS, GROUND } from '../game/render.js';
 import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
-import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort } from '../game/pet.js';
+import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort, bathe, toilet, isDirty, isPottyTrained, POTTY_TRAINED } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD } from './room.js';
@@ -15,12 +16,17 @@ const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
 const BOTTOM = ['games', 'items', 'town', 'family', 'settings'];
 const ALL = [...TOP, ...BOTTOM];
 const LABEL = {
-  status: 'STATUS', food: 'FOOD', clean: 'CLEAN UP', medicine: 'MEDICINE', lights: 'LIGHTS',
+  status: 'STATUS', food: 'FOOD', clean: 'CLEAN', medicine: 'MEDICINE', lights: 'LIGHTS',
   games: 'GAMES', items: 'ITEMS', town: 'TOWN', family: 'FAMILY', settings: 'SETTINGS',
 };
 const STAGE_NAME = { egg: 'EGG', baby: 'BABY', child: 'CHILD', teen: 'TEEN', adult: 'ADULT' };
 const POOP_X = [104, 116, 92, 80];
 const CELL = W / 5;
+// how far a small pet is lifted so it shows over the rim of the tub
+const BATH_LIFT = { baby: 17, child: 12, teen: 9, adult: 9 };
+const GRIME = ['CLEAN', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
+// a splat of mud, in hi-res pixels ('1' mud, '0' its darker underside)
+const MUD = ['.1111..', '1111111', '1111110', '.00000.'];
 
 export class HomeScene {
   constructor(app) {
@@ -58,6 +64,8 @@ export class HomeScene {
         case 'critical': app.sfx('alert'); app.toast(`${name} is very sick! Medicine!`, 3500); break;
         case 'attention': if (!away) app.sfx('alert'); break;
         case 'whim': if (!away) app.toast(`${name} is fussing! Tap it to scold or comfort.`, 3000); break;
+        case 'squirm': if (!away) { app.sfx('alert'); app.toast(`${name} needs the toilet! Tap it!`, 3000); } break;
+        case 'dirty': if (!away) app.toast(`${name} is getting dirty. Bath time!`, 3000); break;
         case 'sleep': app.toast('Sleepy... Turn off the lights.', 3000); break;
         case 'wake': if (!away) app.toast('Good morning!'); break;
         case 'death':
@@ -70,7 +78,7 @@ export class HomeScene {
     }
     if (away && app.awayMs > 30 * 60 * 1000 && pet && !pet.gone) {
       const n = needs(pet);
-      if (n) app.toast(n === 'hungry' ? `${name} is starving!` : n === 'unhappy' ? `${name} missed you!` : n === 'sick' ? `${name} got sick!` : 'Welcome back!', 3000);
+      if (n) app.toast(n === 'hungry' ? `${name} is starving!` : n === 'unhappy' ? `${name} missed you!` : n === 'sick' ? `${name} got sick!` : n === 'dirty' ? `${name} needs a bath!` : 'Welcome back!', 3000);
     }
   }
 
@@ -100,7 +108,7 @@ export class HomeScene {
     if (y >= bottom.y && y < bottom.y + bottom.h) { this.cursor = 5 + Math.min(4, Math.floor(x / CELL)); this.open(ALL[this.cursor]); return true; }
     if (y >= room.y && y < room.y + room.h) {
       const pet = this.pet;
-      if (pet && pet.poop > 0 && x > 72 && y > ROOM_FLOOR - 20 && pet.lights) { this.open('clean'); return true; }
+      if (pet && pet.poop > 0 && x > 72 && y > ROOM_FLOOR - 20 && pet.lights && canAct(pet)) { this.sweep(); return true; }
       if (Math.abs(x - this.petX) < 16 && y > ROOM_FLOOR - 40 && y < ROOM_FLOOR + 4) { this.patPet(); return true; }
     }
     return false;
@@ -110,6 +118,7 @@ export class HomeScene {
     const app = this.app, pet = this.pet;
     if (!canAct(pet)) return;
     if (pet.asleep) { app.toast('Zzz...'); return; }
+    if (pet.squirm) { this.doToilet(); return; }
     if (pet.whim) { this.discipline(); return; }
     const r = pat(this.game);
     if (!r.ok) return;
@@ -164,6 +173,47 @@ export class HomeScene {
     this.play({ type: 'toy', dur: 2200, toy: toyId, done: () => { if (r.liked) app.toast('Its favourite toy!'); } });
   }
 
+  sweep() {
+    const app = this.app, pet = this.pet;
+    if (pet.poop === 0) { app.sfx('nope'); app.toast('Already clean!'); return; }
+    app.sfx('clean');
+    this.play({ type: 'clean', dur: 1000, done: () => clean(this.game) });
+  }
+
+  doBath() {
+    const app = this.app;
+    const r = bathe(this.game);
+    if (!r.ok) { app.sfx('nope'); if (r.refuse) this.play({ type: 'refuse', dur: 900 }); if (r.msg) app.toast(r.msg); return; }
+    app.sfx('clean');
+    this.play({ type: 'bath', dur: 2800, done: () => { app.sfx('happy'); app.toast(r.msg); this.play({ type: 'happy', dur: 900 }); app.save(); } });
+  }
+
+  doToilet() {
+    const app = this.app;
+    const r = toilet(this.game);
+    if (!r.ok) { app.sfx('nope'); if (r.refuse) this.play({ type: 'refuse', dur: 900 }); if (r.msg) app.toast(r.msg); return; }
+    app.sfx('select');
+    this.play({
+      type: 'toilet', dur: 1800, done: () => {
+        app.sfx(r.trained ? 'grow' : 'happy');
+        app.toast(r.msg, r.trained ? 3200 : 2200);
+        this.play({ type: 'happy', dur: 900 });
+        app.save();
+      },
+    });
+  }
+
+  /** Clean: sweep the floor, run a bath, or send the pet to the toilet. */
+  cleanMenu() {
+    const app = this.app, pet = this.pet;
+    const go = (fn) => () => { app.home(); fn.call(this); };
+    app.push(new ListMenu(app, 'CLEAN', [
+      { label: 'Sweep up', icon: ICONS.clean, right: pet.poop ? `x${pet.poop}` : 'TIDY', action: go(this.sweep) },
+      { label: 'Bath', icon: BATH_ICON, right: GRIME[Math.min(4, Math.floor(pet.dirt || 0))], action: go(this.doBath) },
+      { label: 'Toilet', icon: POTTY_ICON, right: pet.squirm ? 'NOW!' : isPottyTrained(pet) ? 'TRAINED' : `${pet.potty || 0}/${POTTY_TRAINED}`, action: go(this.doToilet) },
+    ], { footer: 'SQUIRMING? TAP YOUR PET!' }));
+  }
+
   open(name) {
     const app = this.app, pet = this.pet;
     const waiting = !pet || pet.stage === 'egg';
@@ -175,12 +225,10 @@ export class HomeScene {
       app.sfx('nope'); app.toast('Shh! Sleeping...'); return;
     }
     switch (name) {
-      case 'clean': {
-        if (pet.poop === 0) { app.sfx('nope'); app.toast('Already clean!'); return; }
-        app.sfx('clean');
-        this.play({ type: 'clean', dur: 1000, done: () => clean(this.game) });
+      case 'clean':
+        app.sfx('select');
+        this.cleanMenu();
         return;
-      }
       case 'medicine': {
         const r = medicine(this.game);
         if (!r.ok) { app.sfx('nope'); if (r.refuse) this.play({ type: 'refuse', dur: 900 }); if (r.msg) app.toast(r.msg); return; }
@@ -293,7 +341,7 @@ export class HomeScene {
       return;
     }
 
-    let expr = 'idle', dy = 0, flip = this.facing > 0, solid = 0, arms = 'down';
+    let expr = 'idle', dy = 0, dx = 0, flip = this.facing > 0, solid = 0, arms = 'down';
     const moving = Math.abs(this.targetX - this.petX) > 1 && !pet.asleep;
     const bob = Math.floor(t / (moving ? 220 : 480)) % 2;
     const step = moving ? (Math.floor(t / 200) % 2 ? 1 : 2) : 0;
@@ -345,15 +393,63 @@ export class HomeScene {
           expr = k > 0.7 ? 'dizzy' : expr;
           flip = true;
           break;
+        case 'bath':
+          expr = Math.floor(a.t / 450) % 2 ? 'happy' : 'wink';
+          arms = 'up';
+          flip = false;
+          // (floaters already hover over the rim)
+          dy = -(pet.phenotype.form === 'floater' ? 0 : BATH_LIFT[pet.stage] || 0) - (Math.floor(a.t / 300) % 2);
+          break;
+        case 'toilet':
+          expr = k > 0.7 ? 'happy' : 'blink';
+          flip = true;
+          dy = pet.phenotype.form === 'floater' ? 0 : -7; // perched on the seat
+          break;
       }
+    } else if (pet.squirm && !pet.asleep) {
+      // needs the toilet: a worried little wiggle
+      expr = 'sad';
+      dx = Math.floor(t / 90) % 2 ? 1 : -1;
     }
     const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear, species: pet.species });
-    const x = Math.round(this.petX - CANVAS / 2);
+    const x = Math.round(this.petX - CANVAS / 2) + dx;
     if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
     else scr.bitmap(bm, x, baseY + dy, flip, solid);
 
+    if (!lightsOff && !solid && (pet.dirt || 0) >= 2) {
+      this.drawDirt(scr, bm, x, baseY + dy, flip, pet);
+      if (isDirty(pet) && !a) {
+        scr.draw(STINK, this.petX - 16, ROOM_FLOOR - 36, { frame: Math.floor(t / 400) % 2 });
+        scr.draw(STINK, this.petX + 11, ROOM_FLOOR - 30, { frame: Math.floor(t / 400 + 1) % 2 });
+      }
+    }
     if (!lightsOff && pet.sick && !a) scr.draw(SKULL, this.petX + 12, ROOM_FLOOR - 34, { frame: 0 });
-    if (!pet.asleep && needs(pet) && !a && Math.floor(t / 400) % 2) scr.draw(ATTN, this.petX - 2, ROOM_FLOOR - 50);
+    if (!lightsOff && pet.squirm && !pet.asleep && !a) scr.draw(SWEAT, this.petX + 11 + dx, ROOM_FLOOR - 32 + (Math.floor(t / 250) % 2), {});
+    if (!pet.asleep && (needs(pet) || pet.squirm) && !a && Math.floor(t / 400) % 2) scr.draw(ATTN, this.petX - 2, ROOM_FLOOR - 50);
+  }
+
+  /**
+   * Grime: brown smudges painted onto the pet's own silhouette, more of them as
+   * it gets dirtier. The spots are fixed for each pet, so they stay put.
+   */
+  drawDirt(scr, bm, x, y, flip, pet) {
+    const tries = pet.dirt >= 4 ? 36 : pet.dirt >= 3 ? 24 : 12;
+    const X = Math.round(x * 2), Y = Math.round(y * 2);
+    const tones = { 0: C('brown.1'), 1: C('brown.2') };
+    const body = (i, j) => i >= 0 && j >= 0 && i < bm.w && j < bm.h && bm.px[j * bm.w + i];
+    let seed = hash(pet.id) | 1;
+    const next = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 2 ** 32; };
+    for (let n = 0; n < tries; n++) {
+      const px = Math.floor(next() * bm.w), py = Math.floor(next() * bm.h);
+      // a splat lands on the body and is trimmed to it, so it never spills past the outline
+      if (!body(px + 3, py + 1) || !body(px + 1, py + 2) || !body(px + 5, py + 2)) continue;
+      MUD.forEach((row, j) => {
+        for (let i = 0; i < row.length; i++) {
+          if (row[i] === '.' || !body(px + i - 1, py + j) || !body(px + i + 1, py + j) || !body(px + i, py + j + 1) || !body(px + i, py + j - 1)) continue;
+          scr.hpset(X + (flip ? bm.w - 1 - px - i : px + i), Y + py + j, tones[row[i]]);
+        }
+      });
+    }
   }
 
   drawAnimOverlay(scr, t) {
@@ -391,6 +487,21 @@ export class HomeScene {
         else scr.draw(SPARKLE, this.petX - 14, fy - 34, { frame: Math.floor(t / 100) % 2 });
         break;
       }
+      case 'bath': {
+        const x = Math.round(this.petX - 19), y = fy - 13;
+        scr.draw(TUB, x, y, {});
+        scr.draw(SUDS, x + 4, y - 4, { frame: Math.floor(a.t / 350) % 2 });
+        for (let i = 0; i < 5; i++) {
+          const ph = (a.t / 1100 + i * 0.27) % 1;
+          scr.draw(BUBBLE, x + 2 + i * 8 + Math.round(Math.sin(ph * 7 + i) * 2), y - 8 - Math.round(ph * 34), { frame: i % 3 });
+        }
+        break;
+      }
+      case 'toilet': {
+        scr.draw(POTTY, Math.round(this.petX - 9), fy - 14, {});
+        if (k > 0.7) scr.draw(SPARKLE, this.petX + 12, fy - 30, { frame: Math.floor(t / 100) % 2 });
+        break;
+      }
       case 'grow': case 'hatch': {
         for (let i = 0; i < 4; i++) {
           const ang = t / 300 + i * Math.PI / 2;
@@ -416,7 +527,7 @@ export class HomeScene {
     scr.draw(COIN, W - 6 - 5 - String(game.points).length * 4, 3, {});
     text(scr, game.points, W - 4, 4, C('gold.3'), { align: 'right' });
     text(scr, `G${pet?.generation || game.generation}`, 66, 4, C('sky.3'), { align: 'center' });
-    if (pet && needs(pet) && Math.floor(t / 400) % 2) scr.draw(ATTN, 78, 2, { solid: C('red.2') });
+    if (pet && (needs(pet) || pet.squirm) && Math.floor(t / 400) % 2) scr.draw(ATTN, 78, 2, { solid: C('red.2') });
     if (pet?.paused) text(scr, 'II', 86, 4, C('gold.3'));
     // icon rows
     for (const [row, ids] of [[top, TOP], [bottom, BOTTOM]]) {

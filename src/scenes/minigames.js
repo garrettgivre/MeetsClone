@@ -8,7 +8,7 @@ import { W } from '../engine/screen.js';
 import { LAYOUT, COL, text, dialog } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { FOOD_ART } from '../art/icons.js';
-import { finishGame } from '../game/pet.js';
+import { finishGame, learnedLine } from '../game/pet.js';
 
 const FLOOR_OFF = 130; // floor line, from the top of the room
 
@@ -49,7 +49,8 @@ class MiniGame {
     this.t = 0;
     this.good = good;
     this.msg = msg;
-    this.reward = finishGame(this.app.game, { points, good });
+    this.reward = finishGame(this.app.game, { points, good, skill: this.skill });
+    this.learned = learnedLine(this.app.game);
     this.app.sfx(good ? 'happy' : 'fail');
     this.app.save();
   }
@@ -78,7 +79,7 @@ class MiniGame {
   drawDialogs(scr) {
     const ry = LAYOUT.room.y;
     if (this.state === 'ready') dialog(scr, `${this.title}\n${this.help}`, { y: ry + 36 });
-    if (this.state === 'over') dialog(scr, `${this.msg}\n+${this.reward} points`, { y: ry + 36, title: this.good ? 'NICE!' : 'GAME OVER' });
+    if (this.state === 'over') dialog(scr, `${this.msg}\n+${this.reward} points${this.learned ? '\n' + this.learned : ''}`, { y: ry + 36, title: this.good ? 'NICE!' : 'GAME OVER' });
   }
 }
 
@@ -98,6 +99,7 @@ const WW_ROUNDS = 5;
 export class WhichWayScene extends MiniGame {
   constructor(app) {
     super(app, 'WHICH WAY?', 'Guess which way your pet will hop: A or tap left, B or tap right.');
+    this.skill = 'smart';
     this.round = 0;
     this.wins = 0;
     this.phase = 'guess'; // guess -> show
@@ -148,6 +150,7 @@ const SC_TREATS = ['cookie', 'candy', 'icecream', 'juice', 'fruitbowl', 'pancake
 export class SnackCatchScene extends MiniGame {
   constructor(app) {
     super(app, 'SNACK CATCH', 'Catch the treats, dodge the rocks! A/B or tap to move.');
+    this.skill = 'fit';
     this.x = W / 2;
     this.target = W / 2;
     this.items = [];
@@ -217,6 +220,7 @@ const CM_START = 3, CM_MAX = 9, CM_STEP = 650;
 export class CopyMeScene extends MiniGame {
   constructor(app) {
     super(app, 'COPY ME', 'Watch the dance, then copy it: A or tap left, B or tap right.');
+    this.skill = 'creative';
     this.seq = [];
     this.best = 0;
   }

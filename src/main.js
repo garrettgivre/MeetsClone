@@ -2,8 +2,10 @@
 import { Screen, W, H } from './engine/screen.js';
 import { setupInput } from './engine/input.js';
 import { unlockAudio, play, setMuted } from './engine/audio.js';
-import { newGame, advance, MIN } from './game/pet.js';
+import { newGame, advance, needs, MIN } from './game/pet.js';
 import * as store from './game/save.js';
+import { alertFor } from './game/alerts.js';
+import * as notify from './notify.js';
 import { HomeScene } from './scenes/home.js';
 import { dialog, LAYOUT } from './ui.js';
 
@@ -14,7 +16,9 @@ const DEV = params.has('dev');
 
 const app = {
   scr,
-  dev: DEV,
+  devUrl: DEV,
+  // cheats: ?dev in the address, or switched on in Settings > Debug
+  get dev() { return DEV || !!this.game?.settings.cheats; },
   game: null,
   scenes: [],
   time: 0,           // ms since start, for animations
@@ -56,6 +60,7 @@ else {
 game.lastReal = Date.now();
 app.game = game;
 setMuted(!game.settings.sound);
+if (game.settings.alerts && notify.permission() === 'granted') notify.registerWorker();
 app.push(new HomeScene(app));
 if (app.pendingEvents?.length) app.scene.handleEvents(app.pendingEvents, true);
 
@@ -125,9 +130,35 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
+// ----- in the background -----
+// The frame loop stops while the page is hidden, so a slow timer keeps the
+// pet's clock running and sends a care alert when something happens. (Browsers
+// slow this timer down, and a phone may stop it altogether after a while.)
+const TITLE = document.title;
+function background() {
+  const g = app.game;
+  if (!document.hidden || !g) return;
+  const away = Date.now() - (g.lastReal || Date.now());
+  if (away < 1000) return;
+  const events = advance(g, Math.min(away, 60 * 24 * 60 * MIN));
+  g.lastReal = Date.now();
+  if (events.length) {
+    app.awayMs = 0;
+    app.scenes[0].handleEvents(events, true);
+    const alert = g.settings.alerts && alertFor(events, g.pet);
+    if (alert) notify.show(alert);
+  }
+  const pet = g.pet;
+  document.title = pet && !pet.gone && (needs(pet) || pet.squirm) ? `(!) ${pet.name} needs you` : TITLE;
+  store.save(g);
+}
+setInterval(background, 15000);
+
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) app.save();
   else {
+    document.title = TITLE;
+    notify.clear();
     // catch up on time spent in the background
     const away = Date.now() - app.game.lastReal;
     if (away > 2000) {

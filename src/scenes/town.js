@@ -11,7 +11,9 @@ import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, HAIR_DYES,
   townState, districtLocked, buyPass, cantGo, resident, talk, friendship, doAction,
   dishOfDay, saleOfDay, salePrice, buySale, dyeHair, founderKin,
+  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft,
 } from '../game/town.js';
+import { skillLevel, SKILL_LABEL } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { shopList } from './menus.js';
 import { JumpRopeScene } from './jumprope.js';
@@ -196,6 +198,24 @@ export class PlaceScene {
         action: () => { const r = dyeHair(g, c); app.sfx(r.ok ? 'happy' : 'nope'); if (r.msg) app.toast(r.msg); if (r.ok) { app.save(); app.pop(); this.play('happy'); } },
       })), { footer: "DYE ISN'T PASSED ON" }));
     }
+    if (kind === 'jobs') {
+      // the job board: apply for anything; the interview checks the skill it needs
+      const rows = () => JOBS.map(j => {
+        const short = j.skill && skillLevel(g.pet, j.skill) < j.need;
+        return {
+          label: j.name,
+          right: jobOf(g.pet).id === j.id ? 'YOURS' : short ? `${SKILL_LABEL[j.skill].toUpperCase()} ${j.need}` : j.pay,
+          action: () => {
+            const r = applyJob(g, j.id);
+            app.sfx(r.ok ? 'happy' : 'nope');
+            if (r.msg) app.toast(r.msg, 3000);
+            if (r.ok) { app.save(); menu.items = rows(); this.play('happy'); }
+          },
+        };
+      });
+      const menu = new ListMenu(app, 'JOB BOARD', rows(), { footer: () => `${jobOf(g.pet).name.toUpperCase()}: ${jobPay(g.pet)} A SHIFT` });
+      return app.push(menu);
+    }
     if (kind === 'matchmaker') return app.push(new MatchmakerScene(app));
     if (kind === 'photos') return app.push(new PhotoScene(app));
     if (kind === 'founders') {
@@ -256,7 +276,8 @@ export class PlaceScene {
 
     // the buttons
     const sel = this.buttons[this.sel];
-    const hint = sel?.price ? `COSTS ${sel.price}` : sel?.needs?.(g) || '';
+    const price = typeof sel?.price === 'function' ? sel.price(g) : sel?.price;
+    const hint = price ? `COSTS ${price}` : sel?.needs?.(g) || '';
     const r0 = this.rect(0);
     if (hint) { scr.rect(0, r0.y - 9, W, 9, COL.bar); text(scr, hint.toUpperCase(), W / 2, r0.y - 7, COL.ink, { align: 'center' }); }
     this.buttons.forEach((b, i) => {
@@ -275,6 +296,8 @@ function placeInfo(g, id) {
   if (id === 'stage') return `FANS ${t.fans}`;
   if (id === 'forest' && t.mapPieces < MAP_PIECES && t.mapPieces > 0) return `MAP ${t.mapPieces}/${MAP_PIECES}`;
   if (id === 'starisle' && t.wish) return 'A WISH WAITS';
+  if (id === 'school') return `CLASSES LEFT: ${classesLeft(g)}`;
+  if (id === 'work' && g.pet.stage === 'adult') return `${jobOf(g.pet).name.toUpperCase()} ${'★'.repeat(jobRank(g.pet))}`.trim();
   return null;
 }
 

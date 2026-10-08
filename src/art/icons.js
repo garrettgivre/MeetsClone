@@ -167,6 +167,86 @@ export const MOON = sprite(['.YYY.', 'YYx..', 'Yx...', 'YYx..', '.YYY.']);
 export const SUN = sprite(['.y.y.', 'yYYYy', '.YYY.', 'yYYYy', '.y.y.']);
 export const RING = sprite(['..oo..', '.osso.', '..oo..', '.oyyo.', 'oy..yo', 'oy..yo', '.oyyo.']);
 
+// ---------- Bath and toilet ----------
+// A claw-foot tub (the pet sits behind it), suds along its rim, bubbles, and a
+// little toilet.
+export const TUB = sprite([
+  '.oooooooooooooooooooooooooooooooooooo.',
+  'owwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwmmo',
+  'owmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmGGo',
+  '.oooooooooooooooooooooooooooooooooooo.',
+  '..owwwmmmmmmmmmmmmmmmmmmmmmmmmmmmGGo..',
+  '..owwmmmmmmmmmmmffmffmmmmmmmmmmmmGGo..',
+  '..owwmmmmmmmmmmfPfffpfmmmmmmmmmmmGGo..',
+  '..owmmmmmmmmmmmfffffpfmmmmmmmmmmGGGo..',
+  '...owmmmmmmmmmmmfffpfmmmmmmmmmmmGGo...',
+  '...ommmmmmmmmmmmmfpfmmmmmmmmmmmGGGo...',
+  '....ommmmmmmmmmmmmpmmmmmmmmmmmGGGo....',
+  '.....omGGGGGGGGGGGGGGGGGGGGGGGGGo.....',
+  '.......oooooooooooooooooooooooo.......',
+  '......oyyo..................oyyo......',
+  '.....oyYuo..................ouYyo.....',
+  '.....oooo....................oooo.....',
+]);
+export const SUDS = sprite([
+  [
+    '...ss.....sss......ss.....ss..',
+    '..swws...swwws.ss.swws...swws.',
+    '.swwwwssswwwwwswwswwwwsssswwws',
+    'swwwwwwwwwwwwwwwwwwwwwwwwwwwws',
+    'swwswwwwwswwwwwwwswwwwwwwswwws',
+  ],
+  [
+    '.....ss......ss.....sss...ss..',
+    '.ss.swws.ss.swws...swwws.swws.',
+    'swwsswwwswwswwwwssswwwwwswwwws',
+    'swwwwwwwwwwwwwwwwwwwwwwwwwwwws',
+    'swwwwswwwwwwwswwwwwwswwwwwwsws',
+  ],
+]);
+export const BUBBLE = sprite([['.BBB.', 'Bw..B', 'B...S', 'B...S', '.BSS.'], ['.BB.', 'Bw.S', 'B..S', '.SS.'], ['.B.', 'BwS', '.S.']]);
+export const POTTY = sprite([
+  '.ooooooo........',
+  'owwwwwwmo.......',
+  'owwwwwwmo.......',
+  'owBBwwwmo.......',
+  'owwwwwwmo.......',
+  'owwwwwwmo.......',
+  'ommmmmmGo.......',
+  '.oooooooooooooo.',
+  '..owwwwwwwwwwwmo',
+  '..oooooooooooooo',
+  '...owwwwwwwwmGo.',
+  '...owwwwwwwmGGo.',
+  '....owwwwwmGGo..',
+  '.....owwmmGGo...',
+  '....owwmmmmGGo..',
+  '....oooooooooo..',
+]);
+export const BATH_ICON = sprite([
+  '..s....s..',
+  '.....s....',
+  '.oooooooo.',
+  'owwwwwwwmo',
+  '.oooooooo.',
+  '.owwwwmGo.',
+  '.owwwmmGo.',
+  '..oooooo..',
+  '..oy..yo..',
+]);
+export const POTTY_ICON = sprite([
+  'oooo......',
+  'owmo......',
+  'owmo......',
+  'owmooooooo',
+  'owmowwwwmo',
+  'oooooooooo',
+  '..owwwmGo.',
+  '...owmGo..',
+  '..owwmmGo.',
+  '..ooooooo.',
+]);
+
 // ---------- Foods (10x10) ----------
 export const FOOD_ART = {
   riceball: ICONS.food,
