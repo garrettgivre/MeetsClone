@@ -89,17 +89,27 @@ function joinSeams(L, ramps, joins, melt = new Set()) {
   L.px.set(out);
 }
 
-/** Crop the working canvas to the output size: centred, feet near the bottom. */
+/**
+ * Crop the working canvas to the output size: centred, feet near the bottom.
+ * The ground is the lowest pixel of the body and feet; a tail or wing that
+ * dangles lower doesn't lift the pet off the floor.
+ */
 function crop(L) {
-  let x0 = TW, y0 = TH, x1 = -1, y1 = -1;
-  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) if (L.px[y * TW + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  const dx = Math.floor((PW - (x1 - x0 + 1)) / 2) - x0, dy = PH - 3 - y1;
+  let x0 = TW, y0 = TH, x1 = -1, y1 = -1, ground = -1;
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    const i = y * TW + x;
+    if (!L.px[i]) continue;
+    x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    if (L.ids[i] !== PART.tail && L.ids[i] !== PART.wings) ground = Math.max(ground, y);
+  }
+  if (ground < 0) ground = y1;
+  const dx = Math.floor((PW - (x1 - x0 + 1)) / 2) - x0, dy = PH - 3 - ground;
   const px = new Uint8Array(PW * PH);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const c = L.px[y * TW + x], X = x + dx, Y = y + dy;
     if (c && X >= 0 && Y >= 0 && X < PW && Y < PH) px[Y * PW + X] = c;
   }
-  return { px, dx, dy, overflow: x1 - x0 + 1 > PW || y1 - y0 + 4 > PH };
+  return { px, dx, dy, overflow: x1 - x0 + 1 > PW || ground - y0 + 4 > PH };
 }
 
 /** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
