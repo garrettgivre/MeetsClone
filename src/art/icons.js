@@ -1,28 +1,236 @@
 // UI icons, foods, toys and status symbols.
-import { sprite } from '../engine/sprite.js';
+import { sprite, hdSprite } from '../engine/sprite.js';
 
 // ---------- Menu icons: hi-res sprites, in their own file ----------
 export { MENU_ICONS as ICONS } from './menu-icons.js';
 
 // ---------- Status symbols ----------
-export const HEART = sprite(['.oo.oo.', 'oQqoqro', 'oqqqqro', '.oqqro.', '..oro..', '...o...']);
-export const HEART_EMPTY = sprite(['.oo.oo.', 'ommommo', 'ommmmmo', '.ommmo.', '..omo..', '...o...']);
-export const RICE = sprite(['..oo...', '.owwo..', 'owwwwo.', 'owkkwo.', 'okkkko.', '.oooo..']);
-export const RICE_EMPTY = sprite(['..oo...', '.ommo..', 'ommmmo.', 'omggmo.', 'ogggggo', '.oooo..'].map(r => r.slice(0, 7)));
-export const COIN = sprite(['.ooo.', 'oYyyo', 'oyuyo', 'oyyuo', '.ooo.']);
-export const POOP = sprite([
-  ['...o....', '..ono...', '.onNno..', '.onnno..', 'onNnnno.', 'onnnnndo', '.oooooo.'],
-  ['....o...', '...ono..', '..onNno.', '..onnno.', '.onNnnno', 'onnnnndo', '.oooooo.'],
+// These are drawn by hand at the fine (hi-res) pixel size, like the menu icons.
+export const HEART = hdSprite([
+  '..ooo....ooo..',
+  '.oQQQo..oqqqo.',
+  'oQQwqqooqqqqro',
+  'oQwwqqqqqqqqro',
+  'oQqqqqqqqqqqro',
+  'oqqqqqqqqqqrro',
+  '.oqqqqqqqqrro.',
+  '..oqqqqqqrro..',
+  '...oqqqqrro...',
+  '....oqqrro....',
+  '.....orro.....',
+  '......oo......',
 ]);
-export const SKULL = sprite(['.ooooo.', 'ommmmmo', 'okmmmko', 'okmmmko', 'ommkmmo', '.omomo.', '..ooo..']);
-export const ZZZ = sprite(['kkkk', '..k.', '.k..', 'kkkk']);
-export const ATTN = sprite(['.oo.', 'oqqo', 'oqqo', 'oqqo', '.oo.', '.oo.', 'oqqo', '.oo.']);
-export const SPARKLE = sprite([['..Y..', '..Y..', 'YYxYY', '..Y..', '..Y..'], ['.....', '..Y..', '.YxY.', '..Y..', '.....']]);
-export const NOTE = sprite(['..ooo', '..o.o', '..o.o', 'ooo.o', 'ooo..']);
-export const SWEAT = sprite(['.o.', 'oso', 'oBo', '.o.']);
+export const HEART_EMPTY = hdSprite([
+  '..ooo....ooo..',
+  '.ommmo..ommmo.',
+  'ommmmmoommmmGo',
+  'ommmmmmmmmmmGo',
+  'ommmmmmmmmmmGo',
+  'ommmmmmmmmmGGo',
+  '.ommmmmmmmGGo.',
+  '..ommmmmmGGo..',
+  '...ommmmGGo...',
+  '....ommGGo....',
+  '.....oGGo.....',
+  '......oo......',
+]);
+export const RICE = hdSprite([
+  '....oooo......',
+  '...owwwwo.....',
+  '..owwwwwwo....',
+  '..owwwwwwo....',
+  '.owwwwwwwwo...',
+  '.owwwwwwwmo...',
+  'owwwoooooowmo.',
+  'owwoKKKKKKomo.',
+  'owwoKKKKKKomo.',
+  'ommoKKKKKKomo.',
+  '.ooooooooooo..',
+  '..............',
+]);
+export const RICE_EMPTY = hdSprite([
+  '....oooo......',
+  '...ommmmo.....',
+  '..ommmmmmo....',
+  '..ommmmmmo....',
+  '.ommmmmmmmo...',
+  '.ommmmmmmGo...',
+  'ommmoooooomGo.',
+  'ommoGGGGGGoGo.',
+  'ommoGGGGGGoGo.',
+  'oGGoGGGGGGoGo.',
+  '.ooooooooooo..',
+  '..............',
+]);
+export const COIN = hdSprite([
+  '...oooo...',
+  '.ooYYYYoo.',
+  '.oYYyyyyo.',
+  'oYYyuuyyuo',
+  'oYyuyyyyuo',
+  'oYyuyyyyuo',
+  'oyyyuuyuuo',
+  '.oyyyyuuo.',
+  '.oouuuuoo.',
+  '...oooo...',
+]);
+export const POOP = hdSprite([
+  [
+    '......oo........',
+    '.....onno.......',
+    '....onNNno......',
+    '....onNnnno.....',
+    '...oonnnnndo....',
+    '..onNNnnnnndo...',
+    '..onNnnnnnnddo..',
+    '.oonnnnnnnnnddo.',
+    '.onNNnnnnnnnnddo',
+    'onNNnnnnnnnnnddo',
+    'onNnnnnnnnnndddo',
+    'onnnnnnnnnnddddo',
+    '.oddddddddddddo.',
+    '..oooooooooooo..',
+  ],
+  [
+    '........oo......',
+    '.......onno.....',
+    '......onNNno....',
+    '.....onNnnno....',
+    '....oonnnnndo...',
+    '..onNNnnnnndo...',
+    '..onNnnnnnnddo..',
+    '.oonnnnnnnnnddo.',
+    '.onNNnnnnnnnnddo',
+    'onNNnnnnnnnnnddo',
+    'onNnnnnnnnnndddo',
+    'onnnnnnnnnnddddo',
+    '.oddddddddddddo.',
+    '..oooooooooooo..',
+  ],
+]);
+export const SKULL = hdSprite([
+  '...oooooooo...',
+  '..ommmmmmmmo..',
+  '.omwwmmmmmmGo.',
+  '.omwmmmmmmmGo.',
+  'ommooommooomGo',
+  'ommooommooomGo',
+  'ommooommooomGo',
+  'ommmmmoommmGGo',
+  '.ommmmoommmGo.',
+  '.oommmmmmmGoo.',
+  '..omomomomGo..',
+  '..omomomomGo..',
+  '..oooooooooo..',
+  '..............',
+]);
+export const ZZZ = hdSprite([
+  'kkkkkkkk',
+  'kkkkkkkk',
+  '.....kk.',
+  '....kk..',
+  '...kk...',
+  '..kk....',
+  'kkkkkkkk',
+  'kkkkkkkk',
+]);
+export const ATTN = hdSprite([
+  '..oooo..',
+  '.oQqqro.',
+  '.oQqqro.',
+  '.oQqqro.',
+  '.oQqqro.',
+  '.oqqqro.',
+  '.oqqqro.',
+  '..oqro..',
+  '..oqro..',
+  '...oo...',
+  '........',
+  '..oooo..',
+  '.oQqqro.',
+  '.oqqrro.',
+  '..oooo..',
+  '........',
+]);
+export const SPARKLE = hdSprite([
+  [
+    '....YY....',
+    '....YY....',
+    '....YY....',
+    '...YxxY...',
+    'YYYxwwxYYY',
+    'YYYxwwxYYY',
+    '...YxxY...',
+    '....YY....',
+    '....YY....',
+    '....YY....',
+  ],
+  [
+    '..........',
+    '..........',
+    '....YY....',
+    '....YY....',
+    '..YYxxYY..',
+    '..YYxxYY..',
+    '....YY....',
+    '....YY....',
+    '..........',
+    '..........',
+  ],
+]);
+export const NOTE = hdSprite([
+  '...ooooooo',
+  '...ooooooo',
+  '...oo...oo',
+  '...oo...oo',
+  '...oo...oo',
+  '...oo...oo',
+  '.oooo.oooo',
+  'ooooo.oooo',
+  'oooo..ooo.',
+  '.oo.......',
+]);
+export const SWEAT = hdSprite([
+  '..oo..',
+  '..oo..',
+  '.osBo.',
+  '.osBo.',
+  'osBBBo',
+  'osBBSo',
+  '.oSSo.',
+  '..oo..',
+]);
 export const ANGRY = sprite(['q.q', '.q.', 'q.q']);
-export const ARROW = sprite(['o..', 'oo.', 'ooo', 'oo.', 'o..']);
-export const STINK = sprite([['.l..', 'l.l.', '...l'], ['..l.', '.l.l', 'l...']]);
+export const ARROW = hdSprite([
+  'oo....',
+  'ooo...',
+  'oooo..',
+  'ooooo.',
+  'oooooo',
+  'oooooo',
+  'ooooo.',
+  'oooo..',
+  'ooo...',
+  'oo....',
+]);
+export const STINK = hdSprite([
+  [
+    '..ll....',
+    '.l......',
+    '.l...ll.',
+    '..l.l...',
+    '....l...',
+    '.....l..',
+  ],
+  [
+    '....ll..',
+    '...l....',
+    'll.l....',
+    '..l..l..',
+    '.....l..',
+    '....l...',
+  ],
+]);
 export const SYRINGE = sprite([
   '.......o',
   '......o.',

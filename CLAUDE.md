@@ -5,7 +5,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 85 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 87 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -41,7 +41,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 
 ## Screen and coordinates
 
-- **Pixel scales (the owner wants one scale everywhere):** there are two inside the game. The room, town, pets and menu icons are hi-res (256×448, one unit per pixel). Text, the status bar, list menus, hearts, poop, food, toys and other small sprites are low-res (128×224, each pixel two units; sprites go through Scale2x). Since v0.16.6 the page buttons match the low-res scale: `resize()` sets `--px` to one game pixel and `style.css` sizes them from it. Bringing the low-res layer up to hi-res (a hi-res font and redrawn UI sprites, by hand) has been offered but not done.
+- **Pixel scales (the owner wants one scale everywhere):** there are two inside the game. The room, town, pets and menu icons are hi-res (256×448, one unit per pixel). Text, the status bar, list menus, hearts, poop, food, toys and other small sprites are low-res (128×224, each pixel two units; sprites go through Scale2x). Since v0.16.6 the page buttons match the low-res scale: `resize()` sets `--px` to one game pixel and `style.css` sizes them from it. The owner asked for the low-res layer to be brought up to hi-res, by hand. **Done (v0.16.7):** the font (`src/engine/font.js`, `FINE`: 10 fine rows per glyph, the same advance as before so layouts are unchanged; `tests/font.test.js` checks every glyph) and the status symbols in `src/art/icons.js` that are `hdSprite`s (hearts, rice, coin, poop, skull, Zzz, alert mark, sparkle, note, sweat drop, arrow, stink). **Still low-res, to redraw by hand as `hdSprite`s:** the syringe, broom sweep, ring, tub, suds, bubbles, potty, cane and the small list icons in `icons.js`; the 19 foods and 6 toys (`FOOD_ART`, `TOY_ART`); the wardrobe icons (`src/art/wardrobe-icons.js`). **Still drawn in code with normal-pixel rectangles:** the minigame, jump-rope, travel, matchmaker, wedding, album, photo and ending backdrops, and rules drawn with `hline`/`vline`/`box` (two fine pixels thick).
 - **Logical screen:** 128×224. The page has no bezel: `resize()` in `main.js` scales the canvas to fill the width (or the height above the button strip, whichever runs out first), so on a short viewport thin strips of shell show at the sides. Pets and town art are drawn at double density (HD = 2) on a 256×448 layer.
 - **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `src/game/pet-art.js`), feet 3 rows above the bottom. Adults are roughly 40 to 50 px tall, so a part has very few pixels to make its point.
 - **Town backdrops** (and the home room): each is a 256×312 hi-res bitmap (`RW`, `RH`).
@@ -130,7 +130,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.16.6, October 2026)
+## Status (v0.16.7, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -160,7 +160,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Installing on Android:** the owner also has Room for Two installed from the same site (`garrettgivre.github.io/Room-For-Two/`). Chrome's menu install then says MeetsClone is "already installed" and "could not open app". The likely cause is that Chrome's install sheet checks for an installed app per site, not per app (not confirmed). Changing the manifest `id` to `/MeetsClone/app` (v0.14.5) did not help; leave it as it is now, since a new id makes installed copies look like a different app. v0.14.6 added Settings > Install app, which keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. That worked, and the owner prefers it to the browser menu.
 - **Full screen:** the manifest asks for `display: fullscreen` (the game has its own clock in the status bar). An installed copy only picks up manifest changes when Chrome next refreshes it, which can take a day or a reinstall. `installState` in `main.js` treats both `fullscreen` and `standalone` as installed.
 - **App icons:** installers need PNGs, not the SVG. `badge.png` is the status-bar shape for care alerts: Android uses only its alpha, so it must stay a white silhouette on transparent. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
-- **Fonts:** the pixel font (`src/engine/font.js`, `glyphRows`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`.
+- **Fonts:** the pixel font (`src/engine/font.js`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`. A new character needs a row set in both `FINE` (twice as wide, ten rows) and `SMALL` (the 3×5 lettering `glyphRows` gives to town signs).
 - **Town colours:** `rampOf()` in `town.js` maps neutral colours (white, mist, ink…) onto a ramp for prop roles.
 - **Git Bash heredocs mangle backslashes:** a `python - <<'EOF'` script containing `\\` (Windows paths, regex) fails with a unicode-escape error, and `git commit -m` with a heredoc is unreliable. Write Python scripts and commit messages to files (the scratchpad is fine) and run them by path.
 - **Part options:** `setpart` from `ed.py` replaces the whole `key: part([...], opts)`; pass the options string back or pivots, `front`, `under` and `spread` are lost. Heads have no options; ears, tails, hair and the small child shapes do.
