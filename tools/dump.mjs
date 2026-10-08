@@ -1,6 +1,7 @@
 // Print a composed pet as text, one character per pixel, for pixel-level review.
 //   node tools/dump.mjs <Founder|random:seed|Founder+gene=allele,...> [stage] [expr]
 //   e.g. node tools/dump.mjs Glimmer+head=lamb,pattern=muzzle,accent=red
+//   [expr] can also be an arm pose: down, up, out, wave
 // Colours print as their palette name's first letters in a legend.
 
 import { composePetArt } from '../src/game/pet-art.js';
@@ -14,7 +15,8 @@ const [name, mix = ''] = who.split('+');
 const swap = Object.fromEntries(mix.split(',').filter(Boolean).map(kv => kv.split('=')));
 const p = name.startsWith('random:') ? express(randomGenome(makeRng(+name.slice(7))), rng)
   : express(pureGenome({ ...FOUNDERS.find(f => f.name === name).traits, ...swap }), rng);
-const k = composePetArt(p, stage, { expr, gender: 'f' });
+const arms = ['down', 'up', 'out', 'wave'].includes(expr) ? expr : undefined; // an arm pose can stand in for the expression
+const k = composePetArt(p, stage, { expr: arms ? 'idle' : expr, arms, gender: 'f' });
 const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#$%&*+=?';
 const used = new Map();
 let y0 = k.h, y1 = 0, x0 = k.w, x1 = 0;

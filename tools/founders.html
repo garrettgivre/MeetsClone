@@ -57,8 +57,9 @@ function render() {
   if (params.has('grid')) {
     // everyone side by side, to compare the founders as a set
     const r = document.createElement('div'); r.className = 'row'; out.append(r);
-    // ?stage=teen shows another life stage
-    for (const f of list) show(composePet(express(pureGenome(f.traits), makeRng(1)), params.get('stage') || 'adult', { gender: 'f' }), f.name, r, +params.get('s') || 190);
+    // ?stage=teen shows another life stage, &arms=wave|up|out an arm pose, &expr=happy an expression
+    const pose = { gender: 'f', arms: params.get('arms') || undefined, expr: params.get('expr') || undefined, step: params.get('arms') ? 1 : 0 };
+    for (const f of list) show(composePet(express(pureGenome(f.traits), makeRng(1)), params.get('stage') || 'adult', pose), f.name, r, +params.get('s') || 190);
     return;
   }
   for (const f of list) {
