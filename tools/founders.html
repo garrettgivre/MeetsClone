@@ -35,7 +35,9 @@ function show(bm, label, row, size) {
   const c = document.createElement('canvas'); c.width = bm.w; c.height = bm.h;
   c.style.width = c.style.height = size + 'px';
   const ctx = c.getContext('2d'); const img = ctx.createImageData(bm.w, bm.h); const u = new Uint32Array(img.data.buffer);
-  for (let i = 0; i < bm.px.length; i++) if (bm.px[i]) u[i] = PACKED[bm.px[i]];
+  // ?sil shows silhouettes only, to judge shapes without colour or detail
+  const sil = params.has('sil');
+  for (let i = 0; i < bm.px.length; i++) if (bm.px[i]) u[i] = sil ? 0xff3b2a26 : PACKED[bm.px[i]];
   ctx.putImageData(img, 0, 0);
   const f = document.createElement('figure'); f.append(c, document.createElement('br'), label); row.append(f);
 }
