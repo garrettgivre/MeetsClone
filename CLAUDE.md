@@ -73,7 +73,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Light from the upper left.** Shading is hue-shifted (cool shadows, warm lights), with outlines in a darker shade of the object's own colour.
 - **Process:** after art changes, look at the result in the review pages (screenshot and zoom) before pushing. For big redesigns, outline the plan first.
 
-## Status (v0.13.1, October 2026)
+## Status (v0.13.2, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline and weight.
@@ -85,7 +85,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
   - The town: 22 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
   - Many art passes: every town object is now a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts), added an escalator, a hospital bed, curtained windows and three concert-hall fans (`fanA`..`fanC`).
 - **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations.
-- **Pet art notes:** v0.13.1 gave every head allele a signature silhouette in all six forms and every body allele a texture; wings and tendrils are drawn properly for every form. The drafting kit is `tools/art-scripts/pet_kit.py`: `redraw_head(form, allele)` rebuilds a head from its silhouette and sockets (mask -> house shading -> allele mods and details), `paint_body(form, allele)` paints a texture inside an existing body, `restore_body` fetches the git HEAD grid before a repaint. Review in `tools/parts.html?gene=head&z=5`, `tools/founders.html?grid` and `tools/compare.html`. Next pet-art candidates: rounder lamb cheeks on the small (quad, serpent) heads, and ear and tail polish.
+- **Pet art notes:** v0.13.1 gave every head allele a signature silhouette in all six forms and every body allele a texture; wings and tendrils are drawn properly for every form. The drafting kit is `tools/art-scripts/pet_kit.py`: `redraw_head(form, allele)` rebuilds a head from its silhouette and sockets (mask -> house shading -> allele mods and details), `paint_body(form, allele)` paints a texture inside an existing body, `restore_body` fetches the git HEAD grid before a repaint. Review in `tools/parts.html?gene=head&z=5`, `tools/founders.html?grid` and `tools/compare.html`. v0.13.2 rounded the lamb crowns (bumps only along the flat top), turned the puff tail into a three-lobed cloud, swept the hair tuft into two spikes and domed the nub ears. Next pet-art candidates: the baby and child shapes (plain blobs with a face), and the egg.
 - **Art polish candidates:** the home room in `src/scenes/room.js` (its window, shelf, plant and lamp are still drawn in code), the salon mirrors, the boutique clothes rack and the school blackboard.
 
 ## Gotchas

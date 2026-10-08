@@ -1,6 +1,6 @@
 """Pet part re-drafting: silhouette mask -> house shading -> hand details.
 
-    python tools/art-scripts/pet_kit.py            # redraw every head in every form
+    python tools/art-scripts/pet_kit.py            # redraw every head in every form (from the committed grids: see restore_body for the idea)
     python tools/art-scripts/pet_kit.py quad       # one form
     from pet_kit import *; paint_body("avian", "feathered"); restore_body("avian", "fluffy")
 
@@ -110,20 +110,29 @@ def mod_fox(mask, sockets, face_y):
 
 
 def mod_lamb(mask, sockets, face_y):
+    """A woolly crown of rounded bumps along the flat top, and cheek puffs round the eye line
+    (narrower on the small quad and serpent heads)."""
     e = extents(mask)
     x0, x1, y0, y1 = bounds(mask)
     out = set(mask)
     top = lambda x: min((yy for (xx, yy) in mask if xx == x), default=None)
-    # a woolly crown: bumps along the upper curve
-    for x in range(x0 + 1, x1 - 3, 5):
-        for dx in (0, 1, 2, 3):
-            t = top(x + dx)
-            if t is not None and t <= y0 + 5: out.add((x + dx, t - 1))
-        for dx in (1, 2):
-            t = top(x + dx)
-            if t is not None and t <= y0 + 4: out.add((x + dx, t - 2))
-    # woolly cheeks: a puff on each side around the eye line
-    for i, ext in enumerate((1, 2, 2, 2, 1)):
+    flat = [x for x in range(x0, x1 + 1) if top(x) is not None and top(x) <= y0 + 2]
+    if flat:
+        l, r = min(flat), max(flat)
+        width = r - l + 1
+        n = max(2, round(width / 4.5))
+        step = width / n
+        for i in range(n):
+            bx = l + round(i * step)
+            cols = [x for x in range(bx, min(r, bx + round(step) - 2) + 1)]
+            for x in cols:
+                t = top(x)
+                if t is not None: out.add((x, t - 1))
+            for x in cols[1:-1]:
+                t = top(x)
+                if t is not None: out.add((x, t - 2))
+    cheeks = (1, 2, 2, 2, 1) if y1 - y0 + 1 >= 16 else (1, 2, 2, 1)
+    for i, ext in enumerate(cheeks):
         y = face_y - 1 + i
         if y not in e: continue
         l, r = e[y]
