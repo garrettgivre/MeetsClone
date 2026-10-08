@@ -11,21 +11,23 @@ import { sprite } from '../engine/sprite.js';
 const P = (rows, pivot, extra = {}) => ({ spr: sprite(rows), pivot, ...extra });
 
 // ---------- Eyes (left eye; right eye is mirrored). Pivot = eye centre. ----------
+// Big glossy eyes: a large highlight at the top, a small one at the bottom.
 export const EYES = {
-  bean:    P(['.kk.', 'kwkk', 'kwkk', 'kkkk', 'kkkk', '.kk.'], [2, 3]),
-  button:  P(['.kk.', 'kwkk', 'kkkk', '.kk.'], [2, 2]),
-  dot:     P(['kk', 'kk', 'kk'], [1, 1]),
-  shiny:   P(['.kkk.', 'kwwek', 'kwEek', 'keeek', 'keFek', '.kkk.'], [2, 3]),
-  sparkle: P(['.kkk.', 'kwwkk', 'kwkkk', 'kkkkk', 'keeek', '.kkk.'], [2, 3]),
-  wide:    P(['.kkk.', 'kwwwk', 'kwwkk', 'kwwkk', 'kwwwk', '.kkk.'], [2, 3]),
-  sleepy:  P(['kkkkk', 'kwkkk', 'kkkkk', '.kkk.'], [2, 1]),
-  arc:     P(['.kk.', 'k..k'], [2, 1]),
-  cat:     P(['.kkk.', 'keFek', 'kekek', 'kekek', '.kkk.'], [2, 2]),
-  star:    P(['..o..', '.oYo.', 'oYYYo', '.oYo.', '.o.o.'], [2, 2]),
-  gem:     P(['..k..', '.kFk.', 'kFeek', 'keeEk', '.kek.', '..k..'], [2, 3]),
+  bean:    P(['.kkk.', 'kwwkk', 'kwwkk', 'kkkkk', 'kkkkk', 'kkkwk', '.kkk.'], [2, 3]),
+  button:  P(['.kk.', 'kwkk', 'kkkk', 'kkwk', '.kk.'], [2, 2]),
+  dot:     P(['kk', 'wk', 'kk'], [1, 1]),
+  shiny:   P(['.kkk.', 'kwwek', 'kwwEk', 'keeEk', 'keeek', 'kFewk', '.kkk.'], [2, 3]),
+  sparkle: P(['.kkk.', 'kwwkk', 'kwwkk', 'kkkkk', 'keeek', 'keFwk', '.kkk.'], [2, 3]),
+  wide:    P(['.kkk.', 'kwwwk', 'kwwwk', 'kwwkk', 'kwwkk', 'kwwwk', '.kkk.'], [2, 3]),
+  sleepy:  P(['kkkkk', 'kkkkk', 'kwkkk', 'kkkwk', '.kkk.'], [2, 2]),
+  arc:     P(['.kkk.', 'k...k', 'k...k'], [2, 1]),
+  cat:     P(['.kkk.', 'keFek', 'kekek', 'kekek', 'keeek', '.kkk.'], [2, 3]),
+  star:    P(['..o..', '.oYo.', 'oYYYo', '.oYo.', 'oo.oo'], [2, 2]),
+  gem:     P(['..k..', '.kFk.', 'kFwek', 'keeEk', '.kek.', '..k..'], [2, 3]),
+  heart:   P(['.k.k.', 'kqkqk', 'kqqqk', '.kqk.', '..k..'], [2, 2], { key: true }),
 };
 // Small eyes used by babies (big heads come later).
-export const BABY_EYES = P(['kk', 'wk', 'kk'], [1, 1]);
+export const BABY_EYES = P(['kk', 'wk', 'kk', 'kk'], [1, 2]);
 // Eyelashes flicked out from the outer top corner of girls' eyes.
 export const LASH = P(['k.', '.k'], [1, 1]);
 
@@ -51,10 +53,11 @@ export const MOUTH_FX = {
 };
 // Expression eyes (drawn instead of the pet's own eyes).
 export const EYE_FX = {
-  closed: P(['kkkk'], [2, 0]),
-  happy:  P(['.kk.', 'k..k'], [2, 1]),
-  sad:    P(['k...', '.kkk'], [2, 0]),
-  dizzy:  P(['k.k', '.k.', 'k.k'], [1, 1]),
+  closed: P(['k...k', '.kkk.'], [2, 0]),       // content, sleeping
+  happy:  P(['.kkk.', 'k...k', 'k...k'], [2, 1]),
+  sad:    P(['...kk', 'kkk..', '.kkk.', '.kkk.'], [2, 1]),
+  dizzy:  P(['k...k', '.k.k.', '..k..', '.k.k.', 'k...k'], [2, 2]),
+  wink:   P(['.....', 'kkkkk'], [2, 0]),
 };
 
 // ---------- Ears / headgear (left ear, mirrored; drawn behind the head) ----------
@@ -105,21 +108,38 @@ export const BACKS = {
   cape:     'cape', // drawn procedurally
 };
 
-// ---------- Arms (left arm, mirrored). Pivot = shoulder. ----------
-export const ARM = P(['.oo', 'o3o', 'o3o', '.o.'], [2, 0]);
+// ---------- Arms (left arm, mirrored). Pivot = shoulder on the body's edge. ----------
+export const ARMS = {
+  down: P(['..oo', '.o3o', 'o33o', 'o3o.', '.o..'], [3, 0]),
+  out:  P(['.ooo.', 'o333o', '.ooo.'].map(r => r), [4, 1]),
+  up:   P(['oo..', 'o3o.', 'o33o', '.o3o', '..oo'], [3, 4]),
+};
 
 // ---------- Feet (front, under the body) ----------
 export const FEET = {
   float: null,
-  stubs: P(['.ooo.', 'o333o', '.ooo.'], [2, 0]),
-  paws:  P(['.ooo.', 'o777o', 'o7o7o', '.o.o.'], [2, 0]),
-  legs:  P(['o3o.', 'o3o.', 'o33o', 'oooo'], [1, 0]),
-  shoes: P(['.o3o.', 'oooo.', 'o66oo', 'oooooo'], [2, 0]),
+  stubs: P(['.ooo.', 'o333o', 'o2222o', '.oooo.'], [2, 0]),
+  paws:  P(['.ooo.', 'o777o', 'o7777o', 'o7o7o.', '.o.o..'], [2, 0]),
+  legs:  P(['o3o.', 'o3o.', 'o3o.', 'o33oo', 'ooooo'], [1, 0]),
+  shoes: P(['.o3o.', '.o3o.', 'oo66o.', 'o6666o', '.oooo.'], [2, 0]),
 };
 
 // ---------- Outfits are drawn procedurally; bowtie sprite used at the neck ----------
 export const BOWTIE = P(['oo.oo', 'o6o6o', 'o666o', 'o6o6o', 'oo.oo'], [2, 2]);
 export const TIE = P(['.o.', 'o6o', 'o6o', 'o66o'.slice(0, 3), '.o.'], [1, 0]);
+
+// ---------- Hair pieces drawn outside the head shape ----------
+// (The fringe itself is painted onto the head by the renderer.)
+export const HAIR_PARTS = {
+  // spikes along the top of the head
+  spikes: P(['o...o...o', 'oo.o0o.oo', 'o0o909o0o', 'o0099900o'], [4, 3]),
+  // a ponytail hanging off the back (right side)
+  ponytail: P(['.oo..', 'o00o.', 'o090o', '.o90o', '.o99o', '..o9o', '...oo'], [0, 1]),
+  // twin tails on both sides (left one; mirrored)
+  twintail: P(['..oo', '.o0o', 'o00o', 'o90o', 'o90o', 'o99o', '.o9o', '..oo'], [3, 1]),
+  // a big curly puff behind the head
+  puff: P(['..oooooooo..', '.o00000000o.', 'o0000000000o', 'o0000000000o', 'o9000000009o', 'o99......99o'], [6, 2]),
+};
 
 // ---------- Cheeks (left, mirrored) ----------
 export const CHEEKS = {

@@ -50,6 +50,9 @@ function render() {
   r = section('Expressions');
   for (const e of ['idle', 'blink', 'happy', 'sad', 'eat', 'chew', 'sleep', 'dizzy']) show(composePet(p, 'adult', { expr: e }), e, r);
   show(composeGhost(), 'ghost', r);
+  r = section('Poses');
+  for (const [label, pose] of [['arms up', { arms: 'up', expr: 'happy' }], ['wave', { arms: 'wave', expr: 'wink' }], ['arms out', { arms: 'out' }], ['step 1', { step: 1 }], ['step 2', { step: 2 }]])
+    show(composePet(p, 'adult', { gender: 'f', ...pose }), label, r);
   show(composePet(express(STARTER ? pureGenome(STARTER) : p), 'child'), 'starter', r);
   r = section('Random adults');
   for (let i = 0; i < 16; i++) show(composePet(express(randomGenome()), 'adult', { gender: i % 2 ? 'm' : 'f' }), '#' + (i + 1), r);

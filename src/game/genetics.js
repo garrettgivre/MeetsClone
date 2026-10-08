@@ -8,10 +8,11 @@ import { rand as defaultRng } from '../engine/rng.js';
 
 // dominance: 3 = common/dominant, 2 = normal, 1 = rare/recessive
 export const GENES = {
-  shape:   { round: 3, bean: 2, egg: 2, tall: 2, pear: 2, bun: 2, drop: 1, blocky: 1 },
+  shape:   { round: 3, mochi: 3, bean: 2, egg: 2, tall: 2, pear: 2, bun: 2, onigiri: 1, drop: 1, blocky: 1 },
   size:    { medium: 3, small: 1, large: 1 },
-  eyes:    { bean: 3, button: 3, dot: 2, wide: 2, sparkle: 2, shiny: 2, sleepy: 2, arc: 1, cat: 1, star: 1, gem: 1 },
+  eyes:    { bean: 3, button: 3, dot: 2, wide: 2, sparkle: 2, shiny: 2, sleepy: 2, arc: 1, cat: 1, star: 1, gem: 1, heart: 1 },
   mouth:   { smile: 3, open: 3, tiny: 2, cat: 2, ooh: 2, flat: 2, beak: 1, fang: 1, blep: 1, wobble: 1 },
+  hair:    { none: 3, bangs: 2, bob: 2, spiky: 1, ponytail: 1, twintails: 1, curly: 1 },
   ears:    { none: 3, bear: 2, cat: 2, floppy: 2, bunny: 2, mouse: 2, pigtail: 2, puff: 1, horns: 1, fins: 1, antenna: 1, leaf: 1 },
   crest:   { none: 3, tuft: 2, curl: 2, sprout: 2, bow: 2, ribbon: 2, cap: 2, beret: 1, horn: 1, crown: 1, flame: 1, halo: 1, star: 1 },
   back:    { none: 3, pomtail: 2, longtail: 2, wings: 1, bat: 1, fairy: 1, fishtail: 1, shell: 1, cape: 1 },
@@ -25,7 +26,7 @@ export const GENES = {
   taste:    { sweet: 2, savory: 2, fruity: 2, spicy: 1 },
 };
 
-export const COLOR_GENES = ['color', 'accent', 'eyeColor'];
+export const COLOR_GENES = ['color', 'accent', 'eyeColor', 'hairColor'];
 export const BODY_COLORS = RAMP_NAMES; // all 14 ramps
 export const EYE_COLORS = ['ink', 'brown', 'blue', 'green', 'violet', 'red', 'gold', 'pink', 'sky', 'mint'];
 // Order around the colour wheel, for blending.
@@ -35,7 +36,7 @@ export const PART_GENES = Object.keys(GENES);
 export const ALL_GENES = [...PART_GENES, ...COLOR_GENES];
 
 function choices(gene) {
-  if (gene === 'color' || gene === 'accent') return BODY_COLORS;
+  if (gene === 'color' || gene === 'accent' || gene === 'hairColor') return BODY_COLORS;
   if (gene === 'eyeColor') return EYE_COLORS;
   return Object.keys(GENES[gene]);
 }
@@ -118,20 +119,20 @@ export function difference(a, b) {
 // From generation 2 on, looks come only from genes.
 
 export const STARTER = {
-  shape: 'round', size: 'medium', eyes: 'bean', mouth: 'open', ears: 'none', crest: 'none',
+  shape: 'round', size: 'medium', eyes: 'bean', mouth: 'open', hair: 'none', ears: 'none', crest: 'none',
   back: 'none', outfit: 'none', feet: 'stubs', pattern: 'none', cheeks: 'blush',
-  color: 'cream', accent: 'pink', eyeColor: 'ink',
+  color: 'cream', accent: 'pink', eyeColor: 'ink', hairColor: 'brown',
 };
 
 // Original characters. tier: 0 = best care, 2 = poorest care.
 // Each tier has one boy-leaning and one girl-leaning design, but any pet can become any founder.
 export const FOUNDERS = [
-  { name: 'Lumipom', tier: 0, traits: { shape: 'round', eyes: 'sparkle', mouth: 'open', ears: 'puff', crest: 'ribbon', back: 'fairy', outfit: 'dress', feet: 'shoes', pattern: 'none', cheeks: 'blush', color: 'cream', accent: 'pink', eyeColor: 'sky', taste: 'sweet', energy: 'calm' } },
-  { name: 'Kometchi', tier: 0, traits: { shape: 'bean', eyes: 'bean', mouth: 'open', ears: 'cat', crest: 'star', back: 'none', outfit: 'bowtie', feet: 'stubs', pattern: 'none', cheeks: 'blush', color: 'sky', accent: 'red', eyeColor: 'ink', taste: 'savory', energy: 'lively' } },
-  { name: 'Pipolin', tier: 1, traits: { shape: 'egg', eyes: 'shiny', mouth: 'cat', ears: 'bunny', crest: 'bow', back: 'pomtail', outfit: 'collar', feet: 'stubs', pattern: 'none', cheeks: 'hearts', color: 'pink', accent: 'violet', eyeColor: 'violet', taste: 'fruity' } },
+  { name: 'Lumipom', tier: 0, traits: { hair: 'bangs', hairColor: 'gold', shape: 'mochi', eyes: 'sparkle', mouth: 'open', ears: 'puff', crest: 'ribbon', back: 'fairy', outfit: 'dress', feet: 'shoes', pattern: 'none', cheeks: 'blush', color: 'cream', accent: 'pink', eyeColor: 'sky', taste: 'sweet', energy: 'calm' } },
+  { name: 'Kometchi', tier: 0, traits: { shape: 'mochi', eyes: 'bean', mouth: 'open', ears: 'cat', crest: 'star', back: 'none', outfit: 'bowtie', feet: 'stubs', pattern: 'none', cheeks: 'blush', color: 'sky', accent: 'red', eyeColor: 'ink', taste: 'savory', energy: 'lively' } },
+  { name: 'Pipolin', tier: 1, traits: { hair: 'twintails', hairColor: 'violet', shape: 'round', eyes: 'shiny', mouth: 'cat', ears: 'bunny', crest: 'bow', back: 'pomtail', outfit: 'collar', feet: 'stubs', pattern: 'none', cheeks: 'hearts', color: 'pink', accent: 'violet', eyeColor: 'violet', taste: 'fruity' } },
   { name: 'Ducklet', tier: 1, traits: { shape: 'bun', eyes: 'dot', mouth: 'beak', ears: 'none', crest: 'tuft', back: 'none', outfit: 'scarf', feet: 'shoes', pattern: 'none', cheeks: 'none', color: 'lime', accent: 'orange', eyeColor: 'ink', taste: 'savory', appetite: 'hearty' } },
-  { name: 'Mogumo', tier: 2, traits: { shape: 'blocky', eyes: 'sleepy', mouth: 'blep', ears: 'bear', crest: 'none', back: 'none', outfit: 'overalls', feet: 'stubs', pattern: 'none', cheeks: 'dots', color: 'brown', accent: 'blue', eyeColor: 'ink', taste: 'sweet', energy: 'calm' } },
-  { name: 'Spookit', tier: 2, traits: { shape: 'drop', eyes: 'wide', mouth: 'fang', ears: 'horns', crest: 'none', back: 'bat', outfit: 'tie', feet: 'float', pattern: 'mask', cheeks: 'none', color: 'violet', accent: 'indigo', eyeColor: 'red', taste: 'spicy' } },
+  { name: 'Mogumo', tier: 2, traits: { shape: 'onigiri', eyes: 'sleepy', mouth: 'blep', ears: 'bear', crest: 'none', back: 'none', outfit: 'overalls', feet: 'stubs', pattern: 'none', cheeks: 'dots', color: 'brown', accent: 'blue', eyeColor: 'ink', taste: 'sweet', energy: 'calm' } },
+  { name: 'Spookit', tier: 2, traits: { hair: 'spiky', hairColor: 'indigo', shape: 'drop', eyes: 'wide', mouth: 'fang', ears: 'horns', crest: 'none', back: 'bat', outfit: 'tie', feet: 'float', pattern: 'mask', cheeks: 'none', color: 'violet', accent: 'indigo', eyeColor: 'red', taste: 'spicy' } },
 ];
 
 export function founderFor(careMistakes, rng = defaultRng) {
@@ -150,9 +151,9 @@ export function starterGenome(rng = defaultRng) {
 export function stageTraits(p, stage) {
   const t = { ...p };
   if (stage === 'baby') {
-    Object.assign(t, { eyes: 'baby', mouth: 'open', ears: 'none', crest: 'none', back: 'none', outfit: 'none', feet: 'float', pattern: 'none', cheeks: 'blush', size: 'medium' });
+    Object.assign(t, { eyes: 'baby', mouth: 'open', hair: 'none', ears: 'none', crest: 'none', back: 'none', outfit: 'none', feet: 'float', pattern: 'none', cheeks: 'blush', size: 'medium' });
   } else if (stage === 'child') {
-    Object.assign(t, { ears: 'none', crest: 'none', back: 'none', outfit: 'none', feet: 'stubs', size: 'medium' });
+    Object.assign(t, { hair: p.hair === 'bangs' || p.hair === 'bob' ? 'bangs' : 'none', ears: 'none', crest: 'none', back: 'none', outfit: 'none', feet: 'stubs', size: 'medium' });
   } else if (stage === 'teen') {
     Object.assign(t, { crest: 'none', back: 'none', outfit: 'none', feet: p.feet === 'float' ? 'float' : 'stubs', size: 'medium' });
   }

@@ -266,9 +266,12 @@ export class HomeScene {
       return;
     }
 
-    let expr = 'idle', dy = 0, flip = this.facing > 0, solid = 0;
-    const moving = Math.abs(this.targetX - this.petX) > 1;
+    let expr = 'idle', dy = 0, flip = this.facing > 0, solid = 0, arms = 'down';
+    const moving = Math.abs(this.targetX - this.petX) > 1 && !pet.asleep;
     const bob = Math.floor(t / (moving ? 220 : 480)) % 2;
+    const step = moving ? (Math.floor(t / 200) % 2 ? 1 : 2) : 0;
+    // every so often, a little idle flourish
+    if (!moving && !pet.asleep && !pet.sick && pet.happy >= 3 && t % 9000 < 900) arms = t % 18000 < 9000 ? 'wave' : 'out';
     if (pet.asleep) expr = 'sleep';
     else if (pet.sick) expr = 'sick';
     else if (pet.hunger <= 0 || pet.happy <= 0) expr = 'sad';
@@ -279,23 +282,32 @@ export class HomeScene {
       switch (a.type) {
         case 'eat':
           flip = false;
+          arms = 'out';
           expr = Math.floor(a.t / 280) % 2 ? 'chew' : 'eat';
           break;
         case 'refuse':
           expr = 'sad';
           flip = Math.floor(a.t / 140) % 2 === 0;
           break;
-        case 'happy': case 'pat':
+        case 'happy':
           expr = 'happy';
+          arms = 'up';
           dy = -Math.round(Math.abs(Math.sin(k * Math.PI * 2)) * 6);
+          break;
+        case 'pat':
+          expr = 'wink';
+          arms = 'wave';
+          dy = -Math.round(Math.abs(Math.sin(k * Math.PI)) * 3);
           break;
         case 'toy':
           expr = 'happy';
+          arms = Math.floor(a.t / 250) % 2 ? 'up' : 'out';
           dy = -Math.round(Math.abs(Math.sin(k * Math.PI * 4)) * 5);
           flip = true;
           break;
         case 'grow':
           expr = 'happy';
+          arms = 'up';
           if (Math.floor(a.t / 120) % 2 && k < 0.7) solid = COL.white;
           break;
         case 'medicine':
@@ -304,7 +316,7 @@ export class HomeScene {
           break;
       }
     }
-    const bm = composePet(pet.phenotype, pet.stage, { expr, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender });
+    const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender });
     const x = Math.round(this.petX - CANVAS / 2);
     if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
     else scr.bitmap(bm, x, baseY + dy, flip, solid);
@@ -435,9 +447,13 @@ export class HomeScene {
     }
     // info bar
     scr.rect(0, info.y, W, info.h, COL.ink);
-    let label;
-    if (this.cursor >= 0) label = LABEL[ALL[this.cursor]];
-    else if (pet) label = `${pet.gender === 'f' ? '♀' : '♂'} ${pet.name.toUpperCase()}  ${STAGE_NAME[pet.stage]}`;
-    text(scr, label || '', W / 2, info.y + 4, COL.white, { align: 'center' });
+    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, COL.white, { align: 'center' });
+    else if (pet) {
+      const label = `${pet.name.toUpperCase()}  ${STAGE_NAME[pet.stage]}`;
+      const w = text(scr, label, -999, 0, 0) + 8;
+      const x = Math.round(W / 2 - w / 2);
+      text(scr, pet.gender === 'f' ? '♀' : '♂', x, info.y + 4, pet.gender === 'f' ? C('pink.2') : C('sky.2'));
+      text(scr, label, x + 8, info.y + 4, COL.white);
+    }
   }
 }

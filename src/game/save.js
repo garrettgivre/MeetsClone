@@ -29,8 +29,11 @@ export function migrate(g) {
   for (const k of Object.keys(fresh)) if (g[k] === undefined) g[k] = fresh[k];
   g.settings = { ...fresh.settings, ...g.settings };
   if (g.pet) {
-    if (g.pet.phenotype && !g.pet.phenotype.outfit) g.pet.phenotype.outfit = 'none';
-    if (g.pet.genome && !g.pet.genome.outfit) g.pet.genome.outfit = ['none', 'none'];
+    const fill = { outfit: 'none', hair: 'none', hairColor: 'brown' };
+    for (const [gene, v] of Object.entries(fill)) {
+      if (g.pet.phenotype && !g.pet.phenotype[gene]) g.pet.phenotype[gene] = v;
+      if (g.pet.genome && !g.pet.genome[gene]) g.pet.genome[gene] = [v, v];
+    }
   }
   g.version = SAVE_VERSION;
   return g;

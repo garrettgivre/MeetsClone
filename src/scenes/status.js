@@ -2,7 +2,7 @@
 import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, heartRow, text } from '../ui.js';
-import { composePet, composeEgg, CANVAS } from '../game/render.js';
+import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
 import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry } from '../game/pet.js';
 import { TOYS } from '../game/items.js';
 
@@ -36,7 +36,7 @@ export class StatusScene {
     const bm = pet.stage === 'egg' ? composeEgg(pet.generation > 1 ? pet.phenotype : null)
       : composePet(pet.phenotype, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender });
     scr.setClip(W / 2 - 29, ry + 16, 58, 50);
-    scr.bitmap(bm, W / 2 - CANVAS / 2, ry + 66 - 53);
+    scr.bitmap(bm, W / 2 - CANVAS / 2, ry + 64 - GROUND);
     scr.noClip();
 
     let y = ry + 72;

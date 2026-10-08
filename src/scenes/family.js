@@ -59,7 +59,7 @@ export class MatchmakerScene {
     scr.rect(0, floor, W, 4, C('pink.2'));
     scr.bitmap(composePet(pet.phenotype, 'adult', { gender: pet.gender }), 34 - CANVAS / 2, floor - GROUND);
     const bounce = this.t < 400 ? Math.round(Math.sin(this.t / 400 * Math.PI) * 6) : 0;
-    scr.bitmap(composePet(p.phenotype, 'adult', { gender: p.gender, expr: Math.floor(this.t / 1600) % 4 === 3 ? 'happy' : 'idle' }), 94 - CANVAS / 2, floor - GROUND - bounce, true);
+    scr.bitmap(composePet(p.phenotype, 'adult', { gender: p.gender, expr: Math.floor(this.t / 1600) % 4 === 3 ? 'wink' : 'idle', arms: Math.floor(this.t / 1600) % 4 === 3 ? 'wave' : 'down' }), 94 - CANVAS / 2, floor - GROUND - bounce, true);
     scr.draw(HEART, W / 2 - 4, floor - 30 - (Math.floor(this.t / 300) % 2), {});
     text(scr, `${pet.name} ${sym(pet.gender)}`, 34, floor + 8, COL.ink, { align: 'center' });
     text(scr, `${p.name} ${sym(p.gender)}`, 94, floor + 8, COL.ink, { align: 'center' });
@@ -116,8 +116,8 @@ class WeddingScene {
     const gap = Math.round(30 - k * 14);
     const happy = t > 1800 ? 'happy' : 'idle';
     if (t < 4200) {
-      scr.bitmap(composePet(pet.phenotype, 'adult', { gender: pet.gender, expr: happy }), W / 2 - gap - CANVAS / 2, floor - GROUND);
-      scr.bitmap(composePet(p.phenotype, 'adult', { gender: p.gender, expr: happy }), W / 2 + gap - CANVAS / 2, floor - GROUND, true);
+      scr.bitmap(composePet(pet.phenotype, 'adult', { gender: pet.gender, expr: happy, arms: t > 1800 ? 'up' : 'down' }), W / 2 - gap - CANVAS / 2, floor - GROUND);
+      scr.bitmap(composePet(p.phenotype, 'adult', { gender: p.gender, expr: happy, arms: t > 1800 ? 'up' : 'down' }), W / 2 + gap - CANVAS / 2, floor - GROUND, true);
       if (t > 1800) {
         scr.draw(RING, W / 2 - 3, floor - 46 - (Math.floor(t / 250) % 2), {});
         for (let i = 0; i < 6; i++) {

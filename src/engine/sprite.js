@@ -23,6 +23,7 @@ export const KEY = {
   '1': 'P0', '2': 'P1', '3': 'P2', '4': 'P3',
   '5': 'S0', '6': 'S1', '7': 'S2', '8': 'S3',
   'E': 'Y0', 'e': 'Y1', 'F': 'Y2',
+  '-': 'H0', '9': 'H1', '0': 'H2', '+': 'H3', // hair ramp
   // fixed colours
   o: 'ink', k: 'ink', K: 'shade', g: 'gray', G: 'silver', m: 'mist', w: 'white', z: 'night',
   R: 'red.0', r: 'red.1', q: 'red.2', Q: 'red.3',
@@ -53,16 +54,16 @@ export function sprite(frames, key = null) {
   return { w, h, frames: data, key, lutCache: new Map() };
 }
 
-/** Colour context: which ramps the P/S/Y roles map to. */
-export function colors(primary = 'slate', secondary = 'cream', eye = 'ink') {
-  return { primary, secondary, eye, id: primary + '|' + secondary + '|' + eye };
+/** Colour context: which ramps the P/S/Y/H roles map to. */
+export function colors(primary = 'slate', secondary = 'cream', eye = 'ink', hair = 'brown') {
+  return { primary, secondary, eye, hair, id: primary + '|' + secondary + '|' + eye + '|' + hair };
 }
 const DEFAULT_CTX = colors();
 
 function resolve(name, ctx) {
-  if (name.length === 2 && 'PSY'.includes(name[0])) {
+  if (name.length === 2 && 'PSYH'.includes(name[0])) {
     const shade = +name[1];
-    const r = name[0] === 'P' ? ctx.primary : name[0] === 'S' ? ctx.secondary : ctx.eye;
+    const r = { P: ctx.primary, S: ctx.secondary, Y: ctx.eye, H: ctx.hair }[name[0]];
     if (r === 'ink') return shade >= 2 ? C('shade') : C('ink');
     return ramp(r, shade);
   }
