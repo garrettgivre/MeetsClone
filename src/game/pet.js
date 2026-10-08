@@ -244,7 +244,8 @@ function grow(game, pet, events, rng) {
     pet.species = f.name;
     // the founder's signature outfit is a gift
     for (const id of Object.values(f.wear || {})) if (!game.wardrobe.includes(id)) game.wardrobe.push(id);
-    pet.wear = { ...f.wear };
+    // (hand-drawn founders don't wear body outfits yet, so start them undressed)
+    pet.wear = {};
   }
   if (from === 'egg') emit(events, 'hatch');
   else emit(events, 'grow', { stage: pet.stage });

@@ -19,7 +19,7 @@
 <script type="module">
 import { PACKED } from '../src/engine/palette.js';
 import { composePet, composeEgg, composeGhost, CANVAS } from '../src/game/render.js';
-import { FOUNDERS, pureGenome, express, randomGenome, inherit, STARTER } from '../src/game/genetics.js';
+import { FOUNDERS, pureGenome, express, randomGenome, inherit, STARTER, GENES } from '../src/game/genetics.js';
 
 const out = document.getElementById('out');
 function show(bm, label, parent) {
@@ -56,6 +56,12 @@ function render() {
   for (const [label, pose] of [['arms up', { arms: 'up', expr: 'happy' }], ['wave', { arms: 'wave', expr: 'wink' }], ['arms out', { arms: 'out' }], ['step 1', { step: 1 }], ['step 2', { step: 2 }]])
     show(composePet(p, 'adult', { gender: 'f', ...pose }), label, r);
   show(composePet(express(STARTER ? pureGenome(STARTER) : p), 'child'), 'starter', r);
+  // every option of the creature genes on one base pet
+  const base = { ...express(pureGenome({ shape: 'round', color: 'orange', accent: 'cream', eyes: 'bean', mouth: 'smile', cheeks: 'blush', ears: 'cat' })) };
+  for (const gene of ['back', 'fluff', 'pattern', 'ears', 'crest', 'feet']) {
+    r = section('Parts: ' + gene);
+    for (const v of Object.keys(GENES[gene])) show(composePet({ ...base, [gene]: v }, 'adult', { gender: 'm' }), v, r);
+  }
   r = section('Random adults');
   for (let i = 0; i < 16; i++) show(composePet(express(randomGenome()), 'adult', { gender: i % 2 ? 'm' : 'f' }), '#' + (i + 1), r);
   r = section('Family: Lumi x Grumbit children');

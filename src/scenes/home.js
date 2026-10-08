@@ -8,6 +8,7 @@ import { LAYOUT, ROOM_FLOOR, COL, dialog } from '../ui.js';
 import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
+import { drawRoom as drawRoomHD } from './room.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -236,7 +237,8 @@ export class HomeScene {
     this.drawAnimOverlay(scr, t);
 
     if (lightsOff) {
-      scr.dither(0, LAYOUT.room.y, W, LAYOUT.room.h, COL.night, Math.floor(t / 2000) % 2);
+      scr.hdither(Math.round(this.petX) - 32, ROOM_FLOOR - 64, 64, 66, COL.night);
+
       if (pet?.asleep) {
         const zy = ROOM_FLOOR - 44 - Math.floor((t / 120) % 8);
         scr.draw(ZZZ, this.petX + 10, zy, { solid: COL.white });
@@ -316,7 +318,7 @@ export class HomeScene {
           break;
       }
     }
-    const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear });
+    const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear, species: pet.species });
     const x = Math.round(this.petX - CANVAS / 2);
     if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
     else scr.bitmap(bm, x, baseY + dy, flip, solid);
@@ -371,53 +373,7 @@ export class HomeScene {
   }
 
   drawRoom(scr) {
-    const { y: ry, h: rh } = LAYOUT.room;
-    const pet = this.pet;
-    const hour = new Date(this.game.simTime).getHours();
-    const night = hour >= 20 || hour < 6, dusk = hour >= 17 && hour < 20, dawn = hour >= 6 && hour < 8;
-    const floorY = ry + 92;
-    // wall with polka-dot wallpaper
-    scr.rect(0, ry, W, floorY - ry, C('sky.3'));
-    for (let y = ry + 4; y < floorY - 8; y += 10) for (let x = (y / 10) % 2 ? 4 : 9; x < W; x += 10) {
-      scr.pset(x, y, C('sky.2')); scr.pset(x + 1, y, C('sky.2')); scr.pset(x, y + 1, C('sky.2')); scr.pset(x + 1, y + 1, C('sky.2'));
-    }
-    // skirting board
-    scr.rect(0, floorY - 5, W, 5, C('white'));
-    scr.hline(0, floorY - 5, W, C('sky.1'));
-    // floor boards
-    scr.rect(0, floorY, W, ry + rh - floorY, C('cream.2'));
-    for (let y = floorY + 6; y < ry + rh; y += 8) scr.hline(0, y, W, C('cream.1'));
-    for (let y = floorY; y < ry + rh; y += 8) for (let x = ((y >> 3) % 2) * 16 + 8; x < W; x += 32) scr.vline(x, y + 1, 5, C('cream.1'));
-    // rug
-    for (let y = -6; y <= 6; y++) {
-      const half = Math.round(Math.sqrt(1 - (y / 6.5) ** 2) * 40);
-      scr.hline(56 - half, ROOM_FLOOR + y - 2, half * 2, y === -6 || y === 6 ? C('pink.1') : (Math.abs(y) === 3 ? C('pink.3') : C('pink.2')));
-    }
-    // window
-    const wx = 10, wy = ry + 14, ww = 34, wh = 28;
-    scr.panel(wx - 2, wy - 2, ww + 4, wh + 4, C('white'), C('ink'));
-    const sky = night ? C('indigo.0') : dusk ? C('orange.2') : dawn ? C('pink.3') : C('sky.2');
-    scr.rect(wx, wy, ww, wh, sky);
-    if (night) {
-      scr.draw(MOON, wx + 22, wy + 4, {});
-      [[4, 5], [12, 14], [7, 20], [18, 8], [28, 20]].forEach(([x, y]) => scr.pset(wx + x, wy + y, C('gold.3')));
-    } else {
-      scr.draw(SUN, wx + 4, wy + 4, {});
-      const cx = wx + 14 + Math.floor(this.app.time / 2000) % 14;
-      scr.rect(cx, wy + 16, 9, 3, C('white')); scr.rect(cx + 2, wy + 14, 5, 2, C('white'));
-    }
-    scr.vline(wx + ww / 2, wy, wh, C('white'));
-    scr.hline(wx, wy + wh / 2, ww, C('white'));
-    // shelf + plant
-    scr.rect(92, ry + 34, 28, 3, C('brown.2'));
-    scr.hline(92, ry + 37, 28, C('brown.0'));
-    scr.rect(100, ry + 27, 8, 7, C('orange.1'));
-    scr.box(99, ry + 26, 10, 8, C('ink'));
-    [[101, 22], [104, 19], [107, 23], [98, 20], [104, 24]].forEach(([x, y]) => { scr.rect(x, ry + y, 3, 3, C('green.2')); scr.pset(x, ry + y, C('green.3')); });
-    scr.draw(ICONS.lights, 112, ry + 24, {});
-
-    if (pet && !pet.lights) scr.rect(0, ry, W, rh, C('night'));
-    if (pet && !pet.lights) { scr.panel(wx - 2, wy - 2, ww + 4, wh + 4, C('indigo.0'), C('shade')); scr.draw(MOON, wx + 22, wy + 4, {}); }
+    drawRoomHD(scr, this.game.simTime, this.app.time, this.pet && !this.pet.lights);
   }
 
   drawBars(scr, t) {

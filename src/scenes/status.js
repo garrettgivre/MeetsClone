@@ -35,7 +35,7 @@ export class StatusScene {
     // portrait
     scr.panel(W / 2 - 30, ry + 15, 60, 52, C('sky.3'), COL.ink);
     const bm = pet.stage === 'egg' ? composeEgg(pet.generation > 1 ? pet.phenotype : null)
-      : composePet(pet.phenotype, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender, wear: pet.wear });
+      : composePet(pet.phenotype, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender, wear: pet.wear, species: pet.species });
     scr.setClip(W / 2 - 29, ry + 16, 58, 50);
     scr.bitmap(bm, W / 2 - CANVAS / 2, ry + 64 - GROUND);
     scr.noClip();

@@ -94,7 +94,7 @@ export class JumpRopeScene {
     if (!front) drawRope();
     const pet = this.pet;
     const expr = this.state === 'over' ? (this.won ? 'happy' : 'dizzy') : this.height() > 0 ? 'happy' : 'idle';
-    const bm = composePet(pet.phenotype, pet.stage, { expr, gender: pet.gender, wear: pet.wear, arms: this.height() > 0 || (this.state === 'over' && this.won) ? 'up' : 'out' });
+    const bm = composePet(pet.phenotype, pet.stage, { expr, gender: pet.gender, wear: pet.wear, species: pet.species, arms: this.height() > 0 || (this.state === 'over' && this.won) ? 'up' : 'out' });
     scr.bitmap(bm, W / 2 - CANVAS / 2, floor - GROUND - this.height());
     if (front) drawRope();
 

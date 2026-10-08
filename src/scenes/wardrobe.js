@@ -57,7 +57,7 @@ export class WardrobeScene extends ListMenu {
     const since = this.app.time - this.bounce;
     const happy = since < 700;
     const bm = composePet(pet.phenotype, pet.stage, {
-      gender: pet.gender, wear: pet.wear, t: this.app.time,
+      gender: pet.gender, wear: pet.wear, species: pet.species, t: this.app.time,
       expr: happy ? 'happy' : 'idle', arms: happy ? 'up' : 'down',
     });
     const hop = happy ? Math.round(Math.sin(since / 700 * Math.PI) * 4) : 0;

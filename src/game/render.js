@@ -12,11 +12,14 @@ import { colors, lut } from '../engine/sprite.js';
 import { makeBitmap } from '../engine/screen.js';
 import { hdPart, scale2x, thinOutlines } from '../engine/upscale.js';
 import '../art/face-hd.js'; // hand-drawn hi-res faces
+import '../art/parts-hd.js'; // hand-drawn hi-res feet, arms, toppers
+import { tailShape, wingShape, cheekTuft, maneShape, SHAPED_TAILS, SHAPED_WINGS } from './creature.js';
 import {
   EYES, BABY_EYES, LASH, MOUTHS, MOUTH_FX, EYE_FX, EARS, CRESTS, BACKS, FEET, CHEEKS, ARMS, BOWTIE, TIE, HAIR_PARTS, FACE, MARKS, NOSES,
 } from '../art/parts.js';
 import { stageTraits, SCALED_EARS } from './genetics.js';
 import { CLOTHES } from './items.js';
+import { composeFounder, hasFounderArt } from './founder-render.js';
 
 const SHAPES = {
   round:   { aw: 1.0,  ah: 1.0,  n: 2.0 },
@@ -84,8 +87,21 @@ function headPattern(pattern, u, v, y) {
     case 'tips': return v < -0.38 + 0.12 * Math.cos(u * 9);              // cap of colour
     case 'mask': return v > -0.25 && v < 0.12 && Math.abs(u) < 0.95;
     case 'twotone': return u < 0;
-    case 'stripes': return v < -0.2 && (y >> 1) % 2 === 0;
-    case 'spots': return [[-0.62, -0.35, 0.18], [0.5, -0.62, 0.15], [0.68, 0.2, 0.16]].some(([cx, cy, r]) => (u - cx) ** 2 + (v - cy) ** 2 < r * r);
+    case 'stripes': {
+      // tiger stripes sweeping in from both sides, plus three on the forehead
+      const a = Math.abs(u);
+      if (a > 0.45 && [-0.5, -0.16, 0.18].some(c => Math.abs(v - c - (a - 0.45) * 0.3) < 0.085 * (a - 0.3) / 0.7)) return 'dark';
+      if (v > -0.86 && v < -0.52 && [-0.16, 0, 0.16].some(c => Math.abs(u - c) < 0.035 * (1 - (v + 0.86) / 0.34) + 0.012)) return 'dark';
+      return false;
+    }
+    case 'spots': {
+      // leopard rosettes: dark rings with the accent colour inside
+      for (const [cx, cy, r] of [[-0.62, -0.32, 0.17], [0.5, -0.6, 0.14], [0.68, 0.18, 0.15], [-0.3, -0.72, 0.11], [-0.7, 0.3, 0.12]]) {
+        const d = Math.hypot(u - cx, v - cy);
+        if (d < r) return d > r * 0.55 ? 'dark' : true;
+      }
+      return false;
+    }
     default: return false;
   }
 }
@@ -206,7 +222,9 @@ function headBitmap(t, stage) {
       const shade = !m(x + k, y + k) || !hair(x, y + 2) ? 1 : 2;
       return { ramp: t.hairColor, shade };
     }
-    return headPattern(t.pattern, u, v, y) ? t.accent : t.color;
+    const pat = headPattern(t.pattern, u, v, y);
+    if (pat === 'dark') return { ramp: t.accent, shade: 1 };
+    return pat ? t.accent : t.color;
   }, { shine: t.hair === 'none' });
   const earY = Math.max(1, Math.round(h * 0.18));
   let top = 0;
@@ -340,6 +358,16 @@ function billBitmap(headW, headH, open) {
   return b;
 }
 
+/** Rasterise a creature.js shape { w, h, inside(x, y), paint(x, y) } with outline and shading. */
+function shapeBitmap(key, shape) {
+  let b = cache.get(key);
+  if (b) return b;
+  const w = Math.ceil(shape.w), h = Math.ceil(shape.h);
+  b = raster(w, h, { fn: (u, v) => shape.inside((u + 1) * w / 2, (v + 1) * h / 2) }, (u, v, x, y) => shape.paint(x + 0.5, y + 0.5), { asym: true, shine: false });
+  cache.set(key, b);
+  return b;
+}
+
 function blitFlip(dst, src, x0, y0) {
   for (let j = 0; j < src.h; j++) for (let i = 0; i < src.w; i++) {
     const c = src.px[j * src.w + (src.w - 1 - i)];
@@ -386,10 +414,12 @@ const HC = CANVAS * S, HG = GROUND * S;
  * pose: {
  *   expr: 'idle'|'blink'|'happy'|'sad'|'eat'|'chew'|'sleep'|'sick'|'dizzy'|'wink',
  *   arms: 'down'|'up'|'out'|'wave', step: 0|1|2 (walking), bob: 0|1, gender: 'm'|'f', t: ms (sparkles),
- *   wear: { head, face, body, back, feet } clothing item ids
+ *   wear: { head, face, body, back, feet } clothing item ids, species: founder name (uses hand-drawn art)
  * }
  */
 export function composePet(phenotype, stage, pose = {}) {
+  // hand-pixelled founders (generation-1 adults) use their own sprites
+  if (stage === 'adult' && pose.species && hasFounderArt(pose.species)) return composeFounder(pose.species, pose, HC, HG, S);
   const t = stageTraits(phenotype, stage);
   const ctx = colors(t.color, t.accent, t.eyeColor, t.hairColor || 'brown');
   // clothes: only teens and adults dress up; each item has its own colour
@@ -442,6 +472,19 @@ export function composePet(phenotype, stage, pose = {}) {
       const l = tx + torso.sideL - spread, r = tx + torso.sideR + spread;
       for (let x = l; x <= r; x++) put(out, x, y, x === l || x === r || y === HG - 1 ? C('ink') : ramp(CLOTHES.cape.color, x < cx - 8 ? 2 : 1));
     }
+  } else if (SHAPED_TAILS.includes(t.back)) {
+    const sc = stage === 'adult' ? 1 : 0.8;
+    const sh = tailShape(t.back, t, sc);
+    const tb = shapeBitmap(['tail', t.back, t.color, t.accent, sc].join('|'), sh);
+    const ax = bodyR - S, ay = torso ? ty + torso.h - 3 * S : bodyMidY + 2 * S;
+    blit(out, tb.bm, Math.round(ax - sh.base[0]), Math.round(ay - sh.base[1]));
+  } else if (SHAPED_WINGS.includes(t.back)) {
+    const sc = stage === 'adult' ? 1 : 0.8;
+    const sh = wingShape(t.back, t, sc);
+    const wb = shapeBitmap(['wing', t.back, t.color, t.accent, sc].join('|'), sh);
+    const y = Math.round(bodyMidY - sh.root[1]);
+    blit(out, wb.bm, Math.round(bodyL + 2 * S - sh.root[0]), y);
+    blitFlip(out, wb.bm, Math.round(bodyR - 2 * S - (wb.w - 1 - sh.root[0])), y);
   } else if (back?.pair) {
     stamp(out, back, bodyL + S, bodyMidY, ctx);
     stamp(out, back, bodyR - S, bodyMidY, ctx, true);
@@ -482,6 +525,19 @@ export function composePet(phenotype, stage, pose = {}) {
   }
 
   // ----- head -----
+  if (t.fluff === 'mane') {
+    const size = Math.round(head.w * 1.34);
+    const mb = shapeBitmap(['mane', size, t.hairColor, t.accent].join('|'), maneShape(size, t));
+    blit(out, mb.bm, Math.round(hcx - size / 2), Math.round(hy + head.h / 2 - size / 2 - S));
+  }
+  if (t.fluff === 'cheeks') {
+    const sh = cheekTuft(head.h, t);
+    const fb = shapeBitmap(['tuft', head.h, t.color].join('|'), sh);
+    const y = Math.round(hy + head.h * 0.42);
+    const [l, r] = head.rowSpan(Math.min(head.h - 1, Math.round(head.h * 0.62)));
+    blit(out, fb.bm, hx + l - fb.w + 3 * S, y);
+    blitFlip(out, fb.bm, hx + r - 3 * S + 1, y);
+  }
   // ears drawn to scale sit on the head outline at an angle from the top
   let frontEars = null;
   if (SCALED_EARS.includes(t.ears)) {

@@ -20,7 +20,8 @@ export const GENES = {
   hair:    { none: 3, bangs: 2, bob: 2, spiky: 1, ponytail: 1, twintails: 1, curly: 1 },
   ears:    { none: 3, bear: 2, cat: 2, floppy: 2, bunny: 2, mouse: 2, pigtail: 2, flower: 2, puff: 1, horns: 1, fins: 1, antenna: 1, leaf: 1, wings: 1, antlers: 1 },
   crest:   { none: 3, tuft: 2, curl: 2, sprout: 2, bobble: 2, swirl: 2, bud: 2, horn: 1, flame: 1, halo: 1, star: 1, comet: 1 },
-  back:    { none: 3, pomtail: 2, longtail: 2, wings: 1, bat: 1, fairy: 1, butterfly: 1, fishtail: 1, shell: 1, devil: 1 },
+  back:    { none: 3, pomtail: 2, longtail: 2, fox: 2, curly: 2, wings: 1, bat: 1, fairy: 1, butterfly: 1, fishtail: 1, shell: 1, dragon: 1, bolt: 1, devil: 1 },
+  fluff:   { none: 3, cheeks: 2, mane: 1 },
   build:   { round: 3, chubby: 2, slim: 2, bell: 1, long: 1, stout: 1 },
   belly:   { none: 3, patch: 2, suit: 1, bib: 1, heart: 1 },
   feet:    { stubs: 3, float: 2, paws: 2, legs: 1, flippers: 1, tiny: 1 },
@@ -202,7 +203,7 @@ export function childOdds(mom, dad, n = 400, rng = defaultRng) {
 
 export const GENE_LABELS = {
   shape: 'Head', size: 'Size', eyes: 'Eyes', mouth: 'Mouth', hair: 'Hair', ears: 'Ears', crest: 'Top',
-  back: 'Back', feet: 'Feet', eyeSet: 'Eye spacing', nose: 'Nose', mark: 'Forehead', build: 'Build', belly: 'Belly', pattern: 'Markings', cheeks: 'Cheeks', aura: 'Aura',
+  back: 'Back', fluff: 'Fur', feet: 'Feet', eyeSet: 'Eye spacing', nose: 'Nose', mark: 'Forehead', build: 'Build', belly: 'Belly', pattern: 'Markings', cheeks: 'Cheeks', aura: 'Aura',
   appetite: 'Appetite', energy: 'Energy', taste: 'Taste',
   color: 'Body colour', accent: 'Accent colour', eyeColor: 'Eye colour', hairColor: 'Hair colour',
 };
@@ -267,10 +268,10 @@ export const SCALED_EARS = ['bear', 'mouse', 'cat', 'bunny', 'floppy'];
 export function stageTraits(p, stage) {
   const t = { ...p };
   if (stage === 'baby') {
-    Object.assign(t, { eyes: 'baby', eyeSet: 'normal', mouth: p.mouth === 'bill' ? 'bill' : 'open', nose: 'none', mark: 'none', hair: 'none', ears: 'none', crest: 'none', back: 'none', feet: 'float', pattern: 'none', cheeks: 'blush', size: 'medium' });
+    Object.assign(t, { fluff: 'none', eyes: 'baby', eyeSet: 'normal', mouth: p.mouth === 'bill' ? 'bill' : 'open', nose: 'none', mark: 'none', hair: 'none', ears: 'none', crest: 'none', back: 'none', feet: 'float', pattern: 'none', cheeks: 'blush', size: 'medium' });
   } else if (stage === 'child') {
     // kids already show their ear shape (drawn to scale), their nose and the start of their hair
-    Object.assign(t, { hair: p.hair === 'bangs' || p.hair === 'bob' ? 'bangs' : 'none', ears: SCALED_EARS.includes(p.ears) ? p.ears : 'none', mark: 'none', crest: 'none', back: 'none', feet: p.feet === 'flippers' ? 'flippers' : 'stubs', size: 'medium' });
+    Object.assign(t, { fluff: p.fluff === 'cheeks' ? 'cheeks' : 'none', hair: p.hair === 'bangs' || p.hair === 'bob' ? 'bangs' : 'none', ears: SCALED_EARS.includes(p.ears) ? p.ears : 'none', mark: 'none', crest: 'none', back: 'none', feet: p.feet === 'flippers' ? 'flippers' : 'stubs', size: 'medium' });
   } else if (stage === 'teen') {
     Object.assign(t, { crest: 'none', back: 'none', feet: ['float', 'flippers'].includes(p.feet) ? p.feet : 'stubs', size: 'medium' });
   }

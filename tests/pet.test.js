@@ -157,5 +157,5 @@ test('becoming a founder gifts its signature outfit', () => {
   caredFor(g, 3 * MIN + HOUR + 48 * HOUR + 14 * HOUR, rng);
   const f = FOUNDERS.find(f => f.name === g.pet.species);
   for (const id of Object.values(f.wear)) assert.ok(g.wardrobe.includes(id), id);
-  assert.deepEqual(g.pet.wear, f.wear);
+  assert.deepEqual(g.pet.wear, {}, 'hand-drawn founders start undressed');
 });
