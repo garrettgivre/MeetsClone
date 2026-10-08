@@ -1,0 +1,96 @@
+:root {
+  --shell-a: #fbd3e4;
+  --shell-b: #c9e4fb;
+  --bezel: #fffaf2;
+  --ink: #262459;
+  --btn: #ffe58a;
+  --btn-edge: #e2b84a;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  background: linear-gradient(160deg, var(--shell-a), var(--shell-b));
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  display: flex;
+  justify-content: center;
+}
+
+#device {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 100%;
+  width: 100%;
+  max-width: 560px;
+  padding: max(10px, env(safe-area-inset-top)) 8px max(14px, env(safe-area-inset-bottom));
+}
+
+#bezel {
+  background: var(--bezel);
+  border-radius: 22px;
+  padding: 6px;
+  box-shadow: 0 0 0 3px #fff inset, 0 6px 0 rgba(38, 36, 89, .12), 0 10px 30px rgba(38, 36, 89, .18);
+  line-height: 0;
+}
+
+#screen {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border-radius: 14px;
+  touch-action: none;
+}
+
+#buttons {
+  display: flex;
+  gap: 36px;
+  align-items: center;
+}
+
+.btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: var(--btn);
+  box-shadow: 0 5px 0 var(--btn-edge), 0 8px 14px rgba(38, 36, 89, .2);
+  cursor: pointer;
+  touch-action: none;
+  transition: transform .05s, box-shadow .05s;
+}
+.btn[data-btn="B"] { transform: translateY(10px); }
+.btn.down { transform: translateY(4px); box-shadow: 0 1px 0 var(--btn-edge), 0 2px 6px rgba(38, 36, 89, .2); }
+.btn[data-btn="B"].down { transform: translateY(14px); }
+.btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+#labels {
+  display: flex;
+  gap: 36px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: .55;
+  margin-top: -2px;
+}
+#labels span { width: 64px; text-align: center; }
+#labels span:nth-child(2) { transform: translateY(10px); }
+
+@media (max-height: 640px) {
+  .btn { width: 54px; height: 54px; }
+  #labels { display: none; }
+  #device { gap: 10px; }
+}

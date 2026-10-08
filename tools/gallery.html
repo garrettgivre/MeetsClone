@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Gallery</title>
+<style>
+  body { margin: 0; padding: 16px; font: 14px system-ui, sans-serif; background: #f4f1ea; color: #1b1528; }
+  h2 { font-size: 15px; margin: 18px 0 6px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  canvas { image-rendering: pixelated; width: 240px; height: 240px; background: #fbf8ff; border-radius: 8px; }
+  figure { margin: 0; text-align: center; font-size: 11px; }
+  button { font: inherit; padding: 6px 12px; }
+</style>
+</head>
+<body>
+<button id="reroll">New random pets</button>
+<div id="out"></div>
+<script type="module">
+import { PACKED } from '../src/engine/palette.js';
+import { composePet, composeEgg, composeGhost, CANVAS } from '../src/game/render.js';
+import { FOUNDERS, pureGenome, express, randomGenome, inherit, STARTER } from '../src/game/genetics.js';
+
+const out = document.getElementById('out');
+function show(bm, label, parent) {
+  const c = document.createElement('canvas');
+  c.width = c.height = CANVAS;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(CANVAS, CANVAS);
+  const u = new Uint32Array(img.data.buffer);
+  for (let i = 0; i < bm.px.length; i++) u[i] = bm.px[i] ? PACKED[bm.px[i]] : 0;
+  ctx.putImageData(img, 0, 0);
+  const f = document.createElement('figure');
+  f.append(c, document.createElement('br'), label);
+  parent.append(f);
+}
+function section(title) {
+  const h = document.createElement('h2'); h.textContent = title; out.append(h);
+  const r = document.createElement('div'); r.className = 'row'; out.append(r); return r;
+}
+function render() {
+  out.innerHTML = '';
+  let r = section('Founders (generation 1 adults)');
+  const founders = FOUNDERS.map(f => ({ ...f, p: express(pureGenome(f.traits)) }));
+  founders.forEach((f, i) => show(composePet(f.p, 'adult', { gender: i % 2 ? 'm' : 'f' }), f.name, r));
+  r = section('Growth: egg, baby, child, teen, adult');
+  const p = express(randomGenome());
+  show(composeEgg(p, 0), 'egg', r);
+  for (const s of ['baby', 'child', 'teen', 'adult']) show(composePet(p, s, { gender: 'f' }), s, r);
+  r = section('Expressions');
+  for (const e of ['idle', 'blink', 'happy', 'sad', 'eat', 'chew', 'sleep', 'dizzy']) show(composePet(p, 'adult', { expr: e }), e, r);
+  show(composeGhost(), 'ghost', r);
+  show(composePet(express(STARTER ? pureGenome(STARTER) : p), 'child'), 'starter', r);
+  r = section('Random adults');
+  for (let i = 0; i < 16; i++) show(composePet(express(randomGenome()), 'adult', { gender: i % 2 ? 'm' : 'f' }), '#' + (i + 1), r);
+  r = section('Family: Lumi x Grumbit children');
+  const mom = pureGenome(FOUNDERS[0].traits), dad = pureGenome(FOUNDERS[5].traits);
+  for (let i = 0; i < 12; i++) show(composePet(express(inherit(mom, dad)), 'adult'), 'child ' + (i + 1), r);
+}
+document.getElementById('reroll').onclick = render;
+render();
+</script>
+</body>
+</html>

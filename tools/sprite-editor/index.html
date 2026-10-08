@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprite Editor</title>
+<link rel="stylesheet" href="editor.css">
+</head>
+<body>
+<header class="top">
+  <h1>Sprite Editor</h1>
+  <div class="row">
+    <button id="undo" type="button" title="Undo (Ctrl+Z)">Undo</button>
+    <button id="redo" type="button" title="Redo (Ctrl+Y)">Redo</button>
+  </div>
+</header>
+
+<main class="layout">
+  <div class="col-main">
+    <section class="card">
+      <div class="row tools" id="tools" role="group" aria-label="Tools">
+        <button type="button" data-tool="pencil" aria-pressed="true">Pencil</button>
+        <button type="button" data-tool="eraser" aria-pressed="false">Eraser</button>
+        <button type="button" data-tool="fill" aria-pressed="false">Fill</button>
+        <button type="button" data-tool="eyedropper" aria-pressed="false">Pick</button>
+        <button type="button" data-tool="line" aria-pressed="false">Line</button>
+        <button type="button" data-tool="rect" aria-pressed="false">Rect</button>
+      </div>
+      <div class="row opts">
+        <label class="chk"><input type="checkbox" id="mirror"> Mirror</label>
+        <label class="chk"><input type="checkbox" id="fillShapes"> Filled rect</label>
+        <label class="chk"><input type="checkbox" id="grid" checked> Grid</label>
+        <label class="chk"><input type="checkbox" id="onion"> Onion skin</label>
+        <label class="grow">Zoom <input type="range" id="zoom" min="2" max="40" value="16"></label>
+      </div>
+      <div class="canvas-wrap"><canvas id="cv" width="256" height="256"></canvas></div>
+      <div class="row opts">
+        <span class="cur">Brush: <b id="curBrush">o</b></span>
+        <span id="coord" class="muted">&nbsp;</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Swatches</h2>
+      <div class="row ctx">
+        <label>Primary <select id="ctxP"></select></label>
+        <label>Secondary <select id="ctxS"></select></label>
+        <label>Eye <select id="ctxE"></select></label>
+      </div>
+      <div id="swatches" class="swatches"></div>
+      <p class="muted small">Dashed swatches are <em>role</em> colours: they take the shade from the ramps chosen above (P = primary, S = secondary, Y = eye). Magenta = character not in KEY.</p>
+      <p id="unknown" class="small warn" hidden></p>
+    </section>
+
+    <section class="card">
+      <h2>Transform</h2>
+      <div class="row">
+        <label>W <input type="number" id="sw" min="1" max="64" value="16"></label>
+        <label>H <input type="number" id="sh" min="1" max="64" value="16"></label>
+        <button type="button" id="resize">Resize</button>
+      </div>
+      <div class="row">
+        <div class="arrows" aria-label="Shift sprite">
+          <button type="button" data-shift="0,-1" aria-label="Shift up">&uarr;</button>
+          <button type="button" data-shift="-1,0" aria-label="Shift left">&larr;</button>
+          <button type="button" data-shift="1,0" aria-label="Shift right">&rarr;</button>
+          <button type="button" data-shift="0,1" aria-label="Shift down">&darr;</button>
+        </div>
+        <button type="button" id="flip">Flip H</button>
+        <label class="chk"><input type="checkbox" id="allFrames"> All frames</label>
+        <button type="button" id="clear">Clear frame</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-side">
+    <section class="card">
+      <h2>Frames</h2>
+      <div class="row">
+        <button type="button" id="fAdd">Add</button>
+        <button type="button" id="fDup">Duplicate</button>
+        <button type="button" id="fDel">Delete</button>
+        <button type="button" id="fLeft" aria-label="Move frame earlier">&larr;</button>
+        <button type="button" id="fRight" aria-label="Move frame later">&rarr;</button>
+      </div>
+      <div id="frames" class="frames"></div>
+    </section>
+
+    <section class="card">
+      <h2>Preview</h2>
+      <div class="row">
+        <label>FPS
+          <select id="fps">
+            <option>1</option><option>2</option><option selected>4</option>
+            <option>6</option><option>8</option><option>12</option><option>24</option>
+          </select>
+        </label>
+        <label>Size
+          <select id="pscale">
+            <option value="1">1x</option><option value="2" selected>2x</option><option value="4">4x</option>
+          </select>
+        </label>
+      </div>
+      <div class="preview-wrap"><canvas id="pv"></canvas></div>
+    </section>
+
+    <section class="card">
+      <h2>Export</h2>
+      <textarea id="exp" rows="8" readonly spellcheck="false"></textarea>
+      <div class="row">
+        <button type="button" id="copy">Copy</button>
+        <span id="status" class="muted small" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Import</h2>
+      <textarea id="imp" rows="6" spellcheck="false" placeholder="Paste sprite([...]) or plain lines of characters. Separate frames with a blank line."></textarea>
+      <div class="row">
+        <button type="button" id="load">Load</button>
+        <span id="impStatus" class="muted small" aria-live="polite"></span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script type="module" src="editor.js"></script>
+</body>
+</html>

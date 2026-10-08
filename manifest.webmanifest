@@ -1,0 +1,12 @@
+{
+  "name": "MeetsClone",
+  "short_name": "MeetsClone",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbd3e4",
+  "theme_color": "#f7c6dc",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

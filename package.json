@@ -1,0 +1,9 @@
+{
+  "name": "meetsclone",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "npx -y http-server -p 5173 -c-1"
+  }
+}

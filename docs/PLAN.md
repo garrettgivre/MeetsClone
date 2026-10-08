@@ -9,14 +9,14 @@ How we'll recreate the Tamagotchi Meets experience (see [RESEARCH.md](RESEARCH.m
 | Platform | Static website on GitHub Pages | Free, no server, and every push deploys |
 | Language | Plain JavaScript (ES modules), HTML, CSS | No build step. Open `index.html` through a local server and it runs |
 | Rendering | Our own engine on one `<canvas>` | Full control of the pixel look. No game framework |
-| Screen | **128 × 128** logical pixels, scaled up by whole numbers | Close to the real device, and the pixels stay crisp |
-| Colour | **Indexed palette** of up to 32 colours | Gives the device's look and makes colour genes cheap (swap palette entries) |
+| Screen | **128 × 224 portrait** logical pixels, scaled to fill a phone screen (whole numbers from 3× up) | Mobile-first, with a bigger display than the device |
+| Colour | **64-colour indexed palette** (14 four-shade ramps + 7 neutrals) | Gives the device's look and makes colour genes cheap (swap palette entries) |
 | Input | 3 buttons: **A** (next), **B** (select), **C** (back) | Same as the device. Mapped to on-screen buttons, keyboard and touch |
 | Saving | `localStorage`, plus export/import of a save file | Works offline. Players can back up and move devices |
 | Social | **Meet Codes** (a short text code or QR for a pet) | Recreates device-to-device meetings without a server |
 | Art & names | 100% original | Bandai owns the characters. Mechanics are free to reuse |
 
-> **Name:** the repo is `MeetsClone`, but the public game should have its own title (for example *Pixel Pals*, *Mochi Meets*, or *Hatchlings*). That's something to decide in Phase 0.
+> **Name:** decided later, once more of the game is built. `MeetsClone` is the working title.
 
 ## Architecture
 
@@ -155,8 +155,14 @@ Each phase ends with something playable that's pushed and live on GitHub Pages.
 
 **Rough total:** about 6 to 8 weeks part-time for a full first version. Phases 0–4 (a playable virtual pet) take about 2 weeks.
 
-## Open questions for you
-1. What should the game be called?
-2. Should time be **real time** (like the device: 24 h per stage) or **sped up** (for example, 1 stage per few hours)? This could also be a setting.
-3. Is pet **death** in, or do neglected pets "run away" instead?
-4. Do you want to draw the art yourself with the editor, or have me draft placeholder art first?
+## Decisions made (Oct 2026)
+- Portrait 128×224 screen, mobile-first, with a 64-colour palette.
+- Timings match the original device.
+- Pets can die and can run away.
+- All art is original and drawn in the style of colour-screen virtual pets: a big head on a small body, navy outlines, pastel fills, glossy eyes and blush.
+- Expanded genetics beyond the device: 13 visible traits + 3 temperament genes, two alleles each, with dominance, colour blending and mutations. An **outfit** gene was added.
+- Meet Codes will replace device-to-device meetings.
+
+## Status
+- **First build (done):** Phases 0, 1, 3, 4 and 5, most of 6 and 9, and the first minigame from Phase 7.
+- **Next:** travel and locations with residents (Phase 8), Meet Codes (Phase 10), more minigames, and room decorations.
