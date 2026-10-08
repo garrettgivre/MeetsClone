@@ -56,12 +56,14 @@ const app = {
   reset() {
     store.clear();
     this.game = newGame(Date.now());
+    scr.setFilter(this.game.settings.lcd !== false);
     this.scenes = [];
     this.push(new HomeScene(this));
     this.save();
   },
   load(game) {
     this.game = game;
+    scr.setFilter(game.settings.lcd !== false);
     this.scenes = [];
     this.push(new HomeScene(this));
     this.save();
@@ -82,6 +84,7 @@ else {
 game.lastReal = Date.now();
 app.game = game;
 setMuted(!game.settings.sound);
+scr.setFilter(game.settings.lcd !== false); // the LCD screen filter (Settings)
 // the service worker keeps the game's files fresh (and shows care alerts)
 notify.registerWorker();
 app.push(new HomeScene(app));

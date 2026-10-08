@@ -100,7 +100,7 @@ export function newGame(now = Date.now(), rng = defaultRng) {
     inventory: { cookie: 3, omelette: 2, juice: 2 },
     toys: ['ball'],
     wardrobe: ['bow', 'scarf'],
-    settings: { sound: true, speed: 1, alerts: false, cheats: false },
+    settings: { sound: true, speed: 1, alerts: false, cheats: false, lcd: true },
     generation: 1,
     album: [],
     matchmaker: { day: '', left: 3 },

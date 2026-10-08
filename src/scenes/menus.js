@@ -129,6 +129,13 @@ function settings(app) {
     { label: 'Sound', right: g.settings.sound ? 'ON' : 'OFF', action: (_, it) => {
       g.settings.sound = !g.settings.sound; setMuted(!g.settings.sound); it.right = g.settings.sound ? 'ON' : 'OFF'; app.sfx('select');
     } },
+    { label: 'Screen filter', right: g.settings.lcd !== false ? 'ON' : 'OFF', action: (_, it) => {
+      g.settings.lcd = g.settings.lcd === false;
+      app.scr.setFilter(g.settings.lcd);
+      it.right = g.settings.lcd ? 'ON' : 'OFF';
+      app.toast(g.settings.lcd ? 'LCD filter on: a softer, old-screen look.' : 'Filter off: plain sharp pixels.', 2600);
+      app.save();
+    } },
     { label: 'Care alerts', right: g.settings.alerts ? 'ON' : 'OFF', action: async (_, it) => {
       if (g.settings.alerts) { g.settings.alerts = false; app.toast('Care alerts are off.'); } else {
         const p = await notify.enable();

@@ -2,6 +2,17 @@
 // present() converts to RGBA once per frame and the canvas is scaled up
 // with CSS (image-rendering: pixelated).
 //
+// An optional LCD filter (setFilter) makes the picture look like an old
+// handheld's screen rather than raw pixels. It is not a blur:
+//   - the frame is enlarged three times with hard edges, and the browser then
+//     smooths only that last, small step to the display size, so pixel edges
+//     soften by a fraction of a pixel while flat areas stay flat;
+//   - the frame is laid over itself again, slightly down and to the right and
+//     multiplied in faintly, so dark shapes cast a soft shadow on what is
+//     behind them, the way LCD segments sit above their backing;
+//   - a faint grid marks the screen's cells, and a glass layer adds a sheen at
+//     the top left and a little darkening toward the corners.
+//
 // Two pixel densities share one screen: the UI and rooms are drawn on a
 // 128 x 224 grid (each pixel is a 2x2 block), while pets are drawn at double
 // density (256 x 448) for finer detail. Coordinates passed to every method are
@@ -16,6 +27,8 @@ export const H = 224;
 export const HD = 2;              // detail multiplier for hi-res art
 const BW = W * HD, BH = H * HD;   // real framebuffer size
 
+const LCD = 3; // the filter draws each hi-res pixel as a 3 x 3 block before the browser's final scale
+
 export class Screen {
   constructor(canvas) {
     this.canvas = canvas;
@@ -27,12 +40,49 @@ export class Screen {
     this.buf = new Uint8Array(BW * BH);
     this.palette = PACKED;
     this.clip = null; // [x0, y0, x1, y1] in hi-res pixels
+    this.filter = false;
+    this.raw = null;   // the plain frame, kept off-screen while the filter is on
+    this.glass = null; // the filter's static layers: cell grid, sheen and vignette
+  }
+
+  /** Turn the LCD filter on or off. */
+  setFilter(on) {
+    on = !!on && typeof document !== 'undefined';
+    if (on === this.filter) return;
+    this.filter = on;
+    const k = on ? LCD : 1;
+    this.canvas.width = BW * k;
+    this.canvas.height = BH * k;
+    this.canvas.style.imageRendering = on ? 'auto' : '';
+    this.ctx = this.canvas.getContext('2d', { alpha: false });
+    if (on && !this.raw) {
+      this.raw = document.createElement('canvas');
+      this.raw.width = BW; this.raw.height = BH;
+      this.rawCtx = this.raw.getContext('2d', { alpha: false });
+      this.glass = lcdGlass();
+    }
   }
 
   present() {
     const { buf, out, palette } = this;
     for (let i = 0; i < buf.length; i++) out[i] = palette[buf[i]];
-    this.ctx.putImageData(this.img, 0, 0);
+    if (!this.filter) { this.ctx.putImageData(this.img, 0, 0); return; }
+    this.rawCtx.putImageData(this.img, 0, 0);
+    const ctx = this.ctx, w = BW * LCD, h = BH * LCD;
+    // the picture, enlarged with hard edges
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(this.raw, 0, 0, w, h);
+    // its own shadow: the same picture a little down and right, soft, multiplied in
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.2;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(this.raw, LCD * 0.8, LCD * 0.9, w, h);
+    // cell grid, sheen and vignette
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.drawImage(this.glass, 0, 0);
   }
 
   clear(c) { this.buf.fill(c); }
@@ -162,6 +212,39 @@ export class Screen {
       if (c) this.pset(flip ? x + bm.w - 1 - i : x + i, y + j, solid || c);
     }
   }
+}
+
+/** The LCD filter's static layers, drawn once: a faint grid of cells, a sheen and a vignette. */
+function lcdGlass() {
+  const w = BW * LCD, h = BH * LCD;
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  // cells: one per normal pixel (two hi-res pixels), with a hairline of shade
+  // along the right and bottom and a touch of light along the top and left
+  const cell = document.createElement('canvas');
+  cell.width = cell.height = HD * LCD;
+  const c = cell.getContext('2d');
+  c.fillStyle = 'rgba(38, 36, 89, 0.07)';
+  c.fillRect(HD * LCD - 1, 0, 1, HD * LCD); c.fillRect(0, HD * LCD - 1, HD * LCD, 1);
+  c.fillStyle = 'rgba(255, 255, 255, 0.03)';
+  c.fillRect(0, 0, HD * LCD - 1, 1); c.fillRect(0, 0, 1, HD * LCD - 1);
+  ctx.fillStyle = ctx.createPattern(cell, 'repeat');
+  ctx.fillRect(0, 0, w, h);
+  // a soft sheen across the top left, as if the glass caught a window
+  const sheen = ctx.createLinearGradient(0, 0, w * 0.9, h * 0.55);
+  sheen.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
+  sheen.addColorStop(0.35, 'rgba(255, 255, 255, 0.03)');
+  sheen.addColorStop(0.6, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, 0, w, h);
+  // the corners fall away a little
+  const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.32, w / 2, h / 2, h * 0.72);
+  vig.addColorStop(0, 'rgba(20, 16, 60, 0)');
+  vig.addColorStop(1, 'rgba(20, 16, 60, 0.22)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+  return cv;
 }
 
 /** Off-screen index bitmap used to compose characters once and reuse them. */
