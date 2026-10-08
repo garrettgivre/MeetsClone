@@ -42,7 +42,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 
 - **Logical screen:** 128×224. The page has no bezel: `resize()` in `main.js` scales the canvas to fill the width (or the height above the button strip, whichever runs out first), so on a short viewport thin strips of shell show at the sides. Pets and town art are drawn at double density (HD = 2) on a 256×448 layer.
 - **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `src/game/pet-art.js`), feet 3 rows above the bottom. Adults are roughly 40 to 50 px tall, so a part has very few pixels to make its point.
-- **Town backdrops:** each is a 256×312 hi-res bitmap (`RW`, `RH`).
+- **Town backdrops** (and the home room): each is a 256×312 hi-res bitmap (`RW`, `RH`).
   - `HZ = 172` is the horizon or floor line, and `FEET = 228` is where pets stand.
   - In a place, your pet stands at about x 76 and the resident at about x 188 (hi-res).
   - The action buttons cover roughly y ≥ 250.
@@ -127,7 +127,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.16.0, October 2026)
+## Status (v0.16.1, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -146,7 +146,8 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Known gap:** clothes from the wardrobe are stored and shown in menus but `pet-art.js` does not draw them on the pet.
 - **Confirmed by the owner on Android Chrome (October 2026):** Settings > Install app installs the game, and care alerts arrive. The browser pane here blocks notifications, so alert changes can only be tested with a stand-in; ask the owner to check on the phone.
 - **Pet-art candidates:** the baby and child shapes (plain blobs with a face; could carry more of the line), the egg, and the lamb cheeks on the small quad and serpent heads (still a little pointed).
-- **Town-art candidates:** the home room in `src/scenes/room.js` (its window, shelf, plant and lamp are drawn in code; note its window sky changes with the time of day, so a prop would need a glass ramp per sky state), the salon mirrors, the boutique clothes rack and the school blackboard.
+- **Town-art candidates:** the salon mirrors, the boutique clothes rack and the school blackboard.
+- **The home room** (v0.16.1) is built like a town place: `homeRoom(sky, dark)` in `src/art/town.js` lays out props (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`, drafted by `tools/art-scripts/home_props.py`) with the town kit, one cached picture per time of day plus a lights-off version (`dim`). The window panes are holes: `src/scenes/room.js` draws the sky, sun, cloud, moon and stars first and the room over them. Pets stand at `HOME_FEET` (256), lower than in town, and the front layer (toy chest, plant) is drawn over the pet by `drawRoomFront`. Room decorations would slot in here: swap props or colours in `homeScene`.
 
 ## Gotchas
 

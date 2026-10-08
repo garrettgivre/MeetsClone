@@ -9,7 +9,7 @@ import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
 import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort, bathe, toilet, isDirty, isPottyTrained, POTTY_TRAINED } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
-import { drawRoom as drawRoomHD } from './room.js';
+import { drawRoom as drawRoomHD, drawRoomFront } from './room.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -304,6 +304,8 @@ export class HomeScene {
 
     // pet / egg / ghost
     if (pet) this.drawPet(scr, t, lightsOff);
+    // the toy chest and plant in the front corners stand in front of the pet
+    drawRoomFront(scr, game.simTime, lightsOff);
 
     // effects
     for (const f of this.fx) scr.draw(f.spr, f.x, f.y, {});

@@ -6,7 +6,7 @@
 // a light rim on top/left, a shadow band on the bottom/right and an outline in
 // a darker shade of their own colour (ink only for small, dark details); props
 // sit on soft dithered contact shadows.
-import { C, RAMP_NAMES } from '../engine/palette.js';
+import { C, RAMP_NAMES, COLORS } from '../engine/palette.js';
 import { W, HD, makeBitmap } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
 import { PROPS, stampProp } from './props.js';
@@ -31,6 +31,76 @@ function draw(id) {
 export const backdrop = (id) => draw(id).back;
 /** Framing drawn in front of the pets (bushes, clouds at the corners), or null. */
 export const frontdrop = (id) => draw(id).front;
+
+// ---------------------------------------------------------------- the pet's own room
+// The home screen's room is built with the same kit and props as the town. Its
+// window panes are left see-through: the scene draws the sky (and the sun, a
+// cloud, the moon and stars) first and the room over it, so the view changes
+// with the time of day. Pets stand lower here than in town (HOME_FEET).
+export const HOME_WINDOW = { x: 30, y: 27, w: 64, h: 60 };  // the glass, in hi-res room pixels
+export const HOME_FEET = 256;
+
+/** The room for a sky state ('day' | 'dawn' | 'dusk' | 'night'), lit or with the lights off: { back, front }. */
+export function homeRoom(sky = 'day', dark = false) {
+  const key = `home:${sky}:${dark}`;
+  if (!cache.has(key)) {
+    const k = kit();
+    homeScene(k, sky);
+    // the panes: holes in the picture
+    const { x, y, w, h } = HOME_WINDOW;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      const p = (y + j) * RW + x + i;
+      if (k.bm.px[p] === HOLE) k.bm.px[p] = 0;
+    }
+    if (dark) { dim(k.bm); dim(k.front); }
+    cache.set(key, { back: k.bm, front: k.front });
+  }
+  return cache.get(key);
+}
+const HOLE = C('night'); // painted where the glass goes, then cut out (nothing else in the room uses it)
+
+/** Lights off: the room keeps its shapes but sinks to two night shades. */
+function dim(bm) {
+  const night = C('night'), shade = C('shade');
+  for (let i = 0; i < bm.px.length; i++) {
+    const c = bm.px[i];
+    if (!c) continue;
+    const [r, g, b] = COLORS[c];
+    const lum = (r * 0.3 + g * 0.59 + b * 0.11) / 255;
+    const x = i % bm.w, y = (i / bm.w) | 0;
+    // light things become a half-tone, mid tones a sparse one, dark things solid night
+    bm.px[i] = lum > 0.78 ? ((x + y) & 1 ? shade : night) : lum > 0.5 && (x & 1) === 0 && (y & 1) === 0 ? shade : night;
+  }
+}
+
+function homeScene(k, sky) {
+  const night = sky === 'night', warm = sky === 'dawn' || sky === 'dusk';
+  k.wall('sky.3', 'sky.2', 'dots', { wainscot: 'sky.2' });
+  k.starString(5, { sag: 9, hearts: true, colors: ['gold.3', 'pink.3', 'white', 'mint.3'] });
+  // the window: sky shows through the panes
+  const { x: wx, y: wy, w: ww, h: wh } = HOME_WINDOW;
+  k.rect(wx, wy, ww, wh, 'night');
+  k.prop('homeWindow', wx + 32, wy + 77, { accent: 'pink', roof: 'gold', stone: 'orange', wood: 'brown' });
+  // a framed heart, and a shelf of keepsakes over the bed
+  k.prop('heartFrame', 138, 74, { roof: 'gold', accent: 'pink' });
+  k.prop('wallShelf', 206, 78);
+  k.prop('sproutPot', 184, 66, { stone: 'orange' });
+  k.prop('books', 204, 66, { accent: 'violet' }); k.prop('teddy', 222, 66); k.prop('toyBlock', 235, 66, { accent: 'mint' });
+  k.planks(HZ, 'cream.2'); k.floorShadow('cream.1');
+  // light: sun through the window by day, the lamp at night
+  if (!night) k.beam(wx + 8, HZ, 46, 226, warm ? 'gold.3' : 'cream.3', 0.4);
+  else { k.lightPool(146, 150, 34, 22, 'gold.3'); k.lightPool(146, 196, 40, 9, 'gold.3'); }
+  // the bed and the bedside lamp, against the wall
+  k.shadow(206, 198, 42, 'cream.1', 4); k.prop('petBed', 206, 198, { accent: 'pink', wall: 'cream' });
+  k.shadow(146, 198, 16, 'cream.1', 3); k.prop('nightLamp', 146, 198, { roof: 'gold', stone: 'slate' });
+  // a rug to stand on
+  k.rug(124, HOME_FEET + 4, 80, 14, 'pink.2', 'pink.3');
+  k.layer('front');
+  k.shadow(30, 309, 25, 'cream.1', 3); k.prop('toyChest', 30, 309, { accent: 'red', glass: 'sky', roof: 'gold', stone: 'gold' });
+  k.prop('toyBall', 62, 309, { accent: 'mint' });
+  k.plant(238, 309, 1, 'green.2', 'pink.2', 3);
+  k.layer('back');
+}
 
 // ---------------------------------------------------------------- colour helpers
 const NEUTRAL = ['ink', 'shade', 'gray', 'silver', 'mist', 'white'];
