@@ -44,6 +44,14 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).
 
 ## Town backdrops
+### What gives a scene heart
+- **No rudimentary shapes.** Ground edges, rocks, mountains, tree crowns and clouds are irregular lumps (`blob`, `canopy`, `pcloud`, `mountain`); trunks taper, curve and flare at the roots (`trunk`, `tree`); roofs curve like bells (`roofCurve`); even boxes have soft corners (`block`).
+- **Volume from lobes.** Foliage and clouds are clumps of lobes in mixed sizes, upper ones lit, lower ones in shade, each tucked into a darker pocket where it meets the ones behind.
+- **Clusters, not grids.** Flowers, tufts, rocks, mushrooms and shelf items come in uneven groups from a seeded random generator (`rand`), with open space between. Nothing repeats on a fixed step.
+- **Depth through layers.** Far things are paler and cooler with less contrast; mist sits between layers (`mist`); everything overlaps something; framing in the bottom corners sits in front of the pets.
+- **Hue-shifted light.** Shadows go cooler within their colour (green toward teal, cloud undersides toward lavender), never plain grey; highlights go lighter and warmer.
+- **An open stage.** Keep the middle clear for the pets and put the detail around the edges, with a trail, river or path leading in.
+
 Each place in town is drawn in code at the room's double density (`src/art/town.js`), using a small kit of shaded shapes so every scene follows the same rules:
 - Solid shapes are lit from the upper left: a light rim on the top and left, a two-pixel shadow band on the bottom and right, and an outline in a darker shade of their own colour (ink only for small, dark details).
 - Props stand on soft dithered contact shadows, and indoor walls meet the floor with a dithered shadow line.
