@@ -11,6 +11,7 @@ import { W, HD, makeBitmap } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
 import { PROPS, stampProp } from './props.js';
 import './props-home.js';
+import './props-travel.js';
 import { glyphRows } from '../engine/font.js';
 
 export const RW = W * HD;               // 256
@@ -32,6 +33,19 @@ function draw(id) {
 export const backdrop = (id) => draw(id).back;
 /** Framing drawn in front of the pets (bushes, clouds at the corners), or null. */
 export const frontdrop = (id) => draw(id).front;
+
+const propCache = new Map();
+/** A prop as a hi-res bitmap of its own, for things that move across a scene. `at` is its anchor. */
+export function propBitmap(name, opts = {}) {
+  const key = name + JSON.stringify(opts);
+  if (!propCache.has(key)) {
+    const p = PROPS[name], bm = makeBitmap(p.w, p.h, true);
+    stampProp((x, y, c) => { if (x >= 0 && y >= 0 && x < p.w && y < p.h) bm.px[y * p.w + x] = C(c); }, name, p.at[0], p.at[1], opts);
+    bm.at = p.at;
+    propCache.set(key, bm);
+  }
+  return propCache.get(key);
+}
 
 // ---------------------------------------------------------------- the pet's own room
 // The home screen's room is built with the same kit and props as the town. Its
@@ -1275,34 +1289,125 @@ const SCENES = {
     k.mushroom(242, 248, 'pink.2'); k.mushroom(226, 256, 'orange.2');
     k.layer('back');
   },
+  // ---- scenes that aren't places: the games field, the family scenes, photo backdrops, the trip, a farewell ----
+  playfield(k) {
+    // sports day on a meadow: flags overhead, a striped tent and a popcorn cart at the back; the pets play lower down (y 260)
+    k.bands(['sky.2', 'sky.2', 'sky.3'], 0, 140);
+    k.sun(224, 62, 11);
+    k.pcloud(8, 48, 76, 'violet.3'); k.pcloud(112, 60, 60, 'pink.3', 0.9); k.pcloud(64, 92, 40, 'violet.3', 0.8);
+    k.horizonClouds(118, 'violet.3', 7);
+    k.mountain(64, 136, 180, 30, 'sky.1', { seed: 21 }); k.mountain(204, 136, 150, 22, 'mint.2', { seed: 22 });
+    k.mist(124, 12, 'sky.3');
+    k.canopy(-24, 112, 304, 34, 'mint.1', { seed: 33, r: 9 });
+    k.field(138, 'green.3', { seed: 6, light: 'lime.3' });
+    k.mottle(140, 158, 'mint.2', 5, 9);
+    k.tufts(146, 300, 'green.2', 44, 4);
+    k.bunting(32, 12);
+    k.tree(16, 174, 1.05, 'green.2', { seed: 3 }); k.bush(38, 180, 'lime.2', 9, 5);
+    k.tree(242, 170, 1.1, 'green.2', { seed: 9 });
+    k.shadow(66, 178, 22, 'green.1'); k.prop('tent', 66, 178, { accent: 'pink', wall: 'cream' });
+    k.shadow(196, 180, 18, 'green.1'); k.prop('popcornCart', 196, 180, { accent: 'red' });
+    k.prop('balloons', 222, 178);
+    k.flowerPatch(108, 170, 5, ['gold.2', 'white']); k.flowerPatch(150, 174, 6, ['pink.2', 'violet.2']);
+    // a chalk ring to play in
+    for (let a = 0; a < 360; a += 2) if (Math.floor(a / 8) % 2 === 0) { const r = (a * Math.PI) / 180; k.set(128 + Math.cos(r) * 112, 264 + Math.sin(r) * 30, 'white'); }
+    k.rocks(14, 232, 2); k.flowerPatch(236, 236, 5, ['white', 'pink.2']);
+  },
+  ropefield(k) {
+    SCENES.playfield(k);
+    for (const x of [23, 235]) { k.shadow(x, 260, 9, 'green.1'); k.prop('ropePost', x, 260); }
+  },
+  matchmaker(k) {
+    // the matchmaker's parlour: rosy paper, a garland of hearts, two windows and a framed heart; the pets meet on the rug (y 184)
+    k.wall('pink.3', 'white', 'dots', { wainscot: 'pink.2' });
+    k.prop('window', 54, 128, { accent: 'red' }); k.prop('window', 202, 128, { accent: 'red', flip: true });
+    k.prop('heartFrame', 128, 112, { roof: 'gold', accent: 'red' });
+    k.starString(26, { sag: 10, every: 26, string: 'pink.1', colors: ['red.2', 'white', 'pink.2'], hearts: true });
+    k.vignette('pink.2', 34);
+    k.tiles(HZ, 'white', 'pink.3'); k.floorShadow('pink.1');
+    k.rug(128, 190, 100, 12, 'red.2', 'pink.2');
+    for (const x of [16, 240]) { k.shadow(x, 180, 12, 'pink.1'); k.prop('flowerStand', x, 180, { wall: 'gold', accent: 'pink', flip: x > 128 }); }
+    k.prop('balloons', 128, 172, { accent: 'red' });
+  },
+  // four painted backdrops for the photo studio and the family album (the picture shows x 36-220, y 44-188)
+  photo0(k) {
+    k.bands(['sky.2', 'sky.3', 'sky.3'], 0, 160);
+    k.pcloud(40, 60, 60, 'violet.3', 0.9); k.pcloud(136, 80, 70, 'pink.3');
+    k.mountain(90, 160, 150, 30, 'mint.2', { seed: 5 }); k.mountain(190, 160, 120, 22, 'sky.1', { seed: 6 });
+    k.field(156, 'green.3', { seed: 3, light: 'lime.3' });
+    k.tree(206, 172, 0.8, 'green.2', { seed: 4 });
+    k.flowerPatch(58, 180, 6); k.flowerPatch(186, 184, 5, ['gold.2', 'white']);
+  },
+  photo1(k) {
+    k.wall('pink.3', 'white', 'diamonds');
+    k.starString(44, { sag: 8, x0: 30, x1: 226, every: 28, string: 'pink.1', colors: ['red.2', 'white', 'pink.2'], hearts: true });
+    for (const [x, y, c, r] of [[62, 108, 'pink.2', 6], [196, 100, 'red.2', 5], [102, 132, 'white', 3], [160, 138, 'pink.2', 4]]) k.heart(x, y, c, r);
+    k.planks(HZ, 'pink.3'); k.floorShadow('pink.1');
+    k.prop('balloons', 198, 184); k.prop('giftBox', 58, 184);
+  },
+  photo2(k) {
+    k.bands(['violet.3', 'pink.3', 'gold.3', 'gold.3'], 0, 160);
+    k.sun(128, 100, 15);
+    k.pcloud(38, 70, 56, 'pink.2', 0.9); k.pcloud(162, 62, 60, 'violet.2', 0.9);
+    k.mountain(70, 160, 130, 24, 'violet.2', { seed: 8 }); k.mountain(196, 160, 110, 18, 'pink.2', { seed: 9 });
+    k.field(156, 'gold.3', { seed: 5, light: 'cream.3', deep: 'gold.2', flowers: ['white', 'pink.3'] });
+    k.prop('palm', 204, 186); k.prop('sandcastle', 60, 184);
+  },
+  photo3(k) {
+    k.bands(['indigo.1', 'violet.1', 'violet.2', 'pink.2'], 0, 160);
+    for (let i = 0; i < 40; i++) { const x = (i * 71) % RW, y = 44 + (i * 43) % 100; if (i % 4) k.set(x, y, i % 3 ? 'white' : 'gold.3'); else k.sparkle(x, y); }
+    k.disc(72, 78, 14, 'gold.3', { outline: 'gold.2', shade: true }); k.disc(66, 72, 2, 'gold.2'); k.disc(79, 84, 2, 'gold.2');
+    k.face(72, 79, 1, { ink: 'orange.1', cheek: 'pink.3', mouth: 'orange.2', gap: 4 });
+    k.field(156, 'mint.2', { seed: 14, light: 'mint.3', deep: 'mint.1', flowers: ['white', 'pink.3', 'sky.3'] });
+    for (const x of [54, 202]) { k.lightPool(x, 184, 14, 4, 'gold.3'); k.prop('starLantern', x, 185, { wall: 'gold', stone: 'slate' }); }
+  },
+  trip(k) {
+    // the open country between districts: far peaks and a tree line; the road, track or path slides by in front (y 224)
+    k.bands(['sky.2', 'sky.2', 'sky.3'], 0, 190);
+    k.sun(40, 62, 12);
+    k.horizonClouds(160, 'violet.3', 4);
+    k.mountain(64, 194, 200, 50, 'sky.1', { seed: 31, snow: true }); k.mountain(204, 194, 170, 36, 'mint.2', { seed: 32 });
+    k.mist(178, 14, 'sky.3');
+    k.canopy(-24, 172, 304, 34, 'mint.1', { seed: 43, r: 9 });
+    k.field(194, 'green.3', { seed: 8, light: 'lime.3' });
+    k.tufts(250, 306, 'green.2', 30, 7);
+  },
+  tripSky(k) {
+    // up among the clouds, the land small below
+    k.bands(['sky.1', 'sky.2', 'sky.2', 'sky.3', 'sky.3'], 0, 290);
+    for (const [x, y] of [[36, 70], [150, 44], [226, 130], [84, 170]]) k.sparkle(x, y);
+    k.sun(214, 62, 13);
+    k.horizonClouds(266, 'violet.3', 5);
+    k.mountain(50, 304, 150, 28, 'mint.2', { seed: 51 }); k.mountain(190, 306, 180, 34, 'sky.1', { seed: 52, snow: true });
+    k.canopy(-24, 296, 304, 26, 'green.2', { seed: 53, r: 6 });
+  },
+  farewell(k) {
+    // a quiet hilltop under the stars
+    k.bands(['indigo.0', 'indigo.0', 'indigo.0', 'indigo.1'], 0, 196);
+    for (let i = 0; i < 70; i++) { const x = (i * 71) % RW, y = (i * 43) % 170; if (i % 5) k.set(x, y, i % 3 ? 'white' : 'gold.3'); else k.sparkle(x, y); }
+    k.disc(204, 46, 16, 'gold.3', { outline: 'gold.2', shade: true }); k.disc(196, 38, 2, 'gold.2'); k.disc(212, 40, 3, 'gold.2'); k.disc(213, 56, 2, 'gold.2');
+    k.pcloud(-14, 156, 96, 'indigo.2'); k.pcloud(168, 162, 100, 'indigo.2');
+    // the hill, darker than the sky, with a pale rim of moonlight
+    for (let x = 0; x < RW; x++) {
+      const top = Math.round(188 - Math.cos((x - 128) / 150) * 14 + Math.sin(x / 9) * 1.2);
+      k.rect(x, top, 1, RH - top, 'ink'); k.set(x, top, 'indigo.2'); if (x % 2) k.set(x, top + 1, 'indigo.0');
+    }
+    for (const [x, y, c] of [[40, 196, 'pink.2'], [214, 198, 'sky.3'], [150, 184, 'gold.3']]) { k.rect(x, y - 4, 1, 4, 'indigo.1'); k.star5(x, y - 6, 3, c); }
+  },
 };
 
 // ---------------------------------------------------------------- travel
-/** A vehicle for the trip between districts, drawn straight to the screen at (x, y) (normal pixels). */
+/**
+ * A vehicle for the trip between districts: the hand-pixelled bus, train or
+ * balloon, standing on (x, y) in normal pixels (x is its middle, y the ground).
+ */
 export function drawVehicle(scr, kind, x, y, t) {
-  const r = (a, b, w, h, c) => scr.rect(Math.round(x + a), Math.round(y + b), w, h, C(c));
-  const bob = Math.floor(t / 150) % 2;
-  if (kind === 'bus') {
-    r(0, -24 - bob, 56, 20, 'gold.2'); r(1, -23 - bob, 54, 2, 'gold.3'); r(0, -7 - bob, 56, 2, 'gold.1');
-    scr.box(Math.round(x), Math.round(y - 24 - bob), 56, 20, C('gold.0'));
-    for (let i = 0; i < 4; i++) { r(4 + i * 12, -21 - bob, 9, 7, 'sky.3'); r(5 + i * 12, -20 - bob, 2, 2, 'white'); }
-    r(0, -12 - bob, 56, 2, 'red.1');
-    for (const wx of [10, 42]) { scr.rect(Math.round(x + wx - 4), Math.round(y - 6), 9, 6, C('ink')); r(wx - 1, -4, 3, 2, 'silver'); }
-  } else if (kind === 'train') {
-    r(0, -26, 34, 22, 'red.1'); r(1, -25, 32, 2, 'red.2'); scr.box(Math.round(x), Math.round(y - 26), 34, 22, C('red.0'));
-    r(4, -22, 10, 8, 'sky.3'); r(24, -34, 6, 8, 'ink'); r(30, -10, 6, 6, 'slate.1');
-    r(-40, -22, 36, 18, 'sky.1'); r(-39, -21, 34, 2, 'sky.2'); scr.box(Math.round(x - 40), Math.round(y - 22), 36, 18, C('blue.1'));
-    for (let i = 0; i < 3; i++) r(-36 + i * 11, -19, 8, 6, 'sky.3');
-    for (const wx of [6, 26, -34, -14]) scr.rect(Math.round(x + wx), Math.round(y - 5), 6, 5, C('ink'));
-    if (bob) { r(26, -40, 4, 3, 'mist'); r(30, -44, 5, 4, 'white'); }
-  } else if (kind === 'balloon') {
-    for (let j = -14; j <= 14; j++) {
-      const half = Math.round(Math.sqrt(Math.max(0, 196 - j * j)));
-      for (let i = -half; i < half; i++) scr.rect(Math.round(x + i), Math.round(y - 60 + j + bob), 1, 1, C(Math.floor((i + 14) / 5) % 2 ? 'gold.2' : 'red.2'));
-      scr.rect(Math.round(x + half - 2), Math.round(y - 60 + j + bob), 2, 1, C('red.0'));
-    }
-    r(-6, -58 + bob, 3, 3, 'white');
-    r(-1, -46 + bob, 1, 12, 'ink'); r(5, -46 + bob, 1, 12, 'ink');
-    r(-6, -34 + bob, 18, 8, 'brown.2'); r(-5, -33 + bob, 16, 1, 'brown.3'); scr.box(Math.round(x - 6), Math.round(y - 34 + bob), 18, 8, C('brown.0'));
-  }
+  const put = (name, dx = 0, dy = 0, opts = {}) => { const bm = propBitmap(name, opts); scr.bitmap(bm, x + dx - bm.at[0] / 2, y + dy - (bm.at[1] + 1) / 2); };
+  const bob = Math.floor(t / 150) % 2 ? 0.5 : 0;
+  if (kind === 'bus') put('bus', 0, -bob);
+  else if (kind === 'train') {
+    // puffs of steam drift back from the stack
+    for (let i = 0; i < 3; i++) { const p = ((t / 700) + i / 3) % 1; put('cloudC', 16 - p * 22, -26 - p * 12, { accent: 'slate' }); }
+    put('trainCar', -14); put('trainEngine', 14, -bob);
+  } else if (kind === 'balloon') put('balloon');
 }

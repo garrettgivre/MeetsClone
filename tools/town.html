@@ -36,8 +36,10 @@ function paint(ctx, bm, ox, oy, flip = false) {
   ctx.putImageData(img, 0, 0);
 }
 
-for (const loc of LOCATIONS) {
-  if (only && loc.id !== only) continue;
+// ?scene=playfield,trip shows backdrops that aren't places (the games field, the trip, photo backdrops...)
+const extra = (params.get('scene') || '').split(',').filter(Boolean).map(id => ({ id, name: id, extra: true }));
+for (const loc of extra.length ? extra : LOCATIONS) {
+  if (only && !loc.extra && loc.id !== only) continue;
   const c = document.createElement('canvas'); c.width = RW; c.height = RH;
   c.style.width = RW * z + 'px'; c.style.height = RH * z + 'px';
   const ctx = c.getContext('2d');
@@ -46,7 +48,7 @@ for (const loc of LOCATIONS) {
     // pets are drawn at double density: each 64-px art pixel is one hi-res pixel here, scaled x2
     const big = (art) => { const out = { w: art.w * 2, h: art.h * 2, px: new Uint8Array(art.w * art.h * 4) };
       for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) out.px[y * out.w + x] = art.px[(y >> 1) * art.w + (x >> 1)]; return out; };
-    const r = resident(loc.id);
+    const r = resident(loc.extra ? 'park' : loc.id);
     paint(ctx, big(composePetArt(r.phenotype, 'adult', {})), 188 - 64, FEET - 122);
     paint(ctx, big(composePetArt(express(pureGenome(FOUNDERS[1].traits), makeRng(1)), 'teen', {})), 76 - 64, FEET - 122, true);
   } else {

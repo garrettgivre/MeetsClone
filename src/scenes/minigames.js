@@ -7,12 +7,13 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, text, dialog } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
-import { FOOD_ART } from '../art/icons.js';
+import { FOOD_ART, ROCK } from '../art/icons.js';
+import { backdrop } from '../art/town.js';
 import { finishGame, learnedLine } from '../game/pet.js';
 
 const FLOOR_OFF = 130; // floor line, from the top of the room
 
-/** Shared bits: park backdrop, score panels, the ready/result dialogs. */
+/** Shared bits: the games field, score panels, the ready/result dialogs. */
 class MiniGame {
   constructor(app, title, help) {
     this.app = app;
@@ -55,14 +56,7 @@ class MiniGame {
     this.app.save();
   }
   drawPark(scr) {
-    const { y: ry, h: rh } = LAYOUT.room;
-    const floor = this.floor;
-    scr.rect(0, ry, W, rh, C('sky.3'));
-    scr.rect(14, ry + 16, 14, 4, C('white')); scr.rect(17, ry + 13, 8, 3, C('white'));
-    scr.rect(84, ry + 26, 18, 4, C('white')); scr.rect(88, ry + 23, 9, 3, C('white'));
-    scr.rect(0, floor - 10, W, rh - (floor - 10 - ry), C('green.2'));
-    scr.hline(0, floor - 10, W, C('green.1'));
-    for (let x = 3; x < W; x += 9) scr.pset(x, floor - 6 + (x % 3), C('green.1'));
+    scr.bitmap(backdrop('playfield'), 0, LAYOUT.room.y);
   }
   drawPet(scr, x, { expr = 'idle', arms = 'down', flip = false, dy = 0 } = {}) {
     const pet = this.pet;
@@ -195,12 +189,8 @@ export class SnackCatchScene extends MiniGame {
     this.drawPark(scr);
     for (const it of this.items) {
       const x = Math.round(it.x), y = Math.round(it.y);
-      if (it.rock) {
-        scr.rect(x - 3, y - 2, 7, 5, C('gray'));
-        scr.rect(x - 2, y - 3, 5, 7, C('gray'));
-        scr.pset(x - 1, y - 2, C('silver'));
-        scr.box(x - 3, y - 3, 7, 7, COL.ink);
-      } else {
+      if (it.rock) scr.draw(ROCK, x - 3, y - 3, {});
+      else {
         const spr = FOOD_ART[it.food];
         scr.draw(spr, x - Math.floor(spr.w / 2), y - Math.floor(spr.h / 2), {});
       }

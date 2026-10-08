@@ -4,6 +4,9 @@ import { W } from '../engine/screen.js';
 import { LAYOUT, COL, text, wrap, LINE_H } from '../ui.js';
 import { composeGhost, CANVAS } from '../game/render.js';
 import { startOver } from '../game/pet.js';
+import { backdrop } from '../art/town.js';
+import { SPARKLE, LETTER } from '../art/icons.js';
+import { drawRoom, drawRoomFront } from './room.js';
 
 export class EndingScene {
   constructor(app, kind) {
@@ -29,28 +32,36 @@ export class EndingScene {
   draw(scr) {
     const { y: ry, h: rh } = LAYOUT.room;
     const died = this.kind === 'death';
-    scr.rect(0, ry, W, rh, died ? C('indigo.0') : C('slate.1'));
-    // twinkling stars
-    for (let i = 0; i < 18; i++) {
-      const x = (i * 37) % W, y = ry + 4 + ((i * 53) % 70);
-      if ((Math.floor(this.t / 300) + i) % 3) scr.pset(x, y, C('gold.3'));
-    }
+    const msg = wrap(died ? `${this.name} has returned to the stars.` : `${this.name} ran away... It felt lonely.`, W - 20);
+    const tip = wrap(died ? 'Keep it fed, clean and healthy next time.' : 'Play and give treats so it stays happy.', W - 20);
+    const again = this.t > 1200 && Math.floor(this.t / 500) % 2;
     if (died) {
+      // a hilltop under the stars, a few of them twinkling
+      scr.bitmap(backdrop('farewell'), 0, ry);
+      [[14, 20], [40, 44], [70, 12], [96, 58], [112, 30], [56, 70]].forEach(([x, y], i) => {
+        const f = (Math.floor(this.t / 300) + i) % 4;
+        if (f < 2) scr.draw(SPARKLE, x, ry + y, { frame: 1 - f });
+      });
       const f = Math.floor(this.t / 600) % 2;
       scr.bitmap(composeGhost(f), W / 2 - CANVAS / 2, ry + 30 - Math.round(this.t / 200) % 3);
+      let y = ry + 100;
+      for (const l of msg) { text(scr, l, W / 2, y, COL.white, { align: 'center' }); y += LINE_H; }
+      y += 4;
+      for (const l of tip) { text(scr, l, W / 2, y, C('sky.3'), { align: 'center' }); y += LINE_H; }
+      if (again) text(scr, 'B: NEW EGG', W / 2, ry + rh - 12, C('gold.3'), { align: 'center' });
     } else {
-      // a little note left on the floor
-      scr.panel(W / 2 - 14, ry + 50, 28, 22, C('white'), COL.ink);
-      for (let i = 0; i < 3; i++) scr.hline(W / 2 - 9, ry + 56 + i * 4, 18, C('silver'));
+      // its own room, empty, and the note it left on the rug
+      const now = this.app.game.simTime;
+      drawRoom(scr, now, this.app.time, false);
+      scr.draw(LETTER, W / 2 - 8, ry + 122, {});
+      drawRoomFront(scr, now, false);
+      const h = (msg.length + tip.length) * LINE_H + 13;
+      scr.panel(6, ry + 6, W - 12, h, C('white'), COL.ink);
+      let y = ry + 11;
+      for (const l of msg) { text(scr, l, W / 2, y, COL.ink, { align: 'center' }); y += LINE_H; }
+      y += 4;
+      for (const l of tip) { text(scr, l, W / 2, y, COL.shade, { align: 'center' }); y += LINE_H; }
+      if (again) { scr.panel(W / 2 - 26, ry + rh - 16, 52, 11, COL.hi, COL.ink); text(scr, 'B: NEW EGG', W / 2, ry + rh - 13, COL.ink, { align: 'center' }); }
     }
-    const msg = died
-      ? `${this.name} has returned to the stars.`
-      : `${this.name} ran away... It felt lonely.`;
-    let y = ry + 96;
-    for (const l of wrap(msg, W - 16)) { text(scr, l, W / 2, y, COL.white, { align: 'center' }); y += LINE_H; }
-    y += 4;
-    const tip = died ? 'Keep it fed, clean and healthy next time.' : 'Play and give treats so it stays happy.';
-    for (const l of wrap(tip, W - 16)) { text(scr, l, W / 2, y, C('sky.3'), { align: 'center' }); y += LINE_H; }
-    if (this.t > 1200 && Math.floor(this.t / 500) % 2) text(scr, 'B: NEW EGG', W / 2, ry + rh - 12, C('gold.3'), { align: 'center' });
   }
 }

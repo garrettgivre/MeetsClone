@@ -446,6 +446,42 @@ export const POTTY = hdSprite([
   '.......ommmmmmmmmmGGGGGGGGo.....',
   '........oooooooooooooooooo......',
 ]);
+// a rock to dodge in Snack Catch
+export const ROCK = hdSprite([
+  '.....ooooo....',
+  '...ooGGGGUoo..',
+  '..oGGmGGUUUto.',
+  '.oGGmmGUUUUtto',
+  '.oGGGGUUUUtUto',
+  'oGGGUUUUUUUtto',
+  'oGUUUUUtUUUtto',
+  'oGUUUUttUUttto',
+  'oUUUUUUUUUttto',
+  'oUUUtUUUUtttto',
+  '.oUUUUUUtttto.',
+  '.oUttUUttttto.',
+  '..oottttttoo..',
+  '....oooooo....',
+]);
+// the note a runaway leaves behind
+export const LETTER = hdSprite([
+  '.oooooooooooooooooooooo.',
+  'owwwwwwwwwwwwwwwwwwwwwmo',
+  'owwwwwwwwwwwwwwwwwwwwwmo',
+  'owwGGGGGGGGGGGGGGGwwwwmo',
+  'owwwwwwwwwwwwwwwwwwwwwmo',
+  'owwwwwwwwwwwwwwwwwwwwwmo',
+  'owwGGGGGGGGGGGGGGGGGwwmo',
+  'owwwwwwwwwwwwwwwwwwwwwmo',
+  'owwwwwwwwwwwwwwwwwwwwwmo',
+  'owwGGGGGGGGGGGwwwwwwwwmo',
+  'owwwwwwwwwwwwwwwwpwpwwmo',
+  'owwwwwwwwwwwwwwwpppppwmo',
+  'owwGGGGGGGGGwwwwwpppwwmo',
+  'owwwwwwwwwwwwwwwwwpwwwmo',
+  'owmmmmmmmmmmmmmmmmmmmmmo',
+  '.oooooooooooooooooooooo.',
+]);
 // an old resident's walking stick
 export const CANE = hdSprite([
   '....oooo....',

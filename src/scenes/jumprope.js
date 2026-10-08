@@ -5,6 +5,7 @@ import { W } from '../engine/screen.js';
 import { LAYOUT, COL, text, dialog } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { finishGame, learnedLine } from '../game/pet.js';
+import { backdrop } from '../art/town.js';
 
 const GOAL = 30;
 
@@ -70,23 +71,17 @@ export class JumpRopeScene {
   draw(scr) {
     const { y: ry, h: rh } = LAYOUT.room;
     const floor = ry + 130;
-    // park
-    scr.rect(0, ry, W, rh, C('sky.3'));
-    scr.rect(14, ry + 16, 14, 4, C('white')); scr.rect(17, ry + 13, 8, 3, C('white'));
-    scr.rect(84, ry + 26, 18, 4, C('white')); scr.rect(88, ry + 23, 9, 3, C('white'));
-    scr.rect(0, floor - 10, W, rh - (floor - 10 - ry), C('green.2'));
-    scr.hline(0, floor - 10, W, C('green.1'));
-    for (let x = 3; x < W; x += 9) scr.pset(x, floor - 6 + (x % 3), C('green.1'));
-    // posts
+    // the games field, with a post either side (the rope ties on at their rings)
+    scr.bitmap(backdrop('ropefield'), 0, ry);
     const hy = floor - 22;
-    for (const px of [10, W - 12]) { scr.rect(px, hy, 3, 22, C('brown.2')); scr.box(px - 1, hy - 1, 5, 23, COL.ink); }
 
     const ropeDepth = Math.cos(this.angle) * 24; // + = rope swung down/in front
+    // the rope, three fine pixels thick, lit from above
     const drawRope = () => {
-      for (let x = 12; x <= W - 11; x++) {
-        const u = (x - 64) / 53;
-        scr.pset(x, Math.round(hy + 1 + ropeDepth * (1 - u * u)), C('red.1'));
-        scr.pset(x, Math.round(hy + 2 + ropeDepth * (1 - u * u)), C('red.0'));
+      for (let x = 25; x <= 233; x++) {
+        const u = (x / 2 - 64) / 53;
+        const y = Math.round((hy + 1 + ropeDepth * (1 - u * u)) * 2);
+        scr.hpset(x, y, C('red.2')); scr.hpset(x, y + 1, C('red.1')); scr.hpset(x, y + 2, C('red.0'));
       }
     };
     const front = Math.sin(this.angle) < 0 || ropeDepth > 18;

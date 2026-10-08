@@ -6,6 +6,7 @@ import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
 import { HEART, RING, SPARKLE } from '../art/icons.js';
 import { marry } from '../game/pet.js';
 import { findMatch, weddingBells } from '../game/town.js';
+import { backdrop, frontdrop, FEET } from '../art/town.js';
 
 const sym = (g) => (g === 'f' ? '♀' : '♂');
 
@@ -51,18 +52,15 @@ export class MatchmakerScene {
     if (!this.partner) return;
     const pet = this.app.game.pet, p = this.partner;
     const { y: ry, h: rh } = LAYOUT.room;
-    scr.rect(0, ry, W, rh, C('pink.3'));
-    for (let i = 0; i < 10; i++) {
-      const x = (i * 29 + Math.floor(this.t / 40)) % (W + 10) - 5, y = ry + 16 + ((i * 41) % 60);
-      scr.draw(HEART, x, y, { solid: C('pink.2') });
-    }
+    // the matchmaker's parlour; the two meet on the rug
+    scr.bitmap(backdrop('matchmaker'), 0, ry);
     titleBar(scr, '◀ MATCHMAKER', ry);
     const floor = ry + 92;
-    scr.rect(0, floor, W, 4, C('pink.2'));
     scr.bitmap(composePet(pet.phenotype, 'adult', { gender: pet.gender, wear: pet.wear, species: pet.species }), 34 - CANVAS / 2, floor - GROUND);
     const bounce = this.t < 400 ? Math.round(Math.sin(this.t / 400 * Math.PI) * 6) : 0;
     scr.bitmap(composePet(p.phenotype, 'adult', { gender: p.gender, wear: p.wear, expr: Math.floor(this.t / 1600) % 4 === 3 ? 'wink' : 'idle', arms: Math.floor(this.t / 1600) % 4 === 3 ? 'wave' : 'down' }), 94 - CANVAS / 2, floor - GROUND - bounce, true);
-    scr.draw(HEART, W / 2 - 4, floor - 30 - (Math.floor(this.t / 300) % 2), {});
+    scr.draw(HEART, W / 2 - 4, floor - 44 - (Math.floor(this.t / 300) % 2), {});
+    scr.panel(4, floor + 5, W - 8, 31, C('white'), COL.ink);
     text(scr, `${pet.name} ${sym(pet.gender)}`, 34, floor + 8, COL.ink, { align: 'center' });
     text(scr, `${p.name} ${sym(p.gender)}`, 94, floor + 8, COL.ink, { align: 'center' });
     // where they come from: one of the town's families, or a stranger
@@ -106,17 +104,9 @@ class WeddingScene {
     const pet = this.app.game.pet, p = this.partner;
     const { y: ry, h: rh } = LAYOUT.room;
     const t = this.t;
-    scr.rect(0, ry, W, rh, C('white'));
-    // arch of flowers
-    for (let a = 0; a <= 20; a++) {
-      const ang = Math.PI * a / 20;
-      const x = W / 2 - Math.cos(ang) * 50, y = ry + 92 - Math.sin(ang) * 66;
-      scr.rect(Math.round(x) - 2, Math.round(y) - 2, 5, 5, a % 2 ? C('pink.2') : C('gold.2'));
-      scr.pset(Math.round(x), Math.round(y), C('white'));
-    }
-    const floor = ry + 120;
-    scr.rect(0, floor, W, rh - (floor - ry), C('pink.3'));
-    scr.hline(0, floor, W, C('pink.2'));
+    // the chapel in town, under its arch of flowers
+    scr.bitmap(backdrop('chapel'), 0, ry);
+    const floor = ry + FEET / 2;
     const k = Math.min(1, t / 1800);
     const gap = Math.round(30 - k * 14);
     const happy = t > 1800 ? 'happy' : 'idle';
@@ -139,7 +129,10 @@ class WeddingScene {
         scr.draw(SPARKLE, W / 2 - 2 + Math.cos(ang) * 20, floor - 14 + Math.sin(ang) * 12, { frame: i % 2 });
       }
     }
-    text(scr, t < 4200 ? 'CONGRATULATIONS!' : 'A NEW EGG!', W / 2, ry + 8, COL.accent, { align: 'center' });
+    const front = frontdrop('chapel');
+    if (front) scr.bitmap(front, 0, ry);
+    scr.panel(W / 2 - 40, ry + 4, 80, 11, C('white'), COL.ink);
+    text(scr, t < 4200 ? 'CONGRATULATIONS!' : 'A NEW EGG!', W / 2, ry + 7, COL.accent, { align: 'center' });
   }
 }
 
@@ -169,7 +162,10 @@ class AlbumPage {
     scr.rect(0, ry, W, rh, COL.panel);
     titleBar(scr, `◀ GENERATION ${e.generation}`, ry);
     const floor = ry + 76;
-    scr.panel(8, ry + 16, W - 16, 64, C('sky.3'), COL.ink);
+    // a photograph in a white border, on one of the studio's painted backdrops
+    scr.panel(8, ry + 16, W - 16, 64, C('white'), COL.ink);
+    scr.setClip(11, ry + 19, W - 22, 58);
+    scr.bitmap(backdrop('photo' + (e.generation % 4)), 0, ry - 12);
     if (e.partner) {
       scr.bitmap(composePet(e.phenotype, e.stage, { gender: e.gender, wear: e.wear, species: e.species, expr: 'happy' }), 40 - CANVAS / 2, floor - GROUND);
       scr.bitmap(composePet(e.partner.phenotype, 'adult', { gender: e.gender === 'f' ? 'm' : 'f', wear: e.partner.wear, expr: 'happy' }), 88 - CANVAS / 2, floor - GROUND, true);
@@ -177,6 +173,7 @@ class AlbumPage {
     } else {
       scr.bitmap(composePet(e.phenotype, e.stage === 'egg' ? 'baby' : e.stage, { gender: e.gender, wear: e.wear, species: e.species, expr: e.fate === 'died' ? 'sleep' : 'sad' }), W / 2 - CANVAS / 2, floor - GROUND);
     }
+    scr.noClip();
     let y = ry + 86;
     const line = (a, b) => { text(scr, a, 8, y, COL.gray); text(scr, String(b).toUpperCase(), W - 8, y, COL.ink, { align: 'right' }); y += 9; };
     line('NAME', `${e.name} ${sym(e.gender)}`);

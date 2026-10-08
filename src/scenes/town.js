@@ -3,7 +3,7 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, text, ListMenu } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
-import { backdrop, frontdrop, drawVehicle, FEET } from '../art/town.js';
+import { backdrop, frontdrop, drawVehicle, propBitmap, FEET } from '../art/town.js';
 import { HEART, CANE, ZZZ } from '../art/icons.js';
 import { wrap, LINE_H } from '../ui.js';
 import { TOYS, CLOTHES } from '../game/items.js';
@@ -78,6 +78,44 @@ function go(app, locId) {
 // ---------------------------------------------------------------- the trip
 const TRIP_MS = 1800;
 
+// Clouds that drift back as you go: [prop, y, speed, tint]; the balloon passes more of them.
+const CLOUDS = [['cloudB', 16, 0.012, 'violet'], ['cloudC', 42, 0.02, 'pink'], ['cloudA', 60, 0.03, 'violet']];
+const HIGH_CLOUDS = [['cloudD', 88, 0.04, 'violet'], ['cloudB', 112, 0.05, 'pink'], ['cloudC', 76, 0.035, 'violet']];
+// What stands beside the road, the track and the path: [prop, x, colours], one lot every 420 fine pixels.
+const BESIDE = {
+  bus: [['lamp', 40, { glass: 'gold' }], ['bushB', 120, {}], ['coneTree', 200, { leaf: 'mint' }], ['lamp', 280, { glass: 'gold' }], ['bushA', 350, { leaf: 'lime' }]],
+  train: [['treeB', 30, {}], ['bushB', 110, { leaf: 'lime' }], ['treeC', 210, {}], ['bushC', 290, {}], ['coneTree', 360, { leaf: 'mint' }]],
+  walk: [['flowersA', 30, {}], ['bushC', 110, {}], ['mushroomA', 190, { accent: 'red' }], ['flowersB', 270, { accent: 'gold' }], ['fern', 350, {}]],
+};
+const NEAR = [['bushA', 60, {}], ['tallGrass', 200, {}], ['bushB', 330, { leaf: 'lime' }]];
+
+/** Props sliding past at `speed` fine pixels a millisecond, standing on `base` (a normal y). */
+function slide(scr, list, t, speed, base) {
+  for (const [name, at, opts] of list) {
+    const bm = propBitmap(name, opts);
+    const x = (((at - t * speed) % 420) + 420) % 420 - 80;
+    scr.bitmap(bm, (x - bm.at[0]) / 2, base - (bm.at[1] + 1) / 2);
+  }
+}
+
+/** The road, the railway or the footpath, sliding by under the traveller (ground is a normal y). */
+function drawWay(scr, kind, ground, t) {
+  const G = ground * 2, BW = W * 2, off = (step) => Math.floor(t * 0.26) % step;
+  slide(scr, BESIDE[kind], t, 0.12, ground - 7);
+  if (kind === 'bus') {
+    scr.hrect(0, G - 12, BW, 26, C('slate.2'));
+    scr.hrect(0, G - 13, BW, 1, C('slate.3')); scr.hrect(0, G - 12, BW, 1, C('slate.1')); scr.hrect(0, G + 13, BW, 1, C('slate.1'));
+    for (let x = -off(32); x < BW; x += 32) scr.hrect(x, G + 6, 16, 2, C('white'));
+  } else if (kind === 'train') {
+    scr.hrect(0, G - 3, BW, 12, C('cream.2')); scr.hrect(0, G - 4, BW, 1, C('cream.1')); scr.hrect(0, G + 9, BW, 1, C('cream.1'));
+    for (let x = -off(12); x < BW; x += 12) { scr.hrect(x, G + 1, 5, 6, C('brown.1')); scr.hrect(x, G + 1, 5, 1, C('brown.2')); }
+    scr.hrect(0, G - 1, BW, 1, C('mist')); scr.hrect(0, G, BW, 1, C('slate.1'));
+  } else {
+    scr.hrect(0, G - 9, BW, 24, C('cream.3')); scr.hrect(0, G - 10, BW, 1, C('cream.2')); scr.hrect(0, G + 15, BW, 1, C('cream.1'));
+    for (let x = -off(44); x < BW; x += 44) { scr.hrect(x, G + 7, 3, 1, C('cream.1')); scr.hrect(x + 19, G - 4, 2, 1, C('cream.1')); scr.hrect(x + 31, G + 11, 2, 1, C('cream.2')); }
+  }
+}
+
 class TravelScene {
   constructor(app, locId, kind) { this.app = app; this.locId = locId; this.kind = kind; this.t = 0; }
   enter() { this.app.sfx(this.kind === 'walk' ? 'blip' : 'select'); }
@@ -93,27 +131,30 @@ class TravelScene {
   }
   draw(scr) {
     const { y: ry, h: rh } = LAYOUT.room;
-    const k = this.t / TRIP_MS;
+    const t = this.t, k = t / TRIP_MS;
     const pet = this.app.game.pet;
     const air = this.kind === 'balloon';
-    scr.rect(0, ry, W, rh, C(air ? 'sky.2' : 'sky.3'));
-    for (let i = 0; i < 4; i++) { const cx = ((i * 41 - this.t / 25) % (W + 40) + W + 40) % (W + 40) - 20; scr.rect(Math.round(cx), ry + 18 + i * 13, 16, 4, C('white')); }
+    // far country (or open sky) stands still; clouds, the way and what lines it slide past
+    scr.bitmap(backdrop(air ? 'tripSky' : 'trip'), 0, ry);
+    scr.setClip(0, ry, W, rh);
+    (air ? [...CLOUDS, ...HIGH_CLOUDS] : CLOUDS).forEach(([name, y, speed, tint], i) => {
+      const span = W + 70;
+      scr.bitmap(propBitmap(name, { accent: tint }), (((i * 53 - t * speed) % span) + span) % span - 50, ry + y);
+    });
     const ground = ry + 112;
-    if (!air) {
-      scr.rect(0, ground, W, rh - (ground - ry), C(this.kind === 'train' ? 'green.2' : 'slate.2'));
-      if (this.kind === 'train') for (let x = -(Math.floor(this.t / 20) % 8); x < W; x += 8) scr.rect(x, ground + 2, 4, 2, C('brown.1'));
-      else for (let x = -(Math.floor(this.t / 15) % 16); x < W; x += 16) scr.rect(x, ground + 10, 8, 1, C('white'));
-    } else {
-      for (let i = 0; i < 3; i++) scr.rect(0, ry + rh - 30 + i * 10, W, 10, C(['green.2', 'green.1', 'green.0'][i]));
-    }
+    if (!air) drawWay(scr, this.kind, ground, t);
     const x = -40 + k * (W + 80);
     if (this.kind === 'walk') {
-      const bm = composePet(pet.phenotype, pet.stage, { step: Math.floor(this.t / 200) % 2 ? 1 : 2, gender: pet.gender, wear: pet.wear, species: pet.species });
+      const bm = composePet(pet.phenotype, pet.stage, { step: Math.floor(t / 200) % 2 ? 1 : 2, gender: pet.gender, wear: pet.wear, species: pet.species });
       scr.bitmap(bm, Math.round(x - CANVAS / 2), ground - GROUND, true);
     } else {
-      drawVehicle(scr, this.kind, x, air ? ry + 100 + Math.sin(this.t / 300) * 3 : ground, this.t);
+      drawVehicle(scr, this.kind, x, air ? ry + 104 + Math.sin(t / 300) * 3 : ground, t);
     }
-    text(scr, `TO ${LOCATION[this.locId].name.toUpperCase()}...`, W / 2, ry + 6, COL.ink, { align: 'center' });
+    if (!air) slide(scr, NEAR, t, 0.4, ry + rh + 3);
+    scr.noClip();
+    const label = `TO ${LOCATION[this.locId].name.toUpperCase()}...`, lw = label.length * 4 + 8;
+    scr.panel(Math.round(W / 2 - lw / 2), ry + 3, lw, 11, C('white'), COL.ink);
+    text(scr, label, W / 2, ry + 6, COL.ink, { align: 'center' });
   }
 }
 
@@ -363,7 +404,7 @@ class NewsScene {
 }
 
 // ---------------------------------------------------------------- photos
-const BACKDROPS = [['sky.3', 'sky.2'], ['pink.3', 'pink.2'], ['gold.3', 'gold.2'], ['mint.3', 'mint.2']];
+const BACKDROPS = 4; // the studio's painted backdrops: photo0..photo3 in src/art/town.js
 
 class PhotoScene {
   constructor(app) { this.app = app; this.i = Math.max(0, townState(app.game).photos.length - 1); }
@@ -387,11 +428,9 @@ class PhotoScene {
     titleBar(scr, `◀ PHOTOS ${this.photos.length ? `${this.i + 1}/${this.photos.length}` : ''}`, ry);
     const p = this.photos[this.i];
     if (!p) { text(scr, 'No photos yet!', W / 2, ry + 70, COL.gray, { align: 'center' }); return; }
-    const [c1, c2] = BACKDROPS[p.backdrop % BACKDROPS.length];
     scr.panel(14, ry + 18, 100, 92, C('white'), COL.ink);
-    scr.rect(18, ry + 22, 92, 72, C(c1));
-    for (let y = ry + 22; y < ry + 94; y += 6) scr.rect(18, y, 92, 2, C(c2));
     scr.setClip(18, ry + 22, 92, 72);
+    scr.bitmap(backdrop('photo' + (p.backdrop % BACKDROPS)), 0, ry);
     scr.bitmap(composePet(p.phenotype, p.stage, { expr: 'happy', arms: 'wave', gender: p.gender, wear: p.wear, species: p.species }), W / 2 - CANVAS / 2, ry + 90 - GROUND);
     scr.noClip();
     const d = new Date(p.at);
