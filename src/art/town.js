@@ -10,6 +10,7 @@ import { C, RAMP_NAMES, COLORS } from '../engine/palette.js';
 import { W, HD, makeBitmap } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
 import { PROPS, stampProp } from './props.js';
+import './props-home.js';
 import { glyphRows } from '../engine/font.js';
 
 export const RW = W * HD;               // 256

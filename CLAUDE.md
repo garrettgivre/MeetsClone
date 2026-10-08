@@ -31,6 +31,7 @@ src/update.js, sw.js       update check at start; the service worker fetches fil
 src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg
 src/art/menu-icons.js      the ten home-screen menu icons: hi-res sprites (28×28 at double density) made with `hdSprite`, with their own colour KEY
 src/art/props.js           hand-pixelled TOWN props (text grids with colour roles)
+src/art/props-home.js      the home room's props, pixelled by hand (same colour roles)
 src/art/town.js            the 22 town backdrops: a drawing kit + one function per place in SCENES
 tests/                     unit tests (art coverage, genetics, pet sim, save, town, book, discipline, care: baths, toilet, skills, jobs, alerts, cheats)
 tools/                     review pages + art scripts (see below)
@@ -93,7 +94,8 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 ## What the owner cares about (art direction)
 
 - **Original but in the spirit of Tamagotchi:** the town maps (UraTama Town, Tama Street, the space town) and the official backgrounds are the quality bar. Match their quality, not their layouts.
-- **No clip-art or cheap-feeling pixel art, and no rudimentary shapes.** Objects should be hand-pixelled props, not rectangles and lines drawn in code. Code is fine for light, pattern and sky. Generated-by-script is fine as a *draft*, as long as the result reads as hand-pixelled (irregular masonry, jittered fur, rounded silhouettes) and is checked at zoom.
+- **No clip-art or cheap-feeling pixel art, and no rudimentary shapes.** Objects should be hand-pixelled props, not rectangles and lines drawn in code. Code is fine for light, pattern and sky.
+- **Pixel art is drawn by hand, pixel by pixel. Do not use a script to generate or draft it** (the owner, October 2026: "Don't use a script for the pixel art make it yourself pixel by pixel"). Write the text grid row by row in the art file. A check that only reports row lengths is fine. The drafting scripts in `tools/art-scripts/` (`town_kit.py`, `pet_kit.py`, `icon_kit.py`) made earlier art and are kept for reference; don't reach for them for new work. Still drafted by script and not yet redone by hand: the ten menu icons (`src/art/menu-icons.js`) and the three device buttons (`src/art/buttons.js`).
 - **Charm:** buildings and objects with faces, lettered signs, marquee bulbs, hanging stars and hearts, sticker halos, mushroom houses and cone trees. Scenes should be dense around the edges but feel natural. Pets should show every gene: a child with a lamb head should look woolly even without wool hair.
 - **Light from the upper left.** Shading is hue-shifted (cool shadows, warm lights), with outlines in a darker shade of the object's own colour.
 - **Process:** after art changes, look at the result in the review pages (screenshot and zoom) before pushing. For big redesigns, outline the plan first. The owner asks for broad passes ("improve all the art", "continue improving the pet art"): pick the weakest pieces by looking, fix them in batches, verify, push, and say what's left.
@@ -127,7 +129,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.16.1, October 2026)
+## Status (v0.16.2, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -147,7 +149,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Confirmed by the owner on Android Chrome (October 2026):** Settings > Install app installs the game, and care alerts arrive. The browser pane here blocks notifications, so alert changes can only be tested with a stand-in; ask the owner to check on the phone.
 - **Pet-art candidates:** the baby and child shapes (plain blobs with a face; could carry more of the line), the egg, and the lamb cheeks on the small quad and serpent heads (still a little pointed).
 - **Town-art candidates:** the salon mirrors, the boutique clothes rack and the school blackboard.
-- **The home room** (v0.16.1) is built like a town place: `homeRoom(sky, dark)` in `src/art/town.js` lays out props (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`, drafted by `tools/art-scripts/home_props.py`) with the town kit, one cached picture per time of day plus a lights-off version (`dim`). The window panes are holes: `src/scenes/room.js` draws the sky, sun, cloud, moon and stars first and the room over them. Pets stand at `HOME_FEET` (256), lower than in town, and the front layer (toy chest, plant) is drawn over the pet by `drawRoomFront`. Room decorations would slot in here: swap props or colours in `homeScene`.
+- **The home room** (v0.16.1) is built like a town place: `homeRoom(sky, dark)` in `src/art/town.js` lays out props (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`, hand-pixelled in `src/art/props-home.js`, which registers them with `defineProp`) with the town kit, one cached picture per time of day plus a lights-off version (`dim`). The window panes are holes: `src/scenes/room.js` draws the sky, sun, cloud, moon and stars first and the room over them. Pets stand at `HOME_FEET` (256), lower than in town, and the front layer (toy chest, plant) is drawn over the pet by `drawRoomFront`. Room decorations would slot in here: swap props or colours in `homeScene`.
 
 ## Gotchas
 
