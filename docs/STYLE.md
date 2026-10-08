@@ -48,6 +48,8 @@ Each place in town is drawn in code at the room's double density (`src/art/town.
 - Solid shapes are lit from the upper left: a light rim on the top and left, a two-pixel shadow band on the bottom and right, and an outline in a darker shade of their own colour (ink only for small, dark details).
 - Props stand on soft dithered contact shadows, and indoor walls meet the floor with a dithered shadow line.
 - Floors are in perspective (tiles and planks get taller toward the viewer); outdoor scenes have a far layer (skyline, hills or pines) behind the main props.
+- Outdoor places follow the soft, storybook look of the official backgrounds: a high horizon with a big ground plane seen from above, pastel banded skies with sparkles, and everything leafy or cloudy built from puffs (`puff`, `canopy`, `pcloud`, `cloudBank`), lit on top with a lighter highlight, darker underneath, outlined in a deeper shade of their own colour. Grounds get soft lighter patches (`mottle`), winding rivers (`river`), mountains and waterfalls.
+- Bushes, trees and clouds can frame the bottom corners **in front of** the pets: draw them after `k.layer('front')` (and switch back with `k.layer('back')`). Keep them to the corners so they never cover a pet's face.
 - Keep the middle of the floor clear: your pet stands at the left, the resident at the right, and the action buttons cover the bottom.
 - Review with `tools/town.html` (`?only=park&z=3`, `&pets` to see pets for scale).
 

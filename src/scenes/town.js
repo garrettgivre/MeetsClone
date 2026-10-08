@@ -3,7 +3,7 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, text, ListMenu } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
-import { backdrop, drawVehicle, FEET } from '../art/town.js';
+import { backdrop, frontdrop, drawVehicle, FEET } from '../art/town.js';
 import { HEART } from '../art/icons.js';
 import { TOYS, CLOTHES } from '../game/items.js';
 import { FOUNDERS } from '../game/genetics.js';
@@ -238,6 +238,9 @@ export class PlaceScene {
     }
     const pbm = composePet(pet.phenotype, pet.stage, { expr, arms, gender: pet.gender, wear: pet.wear, species: pet.species, t });
     scr.bitmap(pbm, 38 - CANVAS / 2, FEET_Y - GROUND - dy, true);
+    // bushes, trees and clouds that frame the scene sit in front of the pets
+    const fr = frontdrop(this.loc.id);
+    if (fr) scr.bitmap(fr, 0, ry);
 
     // the resident's name and your friendship
     const f = friendship(g, this.loc.id);

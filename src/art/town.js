@@ -17,15 +17,18 @@ export const FEET = 228;                // where pets stand (hi-res, inside the 
 
 const cache = new Map();
 
-/** The backdrop for a place: a cached hi-res bitmap covering the room area. */
-export function backdrop(id) {
+function draw(id) {
   if (!cache.has(id)) {
     const k = kit();
     (SCENES[id] || SCENES.square)(k);
-    cache.set(id, k.bm);
+    cache.set(id, { back: k.bm, front: k.usedFront() ? k.front : null });
   }
   return cache.get(id);
 }
+/** The backdrop for a place: a cached hi-res bitmap covering the room area. */
+export const backdrop = (id) => draw(id).back;
+/** Framing drawn in front of the pets (bushes, clouds at the corners), or null. */
+export const frontdrop = (id) => draw(id).front;
 
 // ---------------------------------------------------------------- colour helpers
 const NEUTRAL = ['ink', 'shade', 'gray', 'silver', 'mist', 'white'];
@@ -47,9 +50,13 @@ const edge = (c) => (dk(c, 2) === c || c.endsWith('.0') || c.endsWith('.1') || c
 // ---------------------------------------------------------------- drawing kit
 function kit() {
   const bm = makeBitmap(RW, RH, true);
+  const front = makeBitmap(RW, RH, true);
+  let target = bm, frontUsed = false;
+  /** Draw on the backdrop ('back') or in front of the pets ('front'). */
+  const layer = (name) => { target = name === 'front' ? front : bm; if (name === 'front') frontUsed = true; };
   const col = (c) => (typeof c === 'string' ? C(c) : c);
-  const set = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < RW && y < RH) bm.px[y * RW + x] = col(c); };
-  const get = (x, y) => bm.px[y * RW + x];
+  const set = (x, y, c) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < RW && y < RH) target.px[y * RW + x] = col(c); };
+  const get = (x, y) => target.px[y * RW + x];
   const rect = (x, y, w, h, c) => { const v = col(c); x = Math.round(x); y = Math.round(y); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, v); };
   const box = (x, y, w, h, c = 'ink') => { rect(x, y, w, 1, c); rect(x, y + h - 1, w, 1, c); rect(x, y, 1, h, c); rect(x + w - 1, y, 1, h, c); };
   const line = (x0, y0, x1, y1, c) => {
@@ -301,8 +308,151 @@ function kit() {
     for (let x = 0; x < RW; x++) set(x, y + Math.round(Math.sin((x / RW) * Math.PI) * sag), 'ink');
     for (let x = 8, k = 0; x < RW; x += 16, k++) { const yy = y + Math.round(Math.sin((x / RW) * Math.PI) * sag) + 2; disc(x, yy, 2, colors[k % colors.length]); set(x - 1, yy - 1, 'white'); }
   };
+  // ---- soft, puffy shapes (the cel-shaded look of the town scenes) ----
+  /** One round puff: lit on top, darker underneath, a soft outline (darker on the bottom). */
+  const puff = (cx, cy, r, c, { line = dk(c, 2), hi = lt(c) } = {}) => {
+    for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
+      const d = Math.sqrt(x * x + y * y);
+      if (d > r + 0.3) continue;
+      let v = c;
+      const k = x * 0.45 + y; // toward the lower right
+      if (k > r * 0.5) v = dk(c);
+      else if (k < -r * 0.45 && d < r - 1.5) v = hi;
+      if (d > r - 1) v = k > -r * 0.2 ? line : dk(c);
+      set(cx + x, cy + y, v);
+    }
+    if (r >= 4) { set(cx - r * 0.4, cy - r * 0.45, lt(hi)); set(cx - r * 0.4 + 1, cy - r * 0.45, lt(hi)); }
+  };
+  /** A cluster of puffs filling roughly w x h (tree canopies, bushes, hedges), drawn back to front. */
+  const canopy = (x, y, w, h, c, { seed = 1, r = 9, line } = {}) => {
+    // a golden-angle spiral fills a rounded clump evenly; puffs are bigger in the middle
+    const pts = [];
+    const n = Math.max(3, Math.round((w * h) / (r * r * 1.5)));
+    const cx = x + w / 2, cy = y + h / 2, ax = Math.max(1, w / 2 - r * 0.8), ay = Math.max(1, h / 2 - r * 0.8);
+    for (let i = 0; i < n; i++) {
+      const a = i * 2.399963 + seed, rr = Math.sqrt((i + 0.5) / n);
+      pts.push([cx + Math.cos(a) * rr * ax, cy + Math.sin(a) * rr * ay, r * (1.15 - rr * 0.4) * (0.9 + ((i * 7 + seed) % 3) * 0.08)]);
+    }
+    pts.sort((a, b) => a[1] - b[1]);
+    for (const [px, py, pr] of pts) puff(px, py, Math.round(pr), c, line ? { line } : {});
+  };
+  /** A pastel cloud: white puffs with a tinted underside. */
+  const pcloud = (x, y, w, tint = 'violet.3', s = 1) => {
+    const n = Math.max(3, Math.round(w / (10 * s)));
+    for (let i = 0; i < n; i++) {
+      const px = x + (i + 0.5) * (w / n), r = Math.round((6 + ((i * 5) % 4) + (i === n >> 1 ? 4 : 0)) * s);
+      const py = y - (i === 0 || i === n - 1 ? 0 : Math.round(r * 0.5));
+      puff(px, py, r, 'white', { line: tint, hi: 'white' });
+    }
+    for (let i = 0; i < w; i++) { set(x + i, y + 5 * s, tint); if ((i & 1) === 0) set(x + i, y + 4 * s, tint); }
+    rect(x + 2, y + 6 * s, w - 4, 1, dk(tint));
+  };
+  /** Soft horizontal sky bands with dithered seams. */
+  const bands = (colors, y0 = 0, y1 = HZ) => {
+    const h = (y1 - y0) / colors.length;
+    for (let y = y0; y < y1; y++) {
+      const i = Math.min(colors.length - 1, Math.floor((y - y0) / h)), f = (y - y0) / h - i;
+      for (let x = 0; x < RW; x++) {
+        const next = colors[Math.min(colors.length - 1, i + 1)];
+        set(x, y, f > 0.82 && ((x + y) & 1) === 0 ? next : f > 0.92 ? next : colors[i]);
+      }
+    }
+  };
+  /** A soft mountain: lit left face, shaded right face, optional snow cap. */
+  const mountain = (cx, by, w, h, c, { snow = false } = {}) => {
+    for (let j = 0; j < h; j++) {
+      const t = j / h, half = Math.round((w / 2) * Math.pow(t, 0.6));
+      const y = by - h + j;
+      for (let i = -half; i < half; i++) {
+        let v = i < -half * 0.1 + Math.sin(j / 5) * 2 ? lt(c) : c;
+        if (i > half * 0.45) v = dk(c);
+        if (snow && t < 0.22) v = i > half * 0.3 ? 'mist' : 'white';
+        set(cx + i, y, v);
+      }
+      set(cx + half - 1, y, dk(c, 2));
+    }
+  };
+  /** A winding river across the ground with light streaks and sandy banks. */
+  const river = (y0, amp = 8, w = 14, c = 'sky.2', bank = 'cream.3', f = 34) => {
+    for (let x = 0; x < RW; x++) {
+      const cy = y0 + Math.sin(x / f) * amp + x * 0.08, half = w / 2 + x * 0.04;
+      for (let y = Math.round(cy - half - 3); y < cy + half + 3; y++) set(x, y, y < cy - half || y > cy + half ? bank : c);
+      set(x, Math.round(cy - half - 3), dk(bank)); set(x, Math.round(cy + half + 2), dk(bank));
+      if (x % 9 < 4) set(x, Math.round(cy - half / 3 + ((x * 7) % 5) - 2), lt(c));
+      if (x % 13 === 0) set(x, Math.round(cy + half / 2), 'white');
+    }
+  };
+  /** Lighter and darker patches on a ground (soft dithered blobs). */
+  const mottle = (y0, y1, c, n = 14, seed = 3) => {
+    for (let i = 0; i < n; i++) {
+      const cx = (i * 61 + seed * 17) % RW, cy = y0 + ((i * 37 + seed * 11) % Math.max(1, y1 - y0)), rx = 10 + (i * 7) % 16, ry = 3 + (i % 3);
+      for (let y = -ry; y <= ry; y++) for (let x = -rx; x <= rx; x++) if ((x * x) / (rx * rx) + (y * y) / (ry * ry) <= 1 && (((x + y) & 1) === 0 || Math.abs(y) < ry - 1)) set(cx + x, cy + y, c);
+    }
+  };
+  /** A chubby five-pointed star. */
+  const star5 = (cx, cy, r, c) => {
+    const pts = [];
+    for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.5 : r; pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); }
+    const inside = (x, y) => { let k = false; for (let i = 0, j = 9; i < 10; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) k = !k; } return k; };
+    for (let y = Math.floor(cy - r); y <= cy + r; y++) for (let x = Math.floor(cx - r); x <= cx + r; x++) {
+      if (!inside(x + 0.5, y + 0.5)) continue;
+      const rim = !inside(x + 1.5, y + 0.5) || !inside(x - 0.5, y + 0.5) || !inside(x + 0.5, y + 1.5) || !inside(x + 0.5, y - 0.5);
+      set(x, y, rim ? dk(c, 2) : y > cy + r * 0.15 ? dk(c) : c);
+    }
+    set(cx - 1, cy - 1, 'white');
+  };
+  const rainbow = (cx, cy, r, colors = ['red.3', 'orange.3', 'gold.3', 'mint.3', 'sky.3', 'violet.3'], bw = 3) => {
+    colors.forEach((c, i) => {
+      const r0 = r - i * bw;
+      for (let y = -r0; y <= 0; y++) for (let x = -r0; x <= r0; x++) { const d = Math.sqrt(x * x + y * y); if (d <= r0 && d > r0 - bw) set(cx + x, cy + y, c); }
+    });
+  };
+  /**
+   * A bank of cloud: a scalloped top edge, a soft highlight under it, filled
+   * down to the bottom. Stack banks back to front for a sea of clouds.
+   */
+  const cloudBank = (y, c, { line = dk(c), seed = 1, size = 14 } = {}) => {
+    const rnd = (i) => { const v = Math.sin((i + seed * 31) * 12.9898) * 43758.5453; return v - Math.floor(v); };
+    const bumps = [];
+    for (let x = -size - rnd(0) * size, i = 1; x < RW + size; i++) { const r = Math.round(size * (0.7 + rnd(i) * 0.7)); bumps.push([x, y + Math.round((rnd(i + 50) - 0.5) * size * 0.5), r]); x += r * (1.2 + rnd(i + 9) * 0.5); }
+    const top = new Array(RW).fill(Infinity), owner = new Array(RW).fill(-1);
+    bumps.forEach(([cx, cy, r], b) => { for (let x = Math.max(0, Math.ceil(cx - r)); x < Math.min(RW, cx + r); x++) { const t = cy - Math.sqrt(r * r - (x - cx) ** 2); if (t < top[x]) { top[x] = t; owner[x] = b; } } });
+    for (let x = 0; x < RW; x++) {
+      if (!isFinite(top[x])) continue;
+      const t = Math.round(top[x]);
+      for (let yy = t; yy < RH; yy++) set(x, yy, yy < t + 3 ? 'white' : yy < t + 5 && (x + yy) % 2 === 0 ? 'white' : c);
+      set(x, t, line);
+      if (x > 0 && owner[x] !== owner[x - 1]) for (let j = 0; j < 6; j++) set(x, t + j, line); // the crease between two puffs
+    }
+  };
+  const sparkle = (x, y, c = 'white') => { set(x, y, c); set(x - 1, y, c); set(x + 1, y, c); set(x, y - 1, c); set(x, y + 1, c); set(x, y - 2, c); set(x, y + 2, c); };
+  const mushroom = (x, y, c = 'pink.2', s = 1) => {
+    shadow(x, y, 6 * s, dk('green.2'));
+    rect(x - 1 * s, y - 6 * s, 3 * s, 6 * s, 'cream.3');
+    ellipse(x, y - 7 * s, 6 * s, 4 * s, c, { outline: dk(c, 2), shade: true });
+    set(x - 2 * s, y - 9 * s, 'white'); set(x + 2 * s, y - 8 * s, 'white');
+  };
+  const rock = (x, y, r = 6, c = 'slate.3') => { shadow(x, y, r + 2); puff(x, y - r * 0.6, r, c); };
+  /** A rounded, striped tall bush (the soft conifers that frame the scenes). */
+  const conifer = (x, y, w = 22, h = 50, c = 'green.2') => {
+    for (let j = 0; j < h; j++) {
+      const t = j / h, half = Math.round((w / 2) * Math.min(1, Math.sqrt(t * 3)));
+      for (let i = -half; i < half; i++) {
+        let v = (j % 10) < 2 ? lt(c) : c;
+        if (i > half * 0.4) v = dk(c);
+        if (i < -half * 0.5 && (j % 10) < 4) v = lt(c);
+        set(x + i, y - h + j, v);
+      }
+      set(x - half, y - h + j, dk(c, 2)); set(x + half - 1, y - h + j, dk(c, 2));
+    }
+  };
+  const waterfall = (x, y0, y1, w = 14, c = 'sky.3') => {
+    for (let y = y0; y < y1; y++) for (let i = 0; i < w; i++) set(x + i, y, (i + Math.floor(y / 3)) % 5 === 0 ? 'white' : i < 2 || i > w - 3 ? 'sky.2' : c);
+    for (let i = -4; i < w + 4; i += 3) puff(x + i, y1, 4, 'white', { line: 'sky.2', hi: 'white' });
+  };
+
   return {
-    bm, set, get, rect, box, line, dither, block, flat, ellipse, disc, ball, shadow, sky, cloud, skyline, hills, grass, path,
+    bm, front, layer, usedFront: () => frontUsed, set, cloudBank, puff, canopy, pcloud, bands, mountain, river, mottle, star5, rainbow, sparkle, mushroom, rock, conifer, waterfall, get, rect, box, line, dither, block, flat, ellipse, disc, ball, shadow, sky, cloud, skyline, hills, grass, path,
     tiles, planks, cobbles, wall, floorShadow, tree, pine, bush, flower, flowers, pot, lamp, bench, window: window_, door, awning,
     shopFront, counter, shelf, table, chair, rug, frame, clock, water, star, curtain, bunting, stringLights,
   };
@@ -312,8 +462,10 @@ function kit() {
 const SCENES = {
   // ---- downtown ----
   square(k) {
-    k.sky('sky.2', 'sky.3'); k.cloud(60, 26); k.cloud(196, 40, 0.8);
+    k.bands(['sky.2', 'sky.2', 'sky.3'], 0, HZ);
+    k.pcloud(30, 34, 60, 'violet.3'); k.pcloud(182, 48, 56, 'pink.3', 0.9);
     k.skyline(HZ - 60, 'sky.2', 3);
+    k.canopy(-8, HZ - 92, 44, 40, 'green.2', { seed: 21, r: 9 }); k.canopy(222, HZ - 98, 44, 42, 'green.2', { seed: 22, r: 9 });
     k.shopFront(4, HZ, 72, 74, 'pink.3', ['pink.2', 'white'], { sign: 'pink.1' });
     k.shopFront(180, HZ, 72, 80, 'gold.3', ['sky.2', 'white'], { sign: 'sky.1' });
     // town hall
@@ -334,43 +486,56 @@ const SCENES = {
     for (const [dx, dy] of [[-10, -8], [10, -8], [-16, -2], [16, -2], [0, -16], [-5, -13], [5, -13]]) { k.set(128 + dx, 194 + dy, 'sky.3'); k.set(128 + dx, 195 + dy, 'white'); }
     k.lamp(26, 246); k.lamp(230, 246);
     k.pot(56, 214, 'green.2', 'brown.2'); k.pot(200, 214, 'green.2', 'brown.2');
+    k.layer('front');
+    k.canopy(-14, 204, 46, 44, 'green.2', { seed: 23, r: 9 }); k.flowers(4, 246, 4, 'pink.2');
+    k.canopy(224, 206, 46, 42, 'green.2', { seed: 24, r: 9 }); k.flowers(232, 248, 4, 'gold.2');
+    k.layer('back');
   },
   park(k) {
-    k.sky('sky.2', 'sky.3'); k.cloud(70, 30); k.cloud(204, 22, 0.7);
-    k.hills(HZ - 8, 'green.3', 8, 31, 20); k.hills(HZ, 'green.2', 5, 19);
-    for (let x = 10; x < RW; x += 34) k.pine(x, HZ - 6, 22, 'green.1');
-    k.grass(HZ); k.path(HZ, 'cream.2');
-    k.tree(30, HZ + 30, 1.1); k.tree(226, HZ + 22, 0.95);
-    // pond with lily pads, reeds and a duck
-    k.ellipse(212, 236, 36, 11, 'sky.2', { outline: 'blue.1' }); k.ellipse(206, 233, 20, 4, 'sky.3');
-    k.ellipse(196, 238, 5, 2, 'green.2'); k.ellipse(228, 240, 4, 2, 'green.2'); k.set(228, 239, 'pink.2');
-    for (const x of [182, 185, 246]) k.rect(x, 222, 1, 10, 'green.1');
-    k.ellipse(214, 230, 5, 3, 'white', { outline: 'mist' }); k.disc(219, 227, 3, 'white'); k.set(222, 227, 'orange.2'); k.set(220, 226, 'ink');
-    k.bench(16, 222);
-    k.flowers(146, 198, 6, 'pink.2'); k.flowers(72, 204, 5, 'violet.2');
-    for (const [x, y] of [[150, 150], [164, 140]]) { k.set(x, y, 'pink.2'); k.set(x + 2, y, 'pink.2'); k.set(x + 1, y + 1, 'ink'); } // butterflies
+    k.bands(['sky.2', 'sky.2', 'sky.3'], 0, 112);
+    k.pcloud(12, 40, 58, 'violet.3'); k.pcloud(146, 28, 78, 'pink.3', 1.1); k.pcloud(92, 74, 40, 'violet.3', 0.8);
+    k.mountain(40, 112, 140, 26, 'mint.2'); k.mountain(150, 112, 110, 16, 'sky.1'); k.mountain(232, 112, 120, 30, 'mint.2');
+    k.rect(0, 108, RW, RH - 108, 'green.3');
+    k.mottle(114, 300, 'lime.3', 18, 2); k.mottle(124, 300, 'green.2', 9, 5);
+    // a grove on the right
+    for (const x of [178, 198, 220, 240]) { k.rect(x, 120, 5, 22, 'brown.2'); k.rect(x, 120, 2, 22, 'brown.3'); k.shadow(x + 2, 142, 8, 'green.1'); }
+    k.canopy(160, 70, 104, 60, 'green.2', { seed: 2, r: 12 });
+    for (const [x, y] of [[18, 134], [44, 146], [116, 128], [148, 146], [92, 148], [70, 124]]) { k.shadow(x, y + 5, 6, 'green.1'); k.puff(x, y, 5, 'lime.2'); }
+    k.river(170, 6, 16, 'sky.2', 'cream.3');
+    for (const [x, y, c] of [[30, 208, 'pink.2'], [142, 216, 'gold.2'], [212, 204, 'white'], [58, 132, 'pink.2'], [104, 138, 'white'], [126, 206, 'violet.2']]) k.flower(x, y, c);
+    k.mushroom(158, 212, 'red.2'); k.mushroom(168, 217, 'red.2', 0.7);
+    // framing in front of the pets
+    k.layer('front');
+    k.conifer(8, 262, 34, 86, 'green.1'); k.conifer(34, 280, 28, 70, 'green.2');
+    k.canopy(208, 196, 70, 60, 'green.2', { seed: 4, r: 11 }); k.conifer(250, 270, 26, 84, 'green.1');
+    k.layer('back');
   },
   playground(k) {
-    k.sky('sky.2', 'sky.3'); k.cloud(46, 26); k.cloud(200, 50, 0.6);
-    k.hills(HZ - 18, 'green.3', 4, 27);
-    // picket fence and bushes
-    for (let x = 2; x < RW; x += 12) { k.rect(x, HZ - 22, 7, 22, 'white'); for (let j = 0; j < 3; j++) k.rect(x + j, HZ - 25 + j, 7 - j * 2, 1, 'white'); k.rect(x + 6, HZ - 20, 1, 20, 'mist'); }
-    k.rect(0, HZ - 16, RW, 3, 'white'); k.rect(0, HZ - 7, RW, 3, 'white');
-    k.grass(HZ);
-    k.ellipse(128, 238, 96, 22, 'gold.3', { outline: 'gold.2' }); k.dither(40, 228, 176, 20, C('gold.2')); // sandpit
+    k.bands(['sky.2', 'sky.3'], 0, 110);
+    k.pcloud(26, 34, 64, 'pink.3'); k.pcloud(166, 50, 54, 'violet.3', 0.9);
+    k.canopy(-12, 62, 112, 46, 'green.2', { seed: 3, r: 11 }); k.canopy(150, 58, 124, 50, 'green.2', { seed: 6, r: 11 });
+    k.rect(0, 104, RW, RH - 104, 'green.3'); k.mottle(110, 300, 'lime.3', 16, 4);
+    for (let x = 2; x < RW; x += 12) { k.rect(x, 92, 7, 20, 'white'); k.rect(x + 6, 94, 1, 18, 'mist'); for (let j = 0; j < 3; j++) k.rect(x + j, 89 + j, 7 - j * 2, 1, 'white'); }
+    k.rect(0, 97, RW, 3, 'white'); k.rect(0, 105, RW, 3, 'white'); k.dither(0, 112, RW, 2, C('green.2'));
+    // sand pit
+    k.ellipse(128, 222, 116, 34, 'gold.3', { outline: 'gold.1' });
+    for (let i = 0; i < 40; i++) k.set(30 + (i * 47) % 196, 200 + (i * 13) % 40, 'gold.2');
     // swing set
-    k.shadow(62, 216, 46, 'green.0');
-    for (const x of [20, 102]) { k.line(x, 216, x + 6, 114, 'red.1'); k.line(x + 1, 216, x + 7, 114, 'red.1'); k.line(x + 14, 216, x + 8, 114, 'red.1'); k.line(x + 15, 216, x + 9, 114, 'red.1'); }
-    k.block(20, 110, 98, 6, 'red.2');
-    for (const sx of [40, 76]) { k.rect(sx, 116, 1, 62, 'slate.1'); k.rect(sx + 14, 116, 1, 62, 'slate.1'); k.block(sx - 2, 178, 19, 5, 'sky.2'); }
-    // slide with ladder
-    k.shadow(200, 218, 34, 'green.0');
-    k.rect(166, 120, 3, 98, 'sky.1'); k.rect(186, 120, 3, 98, 'sky.1');
-    for (let y = 130; y < 216; y += 10) k.rect(166, y, 22, 2, 'sky.2');
-    k.block(162, 114, 30, 8, 'sky.2');
-    for (let i = 0; i < 64; i++) { const x = 190 + i * 0.85, y = 120 + i * 1.5; k.rect(x, y, 13, 2, 'gold.2'); k.set(x, y, 'gold.1'); k.set(x + 12, y + 1, 'gold.1'); }
-    // bucket and spade
-    k.block(120, 236, 12, 10, 'red.2'); k.rect(122, 233, 8, 1, 'ink'); k.line(140, 244, 148, 232, 'slate.1');
+    const gy = 196;
+    k.shadow(62, gy, 46, 'green.2');
+    for (const x of [20, 102]) { k.line(x, gy, x + 6, gy - 96, 'red.1'); k.line(x + 1, gy, x + 7, gy - 96, 'red.2'); k.line(x + 14, gy, x + 8, gy - 96, 'red.1'); k.line(x + 15, gy, x + 9, gy - 96, 'red.0'); }
+    k.block(20, gy - 100, 98, 6, 'red.2');
+    for (const sx of [40, 76]) { k.rect(sx, gy - 94, 1, 60, 'slate.1'); k.rect(sx + 14, gy - 94, 1, 60, 'slate.1'); k.block(sx - 2, gy - 34, 19, 5, 'sky.2'); }
+    // slide with a ladder
+    k.shadow(200, gy + 2, 34, 'green.2');
+    k.rect(166, gy - 96, 3, 96, 'sky.1'); k.rect(186, gy - 96, 3, 96, 'sky.1');
+    for (let y = gy - 86; y < gy; y += 10) k.rect(166, y, 22, 2, 'sky.2');
+    k.block(162, gy - 102, 30, 8, 'sky.2');
+    for (let i = 0; i < 64; i++) { const x = 190 + i * 0.85, y = gy - 96 + i * 1.5; k.rect(x, y, 13, 2, 'gold.2'); k.set(x, y, 'gold.1'); k.set(x + 12, y + 1, 'gold.1'); }
+    k.block(120, 226, 12, 10, 'red.2'); k.rect(122, 223, 8, 1, 'ink'); k.line(140, 234, 148, 222, 'slate.1');
+    k.layer('front');
+    k.canopy(-10, 206, 56, 50, 'green.2', { seed: 7, r: 10 }); k.canopy(222, 212, 48, 44, 'lime.2', { seed: 8, r: 9 });
+    k.layer('back');
   },
   cafe(k) {
     k.wall('cream.3', 'pink.3', 'stripes', { wainscot: 'pink.2' });
@@ -590,48 +755,72 @@ const SCENES = {
   },
   // ---- seaside & country ----
   beach(k) {
-    k.sky('sky.1', 'sky.2', 118);
-    k.disc(210, 34, 16, 'gold.3', { outline: 'gold.2' }); for (let a = 0; a < 8; a++) k.line(210 + Math.cos(a * 0.785) * 20, 34 + Math.sin(a * 0.785) * 20, 210 + Math.cos(a * 0.785) * 26, 34 + Math.sin(a * 0.785) * 26, 'gold.3');
-    k.cloud(70, 40, 0.8);
-    k.water(118, 'sky.2');
-    k.rect(0, 118, RW, 1, 'sky.3'); k.ellipse(60, 120, 18, 3, 'slate.2'); k.rect(57, 112, 6, 6, 'white'); // island with a sail
-    for (let i = 0; i < 12; i++) k.star((i * 43) % RW, 126 + (i * 17) % 40, 'white');
-    // sand, foam line
-    for (let y = 168; y < RH; y++) k.rect(0, y, RW, 1, y < 176 ? 'gold.3' : 'gold.3');
-    for (let x = 0; x < RW; x++) { const y = 168 + Math.round(Math.sin(x / 16) * 2); k.set(x, y, 'white'); k.set(x, y - 1, 'sky.3'); if ((x & 1) === 0) k.set(x, y + 2, 'white'); }
-    for (let i = 0; i < 60; i++) k.set((i * 47) % RW, 180 + (i * 29) % 130, 'gold.2');
+    k.bands(['sky.1', 'sky.2', 'sky.3'], 0, 92);
+    k.disc(212, 30, 15, 'gold.3', { outline: 'gold.2' });
+    for (let a = 0; a < 8; a++) k.line(212 + Math.cos(a * 0.785) * 19, 30 + Math.sin(a * 0.785) * 19, 212 + Math.cos(a * 0.785) * 25, 30 + Math.sin(a * 0.785) * 25, 'gold.3');
+    k.pcloud(20, 40, 70, 'pink.3'); k.pcloud(124, 58, 48, 'violet.3', 0.8);
+    // the sea, deeper toward the horizon
+    k.rect(0, 92, RW, 6, 'blue.2'); k.rect(0, 98, RW, 22, 'sky.1'); k.rect(0, 120, RW, 30, 'sky.2');
+    for (let y = 96, r = 0; y < 148; y += 5 + r, r++) for (let x = (y * 7) % 30; x < RW; x += 30) { k.rect(x, y, 6 + r * 2, 1, 'sky.3'); }
+    for (let i = 0; i < 14; i++) k.sparkle((i * 43) % RW, 104 + (i * 17) % 40);
+    k.ellipse(70, 96, 22, 4, 'gold.2'); k.rect(66, 84, 2, 10, 'brown.1'); k.ellipse(67, 84, 8, 3, 'green.2'); // a little island
+    // sand
+    k.rect(0, 148, RW, RH - 148, 'gold.3'); k.mottle(160, 300, 'cream.3', 14, 9); k.mottle(170, 300, 'gold.2', 6, 3);
+    for (let x = 0; x < RW; x++) { const y = 148 + Math.round(Math.sin(x / 15) * 2); k.set(x, y, 'white'); k.set(x, y - 1, 'sky.3'); k.set(x, y + 1, 'sky.3'); if ((x & 1) === 0) k.set(x, y + 3, 'white'); }
     // palm tree
-    k.shadow(40, 214, 26, 'gold.1');
-    for (let j = 0; j < 110; j++) { const x = 30 + Math.round(Math.sin(j / 40) * 8); k.rect(x, 104 + j, 7, 1, j % 8 < 2 ? 'brown.1' : 'brown.2'); }
-    for (const [dx, dy, r] of [[-26, 4, 18], [-12, -6, 16], [10, -6, 16], [26, 6, 18], [0, 8, 14]]) k.ellipse(34 + dx, 98 + dy, r, 5, 'green.2', { outline: 'green.0', shade: true });
-    k.disc(30, 106, 3, 'brown.1'); k.disc(37, 107, 3, 'brown.1');
-    // umbrella, towel, sandcastle, crab
-    k.shadow(206, 222, 34, 'gold.1');
-    k.rect(204, 160, 3, 66, 'white');
-    for (let j = 0; j < 16; j++) { const half = Math.round(Math.sqrt(Math.max(0, 1 - ((16 - j) / 16) ** 2)) * 34); for (let i = -half; i < half; i++) k.set(206 + i, 144 + j, Math.floor((i + 34) / 11) % 2 ? 'white' : 'red.2'); }
-    k.rect(172, 160, 68, 1, 'red.0');
-    k.block(150, 230, 44, 14, 'sky.2'); for (let x = 152; x < 192; x += 6) k.rect(x, 231, 3, 12, 'white');
-    k.block(108, 214, 26, 16, 'gold.2'); k.block(112, 204, 8, 10, 'gold.2'); k.block(124, 206, 8, 8, 'gold.2'); k.rect(115, 198, 1, 6, 'ink'); k.rect(116, 198, 4, 3, 'red.2');
-    k.ellipse(84, 242, 6, 4, 'red.2', { outline: 'red.0', shade: true }); k.set(80, 238, 'ink'); k.set(88, 238, 'ink'); k.line(77, 240, 74, 236, 'red.1'); k.line(91, 240, 94, 236, 'red.1');
-    k.disc(64, 262, 3, 'pink.2', { outline: 'pink.0' });
+    k.shadow(40, 202, 30, 'gold.1');
+    for (let j = 0; j < 108; j++) { const x = 28 + Math.round(Math.sin(j / 40) * 8); k.rect(x, 94 + j, 8, 1, j % 8 < 2 ? 'brown.1' : 'brown.2'); k.set(x, 94 + j, 'brown.0'); }
+    for (const [dx, dy, r] of [[-26, 4, 18], [-12, -6, 16], [10, -6, 16], [26, 6, 18], [0, 8, 14]]) k.ellipse(34 + dx, 88 + dy, r, 5, 'green.2', { outline: 'green.0', shade: true });
+    k.puff(30, 96, 3, 'brown.1'); k.puff(37, 97, 3, 'brown.1');
+    // umbrella, towel and a sandcastle
+    k.shadow(206, 206, 34, 'gold.1');
+    k.rect(204, 144, 3, 64, 'white');
+    for (let j = 0; j < 16; j++) { const half = Math.round(Math.sqrt(Math.max(0, 1 - ((16 - j) / 16) ** 2)) * 34); for (let i = -half; i < half; i++) k.set(206 + i, 128 + j, Math.floor((i + 34) / 11) % 2 ? 'white' : 'red.2'); }
+    k.rect(172, 144, 68, 1, 'red.0');
+    k.block(150, 214, 44, 14, 'sky.2'); for (let x = 152; x < 192; x += 6) k.rect(x, 215, 3, 12, 'white');
+    k.block(100, 168, 28, 16, 'gold.2'); k.block(104, 158, 8, 10, 'gold.2'); k.block(116, 160, 8, 8, 'gold.2'); k.rect(107, 152, 1, 6, 'ink'); k.rect(108, 152, 4, 3, 'red.2');
+    k.star5(140, 204, 6, 'orange.2');
+    k.puff(64, 214, 3, 'pink.3');
+    k.layer('front');
+    for (const [x, c] of [[6, 'green.2'], [16, 'green.1'], [244, 'green.2'], [252, 'green.1']]) for (let i = 0; i < 6; i++) k.line(x, 258, x - 12 + i * 5, 210 + Math.abs(i - 3) * 6, c);
+    k.rock(232, 250, 10, 'slate.3'); k.star5(232, 236, 5, 'pink.2');
+    k.layer('back');
   },
   forest(k) {
-    k.sky('mint.2', 'mint.3');
-    for (let i = 0; i < 9; i++) k.pine(8 + i * 30, HZ - 20, 46 + (i % 3) * 10, 'green.0');
-    for (let i = 0; i < 7; i++) k.tree(20 + i * 38, HZ - 2 + (i % 2) * 4, 0.75, 'green.1');
-    k.grass(HZ, 'green.1');
+    k.bands(['sky.2', 'sky.3', 'sky.3'], 0, 112);
+    k.pcloud(120, 30, 64, 'violet.3');
+    k.mountain(206, 112, 110, 84, 'violet.3'); k.mountain(250, 112, 70, 56, 'violet.2');
+    k.waterfall(198, 40, 112, 12);
+    // walls of trees on both sides
+    for (const x of [8, 26, 46, 64]) { k.rect(x, 70, 5, 52, 'brown.2'); k.rect(x, 70, 2, 52, 'brown.3'); }
+    k.canopy(-16, 26, 100, 66, 'green.1', { seed: 1, r: 13 });
+    for (const x of [230, 246]) { k.rect(x, 76, 5, 46, 'brown.2'); }
+    k.canopy(216, 52, 60, 46, 'green.1', { seed: 5, r: 12 });
+    // the glade
+    k.rect(0, 112, RW, RH - 112, 'mint.2');
+    k.ellipse(120, 200, 150, 76, 'mint.3');
+    k.mottle(118, 300, 'green.3', 12, 7);
+    k.river(118, 3, 9, 'sky.3', 'mint.2', 50);
+    k.dither(0, 104, RW, 8, C('white')); // morning mist
     // light shafts
-    for (const x0 of [80, 150]) for (let y = 0; y < HZ + 40; y++) for (let x = x0 + y * 0.3; x < x0 + y * 0.3 + 14; x++) if (((x + y) & 3) === 0) k.set(x, y, 'mint.3');
-    k.tree(26, HZ + 64, 1.25, 'green.2'); k.tree(234, HZ + 54, 1.15, 'green.2');
-    // mushrooms, berry bush, log, ferns
-    for (const [x, y, s] of [[96, 226, 1], [106, 232, 0.7], [170, 218, 0.8]]) { k.shadow(x, y, 7 * s); k.rect(x - 2, y - 7 * s, 4, 7 * s, 'cream.3'); k.ellipse(x, y - 8 * s, 8 * s, 5 * s, 'red.2', { outline: 'red.0', shade: true }); k.set(x - 3 * s, y - 10 * s, 'white'); k.set(x + 2 * s, y - 9 * s, 'white'); }
-    k.bush(146, 206, 'green.2', 18); for (const [x, y] of [[138, 196], [146, 194], [154, 198], [150, 202]]) { k.disc(x, y, 2, 'violet.1'); k.set(x - 1, y - 1, 'violet.3'); }
-    k.shadow(128, 246, 30); k.block(98, 228, 56, 14, 'brown.1'); for (let x = 104; x < 150; x += 8) k.rect(x, 230, 1, 10, 'brown.0'); k.ellipse(98, 235, 5, 7, 'brown.2', { outline: 'brown.0' }); k.disc(98, 235, 2, 'brown.0');
-    for (const x of [60, 200]) for (let i = 0; i < 5; i++) k.line(x, 216, x - 10 + i * 5, 202 + Math.abs(i - 2) * 2, 'green.2');
+    for (const x0 of [86, 140]) for (let y = 0; y < 180; y++) for (let x = x0 + y * 0.3; x < x0 + y * 0.3 + 12; x++) if (((x + y) & 3) === 0) k.set(x, y, 'mint.3');
+    // a pond with lily pads and lotus flowers
+    k.ellipse(218, 182, 36, 13, 'sky.2', { outline: 'sky.1' }); k.ellipse(212, 179, 22, 5, 'sky.3');
+    for (const [x, y] of [[200, 184], [230, 178], [222, 190]]) { k.ellipse(x, y, 5, 2, 'green.2', { outline: 'green.1' }); }
+    k.puff(230, 175, 3, 'pink.3'); k.puff(200, 181, 3, 'pink.3');
+    // mushrooms, rocks and ferns
+    for (const [x, y, s] of [[34, 196, 1], [46, 204, 0.8], [24, 210, 0.7]]) k.mushroom(x, y, 'pink.2', s);
+    k.rock(84, 214, 7); k.rock(174, 156, 5);
+    for (const x of [60, 150]) for (let i = 0; i < 5; i++) k.line(x, 180, x - 10 + i * 5, 166 + Math.abs(i - 2) * 2, 'green.2');
+    k.layer('front');
+    k.canopy(-20, 190, 70, 70, 'green.1', { seed: 9, r: 13 }); k.canopy(214, 200, 64, 60, 'green.2', { seed: 10, r: 12 });
+    k.pcloud(-6, 248, 60, 'mist', 1.2); k.pcloud(206, 252, 60, 'mist', 1.2);
+    k.layer('back');
   },
   fair(k) {
-    k.sky('pink.3', 'gold.3');
-    k.cloud(196, 22, 0.7);
+    k.bands(['sky.2', 'pink.3', 'gold.3'], 0, HZ);
+    k.pcloud(150, 24, 60, 'pink.2'); k.pcloud(14, 150, 40, 'violet.3', 0.7);
+    k.canopy(110, 118, 60, 46, 'green.2', { seed: 25, r: 9 });
     // ferris wheel
     const cx = 64, cy = 88, R = 54;
     k.disc(cx, cy, R, 'pink.3', { outline: 'red.1' }); k.disc(cx, cy, R - 4, 'pink.3', { outline: 'red.2' });
@@ -658,7 +847,10 @@ const SCENES = {
       k.block(x - 4, HZ - 22, 48, 22, c); k.rect(x + 14, HZ - 16, 12, 16, 'night'); k.rect(x + 19, HZ - 52, 1, 6, 'ink'); k.rect(x + 20, HZ - 52, 5, 3, 'gold.2');
     }
     k.shadow(26, 226, 18); k.block(10, 192, 32, 30, 'red.2'); k.flat(14, 180, 24, 12, 'sky.3', 'slate.1'); for (const [x, y] of [[18, 184], [24, 182], [30, 185], [21, 188], [28, 188]]) k.disc(x, y, 2, 'cream.3'); k.disc(16, 224, 4, 'ink'); k.disc(36, 224, 4, 'ink');
-    for (let i = 0; i < 3; i++) { const x = 230 + i * 8; k.line(x, 230, x - 2, 196, 'ink'); k.ball(x - 2, 192, 5, ['red.2', 'gold.2', 'violet.2'][i]); }
+    k.layer('front');
+    for (let i = 0; i < 4; i++) { const x = 228 + i * 7; k.line(x, 236, x - 3 + i, 196 - (i % 2) * 8, 'ink'); k.ball(x - 3 + i, 190 - (i % 2) * 8, 6, ['red.2', 'gold.2', 'violet.2', 'sky.2'][i]); }
+    k.canopy(-12, 214, 50, 40, 'green.2', { seed: 26, r: 9 });
+    k.layer('back');
   },
   stage(k) {
     k.rect(0, 0, RW, RH, 'indigo.0');
@@ -682,68 +874,87 @@ const SCENES = {
   },
   // ---- far away ----
   castle(k) {
-    k.sky('violet.3', 'pink.3'); k.cloud(40, 30, 0.7); k.cloud(222, 54, 0.6);
-    k.hills(HZ - 2, 'green.3', 5, 30);
+    k.bands(['violet.3', 'pink.3', 'pink.3'], 0, 110);
+    k.pcloud(10, 34, 56, 'violet.3'); k.pcloud(196, 54, 54, 'pink.2', 0.9);
+    k.mountain(30, 110, 120, 30, 'violet.3'); k.mountain(226, 110, 120, 36, 'violet.3');
+    k.rect(0, 106, RW, RH - 106, 'green.3'); k.ellipse(128, 118, 120, 18, 'green.3'); k.mottle(114, 300, 'lime.3', 14, 6);
+    // the castle on its hill
+    const B = 124;
     const roof = (x, w, top, c = 'violet.1') => { for (let j = 0; j < w * 1.1; j++) { const half = Math.round(1 + j * 0.48); k.rect(x + w / 2 - half, top + j, half * 2, 1, j % 6 === 5 ? dk(c) : c); k.set(x + w / 2 + half - 1, top + j, dk(c)); } };
-    for (const x of [30, 194]) { k.block(x, 46, 32, HZ - 46, 'slate.3'); roof(x - 2, 36, 8); k.window(x + 11, 70, 10, 16, 'gold.3', 'slate.2', { cross: false }); k.rect(x + 15, 2, 1, 10, 'ink'); k.rect(x + 16, 2, 10, 6, 'red.2'); }
-    k.block(62, 72, 132, HZ - 72, 'slate.3');
-    for (let x = 62; x < 194; x += 12) k.block(x, 62, 8, 12, 'slate.3');
-    // brick texture, banners, windows, gate
-    for (let y = 80; y < HZ - 6; y += 9) for (let x = 66 + (y % 18 ? 0 : 7); x < 190; x += 14) k.rect(x, y, 10, 1, 'slate.2');
-    for (const x of [78, 166]) { k.block(x, 78, 12, 34, 'red.2'); for (let j = 0; j < 6; j++) k.rect(x + j, 112 + j, 12 - j * 2, 1, 'red.2'); k.disc(x + 6, 90, 3, 'gold.2'); }
-    for (const x of [102, 146]) k.window(x, 90, 10, 16, 'gold.3', 'slate.2', { cross: false });
-    k.rect(110, 118, 36, HZ - 118, 'brown.1'); k.disc(128, 118, 18, 'brown.1', { outline: 'slate.0' }); k.box(110, 118, 36, HZ - 118, 'slate.0');
-    for (let x = 114; x < 144; x += 6) k.rect(x, 104, 1, HZ - 104, 'brown.0');
-    k.rect(127, 22, 1, 40, 'ink'); k.rect(128, 22, 16, 10, 'gold.2'); k.disc(134, 27, 2, 'red.2');
-    k.grass(HZ, 'green.2'); k.path(HZ, 'slate.3', 18);
-    // hedges and flowers along the path
-    for (const x of [24, 232]) k.bush(x, 214, 'green.1', 20);
-    k.flowers(56, 236, 5, 'violet.2'); k.flowers(178, 238, 5, 'red.2');
-    k.lamp(80, 216, false); k.lamp(176, 216, false);
+    for (const x of [62, 166]) { k.block(x, 46, 28, B - 46, 'slate.3'); roof(x - 2, 32, 12); k.window(x + 10, 66, 8, 12, 'gold.3', 'slate.2', { cross: false }); k.rect(x + 13, 4, 1, 10, 'ink'); k.rect(x + 14, 4, 9, 5, 'red.2'); }
+    k.block(88, 66, 80, B - 66, 'slate.3');
+    for (let x = 88; x < 168; x += 10) k.block(x, 58, 7, 10, 'slate.3');
+    for (let y = 74; y < B - 4; y += 8) for (let x = 92 + (y % 16 ? 0 : 6); x < 164; x += 12) k.rect(x, y, 8, 1, 'slate.2');
+    for (const x of [96, 152]) { k.block(x, 72, 9, 24, 'red.2'); k.disc(x + 4, 80, 2, 'gold.2'); }
+    k.rect(114, 92, 28, B - 92, 'brown.1'); k.disc(128, 92, 14, 'brown.1', { outline: 'slate.0' }); k.box(114, 92, 28, B - 92, 'slate.0');
+    for (let x = 117; x < 140; x += 5) k.rect(x, 80, 1, B - 80, 'brown.0');
+    k.shadow(128, B + 2, 70, 'green.2');
+    // a winding path down to you
+    for (let y = B; y < RH; y++) { const cx = 128 + Math.sin((y - B) / 30) * 18, half = 12 + (y - B) * 0.32; k.rect(cx - half, y, half * 2, 1, 'cream.3'); k.set(cx - half, y, 'cream.1'); k.set(cx + half, y, 'cream.1'); }
+    k.canopy(0, 96, 56, 40, 'green.2', { seed: 11, r: 10 }); k.canopy(200, 92, 58, 44, 'green.2', { seed: 12, r: 10 });
+    k.flowers(30, 176, 5, 'violet.2'); k.flowers(196, 180, 5, 'red.2'); k.flowers(60, 214, 4, 'pink.2');
+    k.layer('front');
+    k.canopy(-14, 200, 60, 56, 'green.1', { seed: 13, r: 11 }); k.canopy(216, 204, 56, 52, 'green.1', { seed: 14, r: 11 });
+    k.layer('back');
   },
   starisle(k) {
-    // night sky with a galaxy band
-    for (let y = 0; y < RH; y++) k.rect(0, y, RW, 1, y < 60 || y > HZ + 40 ? 'indigo.0' : y < 120 ? (((y >> 1) & 1) ? 'indigo.0' : 'violet.0') : 'violet.0');
-    for (let i = 0; i < 40; i++) k.star((i * 53) % RW, HZ + 54 + (i * 31) % (RH - HZ - 56), i % 4 ? 'violet.2' : 'gold.3');
-    for (let x = 0; x < RW; x++) for (let j = -10; j < 10; j++) { const y = 70 - x * 0.18 + j; if (((x + j) % 3) === 0 && Math.abs(j) < 10 - (x % 7)) k.set(x, y, j % 4 ? 'violet.1' : 'pink.2'); }
-    for (let i = 0; i < 80; i++) k.star((i * 71) % RW, (i * 43) % 170, i % 5 ? 'gold.3' : 'pink.3', i % 11 === 0);
-    k.disc(208, 36, 15, 'gold.3', { outline: 'gold.2' }); k.disc(214, 32, 13, 'indigo.0');
-    // little floating rocks
-    for (const [x, y, r] of [[30, 120, 10], [222, 104, 8]]) { k.ellipse(x, y, r, r / 2, 'violet.2', { outline: 'violet.0', shade: true }); k.ellipse(x, y - r / 3, r, r / 4, 'mint.2'); }
-    // the island
-    for (let j = 0; j < 46; j++) { const half = Math.round(122 * Math.sqrt(1 - (j / 46) ** 2)); k.rect(128 - half, HZ + 4 + j, half * 2, 1, j % 8 < 2 ? 'violet.1' : 'violet.2'); k.set(128 + half - 1, HZ + 4 + j, 'violet.0'); }
-    k.ellipse(128, HZ + 4, 124, 16, 'mint.2', { outline: 'mint.0' }); k.ellipse(110, HZ, 90, 8, 'mint.3');
-    for (let i = 0; i < 30; i++) k.set(20 + (i * 37) % 216, HZ - 4 + (i * 13) % 16, 'mint.1');
-    // the wishing crystal, glowing
-    for (let j = -22; j <= 22; j++) for (let i = -22; i <= 22; i++) if (i * i + j * j < 480 && ((i + j) & 1) === 0) k.set(128 + i, HZ - 36 + j, 'sky.1');
-    for (let y = 0; y < 52; y++) { const half = Math.round((1 - Math.abs(y - 18) / (y < 18 ? 18 : 34)) * 11); k.rect(128 - half, HZ - 56 + y, half, 1, 'sky.3'); k.rect(128, HZ - 56 + y, half, 1, 'sky.2'); k.set(128 - half, HZ - 56 + y, 'blue.1'); k.set(128 + half - 1, HZ - 56 + y, 'blue.1'); }
-    k.star(122, HZ - 46, 'white');
-    // glowing mushrooms
-    for (const [x, c] of [[56, 'pink.2'], [74, 'violet.2'], [196, 'sky.2']]) { k.rect(x - 2, HZ - 10, 4, 12, 'cream.3'); k.ellipse(x, HZ - 12, 11, 6, c, { outline: dk(c, 2), shade: true }); for (const dx of [-5, 0, 5]) k.set(x + dx, HZ - 14, 'white'); }
+    k.bands(['blue.2', 'sky.2', 'sky.3', 'mint.3'], 0, 150);
+    for (let i = 0; i < 46; i++) { const x = (i * 71) % RW, y = (i * 43) % 140; if (i % 3) k.set(x, y, 'white'); else k.sparkle(x, y); }
+    k.rainbow(96, 160, 64);
+    // the crystal peak, with a sleepy little face
+    k.mountain(186, 170, 84, 136, 'sky.2');
+    for (let j = 0; j < 40; j++) k.set(170 + j * 0.2, 60 + j * 2, 'white');
+    k.set(180, 104, 'ink'); k.set(181, 104, 'ink'); k.set(192, 104, 'ink'); k.set(193, 104, 'ink'); k.rect(185, 110, 3, 2, 'gold.1');
+    // a sea of pastel clouds, back to front
+    k.rect(0, 150, RW, RH - 150, 'violet.3');
+    const tints = ['violet.3', 'pink.3', 'gold.3', 'white', 'violet.3', 'pink.3'];
+    for (let r = 0; r < 7; r++) {
+      const c = tints[r % tints.length];
+      k.cloudBank(150 + r * 24, c === 'white' ? 'mist' : c, { line: c === 'white' ? 'violet.3' : dk(c), seed: r + 1, size: 12 + r * 2 });
+    }
+    // a little floating rock off to the side
+    k.ellipse(232, 120, 12, 6, 'sky.1', { outline: 'blue.1', shade: true }); k.ellipse(232, 116, 12, 4, 'cream.3', { outline: 'gold.1' });
+    for (const [x, y, r, c] of [[24, 196, 5, 'violet.2'], [140, 186, 6, 'gold.3'], [226, 204, 5, 'pink.2'], [112, 236, 7, 'sky.3'], [200, 250, 6, 'gold.3'], [40, 252, 6, 'violet.3']]) k.star5(x, y, r, c);
+    for (let i = 0; i < 16; i++) k.sparkle((i * 59) % RW, 170 + (i * 29) % 100, i % 2 ? 'white' : 'gold.3');
+    k.layer('front');
+    for (const [x, y, r, c] of [[2, 236, 14, 'pink.3'], [18, 230, 11, 'pink.3'], [32, 244, 9, 'pink.3'], [8, 252, 12, 'white'], [26, 256, 10, 'white']]) k.puff(x, y, r, c, { line: c === 'white' ? 'violet.3' : 'pink.2', hi: 'white' });
+    for (const [x, y, r, c] of [[254, 232, 14, 'violet.3'], [238, 228, 10, 'violet.3'], [226, 242, 9, 'violet.3'], [246, 252, 12, 'gold.3']]) k.puff(x, y, r, c, { line: dk(c), hi: 'white' });
+    k.star5(14, 214, 7, 'gold.3'); k.star5(240, 210, 6, 'sky.3');
+    k.layer('back');
   },
   // ---- hidden ----
   hidden(k) {
-    k.sky('orange.3', 'gold.3'); k.disc(54, 50, 20, 'orange.2', { outline: 'orange.1' }); k.disc(54, 50, 14, 'gold.3');
-    // mountains
-    for (const [cx, h, c] of [[60, 70, 'violet.2'], [170, 90, 'violet.1'], [250, 60, 'violet.2']]) for (let j = 0; j < h; j++) { const half = Math.round(j * 1.2); k.rect(cx - half, HZ - 20 - h + j, half * 2, 1, j < 12 ? 'white' : c); k.set(cx + half - 1, HZ - 20 - h + j, dk(c)); }
-    k.hills(HZ - 14, 'green.1', 5, 26); k.hills(HZ, 'lime.1', 4, 18, 40);
-    // thatched cottages
-    for (const [x, roofC] of [[14, 'gold.1'], [100, 'orange.1'], [186, 'gold.1']]) {
-      k.shadow(x + 28, HZ + 2, 30);
-      k.block(x, HZ - 48, 56, 48, 'cream.3');
-      for (let j = 0; j < 30; j++) { const half = Math.round(4 + j * 1.05); k.rect(x + 28 - half, HZ - 74 + j, half * 2, 1, j % 5 === 4 ? dk(roofC) : roofC); }
-      for (let i = 0; i < 10; i++) k.line(x + 28 - i * 3, HZ - 74 + i * 3, x + 28 - i * 3 - 4, HZ - 46, dk(roofC));
-      k.door(x + 8, HZ, 16, 28, 'brown.1'); k.window(x + 34, HZ - 38, 12, 12, 'gold.3', 'brown.2', { cross: true });
+    k.bands(['sky.2', 'sky.3', 'sky.3'], 0, 106);
+    k.pcloud(16, 30, 60, 'violet.3'); k.pcloud(110, 48, 44, 'pink.3', 0.8);
+    k.mountain(214, 112, 130, 96, 'violet.3'); k.mountain(252, 112, 80, 60, 'violet.2');
+    k.waterfall(196, 34, 112, 14);
+    k.canopy(-10, 64, 150, 40, 'mint.1', { seed: 15, r: 11 });
+    // the plateau
+    k.rect(0, 104, RW, RH - 104, 'mint.2'); k.ellipse(110, 190, 150, 80, 'mint.3'); k.mottle(110, 300, 'green.3', 12, 8);
+    // the stream from the waterfall, with lily pads
+    for (let y = 112; y < RH; y++) {
+      const cx = 204 + Math.sin((y - 112) / 22) * 10 + (y - 112) * 0.25, half = 7 + (y - 112) * 0.05;
+      k.rect(cx - half, y, half * 2, 1, 'sky.2'); k.set(cx - half, y, 'sky.1'); k.set(cx + half, y, 'mint.1');
+      if (y % 7 === 0) k.rect(cx - half / 2, y, 3, 1, 'sky.3');
     }
-    k.grass(HZ, 'lime.2'); k.path(HZ, 'brown.3', 16);
-    // a well, lanterns and fireflies
-    k.shadow(56, 228, 18); k.block(40, 202, 32, 22, 'slate.3'); for (let y = 206; y < 222; y += 6) k.rect(41, y, 30, 1, 'slate.2');
-    k.rect(42, 176, 3, 26, 'brown.1'); k.rect(67, 176, 3, 26, 'brown.1'); for (let j = 0; j < 8; j++) k.rect(38 + j, 168 + j, 36 - j * 2, 1, 'brown.2');
-    k.rect(55, 184, 1, 14, 'ink'); k.block(51, 196, 10, 8, 'brown.2');
-    for (let x = 0; x < RW; x++) k.set(x, 104 + Math.round(Math.sin(x / 40) * 6), 'ink');
-    for (let x = 20; x < RW; x += 40) { const y = 112 + Math.round(Math.sin(x / 40) * 6); k.dither(x - 9, y - 9, 18, 18, C('gold.3')); k.ellipse(x, y, 5, 6, 'red.2', { outline: 'red.0', shade: true }); k.rect(x - 2, y - 7, 5, 2, 'ink'); k.rect(x - 1, y + 2, 3, 1, 'gold.3'); }
-    for (let i = 0; i < 14; i++) { const x = (i * 59) % RW, y = 140 + (i * 23) % 70; k.set(x, y, 'gold.3'); k.set(x + 1, y, 'lime.3'); }
-    k.tree(236, HZ + 66, 1, 'green.2'); k.flowers(150, 240, 5, 'gold.2');
+    for (const [x, y] of [[212, 150], [222, 196], [228, 236]]) { k.ellipse(x, y, 5, 2, 'green.2', { outline: 'green.1' }); k.puff(x + 3, y - 2, 2, 'pink.3'); }
+    // cottages
+    for (const [x, roofC] of [[14, 'gold.1'], [76, 'orange.1'], [136, 'gold.1']]) {
+      k.shadow(x + 22, 132, 26, 'mint.1');
+      k.block(x, 94, 44, 38, 'cream.3');
+      for (let j = 0; j < 24; j++) { const half = Math.round(3 + j * 1.05); k.rect(x + 22 - half, 74 + j, half * 2, 1, j % 5 === 4 ? dk(roofC) : roofC); }
+      k.door(x + 6, 132, 13, 22, 'brown.1'); k.window(x + 27, 102, 9, 9, 'gold.3', 'brown.2');
+    }
+    // lanterns and fireflies
+    for (let x = 0; x < 180; x++) k.set(x, 64 + Math.round(Math.sin(x / 30) * 4), 'ink');
+    for (let x = 16; x < 180; x += 32) { const y = 70 + Math.round(Math.sin(x / 30) * 4); k.dither(x - 7, y - 7, 14, 14, C('gold.3')); k.ellipse(x, y, 4, 5, 'red.2', { outline: 'red.0', shade: true }); k.rect(x - 2, y - 6, 5, 2, 'ink'); }
+    for (let i = 0; i < 14; i++) { const x = (i * 59) % RW, y = 140 + (i * 23) % 80; k.set(x, y, 'gold.3'); k.set(x + 1, y, 'lime.3'); }
+    for (const [x, y, s] of [[40, 200, 1], [52, 207, 0.8], [154, 182, 0.7]]) k.mushroom(x, y, 'pink.2', s);
+    k.rock(100, 160, 6); k.rock(170, 212, 5);
+    k.layer('front');
+    k.canopy(-16, 196, 56, 56, 'mint.1', { seed: 16, r: 11 });
+    k.pcloud(-10, 250, 70, 'violet.3', 1.3); k.pcloud(196, 254, 72, 'violet.3', 1.3);
+    k.layer('back');
   },
 };
 

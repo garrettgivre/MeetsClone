@@ -12,12 +12,12 @@
 </style>
 </head>
 <body>
-<p>Every town backdrop at full detail, with a guide line where pets stand. <code>?only=park&amp;z=3</code> shows one place bigger; <code>&amp;pets</code> adds two pets for scale.</p>
+<p>Every town backdrop at full detail, with a guide line where pets stand. <code>?only=park&amp;z=3</code> shows one place bigger; <code>&amp;pets</code> adds two pets for scale. The game's buttons cover roughly the bottom fifth.</p>
 <div class="row" id="out"></div>
 <script type="module">
 import { PACKED } from '../src/engine/palette.js';
 import { makeRng } from '../src/engine/rng.js';
-import { backdrop, RW, RH, FEET } from '../src/art/town.js';
+import { backdrop, frontdrop, RW, RH, FEET } from '../src/art/town.js';
 import { LOCATIONS, resident } from '../src/game/town.js';
 import { composePetArt } from '../src/game/pet-art.js';
 import { FOUNDERS, express, pureGenome } from '../src/game/genetics.js';
@@ -52,6 +52,7 @@ for (const loc of LOCATIONS) {
   } else {
     ctx.fillStyle = 'rgba(255,0,0,0.35)'; ctx.fillRect(0, FEET, RW, 1);
   }
+  if (frontdrop(loc.id)) paint(ctx, frontdrop(loc.id), 0, 0);
   const f = document.createElement('figure'); f.append(c, document.createElement('br'), loc.name);
   out.append(f);
 }
