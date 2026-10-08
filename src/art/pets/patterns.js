@@ -59,8 +59,13 @@ export const PATTERNS = {
     return Math.floor((t + 1) * 3.2) % 2 === 1 ? 'accent' : null;
   },
   // Hoolet: a pale face disk and a speckled chest
-  facedisk(region, u, v, { form, fu, fv }) {
-    if (region === 'head') return ((u - fu) / 0.66) ** 2 + ((v - fv + 0.05) / 0.66) ** 2 <= 1 ? 'bright' : null;
+  facedisk(region, u, v, { form, fu, fv, w, h }) {
+    if (region === 'head') {
+      // a heart-shaped owl face: a pale disc round each eye, meeting over the beak (sized in pixels)
+      const px = ((u - fu) * w) / 2, py = ((v - fv) * h) / 2;
+      const dx = Math.max(4, w * 0.22), r = Math.max(4, w * 0.24);
+      return Math.hypot(Math.abs(px) - dx, py + 0.5) <= r ? 'bright' : null;
+    }
     if (form === 'quad') return u < -0.3 && v > -0.3 && v < 0.4 ? 'accent' : null;
     return Math.abs(u) < 0.48 - Math.max(0, v) * 0.25 && v > -0.55 ? 'accent' : null;
   },
