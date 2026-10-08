@@ -162,8 +162,19 @@ export function composePetArt(p, stage, pose = {}) {
     const shape = F[stage];
     L.part('body');
     const ax = OX, ay = OY;
-    L.stamp(shape, ax, ay, ctx, false, stage === 'child' ? patternRemap(p.pattern, 'body', shape, { form: p.form, fu: 0, fv: 0 }) : null);
     const at = placed(shape, ax, ay);
+    // children already show their ears, drawn small (the serpent's ears are the small set)
+    const ears = stage === 'child' && FORMS.serpent.ears[p.ears];
+    const drawEars = () => {
+      const [l] = at('earL'), [r] = at('earR');
+      L.part('ears');
+      if (l) L.stamp(ears, l[0], l[1], ctx);
+      if (r) L.stamp(ears, r[0], r[1], ctx, true);
+      L.part('body');
+    };
+    if (ears && !ears.front) drawEars();
+    L.stamp(shape, ax, ay, ctx, false, stage === 'child' ? patternRemap(p.pattern, 'body', shape, { form: p.form, fu: 0, fv: 0 }) : null);
+    if (ears && ears.front) drawEars();
     face = drawFace(L, p, stage, pose, ctx, at('faceS')[0], 'S');
     neckY = at('faceS')[0][1] + 4;
   } else {

@@ -57,7 +57,8 @@ function render() {
   if (params.has('grid')) {
     // everyone side by side, to compare the founders as a set
     const r = document.createElement('div'); r.className = 'row'; out.append(r);
-    for (const f of list) show(composePet(express(pureGenome(f.traits), makeRng(1)), 'adult', { gender: 'f' }), f.name, r, +params.get('s') || 190);
+    // ?stage=teen shows another life stage
+    for (const f of list) show(composePet(express(pureGenome(f.traits), makeRng(1)), params.get('stage') || 'adult', { gender: 'f' }), f.name, r, +params.get('s') || 190);
     return;
   }
   for (const f of list) {
