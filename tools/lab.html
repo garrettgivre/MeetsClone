@@ -132,7 +132,7 @@ import { randomOutfit } from '../src/game/pet.js';
 import { makeRng as outfitRng } from '../src/engine/rng.js';
 import { hash } from '../src/engine/rng.js';
 import {
-  FOUNDERS, ALL_GENES, GENES, GENE_LABELS, pureGenome, randomGenome, express, inherit, childOdds, carried, randomName, lineOf,
+  FOUNDERS, ALL_GENES, GENES, GENE_LABELS, pureGenome, randomGenome, express, inherit, childOdds, carried, randomName, lineOf, resemblance,
 } from '../src/game/genetics.js';
 
 const $ = (id) => document.getElementById(id);
@@ -263,7 +263,8 @@ function renderDetail() {
   const hidden = carried(k.genome, k.phenotype);
   info.innerHTML = genotypeTable(k)
     + (nov.length ? `<p class="muted"><b class="new">★ New:</b> ${nov.map(g => `${GENE_LABELS[g]} (${k.phenotype[g]})`).join(', ')}</p>` : '')
-    + `<p class="muted">Carries ${hidden.length} hidden allele${hidden.length === 1 ? '' : 's'}.</p>`;
+    + `<p class="muted">Carries ${hidden.length} hidden allele${hidden.length === 1 ? '' : 's'}.</p>`
+    + (() => { const r = resemblance(k.phenotype, state.A.phenotype, state.B.phenotype); return `<p class="muted">Takes after ${state.A.name} in ${r.mom} trait${r.mom === 1 ? '' : 's'}, ${state.B.name} in ${r.dad}; ${r.both} shared by both parents, ${r.neither} by neither.</p>`; })();
   el.append(head, row, btns, info);
 }
 

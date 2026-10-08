@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRng } from '../src/engine/rng.js';
 import {
-  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS, carried, childOdds, drift, lineOf, PART_GENES, NOT_PARTS, BASE_GENES, ANCILLARY_GENES, FORM_GENES,
+  GENES, ALL_GENES, randomGenome, pureGenome, express, inherit, blendColor, FOUNDERS, BODY_COLORS, carried, childOdds, drift, lineOf, PART_GENES, NOT_PARTS, BASE_GENES, ANCILLARY_GENES, FORM_GENES, TEMPERAMENT_GENES, resemblance,
 } from '../src/game/genetics.js';
 
 test('random genomes have two valid alleles per gene', () => {
@@ -144,4 +144,49 @@ test('every part belongs to exactly one founder', () => {
 test('every founder has its own body colour', () => {
   const colours = FOUNDERS.map(f => f.traits.color);
   assert.equal(new Set(colours).size, colours.length);
+});
+
+test('having no part is a coin flip against having one, however rare the part', () => {
+  const rng = makeRng(13);
+  for (const [gene, allele] of [['wings', 'feathered'], ['topper', 'plume'], ['tail', 'tendrils'], ['feet', 'nubs']]) {
+    const g = pureGenome({});
+    g[gene] = [allele, 'none'];
+    let shown = 0;
+    for (let i = 0; i < 200; i++) if (express(g, rng)[gene] === allele) shown++;
+    assert.ok(shown > 70 && shown < 130, `${gene} ${allele} showed ${shown} times in 200`);
+  }
+  // a Hoolet x Kitsu litter can have wings in the first generation
+  const kids = Array.from({ length: 60 }, () => express(inherit(pureGenome(FOUNDERS[5].traits), pureGenome(FOUNDERS[0].traits), rng), rng));
+  assert.ok(kids.some(k => k.wings === 'feathered'), 'some first-generation children have wings');
+  assert.ok(kids.some(k => k.wings === 'none'), 'and some do not');
+});
+
+test('wild pets follow a founder line with a few twists', () => {
+  const rng = makeRng(14);
+  const parts = PART_GENES.filter(g => !TEMPERAMENT_GENES.includes(g));
+  const lines = new Set();
+  let twisted = 0;
+  for (let i = 0; i < 200; i++) {
+    const g = randomGenome(rng);
+    let best = 0, who = null;
+    for (const f of FOUNDERS) {
+      const n = parts.filter(gene => g[gene].every(a => a === (f.traits[gene] ?? 'none'))).length;
+      if (n > best) { best = n; who = f.name; }
+    }
+    assert.ok(best >= parts.length - 3, `a wild pet strays ${parts.length - best} parts from any line`);
+    lines.add(who);
+    if (best < parts.length) twisted++;
+  }
+  assert.equal(lines.size, FOUNDERS.length, 'every line turns up in the wild');
+  assert.ok(twisted > 120, `only ${twisted} of 200 wild pets carried a twist`);
+});
+
+test('resemblance counts who a child takes after', () => {
+  const mom = express(pureGenome(FOUNDERS[0].traits), makeRng(15)), dad = express(pureGenome(FOUNDERS[2].traits), makeRng(16));
+  const r = resemblance(mom, mom, dad);
+  assert.equal(r.dad, 0);
+  assert.equal(r.mom + r.both, ALL_GENES.length);
+  const child = { ...mom, eyes: dad.eyes, ears: 'frills' };
+  const c = resemblance(child, mom, dad);
+  assert.deepEqual([c.dad, c.neither], [1, 1]);
 });

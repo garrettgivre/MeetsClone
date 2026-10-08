@@ -44,7 +44,7 @@ Tap your pet to give it a pat, and tap poop to clean it up.
 - **Generation 1:** the quality of your care decides which of 6 original founders your pet becomes: Kitsu the ember fox, Gloop the cherry jelly, Fleece the cloud lamb, Glimmer the lantern jellyfish, Inchy the garden caterpillar or Hoolet the moon owlet. Every pet is hand-pixel art with breathing, blinking and expression animation (see `docs/STYLE.md`).
 - **Six body plans:** biped, blob, four-legged, floater, serpent and bird. A pet's form is a gene, and every body part is drawn separately for every form, so a lamb-line child with a jellyfish's body plan still looks hand-made.
 - **Founders are the genetic lines:** every body part belongs to exactly one founder, and no two founders share a part. The Pairing Lab shows which line each part comes from.
-- **Genetics:** every trait has two alleles with dominance, so recessive traits can skip a generation.
+- **Genetics:** every trait has two alleles with dominance, so recessive traits can skip a generation. Having no tail, topper or wings neither beats nor loses to having one (a coin flip), so a rare part can show in the first mixed litter.
   - Body plans are codominant (a coin flip between the parents), colours can blend or drift around the colour wheel, and rare mutations happen.
   - Base parts every pet has: head, body, eyes, ears, mouth, markings and forehead mark. Optional parts: tail, topper, feet, nose, wings and hair. Plus body, accent, eye and hair colour.
   - Temperament genes (appetite, energy, taste) change how the pet plays.
@@ -53,7 +53,7 @@ Tap your pet to give it a pat, and tap poop to clean it up.
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
 - **Economy:** Gotchi Points, shops in town for food, toys and clothes, and favourite foods and toys.
 - **Minigames:** Jump Rope, Which Way? (guess where your pet hops), Snack Catch (catch treats, dodge rocks) and Copy Me (repeat your pet's left/right dance).
-- **Family:** a matchmaker (3 partners a day), a wedding, the next-generation egg, and a family album.
+- **Family:** a matchmaker (3 partners a day, each a wild pet from one of the founder lines with a twist or two), a wedding, the next-generation egg, and a family album.
 - **Town** (bottom row): 22 places to visit, each with its own backdrop and a resident who becomes a friend the more you chat (with gifts at 3 and 7 hearts).
   - **Downtown** (walk): Town Square (fountain fortunes), Park (daily stroll finds), Playground, Cafe (dish of the day), Bakery, Toy Shop, Boutique, Arcade (all the minigames) and Hospital (treatment and check-ups).
   - **Uptown** (Bus Pass): Department Store (with a daily sale), Beauty Salon (hair dye, not inherited), School (a daily lesson in manners), Workshop (adult shifts for pay), Wedding Chapel (the matchmaker) and Photo Studio (a photo album).

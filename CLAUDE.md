@@ -73,11 +73,11 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Light from the upper left.** Shading is hue-shifted (cool shadows, warm lights), with outlines in a darker shade of the object's own colour.
 - **Process:** after art changes, look at the result in the review pages (screenshot and zoom) before pushing. For big redesigns, outline the plan first.
 
-## Status (v0.12.8, October 2026)
+## Status (v0.13.0, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline and weight.
-  - Genetics with six body plans and six founders.
+  - Genetics with six body plans and six founders. v0.13: an ancillary part paired with `none` is a coin flip whatever its rarity (before, `none` beat every rare part, so wings, plumes and tendrils could never show in a first mixed litter); `randomGenome` (matchmaker partners, residents, the lab) starts from a founder and adds one to three twists, so wild pets look coherent; `resemblance()` says who a child takes after (shown in the lab).
   - Wardrobe, shops and points.
   - Four minigames.
   - Matchmaker, wedding and generations.
@@ -85,6 +85,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
   - The town: 22 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
   - Many art passes: every town object is now a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts), added an escalator, a hospital bed, curtained windows and three concert-hall fans (`fanA`..`fanC`).
 - **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations.
+- **Pet art notes:** wings and tendrils are now drawn properly for every form (side wings for biped and blob, rising wings for quad, a small pair for serpent). Heads still differ mostly by colour and size across forms; giving fox and lamb heads stronger silhouettes is the next pet-art candidate.
 - **Art polish candidates:** the home room in `src/scenes/room.js` (its window, shelf, plant and lamp are still drawn in code), the salon mirrors, the boutique clothes rack and the school blackboard.
 
 ## Gotchas

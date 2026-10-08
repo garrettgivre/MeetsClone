@@ -55,13 +55,14 @@ function choices(gene) {
   return Object.keys(GENES[gene]);
 }
 // The GENES numbers are how common an allele is in the wild, and dominance
-// follows them. Having no ears, top, nose and so on doesn't beat having one.
-const NONE_TIES = ANCILLARY_GENES;
+// follows them. Having no tail, topper, nose and so on neither beats nor loses
+// to having one: a part paired with 'none' is a coin flip, whatever its rarity,
+// so a rare plume or pair of wings can show in the very first mixed litter.
 function dom(gene, allele) {
-  if (allele === 'none' && NONE_TIES.includes(gene)) return 2;
   if (gene === 'form') return 2;
   return GENES[gene]?.[allele] ?? 2;
 }
+const noneTie = (gene, a, b) => ANCILLARY_GENES.includes(gene) && (a === 'none') !== (b === 'none');
 
 /** A random allele, common ones more likely. */
 export function randomAllele(gene, rng = defaultRng) {
@@ -70,16 +71,24 @@ export function randomAllele(gene, rng = defaultRng) {
 }
 
 /**
- * A wild-born genome (matchmaker partners, testing). Wild pets usually breed
- * true: colours are mostly two copies of the same allele and parts often are,
- * so children resemble the parent you can see, with the odd surprise.
+ * A wild-born genome (matchmaker partners, town residents, testing). Wild pets
+ * come from the founder lines: each starts as a founder, usually in its own
+ * colours, and picks up a few twists from the wider gene pool (a part, now and
+ * then a whole body plan), often as one carried copy. So a wild pet looks like
+ * a coherent creature with a surprise or two, and its children can take after
+ * either it or the line it came from.
  */
-export function randomGenome(rng = defaultRng) {
-  const g = {};
-  for (const gene of ALL_GENES) {
-    const a = randomAllele(gene, rng);
-    const same = COLOR_GENES.includes(gene) ? 0.7 : 0.45;
-    g[gene] = [a, rng.chance(same) ? a : randomAllele(gene, rng)];
+export function randomGenome(rng = defaultRng, twists = 1 + rng.int(3)) {
+  const g = pureGenome(rng.pick(FOUNDERS).traits);
+  for (const gene of TEMPERAMENT_GENES) g[gene] = [randomAllele(gene, rng), randomAllele(gene, rng)];
+  // a fresh coat: most wild pets wear colours of their own, with hair to match
+  if (rng.chance(0.7)) { const c = rng.pick(BODY_COLORS); g.color = [c, rng.chance(0.7) ? c : g.color[1]]; g.hairColor = [c, c]; }
+  if (rng.chance(0.4)) { const c = rng.pick(BODY_COLORS); g.accent = [c, rng.chance(0.7) ? c : g.accent[1]]; }
+  if (rng.chance(0.3)) g.eyeColor = [rng.pick(EYE_COLORS), g.eyeColor[1]];
+  const pool = PART_GENES.filter(gene => !TEMPERAMENT_GENES.includes(gene) && (gene !== 'form' || rng.chance(0.15)));
+  for (let i = 0; i < twists; i++) {
+    const gene = rng.pick(pool), a = randomAllele(gene, rng);
+    g[gene] = rng.chance(0.4) ? [a, a] : rng.chance(0.5) ? [a, g[gene][1]] : [g[gene][0], a];
   }
   return g;
 }
@@ -112,7 +121,7 @@ export function express(genome, rng = defaultRng) {
   for (const gene of PART_GENES) {
     const [a, b] = genome[gene] || ['none', 'none'];
     const da = dom(gene, a), db = dom(gene, b);
-    p[gene] = da > db ? a : db > da ? b : rng.chance(0.5) ? a : b;
+    p[gene] = noneTie(gene, a, b) || da === db ? (rng.chance(0.5) ? a : b) : da > db ? a : b;
   }
   for (const gene of COLOR_GENES) {
     const [a, b] = genome[gene];
@@ -189,6 +198,16 @@ export function difference(a, b) {
   let n = 0;
   for (const gene of ALL_GENES) if (a[gene] !== b[gene]) n++;
   return n;
+}
+
+/** Who a child takes after: how many visible traits it shares with mum only, dad only, both, or neither. */
+export function resemblance(child, mom, dad) {
+  const r = { mom: 0, dad: 0, both: 0, neither: 0 };
+  for (const gene of ALL_GENES) {
+    const m = child[gene] === mom[gene], d = child[gene] === dad[gene];
+    if (m && d) r.both++; else if (m) r.mom++; else if (d) r.dad++; else r.neither++;
+  }
+  return r;
 }
 
 // ---------- Generation 1 ----------

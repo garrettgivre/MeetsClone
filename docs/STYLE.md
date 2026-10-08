@@ -8,7 +8,7 @@ Pets are hand-pixelled characters in a classic colour-screen virtual pet style, 
 |---|---|---|
 | Form | `form` | the body plan: biped, blob, quad, floater, serpent, avian. Codominant, so lines mix. |
 | Base | `head`, `body`, `eyes`, `ears`, `mouth`, `pattern`, `mark` | every pet has all of these |
-| Ancillary | `tail`, `topper`, `feet`, `nose`, `wings`, `hair` | optional (`none`) |
+| Ancillary | `tail`, `topper`, `feet`, `nose`, `wings`, `hair` | optional (`none`); against a part, `none` is always a coin flip |
 | Colour | `color`, `accent`, `eyeColor`, `hairColor` | recolour the role characters in every part |
 | Temperament | `appetite`, `energy`, `taste` | not drawn |
 
