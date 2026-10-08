@@ -19,8 +19,8 @@ export const PATTERNS = {
   // Gloop: little round bubbles floating in the jelly (sized in pixels, so they stay round)
   bubbles(region, u, v, { w, h }) {
     const spots = region === 'head'
-      ? [[-0.5, -0.3, 1.6], [0.55, -0.5, 1.1], [0.62, 0.2, 1.3]]
-      : [[-0.5, 0.15, 1.8], [0.4, -0.15, 1.2], [0.1, 0.55, 1.1], [0.65, 0.5, 0.9]];
+      ? [[-0.5, -0.3, 1.2], [0.55, -0.5, 0.8], [0.62, 0.2, 1.0]]
+      : [[-0.5, 0.15, 1.4], [0.4, -0.15, 0.9], [0.1, 0.55, 0.8], [0.65, 0.5, 0.8]];
     return spots.some(([x, y, r]) => (((u - x) * w) / 2) ** 2 + (((v - y) * h) / 2) ** 2 <= r * r) ? 'bright' : null;
   },
   // Fleece: a sooty face and sooty legs, like a black-faced sheep

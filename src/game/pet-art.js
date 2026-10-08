@@ -118,10 +118,6 @@ function drawFace(L, p, stage, pose, ctx, [fx, fy], size) {
     const by = fy + eye.h - eye.pivot[1];
     for (const x of [exL - 2, exL - 1, exR + 1, exR + 2]) if (skinAt(x, by)) L.set(x, by, C('pink.2'));
   }
-  if (!simple && stage !== 'child') {
-    const mark = MARKS[p.mark]?.[size];
-    if (mark) L.stamp(mark, fx, fy + lay.mark, ctx);
-  }
   L.stamp(eye, exL, fy, ctx);
   // the right eye keeps its glint on the lit (left) side unless the eye is meant to mirror
   if (eye.mirror) L.stamp(eye, exR, fy, ctx, true);
@@ -214,6 +210,10 @@ export function composePetArt(p, stage, pose = {}) {
       head: () => {
         L.part('head');
         L.stamp(head, hx0 + head.pivot[0], hy0 + head.pivot[1], ctx, false, patternRemap(p.pattern, 'head', head, headInfo));
+        // the forehead mark goes on with the head, so hair and toppers can sit over it
+        const lay = { ...FACE_LAYOUT[faceSock[0]], ...(F.faceLayout || {}) };
+        const mark = MARKS[p.mark]?.[faceSock[0]];
+        if (mark) { L.part('face'); L.stamp(mark, fx, fy + lay.mark, ctx); L.part('head'); }
         if (ears?.front) drawEars();
       },
       hair: () => { if (has('hair')) { L.part('hair'); const [t] = Hs('top'); if (t) L.stamp(F.hair[p.hair], t[0], t[1], ctx); } },

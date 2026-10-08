@@ -17,7 +17,7 @@ export const EYES = {
   },
   sleepy: {  // Fleece: heavy-lidded and content
     S: part(['kkkk', 'kwek', '.kk.'], { pivot: [2, 1] }),
-    L: part(['.kkkk.', 'kkkkkk', 'kwFEEk', '.kkkk.'], { pivot: [3, 2] }),
+    L: part(['kkkkkk', '.kweE.', '..kk..'], { pivot: [3, 1] }),
   },
   glow: {    // Glimmer: lantern-light rings, no dark pupil
     S: part(['.ee.', 'eFwe', 'eFFe', '.ee.'], { pivot: [2, 2] }),

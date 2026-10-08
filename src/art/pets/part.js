@@ -31,12 +31,15 @@ const SOCKETS = {
 export function part(rows, opts = {}) {
   const w = rows[0].length;
   const sockets = {};
+  // a marker floating on empty space records the socket but draws nothing
+  const empty = (x, y) => { const c = rows[y]?.[x]; return c === undefined || c === '.' || c === ' '; };
   const clean = rows.map((r, y) => {
     if (r.length !== w) throw new Error(`part row ${y} is ${r.length} wide, expected ${w}: "${r}"`);
     return [...r].map((ch, x) => {
       const name = SOCKETS[ch];
       if (!name) return ch;
       (sockets[name] ||= []).push([x, y]);
+      if (empty(x - 1, y) && empty(x + 1, y) && empty(x, y - 1) && empty(x, y + 1)) return '.';
       return typeof opts.under === 'object' ? (opts.under[ch] ?? '3') : (opts.under ?? '3');
     }).join('');
   });

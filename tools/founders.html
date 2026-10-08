@@ -23,7 +23,7 @@
 import { PACKED } from '../src/engine/palette.js';
 import { makeRng } from '../src/engine/rng.js';
 import { composePet } from '../src/game/render.js';
-import { FOUNDERS, pureGenome, express } from '../src/game/genetics.js';
+import { FOUNDERS, GENES, pureGenome, express } from '../src/game/genetics.js';
 
 const out = document.getElementById('out');
 const pick = document.getElementById('pick');
@@ -43,6 +43,15 @@ function render() {
   out.innerHTML = '';
   const list = pick.value ? FOUNDERS.filter(f => f.name === pick.value) : FOUNDERS;
   const big = +params.get('s') || (list.length === 1 ? 384 : 256);
+  if (params.has('forms')) {
+    // each founder's own parts and colours, drawn in every body plan
+    for (const f of list) {
+      const h = document.createElement('h2'); h.textContent = `${f.name}'s parts in every form`; out.append(h);
+      const r = document.createElement('div'); r.className = 'row'; out.append(r);
+      for (const form of Object.keys(GENES.form)) show(composePet(express(pureGenome({ ...f.traits, form }), makeRng(1)), 'adult', { gender: 'f' }), form, r, +params.get('s') || 190);
+    }
+    return;
+  }
   if (params.has('grid')) {
     // everyone side by side, to compare the founders as a set
     const r = document.createElement('div'); r.className = 'row'; out.append(r);
