@@ -52,7 +52,7 @@ function render() {
     show(composePet(kid, 'adult', { gender: rng.chance(0.5) ? 'f' : 'm' }), `${a.name} x ${b.name}`, r, kid);
   }
   r = section('Random wild pets');
-  for (let i = 0; i < 12; i++) { const w = express(randomGenome(rng), rng); show(composePet(w, 'adult', { gender: i % 2 ? 'f' : 'm' }), '#' + (i + 1), r, w); }
+  for (let i = 0; i < (+new URLSearchParams(location.search).get('n') || 12); i++) { const w = express(randomGenome(rng), rng); show(composePet(w, 'adult', { gender: i % 2 ? 'f' : 'm' }), '#' + (i + 1), r, w); }
   const g = express(inherit(pureGenome(FOUNDERS[0].traits), pureGenome(FOUNDERS[3].traits), rng), rng);
   r = section('Growth');
   out.lastElementChild.previousElementSibling.append(Object.assign(document.createElement('small'), { textContent: '  ' + genes(g) }));
