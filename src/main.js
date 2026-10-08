@@ -1,5 +1,5 @@
 // Boot: screen, input, the scene stack, the simulation clock and saving.
-import { Screen, W, H } from './engine/screen.js';
+import { Screen, W, H, lcdCell } from './engine/screen.js';
 import { setupInput } from './engine/input.js';
 import { unlockAudio, play, setMuted } from './engine/audio.js';
 import { newGame, advance, needs, MIN } from './game/pet.js';
@@ -41,6 +41,14 @@ const app = {
   devUrl: DEV,
   // cheats: ?dev in the address, or switched on in Settings > Debug
   get dev() { return DEV || !!this.game?.settings.cheats; },
+  /** The LCD screen filter (Settings): the game screen, the buttons and the glass over both. */
+  setFilter(on) {
+    on = on !== false;
+    scr.setFilter(on);
+    paintButtons(on);
+    document.body.classList.toggle('lcd', on);
+    document.documentElement.style.setProperty('--cell', on ? `url(${lcdCell().toDataURL()})` : 'none');
+  },
   game: null,
   scenes: [],
   time: 0,           // ms since start, for animations
@@ -56,14 +64,14 @@ const app = {
   reset() {
     store.clear();
     this.game = newGame(Date.now());
-    scr.setFilter(this.game.settings.lcd !== false);
+    this.setFilter(this.game.settings.lcd);
     this.scenes = [];
     this.push(new HomeScene(this));
     this.save();
   },
   load(game) {
     this.game = game;
-    scr.setFilter(game.settings.lcd !== false);
+    this.setFilter(game.settings.lcd);
     this.scenes = [];
     this.push(new HomeScene(this));
     this.save();
@@ -84,7 +92,7 @@ else {
 game.lastReal = Date.now();
 app.game = game;
 setMuted(!game.settings.sound);
-scr.setFilter(game.settings.lcd !== false); // the LCD screen filter (Settings)
+app.setFilter(game.settings.lcd);
 // the service worker keeps the game's files fresh (and shows care alerts)
 notify.registerWorker();
 app.push(new HomeScene(app));
@@ -95,7 +103,6 @@ checkForUpdate(() => app.save());
 setInterval(() => { if (!document.hidden) checkForUpdate(() => app.save()); }, 5 * 60 * 1000);
 if (app.pendingEvents?.length) app.scene.handleEvents(app.pendingEvents, true);
 
-paintButtons();
 
 // ----- input -----
 setupInput({

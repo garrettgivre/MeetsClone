@@ -125,10 +125,10 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 ## The LCD screen filter (v0.17)
 
 - Settings > Screen filter (`settings.lcd`, on by default) calls `scr.setFilter()`. The owner asked for something that hides the pixels a little and feels like a 90s handheld screen, not a blur.
-- With it on, `Screen.present()` in `src/engine/screen.js` keeps the plain 256×448 frame off-screen and composes the visible canvas at three times that size: the frame enlarged with hard edges; the same frame again, offset down and right and multiplied in at low strength (dark shapes cast a soft shadow, like LCD segments over their backing); then a static layer built once by `lcdGlass()` (a faint grid of cells, a sheen at the top left, a vignette). The canvas's CSS `image-rendering` switches to `auto`, so the browser smooths only the last small step to the display size.
+- With it on, `Screen.present()` in `src/engine/screen.js` keeps the plain 256×448 frame off-screen and composes the visible canvas at three times that size: the frame enlarged with hard edges; the same frame again, offset down and right and multiplied in at low strength (dark shapes cast a soft shadow, like LCD segments over their backing); then the grid of cells from `lcdGlass()`. Since v0.17.1 the owner wanted it over the buttons too, so `app.setFilter()` in `main.js` is the one switch: it sets the screen filter, repaints the buttons with the same enlarge-and-shadow treatment (`paintButtons(true)`), and adds `body.lcd`, under which `style.css` shows `#glass` (the sheen and vignette over the whole device) and lays the cell grid (`--cell`, sized by `--px`) over the button strip. The canvas's CSS `image-rendering` switches to `auto`, so the browser smooths only the last small step to the display size.
 - With it off, the canvas is the plain 256×448 frame with `image-rendering: pixelated`, as before.
 - Anything that reads pixels back from the visible canvas must allow for both sizes (`scr.canvas.width` is 256 or 768).
-- Strengths to tune if asked: the shadow's `globalAlpha` (0.2) and offset, the grid's two alphas and the vignette's end alpha in `lcdGlass()`.
+- Strengths to tune if asked: the shadow's `globalAlpha` (0.2) and offset, the grid's two alphas in `lcdCell()`, and the sheen and vignette gradients on `#glass` in `style.css`.
 
 ## Updates: how the newest version always shows (v0.14.2)
 
@@ -138,7 +138,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.17.0, October 2026)
+## Status (v0.17.1, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.

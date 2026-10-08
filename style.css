@@ -32,6 +32,35 @@ body {
   width: 100%;
   max-width: 560px;
   padding: 0 0 max(10px, env(safe-area-inset-bottom));
+  position: relative;
+}
+
+/* With the LCD filter on, the screen's navy comes out a shade deeper (its own
+   shadow is laid over it), so the page around it is set to that same shade. */
+body.lcd, body.lcd #bezel { background: #201e4e; }
+
+/* The LCD filter's glass, over the screen and the buttons alike: a sheen at
+   the top left and corners that fall away a little. Taps pass through it. */
+#glass { display: none; }
+body.lcd #glass {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, .10) 0%, rgba(255, 255, 255, .03) 22%, rgba(255, 255, 255, 0) 42%),
+    radial-gradient(ellipse 75% 62% at 50% 50%, rgba(20, 16, 60, 0) 55%, rgba(20, 16, 60, .24) 100%);
+}
+/* ...and the screen's faint cell grid carries on over the strip and its buttons */
+body.lcd #controls { position: relative; }
+body.lcd #controls::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--cell, none);
+  background-size: var(--px, 3px) var(--px, 3px);
 }
 
 /* (the wrapper only keeps the screen clear of a phone's notch, in the status bar's own colour) */
@@ -49,6 +78,7 @@ body {
 }
 
 #controls {
+  align-self: stretch;
   flex: 1;
   display: flex;
   flex-direction: column;

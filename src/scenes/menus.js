@@ -131,7 +131,7 @@ function settings(app) {
     } },
     { label: 'Screen filter', right: g.settings.lcd !== false ? 'ON' : 'OFF', action: (_, it) => {
       g.settings.lcd = g.settings.lcd === false;
-      app.scr.setFilter(g.settings.lcd);
+      app.setFilter(g.settings.lcd);
       it.right = g.settings.lcd ? 'ON' : 'OFF';
       app.toast(g.settings.lcd ? 'LCD filter on: a softer, old-screen look.' : 'Filter off: plain sharp pixels.', 2600);
       app.save();

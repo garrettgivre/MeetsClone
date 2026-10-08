@@ -83,22 +83,39 @@ const DOWN = [
   '................................',
 ];
 
-function render(rows) {
+/**
+ * A button picture as an image URL. With the LCD filter on it gets the same
+ * treatment as the screen: enlarged with hard edges (so the browser smooths
+ * only the final step) and laid over itself, offset, for a soft shadow.
+ */
+function render(rows, lcd) {
+  const w = rows[0].length, h = rows.length;
   const cv = document.createElement('canvas');
-  cv.width = rows[0].length;
-  cv.height = rows.length;
+  cv.width = w; cv.height = h;
   const ctx = cv.getContext('2d');
   rows.forEach((row, y) => [...row].forEach((ch, x) => {
     if (!KEY[ch]) return;
     ctx.fillStyle = HEX[C(KEY[ch])];
     ctx.fillRect(x, y, 1, 1);
   }));
-  return cv.toDataURL();
+  if (!lcd) return cv.toDataURL();
+  const k = 6; // a button pixel is a normal game pixel: two hi-res pixels, each drawn three times over
+  const big = document.createElement('canvas');
+  big.width = w * k; big.height = h * k;
+  const b = big.getContext('2d');
+  b.imageSmoothingEnabled = false;
+  b.drawImage(cv, 0, 0, w * k, h * k);
+  b.globalCompositeOperation = 'source-atop'; // the shadow stays inside the button's own shape
+  b.globalAlpha = 0.2;
+  b.imageSmoothingEnabled = true;
+  b.filter = 'brightness(0.55)';
+  b.drawImage(cv, 3 * 0.8, 3 * 0.9, w * k, h * k);
+  return big.toDataURL();
 }
 
+let style = null;
 /** Paint the buttons: each gets the UP picture, and the DOWN one while it is held (the .down class). */
-export function paintButtons() {
-  const style = document.createElement('style');
-  style.textContent = `.btn { background-image: url(${render(UP)}); } .btn.down { background-image: url(${render(DOWN)}); }`;
-  document.head.appendChild(style);
+export function paintButtons(lcd = false) {
+  if (!style) { style = document.createElement('style'); document.head.appendChild(style); }
+  style.textContent = `.btn { background-image: url(${render(UP, lcd)}); image-rendering: ${lcd ? 'auto' : 'pixelated'}; } .btn.down { background-image: url(${render(DOWN, lcd)}); }`;
 }

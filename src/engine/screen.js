@@ -10,8 +10,9 @@
 //   - the frame is laid over itself again, slightly down and to the right and
 //     multiplied in faintly, so dark shapes cast a soft shadow on what is
 //     behind them, the way LCD segments sit above their backing;
-//   - a faint grid marks the screen's cells, and a glass layer adds a sheen at
-//     the top left and a little darkening toward the corners.
+//   - a faint grid marks the screen's cells.
+// The glass over it all (a sheen at the top left, darker corners) is a page
+// layer in style.css, so it covers the buttons under the screen as well.
 //
 // Two pixel densities share one screen: the UI and rooms are drawn on a
 // 128 x 224 grid (each pixel is a 2x2 block), while pets are drawn at double
@@ -42,7 +43,7 @@ export class Screen {
     this.clip = null; // [x0, y0, x1, y1] in hi-res pixels
     this.filter = false;
     this.raw = null;   // the plain frame, kept off-screen while the filter is on
-    this.glass = null; // the filter's static layers: cell grid, sheen and vignette
+    this.glass = null; // the filter's static layer: the cell grid
   }
 
   /** Turn the LCD filter on or off. */
@@ -79,7 +80,7 @@ export class Screen {
     ctx.globalAlpha = 0.2;
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(this.raw, LCD * 0.8, LCD * 0.9, w, h);
-    // cell grid, sheen and vignette
+    // the cell grid
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
     ctx.drawImage(this.glass, 0, 0);
@@ -214,14 +215,12 @@ export class Screen {
   }
 }
 
-/** The LCD filter's static layers, drawn once: a faint grid of cells, a sheen and a vignette. */
-function lcdGlass() {
-  const w = BW * LCD, h = BH * LCD;
-  const cv = document.createElement('canvas');
-  cv.width = w; cv.height = h;
-  const ctx = cv.getContext('2d');
-  // cells: one per normal pixel (two hi-res pixels), with a hairline of shade
-  // along the right and bottom and a touch of light along the top and left
+/**
+ * One cell of the LCD grid (a normal pixel, drawn LCD times enlarged): a
+ * hairline of shade along the right and bottom and a touch of light along the
+ * top and left. Also used, as an image, behind the buttons under the screen.
+ */
+export function lcdCell() {
   const cell = document.createElement('canvas');
   cell.width = cell.height = HD * LCD;
   const c = cell.getContext('2d');
@@ -229,20 +228,16 @@ function lcdGlass() {
   c.fillRect(HD * LCD - 1, 0, 1, HD * LCD); c.fillRect(0, HD * LCD - 1, HD * LCD, 1);
   c.fillStyle = 'rgba(255, 255, 255, 0.03)';
   c.fillRect(0, 0, HD * LCD - 1, 1); c.fillRect(0, 0, 1, HD * LCD - 1);
-  ctx.fillStyle = ctx.createPattern(cell, 'repeat');
-  ctx.fillRect(0, 0, w, h);
-  // a soft sheen across the top left, as if the glass caught a window
-  const sheen = ctx.createLinearGradient(0, 0, w * 0.9, h * 0.55);
-  sheen.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
-  sheen.addColorStop(0.35, 'rgba(255, 255, 255, 0.03)');
-  sheen.addColorStop(0.6, 'rgba(255, 255, 255, 0)');
-  ctx.fillStyle = sheen;
-  ctx.fillRect(0, 0, w, h);
-  // the corners fall away a little
-  const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.32, w / 2, h / 2, h * 0.72);
-  vig.addColorStop(0, 'rgba(20, 16, 60, 0)');
-  vig.addColorStop(1, 'rgba(20, 16, 60, 0.22)');
-  ctx.fillStyle = vig;
+  return cell;
+}
+
+/** The LCD filter's grid for the whole screen, drawn once. */
+function lcdGlass() {
+  const w = BW * LCD, h = BH * LCD;
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = ctx.createPattern(lcdCell(), 'repeat');
   ctx.fillRect(0, 0, w, h);
   return cv;
 }
