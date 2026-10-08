@@ -1,0 +1,54 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Icons, foods, toys</title>
+<!-- Every small sprite at zoom, on the colours it is shown against.
+     ?z=6 sets the zoom, ?only=TUB,riceball picks sprites, ?bg=navy the paper. -->
+<style>
+  body { margin: 12px; background: #888; font: 12px monospace; color: #fff; }
+  .cell { display: inline-block; margin: 4px; text-align: center; vertical-align: top; }
+  canvas { image-rendering: pixelated; display: block; margin: 0 auto 2px; }
+</style>
+<div id="out"></div>
+<script type="module">
+import * as ICONS from '../src/art/icons.js';
+import { HATS, FACE, BOWTIE, TIE } from '../src/art/wardrobe-icons.js';
+import { lut, colors } from '../src/engine/sprite.js';
+import { HEX, C } from '../src/engine/palette.js';
+import { CLOTHES } from '../src/game/items.js';
+
+const q = new URLSearchParams(location.search);
+const z = +(q.get('z') || 5);
+const only = q.get('only')?.split(',');
+const paper = HEX[C({ navy: 'ink', sky: 'sky.3', pink: 'pink.3' }[q.get('bg')] || 'cream.3')];
+const out = document.getElementById('out');
+
+function show(name, spr, ctx) {
+  if (only && !only.includes(name)) return;
+  const hd = spr._hd;
+  if (!hd) { console.warn(name, 'is still a 1x sprite'); return; }
+  const t = lut(hd, ctx);
+  hd.frames.forEach((frame, f) => {
+    const cv = document.createElement('canvas');
+    cv.width = (hd.w + 2) * z; cv.height = (hd.h + 2) * z;
+    const c = cv.getContext('2d');
+    c.fillStyle = paper; c.fillRect(0, 0, cv.width, cv.height);
+    for (let j = 0; j < hd.h; j++) for (let i = 0; i < hd.w; i++) {
+      const p = t[frame[j * hd.w + i]];
+      if (p) { c.fillStyle = HEX[p]; c.fillRect((i + 1) * z, (j + 1) * z, z, z); }
+    }
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.append(cv, name + (hd.frames.length > 1 ? ' ' + f : ''));
+    out.append(cell);
+  });
+}
+
+for (const [name, v] of Object.entries(ICONS)) {
+  if (v && v.frames) show(name, v);
+  else if (name === 'FOOD_ART' || name === 'TOY_ART' || name === 'ICONS') for (const [id, spr] of Object.entries(v)) show(id, spr);
+}
+const worn = (id, spr) => show(id, spr, colors('cream', CLOTHES[id].color, 'ink', 'brown'));
+for (const [id, h] of Object.entries(HATS)) worn(id, h.spr);
+for (const [id, f] of Object.entries(FACE)) if (f.cheek) worn(id, f.cheek.spr);
+worn('bowtie', BOWTIE.spr); worn('tie', TIE.spr);
+</script>

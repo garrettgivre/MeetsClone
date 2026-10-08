@@ -464,7 +464,7 @@ export class HomeScene {
       case 'eat': {
         const spr = FOOD_ART[a.food] || FOOD_ART.riceball;
         const bites = Math.min(3, Math.floor(k * 4));
-        const x = Math.round(this.petX - 28), y = fy - 12;
+        const x = Math.round(this.petX - 28), y = fy - 2 - spr.h; // every dish sits on the same line
         if (bites < 3) {
           scr.setClip(x, y, spr.w - Math.round(spr.w * bites / 3), spr.h);
           scr.draw(spr, x, y, {});
