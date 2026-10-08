@@ -66,6 +66,7 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - **Far Away** (Balloon Ticket): Royal Castle (well-mannered pets only, and a crown on the first visit) and Star Isle (a wish gives your next egg a part you've never found).
   - **Hidden Village:** find three pieces of an old map in the park and forest. Its elder introduces you to a founder's family, for a partner with pure founder genes.
 - **Gene Book** (Family menu): every body plan, part and body colour, shown on a little pet, with silhouettes for ones not found yet. Your pets fill it in as they grow into their looks, and so do the partners they marry. Each find pays points, and finding every part of a founder's line pays a bonus.
+- **Install:** Settings → Install app adds the game to your phone or computer as its own app (where the browser supports it).
 - **Saving:** automatic saves, catch-up for time spent away, and backup and restore codes.
 - **Updates:** the game checks for a newer release when it starts (and when you come back to it) and reloads into it, so you never play a stale copy. It also opens without a connection, using the last copy it fetched.
 

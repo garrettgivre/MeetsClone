@@ -115,7 +115,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.14.5, October 2026)
+## Status (v0.14.6, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -139,7 +139,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Saves:** `src/game/save.js` `migrate` fills in new pet fields. Add defaults there whenever the pet shape changes, and keep old saves loading; `tests/save.test.js` covers this.
 - **Deploy list:** the Pages workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
 - **Menu icons:** `tools/art-scripts/icon_kit.py` rewrites `src/art/menu-icons.js` from masks (one function per icon). Hand edits made in the JS file are lost if the script is run again, so either edit the script or stop running it. Other UI sprites in `icons.js` are still 1x grids that `scr.draw` upscales; `hdSprite(rows, key)` is the way to draw one at full density.
-- **App id:** the manifest `id` is `/MeetsClone/app`, changed in v0.14.5 because Chrome on Android kept saying "already installed" after an install that failed (when the manifest had only an SVG icon). Don't change it again without a reason: a new id makes installed copies look like a different app.
+- **Installing on Android:** the owner also has Room for Two installed from the same site (`garrettgivre.github.io/Room-For-Two/`). Chrome's menu install then says MeetsClone is "already installed" and "could not open app". The likely cause is that Chrome's install sheet checks for an installed app per site, not per app (not confirmed). Changing the manifest `id` to `/MeetsClone/app` (v0.14.5) did not help; leave it as it is now, since a new id makes installed copies look like a different app. v0.14.6 added Settings > Install app, which keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. If that fails too, the sure fix is a different web address for one of the two games (a custom domain or another host).
 - **App icons:** installers need PNGs, not the SVG. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
 - **Fonts:** the pixel font (`src/engine/font.js`, `glyphRows`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`.
 - **Town colours:** `rampOf()` in `town.js` maps neutral colours (white, mist, ink…) onto a ramp for prop roles.

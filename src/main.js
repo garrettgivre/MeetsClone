@@ -16,7 +16,26 @@ const scr = new Screen(canvas);
 const params = new URLSearchParams(location.search);
 const DEV = params.has('dev');
 
+// ----- installing as an app -----
+// Chrome offers the install through this event; keeping it lets Settings >
+// Install app show Chrome's own install dialog directly. (Chrome's menu can
+// refuse with "already installed" when another app from the same site is on
+// the phone, and this route doesn't go through that check.)
+let installEvent = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvent = e; });
+window.addEventListener('appinstalled', () => { installEvent = null; app.toast('Installed! Look for MeetsClone with your apps.', 3600); });
+const standalone = () => window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true;
+
 const app = {
+  /** 'app' (running installed), 'ready' (can be installed now) or 'no' (the browser hasn't offered it). */
+  get installState() { return standalone() ? 'app' : installEvent ? 'ready' : 'no'; },
+  /** Show the browser's install dialog. Resolves to 'accepted', 'dismissed' or 'unavailable'. */
+  async install() {
+    if (!installEvent) return 'unavailable';
+    const e = installEvent;
+    installEvent = null; // an event can only be used once
+    try { e.prompt(); return (await e.userChoice).outcome; } catch { return 'unavailable'; }
+  },
   scr,
   devUrl: DEV,
   // cheats: ?dev in the address, or switched on in Settings > Debug

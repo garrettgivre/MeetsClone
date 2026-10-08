@@ -170,6 +170,15 @@ function settings(app) {
       if (window.confirm('Erase everything and start with a new egg?')) { app.reset(); app.toast('A new egg appeared!'); }
     } },
   ];
+  if (app.installState !== 'app') {
+    items.push({ label: 'Install app', right: app.installState === 'ready' ? '▶' : '', action: async (_, it) => {
+      const r = await app.install();
+      if (r === 'accepted') app.toast('Installing...', 3000);
+      else if (r === 'dismissed') app.toast('Not installed. Come back here to try again.', 3000);
+      else { app.sfx('nope'); app.toast("The browser isn't offering an install right now. Reload the page and try again, or use its menu.", 4600); }
+      it.right = app.installState === 'ready' ? '▶' : '';
+    } });
+  }
   items.push({ label: 'Debug', right: '▶', action: () => debugMenu(app) });
   items.push({ label: 'Version', right: VERSION, action: () => app.toast(`MeetsClone v${VERSION}`) });
   app.push(new ListMenu(app, 'SETTINGS', items));
