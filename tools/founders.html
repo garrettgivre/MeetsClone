@@ -47,7 +47,7 @@ for (const [name, art] of Object.entries(FOUNDER_ART)) {
   const f = FOUNDERS.find(x => x.name === name);
   row.append(fig(spriteCanvas(art.spr, 8), name + ' (new, 8x)'));
   row.append(fig(spriteCanvas(art.spr, 3), 'new, game size'));
-  if (f) row.append(fig(bitmapCanvas(composePet(express(pureGenome(f.traits)), 'adult', {}), 1.5), 'old generated'));
+  if (f) row.append(fig(bitmapCanvas(composePet(express(pureGenome(f.traits)), 'adult', {}), 1.5), 'kit-built from genes'));
   out.append(row);
   // expression and animation sheet, as the game draws it
   const sheet = document.createElement('div'); sheet.className = 'row';

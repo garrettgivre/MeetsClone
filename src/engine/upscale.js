@@ -5,7 +5,6 @@
 // pixels ('o') that don't touch the outside are filled with the colour next to
 // them, leaving a crisp 1px outer outline like the procedurally drawn shapes.
 
-import { sprite } from './sprite.js';
 
 const EMPTY = '.';
 
@@ -47,18 +46,4 @@ export function thinOutlines(rows, outline = 'o') {
     g[y][x] = Object.entries(count).sort((a, b) => b[1] - a[1])[0][0];
   }
   return g.map(r => r.join(''));
-}
-
-/**
- * Double-density version of a part { spr, pivot, rows?, hd? }.
- * Parts with hand-drawn double-density art (part.native) use it; others are upscaled once and cached.
- */
-export function hdPart(part) {
-  if (part.hd) return part;
-  if (part.native) return part.native;               // hand-drawn double-density art
-  if (part._hd) return part._hd;
-  const rows = part.rows;
-  const big = thinOutlines(scale2x(rows));
-  part._hd = { ...part, spr: sprite(big, part.spr.key), pivot: [part.pivot[0] * 2, part.pivot[1] * 2], hd: true };
-  return part._hd;
 }

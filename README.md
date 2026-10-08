@@ -39,7 +39,7 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Attention calls and care mistakes.
   - Toothaches from too many snacks.
 - **Pets can die or run away:** from untreated illness or starvation, or from long unhappiness.
-- **Generation 1:** the quality of your care decides which of 6 original founder characters your pet becomes. Founders are hand-pixelled sprites with breathing, blinking and expression animation (see `docs/STYLE.md`, preview in `tools/founders.html`).
+- **Generation 1:** the quality of your care decides which of 6 original founder characters your pet becomes. Founders are hand-pixelled sprites with breathing, blinking and expression animation. Their children are built from a hand-pixelled parts kit in the same style, and founder parts are transcribed from the founders themselves (see `docs/STYLE.md`).
 - **Founders:**
   - No two founders share a body part.
   - Each brings founder-only parts that exist nowhere else: Ducklet's bill, flippers and bib; Mogumo's muzzle, droopy eyes, stout build and heart belly; Kometchi's comet and star mark; Pipolin's twin tails, tiny feet and heart cheeks; Lumipom's pom-poms and fairy wings; Spookit's horns, moon mark and devil tail.
@@ -68,6 +68,7 @@ tools/sprite-editor/      in-browser editor for the sprite format
 tools/gallery.html        preview founders, growth stages, expressions and poses
 tools/lab.html            Pairing Lab: breed any two pets, inspect genes, odds, random pairings, lineages
 tools/founders.html       hand-pixelled founders at 8x, game size, and their expression sheets
+tools/compare.html        art review: founders vs their kit-built twins, children, wild pets, growth, expressions
 tools/sketch.mjs          silhouette drafts for hand-pixelling new characters
 docs/                     research notes and the build plan
 ```

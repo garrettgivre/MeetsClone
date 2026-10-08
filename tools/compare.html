@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Review</title>
+<style>
+  body { margin: 0; padding: 12px; font: 13px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
+  h2 { font-size: 14px; margin: 14px 0 6px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; }
+  figure { margin: 0; text-align: center; font-size: 11px; }
+  canvas { image-rendering: pixelated; background: #e9f6fb; border-radius: 8px; }
+  label { margin-right: 10px; }
+</style>
+</head>
+<body>
+<label>Size <select id="size"><option>130</option><option selected>190</option><option>260</option></select></label>
+<label>Seed <input id="seed" type="number" value="3" style="width:60px"></label>
+<div id="out"></div>
+<script type="module">
+import { PACKED } from '../src/engine/palette.js';
+import { makeRng } from '../src/engine/rng.js';
+import { composePet, composeEgg } from '../src/game/render.js';
+import { FOUNDERS, pureGenome, express, randomGenome, inherit } from '../src/game/genetics.js';
+
+const out = document.getElementById('out');
+function show(bm, label, row) {
+  const size = +document.getElementById('size').value;
+  const c = document.createElement('canvas'); c.width = bm.w; c.height = bm.h;
+  c.style.width = c.style.height = size + 'px';
+  const ctx = c.getContext('2d'); const img = ctx.createImageData(bm.w, bm.h); const u = new Uint32Array(img.data.buffer);
+  for (let i = 0; i < bm.px.length; i++) if (bm.px[i]) u[i] = PACKED[bm.px[i]];
+  ctx.putImageData(img, 0, 0);
+  const f = document.createElement('figure'); f.append(c, document.createElement('br'), label); row.append(f);
+}
+function section(title) {
+  const h = document.createElement('h2'); h.textContent = title; out.append(h);
+  const r = document.createElement('div'); r.className = 'row'; out.append(r); return r;
+}
+function render() {
+  out.innerHTML = '';
+  const rng = makeRng(+document.getElementById('seed').value || 1);
+  let r = section('Founders: hand-drawn vs built from their genes');
+  for (const f of FOUNDERS) {
+    const p = express(pureGenome(f.traits), rng);
+    show(composePet(p, 'adult', { species: f.name, gender: 'f' }), f.name, r);
+    show(composePet(p, 'adult', { gender: 'f' }), 'kit', r);
+  }
+  r = section('Children of founder pairs');
+  for (let i = 0; i < 12; i++) {
+    const a = rng.pick(FOUNDERS), b = rng.pick(FOUNDERS.filter(x => x !== a));
+    const kid = express(inherit(pureGenome(a.traits), pureGenome(b.traits), rng), rng);
+    show(composePet(kid, 'adult', { gender: rng.chance(0.5) ? 'f' : 'm' }), `${a.name} x ${b.name}`, r);
+  }
+  r = section('Random wild pets');
+  for (let i = 0; i < 12; i++) show(composePet(express(randomGenome(rng), rng), 'adult', { gender: i % 2 ? 'f' : 'm' }), '#' + (i + 1), r);
+  r = section('Growth');
+  const g = express(inherit(pureGenome(FOUNDERS[0].traits), pureGenome(FOUNDERS[3].traits), rng), rng);
+  show(composeEgg(g, 0), 'egg', r);
+  for (const s of ['baby', 'child', 'teen', 'adult']) show(composePet(g, s, { gender: 'f' }), s, r);
+  r = section('Expressions');
+  for (const e of ['idle', 'blink', 'happy', 'wink', 'eat', 'sad', 'sleep', 'dizzy']) show(composePet(g, 'adult', { gender: 'f', expr: e, bob: e === 'idle' ? 0 : 0 }), e, r);
+}
+document.getElementById('size').onchange = render;
+document.getElementById('seed').onchange = render;
+render();
+</script>
+</body>
+</html>

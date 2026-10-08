@@ -1,11 +1,10 @@
-// Drawing and animating the hand-pixelled founder sprites.
-// Each sprite pixel is a normal screen pixel (2x2 at double density), so the
-// founders keep a crafted, readable pixel size. Animation is layered on top of
-// the single hand-drawn frame using the anchors in src/art/founders.js:
+// Drawing and animating sprite-resolution pets: the hand-pixelled founders and
+// kit-built children share this pipeline. Each sprite pixel becomes a normal
+// screen pixel (2x2 at double density). Animation is layered on the frame:
 //   breathing   the head (rows above `neck`) bobs down a pixel
-//   walking     a one-pixel hop on alternate steps
+//   walking     a one-pixel hop
 //   expressions eyes are covered with the face colour and redrawn
-//               (blink, happy ^^, sad, sleep, dizzy); mouths open for eating
+//               (blink, happy ^^, wink, sad, sleep, dizzy); mouths open to eat
 
 import { C } from '../engine/palette.js';
 import { lut, colors } from '../engine/sprite.js';
@@ -27,14 +26,10 @@ const FIT = {
 };
 
 /**
- * Compose a founder. canvas/ground are the hi-res bitmap size and the feet line
- * (same as composePet), scale = hi-res pixels per sprite pixel.
+ * Scale and animate a sprite-resolution pet.
+ * src: { px, w, h, eyeBoxes: [[x,y,w,h],...], faceColour, mouth: [x,y], neck, floats, keepMouth }
  */
-export function composeFounder(species, pose, canvas, ground, scale) {
-  const art = FOUNDER_ART[species];
-  const spr = art.spr;
-  const t = lut(spr);
-  const src = spr.frames[0];
+export function animateSprite(src, pose, canvas, ground, scale) {
   const out = makeBitmap(canvas, canvas, true);
   const put = (x, y, c) => {
     for (let j = 0; j < scale; j++) for (let i = 0; i < scale; i++) {
@@ -42,14 +37,13 @@ export function composeFounder(species, pose, canvas, ground, scale) {
       if (X >= 0 && Y >= 0 && X < canvas && Y < canvas) out.px[Y * canvas + X] = c;
     }
   };
-
-  // find the lowest drawn row so the feet sit on the ground line
-  let bottom = spr.h - 1;
-  while (bottom > 0 && ![...src.slice(bottom * spr.w, (bottom + 1) * spr.w)].some(ch => t[ch])) bottom--;
+  let bottom = src.h - 1;
+  const rowEmpty = (y) => { for (let x = 0; x < src.w; x++) if (src.px[y * src.w + x]) return false; return true; };
+  while (bottom > 0 && rowEmpty(bottom)) bottom--;
   const groundRow = Math.floor(ground / scale);
-  const lift = art.floats ? 3 + Math.round(Math.sin((pose.t || 0) / 500) * 1) : 0;
+  const lift = src.floats ? 3 + Math.round(Math.sin((pose.t || 0) / 500)) : 0;
   const hop = pose.step === 1 ? 1 : 0;
-  const ox = Math.floor(canvas / scale / 2 - spr.w / 2);
+  const ox = Math.floor(canvas / scale / 2 - src.w / 2);
   const oy = groundRow - bottom - lift - hop;
   const bob = pose.bob ? 1 : 0;
 
@@ -57,72 +51,90 @@ export function composeFounder(species, pose, canvas, ground, scale) {
   const cx = canvas / 2, gy = ground;
   for (let i = -12; i <= 12; i++) {
     const X = cx + i;
-    if (art.floats) { if ((i & 3) === 0) { out.px[gy * canvas + X] = C('silver'); out.px[gy * canvas + X + 1] = C('silver'); } }
+    if (src.floats) { if ((i & 3) === 0) { out.px[gy * canvas + X] = C('silver'); out.px[gy * canvas + X + 1] = C('silver'); } }
     else if (Math.abs(i) < 11) { out.px[gy * canvas + X] = C('mist'); if (Math.abs(i) < 8) out.px[(gy + 1) * canvas + X] = C('mist'); }
   }
 
-  // body first, then the head with its breathing bob on top
+  // body first, then the head (with its breathing bob) on top
   const drawRows = (from, to, dy) => {
-    for (let y = from; y < to; y++) for (let x = 0; x < spr.w; x++) {
-      const c = t[src[y * spr.w + x]];
+    for (let y = from; y < to; y++) for (let x = 0; x < src.w; x++) {
+      const c = src.px[y * src.w + x];
       if (c) put(ox + x, oy + y + dy, c);
     }
   };
-  drawRows(art.neck, spr.h, 0);
-  drawRows(0, art.neck, bob);
+  drawRows(src.neck, src.h, 0);
+  drawRows(0, src.neck, bob);
 
   const ink = C('ink');
-  const skin = t[art.face.charCodeAt(0)];
   const at = (x, y, c) => put(ox + x, oy + y + bob, c);
   const expr = pose.expr || 'idle';
-  const [ew, eh] = art.eyeSize;
+  const skin = src.faceColour;
 
   // ----- eyes -----
-  const closedEye = (ex, ey, shape) => {
-    const x0 = ex - Math.floor(ew / 2), y0 = ey - Math.floor(eh / 2);
-    for (let y = 0; y < eh; y++) for (let x = 0; x < ew; x++) at(x0 + x, y0 + y, skin);
-    const mid = y0 + Math.floor(eh / 2);
-    const w = Math.max(3, ew);
-    const xs = ex - Math.floor(w / 2);
-    for (let x = 0; x < w; x++) {
-      const end = x === 0 || x === w - 1;
+  const cover = ([x0, y0, w, h]) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) at(x0 + x, y0 + y, skin); };
+  const closedEye = (box, shape) => {
+    cover(box);
+    const [x0, y0, w, h] = box;
+    const mid = y0 + Math.floor(h / 2);
+    const lw = Math.max(3, w);
+    const xs = x0 + Math.floor((w - lw) / 2);
+    for (let x = 0; x < lw; x++) {
+      const end = x === 0 || x === lw - 1;
       let y = mid;
-      if (shape === 'happy') y = end ? mid + 1 : mid;         // ^^
-      if (shape === 'closed') y = end ? mid - 1 : mid;        // content curve
-      if (shape === 'sad') y = end ? mid + (x === 0 ? 0 : 1) : mid; // droopy
+      if (shape === 'happy') y = end ? mid + 1 : mid;
+      if (shape === 'closed') y = end ? mid - 1 : mid;
+      if (shape === 'sad') y = end ? mid + (x === 0 ? 0 : 1) : mid;
       at(xs + x, y, ink);
     }
   };
-  const dizzyEye = (ex, ey) => {
-    const x0 = ex - Math.floor(ew / 2), y0 = ey - Math.floor(eh / 2);
-    for (let y = 0; y < eh; y++) for (let x = 0; x < ew; x++) at(x0 + x, y0 + y, skin);
+  const dizzyEye = (box) => {
+    cover(box);
+    const [x0, y0, w, h] = box, ex = x0 + (w >> 1), ey = y0 + (h >> 1);
     for (let i = -1; i <= 1; i++) { at(ex + i, ey + i, ink); at(ex + i, ey - i, ink); }
   };
-  const eyeShape = { blink: 'closed', sleep: 'closed', chew: 'closed', happy: 'happy', wink: null, sad: 'sad', sick: 'sad' }[expr];
-  art.eyes.forEach(([ex, ey], i) => {
-    if (expr === 'dizzy') return dizzyEye(ex, ey);
-    if (expr === 'wink' && i === 1) return closedEye(ex, ey, 'happy');
-    if (eyeShape) closedEye(ex, ey, eyeShape);
+  const shape = { blink: 'closed', sleep: 'closed', chew: 'closed', happy: 'happy', sad: 'sad', sick: 'sad' }[expr];
+  src.eyeBoxes.forEach((box, i) => {
+    if (expr === 'dizzy') return dizzyEye(box);
+    if (expr === 'wink' && i === 1) return closedEye(box, 'happy');
+    if (shape) closedEye(box, shape);
   });
 
-  // ----- mouth (open for eating and big smiles; the bill and fangs keep their own shape) -----
-  const [mx, my] = art.mouth;
-  if ((expr === 'eat' || expr === 'happy' || expr === 'wink') && species !== 'Ducklet') {
-    for (let x = -1; x <= 1; x++) at(mx + x, my, ink);
-    at(mx - 1, my + 1, ink); at(mx, my + 1, C('red.1')); at(mx + 1, my + 1, ink);
-    at(mx, my + 2, ink);
-  } else if (expr === 'chew' && species !== 'Ducklet') {
-    for (let x = -1; x <= 1; x++) at(mx + x, my, ink);
+  // ----- mouth -----
+  if (!src.keepMouth) {
+    const [mx, my] = src.mouth;
+    if (expr === 'eat' || expr === 'happy' || expr === 'wink') {
+      for (let x = -1; x <= 1; x++) at(mx + x, my, ink);
+      at(mx - 1, my + 1, ink); at(mx, my + 1, C('red.1')); at(mx + 1, my + 1, ink);
+      at(mx, my + 2, ink);
+    } else if (expr === 'chew') {
+      for (let x = -1; x <= 1; x++) at(mx + x, my, ink);
+    }
   }
+  return { out, at, ox, oy, bob };
+}
 
-  // ----- clothes: hats, glasses, ties (other outfits don't fit hand-drawn bodies yet) -----
+/** Compose a hand-pixelled founder (with hats, glasses and ties when worn). */
+export function composeFounder(species, pose, canvas, ground, scale) {
+  const art = FOUNDER_ART[species];
+  const spr = art.spr, t = lut(spr), f = spr.frames[0];
+  const px = new Uint8Array(spr.w * spr.h);
+  for (let i = 0; i < f.length; i++) px[i] = t[f[i]];
+  const [ew, eh] = art.eyeSize;
+  const src = {
+    px, w: spr.w, h: spr.h, neck: art.neck, floats: art.floats, mouth: art.mouth,
+    faceColour: t[art.face.charCodeAt(0)], keepMouth: species === 'Ducklet',
+    eyeBoxes: art.eyes.map(([x, y]) => [x - Math.floor(ew / 2), y - Math.floor(eh / 2), ew, eh]),
+  };
+  const { out, at, ox, oy } = animateSprite(src, pose, canvas, ground, scale);
+
+  // clothes: hats, glasses, ties (other outfits don't fit hand-drawn bodies yet)
   const wear = pose.wear || {};
   const fit = FIT[species];
   const itemCtx = (id) => colors('cream', CLOTHES[id]?.color || 'pink', 'ink', 'brown');
   const stampPart = (part, ax, ay, ctx, flip = false) => {
-    const s = part.spr, lt = lut(s, ctx), f = s.frames[0];
+    const s = part.spr, lt = lut(s, ctx), fr = s.frames[0];
     for (let j = 0; j < s.h; j++) for (let i = 0; i < s.w; i++) {
-      const c = lt[f[j * s.w + i]];
+      const c = lt[fr[j * s.w + i]];
       if (!c) continue;
       const x = flip ? ax + (s.w - 1 - part.pivot[0]) - i : ax - part.pivot[0] + i;
       at(x, ay - part.pivot[1] + j, c);
@@ -130,16 +142,34 @@ export function composeFounder(species, pose, canvas, ground, scale) {
   };
   if (fit && wear.head && CRESTS[wear.head]) stampPart(CRESTS[wear.head], fit.top[0], fit.top[1], itemCtx(wear.head));
   if (fit && wear.face && FACE[wear.face]?.lens) {
-    const lens = FACE[wear.face].lens;
-    art.eyes.forEach(([ex, ey], i) => stampPart(lens, ex, ey, itemCtx(wear.face), i === 1));
+    art.eyes.forEach(([ex, ey], i) => stampPart(FACE[wear.face].lens, ex, ey, itemCtx(wear.face), i === 1));
   }
   if (fit && (wear.body === 'bowtie' || wear.body === 'tie')) {
     const part = wear.body === 'bowtie' ? BOWTIE : TIE;
-    const s = part.spr, lt = lut(s, itemCtx(wear.body)), f = s.frames[0];
+    const s = part.spr, lt = lut(s, itemCtx(wear.body)), fr = s.frames[0];
+    const scaleBox = canvas / (canvas / scale); // = scale
     for (let j = 0; j < s.h; j++) for (let i = 0; i < s.w; i++) {
-      const c = lt[f[j * s.w + i]];
-      if (c) put(ox + fit.neck[0] - part.pivot[0] + i, oy + fit.neck[1] - part.pivot[1] + j, c);
+      const c = lt[fr[j * s.w + i]];
+      if (!c) continue;
+      const X = ox + fit.neck[0] - part.pivot[0] + i, Y = oy + fit.neck[1] - part.pivot[1] + j;
+      for (let b = 0; b < scaleBox; b++) for (let a = 0; a < scaleBox; a++) {
+        const xx = X * scaleBox + a, yy = Y * scaleBox + b;
+        if (xx >= 0 && yy >= 0 && xx < canvas && yy < canvas) out.px[yy * canvas + xx] = c;
+      }
     }
   }
   return out;
+}
+
+/** Wrap a kit-built pet (from render-kit.js) for scaling and animation. */
+export function composeKitSprite(kit, pose, canvas, ground, scale) {
+  if (kit.egg) {
+    return animateSprite({ ...kit, eyeBoxes: [], neck: 0, mouth: [0, 0], keepMouth: true, faceColour: 0 }, {}, canvas, ground, scale).out;
+  }
+  const [ew, eh] = kit.eyeSize, [pxv, pyv] = kit.eyePivot;
+  const src = {
+    ...kit, keepMouth: kit.bill,
+    eyeBoxes: [[kit.eyes[0][0] - pxv, kit.eyes[0][1] - pyv, ew, eh], [kit.eyes[1][0] - (ew - 1 - pxv), kit.eyes[1][1] - pyv, ew, eh]],
+  };
+  return animateSprite(src, pose, canvas, ground, scale).out;
 }
