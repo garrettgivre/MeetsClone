@@ -21,37 +21,37 @@ export const KW = 48, KH = 52, KG = 50; // sprite canvas and the feet row
 const STAGE = { baby: [16, 14, 0, 0], child: [21, 18, 0, 0], teen: [26, 21, 14, 10], adult: [30, 24, 17, 13] };
 const SIZE = { small: -2, medium: 0, large: 2 };
 const SHAPES = {
-  round:   { aw: 1.0,  ah: 1.0,  n: 2.0 },
-  mochi:   { aw: 1.1,  ah: 0.92, n: 2.4, nb: 2.9 },
-  bean:    { aw: 1.12, ah: 0.88, n: 2.3 },
-  egg:     { aw: 0.94, ah: 1.06, n: 2.0, pear: -0.18 },
-  tall:    { aw: 0.88, ah: 1.12, n: 2.3 },
-  pear:    { aw: 1.0,  ah: 1.0,  n: 2.0, pear: 0.3 },
-  bun:     { aw: 1.12, ah: 0.88, n: 2.6, nb: 3.2 },
-  onigiri: { aw: 1.08, ah: 0.98, n: 2.3, pear: 0.3, nb: 2.8 },
-  drop:    { aw: 0.98, ah: 1.08, n: 2.0, drop: true },
-  blocky:  { aw: 1.0,  ah: 0.96, n: 4.0 },
-  heart:   { aw: 1.08, ah: 0.98, n: 2.0, nb: 1.7, notch: 0.3 },
-  cloud:   { aw: 1.16, ah: 0.9,  n: 2.4, nb: 3.0, bumps: 3 },
-  acorn:   { aw: 1.04, ah: 1.04, n: 3.0, pear: -0.32 },
-  peach:   { aw: 1.06, ah: 1.0,  n: 2.0, nb: 1.9, notch: 0.16 },
+  round:   { aw: 1.0,  ah: 1.0,  n: 2.0 },                       // a circle
+  mochi:   { aw: 1.2,  ah: 0.84, n: 2.2, nb: 4.5 },              // squished, flat bottom
+  bean:    { aw: 1.18, ah: 0.86, n: 2.0 },                       // a wide oval
+  egg:     { aw: 0.9,  ah: 1.12, n: 2.0, pear: -0.28 },          // tall, narrow at the top
+  tall:    { aw: 0.82, ah: 1.18, n: 2.8 },                       // a tall rounded block
+  pear:    { aw: 1.06, ah: 1.0,  n: 2.0, pear: 0.42 },           // full cheeks, small crown
+  bun:     { aw: 1.16, ah: 0.88, n: 3.4, nb: 2.0 },              // flat top, round bottom
+  onigiri: { aw: 1.12, ah: 0.98, n: 2.3, pear: 0.38, nb: 3.2 },  // a rice-ball triangle
+  drop:    { aw: 0.98, ah: 1.08, n: 2.0, drop: true },           // pointed top
+  blocky:  { aw: 1.0,  ah: 0.96, n: 4.0 },                       // a rounded square
+  heart:   { aw: 1.08, ah: 0.98, n: 2.0, nb: 1.5, notch: 0.3 },  // notched top, pointed chin
+  cloud:   { aw: 1.18, ah: 0.9,  n: 2.4, nb: 3.0, bumps: 3, bumpAmp: 0.16 }, // scalloped top
+  acorn:   { aw: 1.06, ah: 1.06, n: 3.2, pear: -0.5 },           // wide flat cap, pointed chin
+  peach:   { aw: 1.08, ah: 0.98, n: 2.0, nb: 2.3, notch: 0.12 }, // a small cleft on top
 };
 const BUILDS = {
-  round: { dw: 0, dh: 0, n: 2.5, pear: 0.25 }, chubby: { dw: 5, dh: 0, n: 2.2, pear: 0.1 },
-  slim: { dw: -3, dh: 1, n: 3.0, pear: 0.1 }, bell: { dw: 3, dh: 0, n: 2.4, pear: 0.55 },
-  long: { dw: -2, dh: 3, n: 3.2, pear: 0.15 }, stout: { dw: 6, dh: -3, n: 2.8, pear: 0.05 },
-  pear: { dw: 2, dh: 0, n: 2.3, pear: 0.45 }, egg: { dw: -1, dh: 2, n: 2.0, pear: -0.15 },
-  barrel: { dw: 4, dh: 1, n: 2.5, pear: 0.12 }, wide: { dw: 8, dh: -2, n: 2.6, pear: 0.1 },
-  cone: { dw: 2, dh: 1, n: 2.6, pear: 0.7 }, peanut: { dw: 1, dh: 2, n: 2.4, pear: 0.05, waist: 0.22 },
-  square: { dw: 2, dh: 0, n: 6, pear: 0 }, tiny: { dw: -5, dh: -4, n: 2.4, pear: 0.2 },
+  round: { dw: 0, dh: 0, n: 2.2, pear: 0.2 }, chubby: { dw: 8, dh: 2, n: 2.0, pear: 0.1 },
+  slim: { dw: -5, dh: 2, n: 3.0, pear: 0 }, bell: { dw: 6, dh: 1, n: 3, pear: 0.62, flare: true },
+  long: { dw: -2, dh: 4, n: 3.2, pear: 0.1 }, stout: { dw: 6, dh: -3, n: 2.8, pear: 0.05 },
+  pear: { dw: 3, dh: 0, n: 2.2, pear: 0.6 }, egg: { dw: -2, dh: 3, n: 2.0, pear: -0.3 },
+  barrel: { dw: 3, dh: 2, n: 4.5, pear: 0 }, wide: { dw: 9, dh: -2, n: 2.4, pear: 0.1 },
+  cone: { dw: 3, dh: 2, n: 3.0, pear: 0.9 }, peanut: { dw: 3, dh: 3, n: 2.2, pear: 0.05, waist: 0.36 },
+  square: { dw: 1, dh: 0, n: 8, pear: 0 }, tiny: { dw: -6, dh: -4, n: 2.2, pear: 0.2 },
 };
 
 function inside(s, u, v) {
   if (s.notch && v < -0.42 && Math.abs(u) < s.notch * (-0.42 - v) / 0.58) return false;
   // a scalloped top, like a cloud
-  if (s.bumps && v < 0) v /= 1 + 0.1 * Math.cos(u * Math.PI * s.bumps);
+  if (s.bumps && v < 0) v /= 1 + s.bumpAmp * Math.cos(u * Math.PI * s.bumps);
   let f = 1;
-  if (s.pear > 0) f = 1 - s.pear * (1 - (v + 1) / 2);
+  if (s.pear > 0) f = 1 - s.pear * (s.flare ? 1 - ((v + 1) / 2) ** 2 : 1 - (v + 1) / 2); // a flare curves out at the bottom
   if (s.pear < 0) f = 1 + s.pear * ((v + 1) / 2);
   if (s.waist) f *= 1 - s.waist * Math.exp(-((v / 0.3) ** 2));
   if (s.drop) f = Math.min(1, Math.pow(Math.max(0, (v + 1) / 1.25), 0.7) + 0.1);
@@ -77,7 +77,7 @@ function makeMask(w, h, s) {
 const zig = (x) => Math.abs((((x % 1) + 1) % 1) - 0.5) * 2;
 function hairAt(hair, u, v) {
   switch (hair) {
-    case 'ponytail': return v < -0.66 - 0.36 * u; // a fringe swept to one side
+    case 'ponytail': return v < -0.5 - 1.3 * (u + 0.45); // just a lock at one temple; the tail does the rest
     case 'bangs': case 'twintails':
       // locks that come to a point, one centred on the face
       return v < -0.42 + 0.24 * (1 - zig(u / 0.4 + 0.5));
@@ -86,15 +86,15 @@ function hairAt(hair, u, v) {
       const notch = Math.abs(Math.abs(u) - 0.3) < 0.07 ? 0.1 : 0;
       return v < -0.34 - notch || (Math.abs(u) > 0.66 && v < 0.5);
     }
-    case 'spiky': return v < -0.48 + 0.2 * zig(u * 2.4 + 0.5);
-    case 'curly': return v < -0.44 + 0.1 * Math.cos(u * 14);
+    case 'spiky': return v < -0.5 + 0.3 * zig(u * 3 + 0.5); // sharp zigzag
+    case 'curly': return v < -0.48 + 0.14 * Math.abs(Math.sin(u * 6)); // round scalloped curls
     default: return false;
   }
 }
 function headPattern(pattern, u, v, y) {
   switch (pattern) {
-    case 'socks': return (u / 0.62) ** 2 + ((v - 0.62) / 0.42) ** 2 <= 1;
-    case 'tips': return (u / 0.38) ** 2 + ((v - 0.66) / 0.3) ** 2 <= 1; // a pale muzzle
+    case 'socks': return v > 0.3 + 0.08 * Math.cos(u * 3); // the whole lower face
+    case 'tips': return Math.abs(u) > 0.72 && v > 0.1 && v < 0.55 - (Math.abs(u) - 0.72) * 0.8; // fur tufts at the edges of the cheeks
     case 'mask': return v > -0.08 + 0.1 * Math.abs(u) && v < 0.36 - 0.12 * Math.abs(u) ? 'dark' : false; // a bandit mask over the eyes
     case 'twotone': return ((u + 0.36) / 0.3) ** 2 + ((v - 0.06) / 0.34) ** 2 <= 1; // a patch over one eye
     case 'stripes': // three short stripes on the brow
@@ -113,7 +113,7 @@ function paintShape(w, h, mask, paint, opts = {}) {
   const m = (x, y) => x >= 0 && y >= 0 && x < w && y < h && mask[y * w + x] === 1;
   const ink = C('ink');
   // light cluster: a rounded patch on the upper left, and a shine pixel in it
-  const lcx = w * 0.3, lcy = h * 0.26, lrx = Math.max(1.6, w * 0.11), lry = Math.max(1.2, h * 0.09);
+  const lcx = w * 0.3, lcy = h * 0.26, lrx = Math.max(1.5, w * 0.085), lry = Math.max(1.1, h * 0.065);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!m(x, y)) continue;
     const u = ((x + 0.5) - w / 2) / (w / 2), v = ((y + 0.5) - h / 2) / (h / 2);
@@ -220,7 +220,7 @@ function bodyBM(t, stage) {
     switch (t.belly) {
       case 'patch': if ((u / 0.5) ** 2 + ((v - 0.3) / 0.62) ** 2 <= 1) return t.accent; break;
       case 'suit': return t.accent;
-      case 'bib': if ((u / 0.72) ** 2 + ((v + 0.45) / 0.75) ** 2 <= 1) return t.accent; break;
+      case 'bib': if (v < 0.05 + 0.14 * Math.abs(Math.cos(u * 5)) && (u / 0.78) ** 2 + ((v + 0.45) / 0.8) ** 2 <= 1) return t.accent; break; // a scalloped collar
       case 'heart': { const x = u / 0.55, y = -(v - 0.2) / 0.62; if ((x * x + y * y - 1) ** 3 - x * x * y ** 3 <= 0) return t.accent; break; }
     }
     return t.color;
@@ -328,8 +328,6 @@ export function composeKit(phenotype, stage, pose = {}) {
     else L.stamp(ARMS[which], bx + r - 2, by + 3, ctx, true);
   };
   if (body) {
-    if (armL !== 'up') drawArm(armL, -1);
-    if (armR !== 'up') drawArm(armR, 1);
     L.blit(body, bx, by);
     // feet sit in front of the body's lower edge
     if (feet) {
@@ -338,6 +336,9 @@ export function composeKit(phenotype, stage, pose = {}) {
       L.stamp(feet, cx - span - (odd ? 0 : 1), fy - (pose.step === 1 ? 1 : 0), ctx);
       L.stamp(feet, cx + span, fy - (pose.step === 2 ? 1 : 0), ctx, true);
     }
+    // arms hang in front of the body so they read, hands and all
+    if (armL !== 'up') drawArm(armL, -1);
+    if (armR !== 'up') drawArm(armR, 1);
   } else if (feet) {
     const span = Math.max(3, Math.round(head.w * 0.22));
     L.stamp(feet, cx - span - (odd ? 0 : 1), hy + head.h - 2, ctx);
@@ -378,8 +379,10 @@ export function composeKit(phenotype, stage, pose = {}) {
 
   // ----- face -----
   const ey = hy + head.eyeY;
-  const exL = hcx - head.eyeDX - (odd ? 0 : 1), exR = hcx + head.eyeDX;
   const eye = t.eyes === 'baby' ? BABY_EYES : (EYES[t.eyes] || EYES.bean);
+  // keep at least three pixels of face between the eyes, so big eyes never read as goggles
+  const eyeDX = Math.max(head.eyeDX, Math.ceil((eye.spr.w + 3) / 2));
+  const exL = hcx - eyeDX - (odd ? 0 : 1), exR = hcx + eyeDX;
   const cheeks = CHEEKS[t.cheeks];
   if (cheeks && pose.expr !== 'sick') {
     const cy = ey + eye.spr.h - eye.pivot[1];
@@ -402,8 +405,14 @@ export function composeKit(phenotype, stage, pose = {}) {
     L.stamp(BILL, hcx, ey + eye.spr.h - eye.pivot[1] - 1, ctx); // Ducklet's bill sits right under the eyes
   } else {
     if (nose === 'whiskers') {
-      for (const side of [-1, 1]) for (let i = 0; i < 3; i++) for (let k = 0; k < 3; k++) {
-        L.set(hcx + side * (head.eyeDX + 2 + k) - (side < 0 && !odd ? 1 : 0), mouthY - 2 + i * 2 + (i - 1) * (k > 1 ? 1 : 0), C('ink'));
+      // two whiskers a side, poking out past the cheeks
+      for (const [dy, tilt] of [[-1, -1], [1, 1]]) {
+        const y = mouthY + dy, [l, r] = head.span(y - hy);
+        for (let k = 0; k < 4; k++) {
+          const yy = y + (k > 1 ? tilt : 0);
+          L.set(hx + l + 1 - k, yy, C('ink'));
+          L.set(hx + r - 1 + k, yy, C('ink'));
+        }
       }
     } else if (nose === NOSES.snout) {
       L.stamp(nose, hcx, mouthY - 4, ctx);
@@ -414,11 +423,13 @@ export function composeKit(phenotype, stage, pose = {}) {
     if (mouth && typeof mouth === 'object') L.stamp(mouth, hcx, mouthY, ctx);
   }
 
+  // the skin on the inner side of each eye (ears can hang over the outer side), to paint over closed eyes (a mask or patch keeps its colour)
+  const faceAt = (x, y) => { const c = L.px[y * KW + x]; return c && c !== C('ink') && c !== C('white') ? c : null; };
   return {
     px: L.px, w: KW, h: KH,
     eyes: [[exL, ey], [exR, ey]], eyeSize: [eye.spr.w, eye.spr.h], eyePivot: eye.pivot,
     mouth: [hcx, mouthY], mouthOpen: MOUTH_OPEN,
-    faceColour: ramp(t.color, 2), neck: by + 2, headTop: hy, floats, bill: t.mouth === 'bill', ctx,
+    faceColour: ramp(t.color, 2), eyeSkin: [faceAt(exL + eye.spr.w - eye.pivot[0], ey), faceAt(exR - (eye.spr.w - eye.pivot[0]), ey)].map(c => c || ramp(t.color, 2)), neck: by + 2, headTop: hy, floats, bill: t.mouth === 'bill', ctx,
     expr: pose.expr, wink: pose.expr === 'wink',
   };
 }

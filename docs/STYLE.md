@@ -61,4 +61,6 @@ Clothes are a wardrobe feature, not genes, and aren't drawn on pets yet.
   - A small rounded light cluster with a white shine pixel.
   - A one-pixel shadow band on the lower right, and a neck shadow under the head.
 - **Hair** sits a pixel beyond the skull for volume and is outlined in its darkest shade, with strand lines and a gloss row. Fringes: pointed bangs, Lumipom's notched bob, Gillybop's swept fringe, spiky, curly.
+- **No look-alikes:** every part must be clearly different from the others in its category (shape first, then colour). Check with `tools/parts.html` (every kit part side by side, `?cat=EARS` for one category) and `tools/gallery.html?gene=shape,build` for the drawn genes.
+- **Arms** are drawn in front of the body with a soft inner edge and a round hand, so every pet has visible arms and hands.
 - **Review:** design each founder, then critique and fix it at least five times in `tools/founders.html` before calling it final. Use `tools/compare.html` for children, wild pets, growth stages and expressions after any art change.

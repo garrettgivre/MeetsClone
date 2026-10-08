@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parts Sheet</title>
+<style>
+  body { margin: 0; padding: 12px; font: 13px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
+  h2 { font-size: 14px; margin: 12px 0 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; }
+  figure { margin: 0; text-align: center; font-size: 11px; }
+  canvas { image-rendering: pixelated; background: #e9f6fb; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script type="module">
+// Every kit part, category by category, drawn in its founder's colours, to
+// check that no two parts in a category look alike.
+// ?cat=EARS shows one category; ?z=10 sets the zoom.
+import { PACKED } from '../src/engine/palette.js';
+import { colors, lut } from '../src/engine/sprite.js';
+import * as KIT from '../src/art/kit.js';
+import { FOUNDERS, lineOf } from '../src/game/genetics.js';
+
+const params = new URLSearchParams(location.search);
+const Z = +params.get('z') || 8;
+const GENE = { EYES: 'eyes', MOUTHS: 'mouth', NOSES: 'nose', MARKS: 'mark', CHEEKS: 'cheeks', EARS: 'ears', CRESTS: 'crest', BACKS: 'back', HAIR: 'hair', FEET: 'feet', ARMS: null };
+const HAIRGENE = { spikes: 'spiky', twintail: 'twintails', ponytail: 'ponytail', puff: 'curly' };
+const out = document.getElementById('out');
+
+function draw(part, ctx, label, row) {
+  const s = part.spr, t = lut(s, ctx), f = s.frames[0];
+  const c = document.createElement('canvas'); c.width = s.w + 2; c.height = s.h + 2;
+  c.style.width = (s.w + 2) * Z + 'px'; c.style.height = (s.h + 2) * Z + 'px';
+  const g = c.getContext('2d'); const img = g.createImageData(c.width, c.height); const u = new Uint32Array(img.data.buffer);
+  for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) { const p = t[f[y * s.w + x]]; if (p) u[(y + 1) * c.width + x + 1] = PACKED[p]; }
+  g.putImageData(img, 0, 0);
+  const fig = document.createElement('figure'); fig.append(c, document.createElement('br'), label); row.append(fig);
+}
+for (const [cat, gene] of Object.entries(GENE)) {
+  if (params.get('cat') && params.get('cat') !== cat) continue;
+  const h = document.createElement('h2'); h.textContent = cat; out.append(h);
+  const row = document.createElement('div'); row.className = 'row'; out.append(row);
+  for (const [name, part] of Object.entries(KIT[cat])) {
+    if (!part || typeof part !== 'object') continue;
+    const owner = gene ? FOUNDERS.find(f => f.name === lineOf(gene, cat === 'HAIR' ? HAIRGENE[name] : name)) : FOUNDERS[0];
+    const tr = owner?.traits || {};
+    const ctx = colors(tr.color || 'slate', tr.accent || 'cream', tr.eyeColor || 'ink', tr.hairColor || 'brown');
+    draw(part, ctx, `${name}${owner && gene ? ' · ' + owner.name : ''}`, row);
+  }
+}
+</script>
+</body>
+</html>

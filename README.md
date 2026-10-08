@@ -62,7 +62,8 @@ src/game/                 simulation, genetics, rendering, items, saving
 src/scenes/               home, menus, status, minigames, family, endings
 tests/                    node --test unit tests for game logic
 tools/sprite-editor/      in-browser editor for the sprite format
-tools/gallery.html        preview growth stages, expressions, poses and every part
+tools/gallery.html        preview growth stages, expressions, poses and every part (?gene=shape,build)
+tools/parts.html          every kit part side by side, by category, to keep parts distinct
 tools/lab.html            Pairing Lab: breed any two pets, inspect genes, odds, random pairings, lineages
 tools/founders.html       founder review sheets (?f=Name&s=560 for one, ?grid for the set)
 tools/compare.html        art review: founders, children, wild pets, growth, expressions

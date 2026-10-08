@@ -17,17 +17,17 @@ const ORANGE = { a: 'orange.0', b: 'orange.1', n: 'orange.2', N: 'orange.3' };
 // ---------------------------------------------------------------------------
 // Eyes (left eye; mirrored). Pivot = eye centre.
 export const EYES = {
-  droopy:  P(['.kkkk', 'kkwek', '.kkk.'], [2, 1]),                         // Mogumo: sleepy, heavy lids
+  droopy:  P(['kkkkk', '.kwk.'], [2, 0]),                                     // Mogumo: a heavy lid, the eye just peeking
   cat:     P(['.kk.', 'kFek', 'kekk', 'kekk', 'kEek', '.kk.'], [2, 3]),      // Kometchi: slit pupils
   dot:     P(['.k.', 'kwk', 'kwk', 'kkk', '.k.'], [1, 2]),                            // Ducklet
-  shiny:   P(['.kk.', 'kwek', 'keek', 'keFk', 'kFwk', '.kk.'], [2, 3]),      // Pipolin
-  sparkle: P(['.kk.', 'kwwk', 'kwkk', 'keek', 'kFek', '.kk.'], [2, 3]),      // Lumipom
+  shiny:   P(['.kkk.', 'kwwek', 'kweEk', 'keeEk', 'kFwEk', '.kkk.'], [2, 3]),   // Pipolin: big coloured irises
+  sparkle: P(['.kkk.', 'kwwkk', 'kwkkk', 'kkkkk', 'kFFwk', '.kkk.'], [2, 3]),   // Lumipom: dark eyes with two glints
   wide:    P(['.kkk.', 'kwwwk', 'kwwwk', 'kweEk', 'kwEEk', '.kkk.'], [2, 3]), // Spookit
-  gem:     P(['.kk.', 'kFwk', 'kFek', 'keEk', '.kk.'], [2, 2]),              // Fawnly: glassy doe eyes
+  gem:     P(['..k..', '.kFk.', 'kFwek', 'keeEk', '.kEk.', '..k..'], [2, 3]),  // Fawnly: faceted, glassy
   heart:   P(['.k.k.', 'kqkqk', 'kQqqk', '.kqk.', '..k..'], [2, 2]),        // Pupplo
   button:  P(['.kk.', 'kwkk', 'kkkk', '.kk.'], [2, 2]),                      // Hamuchi
   star:    P(['.kkk.', 'kkFkk', 'kFwFk', 'kkFkk', '.kkk.'], [2, 2]),             // Gillybop
-  sleepy:  P(['.kkk.', 'kkwek', '.kkk.'], [2, 1]),                           // Sproutle
+  sleepy:  P(['k...k', '.kkk.', '.k.k.'], [2, 1]),                       // Sproutle: peaceful closed lids with lashes
   bean:    P(['.kk.', 'kwkk', 'kwkk', 'kkkk', 'kEEk', '.kk.'], [2, 3]),      // Drakko
   pixel:   P(['kkkk', 'kFFk', 'kFek', 'kkkk'], [2, 2]),                      // Bolto: glowing LEDs
   arc:     P(['.kkk.', 'k...k'], [2, 1]),                                    // Nocti: content, half-asleep
@@ -37,16 +37,16 @@ export const BABY_EYES = P(['kk', 'wk', 'kk'], [1, 1]);
 // ---------------------------------------------------------------------------
 // Mouths (pivot = top centre)
 export const MOUTHS = {
-  tiny:   P(['k.k', '.k.'], [1, 0]),                         // Mogumo
+  tiny:   P(['.k.', 'k.k'], [1, 0]),                         // Mogumo: a little bear ∧
   cat:    P(['k.k.k', '.k.k.'], [2, 0]),                     // Kometchi
   bill:   'bill',                                            // Ducklet (drawn as BILL)
   smile:  P(['k...k', '.kkk.'], [2, 0]),                     // Pipolin
-  open:   P(['kkkkk', 'kRqRk', '.kkk.'], [2, 0]),            // Lumipom
+  open:   P(['kkkkk', 'kRRRk', '.kqk.', '..k..'], [2, 0]),   // Lumipom: an open D laugh
   fang:   P(['kkkkk', '.wk..'], [2, 0]),                     // Spookit
   ooh:    P(['.k.', 'kqk', '.k.'], [1, 0]),                  // Fawnly
-  blep:   P(['k.k.k', '.kqk.', '..q..'], [2, 0]),            // Pupplo: tongue out
-  teeth:  P(['kkkk', 'kwwk', '.kk.'], [2, 0]),               // Hamuchi: buck teeth
-  wobble: P(['k.......k', '.k..k..k.', '..kk.kk..'], [4, 0]),                     // Gillybop
+  blep:   P(['kkkkk', '.kqk.', '.kqk.', '..k..'], [2, 0]),   // Pupplo: tongue out
+  teeth:  P(['kkkkk', 'kwkwk', '.k.k.'], [2, 0]),            // Hamuchi: buck teeth
+  wobble: P(['k.......k', '.kk...kk.', '...kkk...'], [4, 0]), // Gillybop: a wide axolotl smile
   flat:   P(['kkk'], [1, 0]),                               // Sproutle
   grin:   P(['kk.....kk', '.kwwwwwk.', '..kkkkk..'], [4, 0]),      // Drakko
   grill:  P(['kkkkkkk', 'kGkGkGk', 'kkkkkkk'], [3, 0]),            // Bolto
@@ -79,8 +79,8 @@ export const NOSES = {
     '..222222222..',
   ], [6, 0]),
   whiskers: 'whiskers',                                        // Kometchi
-  button: P(['pp', 'pp'], [1, 0]),                             // Pipolin
-  dot: P(['kk', 'Kk'], [1, 0]),                                // Pupplo
+  button: P(['.pp.', 'pPpp', '.pp.'], [2, 0]),                             // Pipolin
+  dot: P(['Kkk', 'kkk', '.k.'], [1, 0]),                                // Pupplo
 };
 
 // Forehead marks (pivot = centre)
@@ -88,9 +88,9 @@ export const MARKS = {
   none: null,
   star:    P(['..y..', '.yYy.', 'yyYyy', '.y.y.'], [2, 2]),   // Kometchi
   moon:    P(['.YY', 'Y..', '.YY'], [1, 1]),                    // Spookit
-  drop:    P(['.B.', 'BsB', 'BBB', '.B.'], [1, 2]),             // Fawnly
+  drop:    P(['.B.', '.B.', 'BsB', 'BBB', '.B.'], [1, 3]),          // Fawnly: a dewdrop
   heart:   P(['.q.q.', 'qQqqq', '.qqq.', '..q..'], [2, 2]),     // Pupplo
-  diamond: P(['.l.', 'lil', '.l.'], [1, 1]),                    // Sproutle
+  diamond: P(['..l..', '.lil.', 'li.il', '.lil.', '..l..'], [2, 2]),                    // Sproutle
 };
 
 // Cheeks (left; mirrored). Pivot = top centre.
@@ -107,26 +107,22 @@ export const CHEEKS = {
 // `side` ears hang at the side of the head; `front` ears draw over the head.
 export const EARS = {
   none: null,
-  bear: P([                    // Mogumo
+  bear: P([                    // Mogumo: small round half-domes
     '..1111..',
-    '.144332o',
+    '.144332.',
     '143ff33o',
     '13fPff3o',
-    '13fff33o',
+    '13ffff3o',
     '1333332o',
-    '.o3332o.',
-    '..oooo..',
-  ], [5, 6]),
-  cat: P([                     // Kometchi
-    '1......',
-    '11.....',
-    '141....',
-    '14fo...',
-    '13ffo..',
-    '13fffo.',
-    '133ff3o',
-    '1333332',
-  ], [4, 7]),
+  ], [4, 5]),
+  cat: P([                     // Kometchi: short upright points with a fur tuft
+    '1.....',
+    '141...',
+    '14f1..',
+    '13fwo.',
+    '13ffwo',
+    '133332',
+  ], [3, 5]),
   bunny: P([                   // Pipolin
     '.1111.',
     '144332',
@@ -180,18 +176,18 @@ export const EARS = {
     '..566..',
     '...55..',
   ], [4, 1], { side: true, front: true, at: 0.1 }),
-  mouse: P([                   // Hamuchi: big round ears
-    '...1111...',
-    '..144332..',
-    '.14433332.',
-    '143ffff33o',
-    '13fPPff33o',
-    '13fPfff32o',
-    '13ffff332o',
-    '.1333332o.',
-    '..o3322o..',
-    '...oooo...',
-  ], [6, 7]),
+  mouse: P([                   // Hamuchi: big thin round ears
+    '....1111....',
+    '..11443322..',
+    '.1443ffff32.',
+    '143fPPPPff3o',
+    '13fPPfPPPf3o',
+    '13fPPPPPff2o',
+    '13ffPPPff32o',
+    '.133ffff32o.',
+    '..o333322o..',
+    '....oooo....',
+  ], [7, 8]),
   fins: P([                    // Gillybop: three feathery axolotl gills
     '.55.....',
     '5885....',
@@ -225,16 +221,17 @@ export const EARS = {
     '...G.',
     '..oGo',
   ], [3, 8]),
-  wings: P([                   // Nocti: big pointed bat ears
-    '1......',
-    '11.....',
-    '161....',
-    '1661...',
-    '16661..',
-    '.16661.',
-    '.166661',
-    '1333332',
-  ], [5, 7]),
+  wings: P([                   // Nocti: tall bat ears that lean out, ridged inside
+    '11......',
+    '161.....',
+    '.1661...',
+    '.16661..',
+    '.167661.',
+    '.166761.',
+    '.1666661',
+    '16676661',
+    '13333332',
+  ], [5, 8]),
 };
 
 // ---------------------------------------------------------------------------
@@ -251,12 +248,12 @@ export const CRESTS = {
     '.........uxuxu.',
     '........uu...uu',
   ], [9, 9]),
-  tuft: P(['.11..', '1441.', '.o131', '...13', '..13o', '.13o.'], [2, 5], { front: true }),                                         // Ducklet
+  tuft: P(['1.1.1', '14141', '.141.', '..1..'], [2, 3], { front: true }),                 // Ducklet: three feather sprigs
   bobble: P(['.555.', '58875', '58776', '57766', '.566.'], [2, 3], { front: true }),                 // Pipolin
   halo: P(['..uuuuu..', '.uYYYYYu.', 'uY.....Yu', '.uxxxxxu.', '..uuuuu..'], [4, 9], { front: true }),                       // Lumipom
   bud: P(['..o..', '.oPo.', 'oPfPo', 'ofPfo', '.ofo.', '.lLl.', '..L..'], [2, 6]),            // Fawnly
-  star: P(['..u..', '.uxu.', 'uxYxu', '.uxu.', 'u.u.u'], [2, 4], { front: true }), // Hamuchi
-  swirl: P(['..55..', '.5885.', '..5875', '.58775', '587765', '.55555'], [3, 5]),            // Gillybop
+  star: P(['..u..', '..x..', 'uxYxu', '..x..', '..u..'], [2, 4], { front: true }),         // Hamuchi: a little twinkle
+  swirl: P(['.6666.', '6....6', '6.66.6', '6.6..6', '6.666.', '6.....', '.66...'], [3, 6]),  // Gillybop: a curl of water
   sprout: P(['.jj.....jj.', 'jlij...jlij', 'jllLj.jLllj', '.jjlLjLljj.', '...jjLjj...', '....jLj....', '....jLj....', '....jLj....'], [5, 7]), // Sproutle
   flame: P(['....R....', '...RR..R.', '..RaR.RR.', '.RaAaRaR.', '.RaAYAaR.', 'RaAYYYAaR', 'RaAYwYAaR', '.RaAYAaR.', '..RRRRR..'], [4, 8], { front: true }), // Drakko
   horn: P(['..o..', '.oGo.', '.oGo.', 'omGGo', 'oGGgo', 'ooooo'], [2, 5]),                  // Bolto
@@ -288,7 +285,7 @@ export const BACKS = {
     '33333322o.',
     'ooooooooo.',
   ], [0, 12], { tail: true }),
-  wings: P(['....11.', '..1144o', '.14433o', '143332o', '14332o.', '1332o..', '.oo....'], [5, 2], { pair: true }), // Ducklet
+  wings: P(['....111.', '..11443o', '.144333o', '14333332', '1332o2o.', '.oo.o...'], [5, 2], { pair: true }), // Ducklet: feathered stubs
   pomtail: P(['.555.', '58875', '58776', '.566.'], [0, 2], { tail: true }),                       // Pipolin: cotton tail
   fairy: P([                   // Lumipom
     '...SSS.......',
@@ -333,20 +330,22 @@ export const BACKS = {
     '1333322oo..',
     'oooooo.....',
   ], [0, 5], { tail: true }),
-  butterfly: P(['.5555...', '5888755.', '58Y87765', '58877Y65', '.5577665', '..57665.', '.57Y65..', '.5765...', '..55....'], [7, 3], { pair: true }), // Sproutle
-  dragon: P([                  // Drakko
-    '........7.',
-    '.......776',
-    '..7...1446',
-    '.77..1433o',
-    '.7..1433o.',
-    '...1433o..',
-    '.71433o...',
-    '71433o....',
-    '1433o.....',
-    '133o......',
-    '1oo.......',
-  ], [0, 9], { tail: true }),
+  butterfly: P(['.555....', '58875...', '58Y8755.', '.587765.', '..5555..', '.5776...', '.57Y5...', '..55....'], [6, 3], { pair: true }), // Sproutle: two-lobed
+  dragon: P([                  // Drakko: a thick tail with gold back spikes
+    '.........u.',
+    '........uY1',
+    '.....u..1446',
+    '....uY.1433o',
+    '....u.1433o.',
+    '.u...1433o..',
+    'uY..1433o...',
+    'u..1433o....',
+    '..1433o.....',
+    '.1433o......',
+    '1433o.......',
+    '133o........',
+    '1oo.........',
+  ], [0, 11], { tail: true }),
   bolt: P([                    // Bolto: a power-cable lightning tail
     '......uu.',
     '.....uYx',
@@ -376,12 +375,15 @@ export const BACKS = {
 // ---------------------------------------------------------------------------
 // Hair pieces drawn outside the head (the fringe itself is painted on the head)
 export const HAIR = {
-  spikes: P([                  // Spookit: three clean spikes
-    '.-...-...-.',
-    '-+-.-+-.-+9',
-    '-+0-+00-+09',
+  spikes: P([                  // Spookit: three tall spikes
+    '.....-.....',
+    '.-...-+...-',
+    '.-+.-+0..-9',
+    '-+0.-+09.-9',
+    '-+0-+009-+9',
+    '-+00+0009+9',
     '-+000000099',
-  ], [5, 3]),
+  ], [5, 6]),
   twintail: P([                // Pipolin (left): ribbon-tied, hanging and curling out
     '...-qq.',
     '..-qRq.',
@@ -420,22 +422,23 @@ export const TUFT = P(['.555.', '58875', '58776', '57766', '.566.'], [2, 2]); //
 // ---------------------------------------------------------------------------
 // Arms (left; pivot = shoulder)
 export const ARMS = {
-  down: P(['..11.', '.1433', '14433', '14333', '1333.', '.o32o', '..oo.'], [4, 1]),
-  out:  P(['.11111.', '1443333', '.o2222o', '..oooo.'], [6, 1]),
-  up:   P(['.11..', '1441.', '1433o', '.1433', '..o32', '...oo'], [4, 5]),
+  // drawn in front of the body, with a soft inner edge and a round hand at the end
+  down: P(['.11..', '1442.', '1432.', '14322', '13322', '.ooo.'], [3, 1]),
+  out:  P(['.11....', '1441112', '1433332', '133222.', '.ooo...'], [6, 1]),
+  up:   P(['.11..', '1441.', '1332o', '.143o', '.143o', '..13o', '..13o'], [3, 6]),
 };
 
 // Feet (pivot = top centre)
 export const FEET = {
   paws: P(['.11111.', '1433332', '1378762', '.ooooo.'], [3, 0]),                         // Mogumo
-  legs: P(['.13o.', '.13o.', '.13o.', '13332o', '.oooo.'], [2, 0]),                  // Kometchi
+  legs: P(['13o', '13o', '13o', '13o', 'wwwo', '.oo.'], [1, 0]),                         // Kometchi: slim legs, white socks
   flippers: P(['aNNnnnnnbo', 'onnbnnbnno', '.oooooooo.'], [5, 0], { key: ORANGE }),   // Ducklet
-  tiny: P(['1433o', '1322o', '.ooo.'], [2, 0]),                                       // Pipolin
+  tiny: P(['.13.', '1332', '.oo.'], [2, 0]),                                            // Pipolin: tiny nubs
   cloud: P(['.mm..mm.', 'mwwmmwwm', 'mwwwwwwG', 'GmwwwwGG', '.GGGGGG.'], [4, 0]),                     // Lumipom: rides a cloud
   claws: P(['.1111.', '14332o', '13332o', '.w.w.w'], [3, 0]),                         // Spookit
-  hooves: P(['.13o.', '.13o.', '.13o.', 'onnNo', '.ooo.'], [2, 0]),                   // Fawnly
-  stubs: P(['.1111.', '14332o', '.oooo.'], [3, 0]),                                   // Pupplo
-  puffs: P(['.5555.', '588775', '577766', '.5555.'], [3, 0]),                         // Hamuchi: fluffy feet
+  hooves: P(['.13o.', '.13o.', '.13o.', 'nNknn', 'nn.nn'], [2, 0]),                       // Fawnly: split hooves
+  stubs: P(['.11111.', '1433332', '13o3o32', '.ooooo.'], [3, 0]),                         // Pupplo: stubby feet with toes
+  puffs: P(['.5555.', '588775', '577766', '5.56.5'], [3, 0]),                         // Hamuchi: fluffy feet
   tentacles: P(['1331331', '133o133o', '.13o.13o', '.73o.73o', '..oo..oo'], [4, 0]), // Gillybop
   roots: P(['..nn..', '.nNNn.', 'n.nn.n', 'n.n..n', '..n...'], [3, 0]),             // Sproutle
   talons: P(['..13o.', '.1333o', '13333o', 'u.u.u.'], [3, 0]),                        // Drakko

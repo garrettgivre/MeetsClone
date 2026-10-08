@@ -10,7 +10,8 @@ import { makeBitmap } from '../engine/screen.js';
 
 /**
  * Scale and animate a sprite-resolution pet.
- * src: { px, w, h, eyeBoxes: [[x,y,w,h],...], faceColour, mouth: [x,y], neck, floats, keepMouth }
+ * src: { px, w, h, eyeBoxes: [[x,y,w,h,skin?],...], faceColour, mouth: [x,y], neck, floats, keepMouth }
+ * (an eye box may carry its own skin colour, for a patch or mask around that eye)
  */
 export function animateSprite(src, pose, canvas, ground, scale) {
   const out = makeBitmap(canvas, canvas, true);
@@ -54,7 +55,7 @@ export function animateSprite(src, pose, canvas, ground, scale) {
   const skin = src.faceColour;
 
   // ----- eyes -----
-  const cover = ([x0, y0, w, h]) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) at(x0 + x, y0 + y, skin); };
+  const cover = ([x0, y0, w, h, c = skin]) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) at(x0 + x, y0 + y, c); };
   const closedEye = (box, shape) => {
     cover(box);
     const [x0, y0, w, h] = box;
@@ -104,7 +105,7 @@ export function composeKitSprite(kit, pose, canvas, ground, scale) {
   const [ew, eh] = kit.eyeSize, [pxv, pyv] = kit.eyePivot;
   const src = {
     ...kit, keepMouth: kit.bill,
-    eyeBoxes: [[kit.eyes[0][0] - pxv, kit.eyes[0][1] - pyv, ew, eh], [kit.eyes[1][0] - (ew - 1 - pxv), kit.eyes[1][1] - pyv, ew, eh]],
+    eyeBoxes: [[kit.eyes[0][0] - pxv, kit.eyes[0][1] - pyv, ew, eh, kit.eyeSkin?.[0]], [kit.eyes[1][0] - (ew - 1 - pxv), kit.eyes[1][1] - pyv, ew, eh, kit.eyeSkin?.[1]]],
   };
   return animateSprite(src, pose, canvas, ground, scale).out;
 }
