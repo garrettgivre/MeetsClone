@@ -1,6 +1,40 @@
 # CLAUDE.md: handoff notes for agents
 
-MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets / On*. It's plain JavaScript (ES modules) on a custom pixel engine, with no build step and no dependencies. It is hosted on GitHub Pages at https://garrettgivre.github.io/MeetsClone/ from the repo `garrettgivre/MeetsClone`. All art and names are original. Start with `README.md` for features and `docs/` for depth.
+MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets / On*. It's plain JavaScript (ES modules) on a custom pixel engine, with no build step and no dependencies. It is hosted on GitHub Pages at https://garrettgivre.github.io/MeetsClone/ from the repo `garrettgivre/MeetsClone`. All art and names are original. `README.md` lists the features; `docs/STYLE.md` has the art rules.
+
+The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
+
+## Where things stand (v0.17.1, 8 October 2026)
+
+Everything is committed, pushed and live. `npm test` passes (87 tests).
+
+**Work in progress: one pixel scale everywhere.** The owner asked for the whole game to render at a single pixel size and said "Yes make it consistent and look nice". Stage one shipped in v0.16.7. I then asked whether to carry on with the foods, toys and bath, then the scenes; the owner moved on to other requests without answering, so confirm before starting a long pass. What is left, in the order I would do it:
+
+1. **Small sprites still at the old chunky size** (1x grids that `scr.draw` upscales with Scale2x). Redraw each by hand as an `hdSprite` at twice its current grid size, so nothing that places it has to change:
+   - in `src/art/icons.js`: `SYRINGE`, `BROOM_WAVE`, `MOON`, `SUN`, `RING`, `TUB`, `SUDS`, `BUBBLE`, `POTTY`, `CANE`, `ANGRY`, and the list icons `BROOM_ICON`, `BATH_ICON`, `POTTY_ICON`;
+   - `FOOD_ART` (19 foods) and `TOY_ART` (6 toys), also in `icons.js`; they show in every feeding and play animation and in the menus;
+   - `src/art/wardrobe-icons.js`.
+2. **Scenes still drawn in code as plain rectangles**, the furthest from the rest of the art: the three minigames in `src/scenes/minigames.js`, `jumprope.js`, the travel animation and photo page in `src/scenes/town.js`, the matchmaker, wedding and album in `family.js`, and `ending.js`. Each needs a real backdrop (built like a town place) rather than a redrawn sprite.
+3. **Rules and dividers** drawn with `hline`, `vline` and `box`, which are two fine pixels thick.
+
+Already at the fine size: the room, the town, pets, the ten menu icons, the font, and the status symbols (`HEART`, `HEART_EMPTY`, `RICE`, `RICE_EMPTY`, `COIN`, `POOP`, `SKULL`, `ZZZ`, `ATTN`, `SPARKLE`, `NOTE`, `SWEAT`, `ARROW`, `STINK`).
+
+**Other open items**
+- **Clothes are not drawn on the pet.** Wardrobe items are bought, stored, listed and "worn", but `src/game/pet-art.js` never draws them (the comment in `src/game/render.js` says so, and there is no `wear` handling in `pet-art.js`). I told the owner; they have not asked for it yet. It was my top suggestion for what to do next.
+- **Not yet seen on a real phone by me:** the LCD filter's cell grid (it could shimmer at some screen densities) and the care-alert status-bar badge. The owner has confirmed that installing and alerts work.
+- **Ideas the owner has heard and not picked up:** a daycare or sitter, room decorations (wallpaper, bedding, furniture; the room is now built to allow it), seasons and holidays, Meet Codes, twins, mail and visitors, gardening, daily goals, a taller screen so short phone viewports have no side strips, a pick-list at the cottages, job-specific minigames.
+
+## What the owner wants (read this before doing anything)
+
+- **Pixel art is drawn by hand, pixel by pixel. Never use a script to generate or draft it.** The owner's words: "Don't use a script for the pixel art make it yourself pixel by pixel". Write the text grid row by row in the art file. A check that only reports row lengths or stray characters is fine, because it draws nothing. Splicing hand-typed rows into a file with a small script is fine too. Code is still fine for sky, light and pattern fills inside scenes.
+  - The older drafting scripts (`tools/art-scripts/town_kit.py`, `pet_kit.py`, `draft.py`, `props_draft.py`, `ed.py`) made earlier art and are kept only for reference. Do not use them for new work.
+  - The three gold buttons (`src/art/buttons.js`) came from a script that is now deleted. The owner said they are fine as they are.
+- **One pixel scale, cohesive look.** See the work in progress above.
+- **Original, in the spirit of Tamagotchi.** The official town maps and backgrounds are the quality bar; match their quality, not their layouts. No clip-art, no cheap-looking pixel art, no rudimentary shapes: objects are props, not rectangles drawn in code.
+- **Charm:** faces on buildings and objects, lettered signs, marquee bulbs, hanging stars and hearts, sticker halos, mushroom houses, cone trees. Dense around the edges, clear in the middle. Pets should show every gene.
+- **Light from the upper left.** Hue-shifted shading (cool shadows, warm lights), outlines in a darker shade of the object's own colour.
+- **Think about function before drawing.** For the menu icons the owner asked me to "think about their function and what they contain" and redesign from scratch; the header of `src/art/menu-icons.js` records what each one shows and why.
+- **Process:** look at every art change in the browser at zoom before pushing; never say art looks good without viewing it. Commit and push each finished change straight to `main`. Then say plainly what was done, what was checked and what is left. The owner asks for broad passes; do a real chunk, verify it, push it, and list the remainder rather than claiming the whole thing.
 
 ## Run, test, deploy
 
@@ -14,163 +48,123 @@ npm start         # static server on http://localhost:5173 (http-server, cache o
   { "version": "0.0.1", "configurations": [ { "name": "game", "runtimeExecutable": "npx",
     "runtimeArgs": ["-y", "http-server", "-p", "5173", "-c-1", "--silent"], "port": 5173 } ] }
   ```
-  If port 5173 is already served by another chat's server, the browser tools in this chat can't reach it: add a second configuration on another port (same command with `-p 5174`, `"port": 5174`) and start that one. A different port has its own `localStorage`, so it starts a fresh game.
-- **Deploy:** every push to `main` runs the tests and deploys to Pages (`.github/workflows/pages.yml`). The owner wants each finished update **committed and pushed straight to `main`**; no PRs are needed. The `gh` CLI is not installed here, but the repo is public, so check a deploy with `curl -s "https://api.github.com/repos/garrettgivre/MeetsClone/actions/runs?per_page=3"` (look at `conclusion`) and the live version with `curl -s https://garrettgivre.github.io/MeetsClone/src/version.js | tail -1`. **Check after every push:** on 2026-10-08 the `deploy-pages` step failed on GitHub's side for v0.16.7 though the tests passed, so the site stayed on the previous version until the next push. If a deploy fails, push again (a new commit re-runs it).
-- **Version:** bump `src/version.js` with every release (`VERSION` plus the one-line history in the comment above it). Settings shows the version number. Patch for art and polish, minor for a mechanics change.
-- **Commits:** end every commit message with `Co-Authored-By: Claude <noreply@anthropic.com>` (use the current model name). Write the message to a file and use `git commit -F`; see the Git Bash gotcha below.
+  If port 5173 is already served by another chat's server, the browser tools in this chat can't reach it: add a second configuration on another port (same command with `-p 5174`, `"port": 5174`) and start that one. A different port has its own `localStorage`, so it is a separate test save and the owner's game is never touched.
+- **Deploy:** every push to `main` runs the tests and deploys to Pages (`.github/workflows/pages.yml`). The owner wants each finished update committed and pushed straight to `main`; no PRs.
+  - **Check the deploy after every push.** The `gh` CLI is not installed, but the repo is public:
+    ```bash
+    curl -s "https://api.github.com/repos/garrettgivre/MeetsClone/actions/runs?per_page=3"   # look at "conclusion"
+    curl -s "https://garrettgivre.github.io/MeetsClone/src/version.js?t=$(date +%s)" | tail -1   # the live version
+    ```
+    A deploy takes about a minute. On 8 October the `deploy-pages` step failed on GitHub's side for v0.16.7 although the tests passed; the site stayed a version behind and the owner reported it as "the update check doesn't work". If a deploy fails, push another commit to run it again.
+  - The workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
+- **Version:** bump `src/version.js` with every release (`VERSION`, plus a phrase in the history comment above it). Patch for art and polish, minor for a mechanics change. Open games only notice a release if the version changed (see "Updates").
+- **Commits:** end every message with `Co-Authored-By: Claude <noreply@anthropic.com>` (use the current model name). Write the message to a file and use `git commit -F` (see the Git Bash gotcha). The "LF will be replaced by CRLF" warnings are harmless.
 
 ## Layout
 
 ```
-index.html, style.css      page shell: the screen flush to the top, a navy strip below with 3 large unlabelled buttons (A next, B select, C back; art in src/art/buttons.js)
-src/engine/                pixel engine: palette (64 colours, ramps like 'pink.0'..'pink.3'), screen, sprite, font, input, audio
-src/game/                  simulation (pet.js), genetics, items, save/migrate, Gene Book (book.js), town state (town.js), pet rendering (pet-art.js), alert wording (alerts.js), debug cheats (cheats.js)
-src/scenes/                home, room, menus, status, minigames, family, gene book, wardrobe, debug menu, town (TownScene / TravelScene / PlaceScene / PhotoScene)
-src/notify.js, sw.js       care alerts: browser notifications through the service worker
-src/update.js, sw.js       update check at start; the service worker fetches files fresh and keeps an offline copy
+index.html, style.css      page shell: the screen flush to the top and sides, a navy strip below with three gold buttons (A next, B select, C back), the #glass layer for the LCD filter
+manifest.webmanifest, sw.js, assets/   the installable app: full-screen display, PNG icons, the service worker
+src/main.js                boot, the frame loop, sizing (resize), install, background alerts, app.setFilter
+src/update.js              the check for a newer release
+src/notify.js              care alerts through the service worker
+src/ui.js                  LAYOUT, colours, dialog, ListMenu
+src/engine/                palette (64 colours, ramps like 'pink.0'..'pink.3'; mutedLut), screen (framebuffer, LCD filter), sprite (sprite, hdSprite), font, input, audio
+src/game/                  pet.js (simulation), genetics, items, save/migrate, book.js (Gene Book), town.js (places, residents, jobs), pet-art.js (pet rendering), alerts.js, cheats.js
+src/scenes/                home, room, menus, status, minigames, jumprope, family, genebook, wardrobe, debug, ending, town (TownScene, TravelScene, PlaceScene, NewsScene, PhotoScene)
 src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg
-src/art/menu-icons.js      the ten home-screen menu icons: hi-res sprites (28×28 at double density) made with `hdSprite`, with their own colour KEY
-src/art/props.js           hand-pixelled TOWN props (text grids with colour roles)
-src/art/props-home.js      the home room's props, pixelled by hand (same colour roles)
-src/art/town.js            the 22 town backdrops: a drawing kit + one function per place in SCENES
-tests/                     unit tests (art coverage, genetics, pet sim, save, town, book, discipline, care: baths, toilet, skills, jobs, alerts, cheats)
-tools/                     review pages + art scripts (see below)
-docs/STYLE.md              art rules for pets AND town (read before drawing anything)
-docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  notes on the original device
+src/art/menu-icons.js      the ten home-screen menu icons, hand-pixelled hi-res sprites
+src/art/buttons.js         the three gold buttons (UP and DOWN grids) and paintButtons
+src/art/icons.js           status symbols, foods, toys, bath and toilet sprites
+src/art/props.js           town props (text grids with colour roles)
+src/art/props-home.js      the home room's props, hand-pixelled; registers them with defineProp
+src/art/town.js            the drawing kit, the 23 town backdrops (SCENES) and the home room (homeRoom)
+tests/                     art, book, care, discipline, font, genetics, pet, save, town
+tools/                     review pages (parts, founders, gallery, compare, lab, town, props), dump.mjs, the sprite editor, old art scripts
+docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Architecture section is out of date);  docs/RESEARCH.md  notes on the device
 ```
 
-## Screen and coordinates
+## Screen, sizes and coordinates
 
-- **Pixel scales (the owner wants one scale everywhere):** there are two inside the game. The room, town, pets and menu icons are hi-res (256×448, one unit per pixel). Text, the status bar, list menus, hearts, poop, food, toys and other small sprites are low-res (128×224, each pixel two units; sprites go through Scale2x). Since v0.16.6 the page buttons match the low-res scale: `resize()` sets `--px` to one game pixel and `style.css` sizes them from it. The owner asked for the low-res layer to be brought up to hi-res, by hand. **Done (v0.16.7):** the font (`src/engine/font.js`, `FINE`: 10 fine rows per glyph, the same advance as before so layouts are unchanged; `tests/font.test.js` checks every glyph) and the status symbols in `src/art/icons.js` that are `hdSprite`s (hearts, rice, coin, poop, skull, Zzz, alert mark, sparkle, note, sweat drop, arrow, stink). **Still low-res, to redraw by hand as `hdSprite`s:** the syringe, broom sweep, ring, tub, suds, bubbles, potty, cane and the small list icons in `icons.js`; the 19 foods and 6 toys (`FOOD_ART`, `TOY_ART`); the wardrobe icons (`src/art/wardrobe-icons.js`). **Still drawn in code with normal-pixel rectangles:** the minigame, jump-rope, travel, matchmaker, wedding, album, photo and ending backdrops, and rules drawn with `hline`/`vline`/`box` (two fine pixels thick).
-- **Logical screen:** 128×224. The page has no bezel: `resize()` in `main.js` scales the canvas to fill the width (or the height above the button strip, whichever runs out first), so on a short viewport thin strips of shell show at the sides. Pets and town art are drawn at double density (HD = 2) on a 256×448 layer.
-- **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `src/game/pet-art.js`), feet 3 rows above the bottom. Adults are roughly 40 to 50 px tall, so a part has very few pixels to make its point.
-- **Town backdrops** (and the home room): each is a 256×312 hi-res bitmap (`RW`, `RH`).
-  - `HZ = 172` is the horizon or floor line, and `FEET = 228` is where pets stand.
-  - In a place, your pet stands at about x 76 and the resident at about x 188 (hi-res).
-  - The action buttons cover roughly y ≥ 250.
-  - Keep the middle of the floor clear, and put detail around the edges.
-- **Front layer:** `k.layer('front')` … `k.layer('back')` draws over the pets (via `frontdrop(id)`). Use it only for corner framing.
+- **Two grids in one framebuffer.** Scene code works in normal pixels (128×224). The framebuffer is 256×448 fine pixels. `scr.pset`, `rect`, `hline` take normal pixels (each a 2×2 block); `hpset`, `hrect` take fine ones; bitmaps flagged `hd` and `hdSprite`s are drawn one fine pixel per cell.
+- **Sprites:** `sprite(rows)` is a 1x grid that `scr.draw` upscales with Scale2x (the old chunky look). `hdSprite(rows, key)` is drawn at fine density with no upscaling; its `w` and `h` are still in normal pixels, so an `hdSprite` of twice the grid size replaces a `sprite` without moving anything. `scr.draw` options: `frame`, `flip`, `ctx` (colour context), `solid`, `remap` (a palette-to-palette table such as `mutedLut()`).
+- **Font** (`src/engine/font.js`): `FINE` holds each glyph as ten fine rows, hand-drawn; widths are twice the old 3×5 lettering so every layout kept its place (`tests/font.test.js` enforces that). `SMALL` is the old lettering, kept for signs painted into town backdrops (`glyphRows`). A new character needs rows in both. There is no `&`.
+- **Screen layout** (`LAYOUT` in `src/ui.js`, normal pixels): status bar 0-12, top icon row 12-34, room 34-190, bottom icon row 190-212, info bar 212-224. The icon rows are navy; an icon is drawn in greys (`MUTED` in `home.js`) until the cursor is on it. The info bar shows only the highlighted menu's name.
+- **Page sizing** (`resize()` in `main.js`): the canvas takes the full width, or the height left above the buttons, whichever runs out first. `--px` is set to the size of one normal game pixel; the buttons (32×36 art pixels), their gap and their offsets are all measured in it, so they match the game's scale. `BUTTON_ROWS` is the strip's height in game pixels. On a short viewport (a phone browser with its toolbars) thin strips show at the sides; removing them would need a taller logical screen.
+- **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `pet-art.js`), feet 3 rows above the bottom; drawn at fine density.
+- **Town backdrops and the home room:** each is a 256×312 fine bitmap (`RW`, `RH`).
+  - Town: `HZ = 172` is the horizon or floor line, `FEET = 228` is where pets stand; your pet is at about x 76, the resident at about x 188, a keeper's child at about x 230; the action buttons cover roughly y ≥ 250.
+  - Home: pets stand at `HOME_FEET = 256`.
+  - `k.layer('front')` … `k.layer('back')` draws over the pets. Use it only for corner framing.
 
-## Pet art: how it works
+## The home room
 
-- **Parts are text grids** (`src/art/pets/part.js`): `1-4` body ramp (1 = darkest, the lit outline; 2 shadow; 3 base; 4 light), `5-8` accent ramp, `e E F` eye colour, `- 9 0 +` hair ramp, `o`/`k` ink, `w` white. Socket markers sit in the grid: `@`/`*` face (small/large), `^` top, `=` neck, `[ ]` ears, `< >` arms, `( )` wings, `! ?` feet, `~` tail, `#` the part's own pivot. Left-side parts face left; the right side is mirrored.
-- **Every part is drawn for every form** (`src/art/pets/forms/<form>.js`: biped, blob, quad, floater, serpent, avian), so any mix of genes fits. Each form file holds heads, bodies, ears, hair, toppers, tails, feet, wings, arms, the baby and child shapes, and `order` (draw order). Face parts (eyes, mouths, marks, noses) are shared in `face.js` in sizes S and L.
-- **The renderer** (`src/game/pet-art.js`) puts the head's neck socket on the body's, hangs every other part on its socket, recolours patterns inside the drawn shading, softens outlines where same-colour parts join (`joinSeams`), moves the forehead mark if hair hides it, then draws the face. It reports `seen` pixels per part, `offFace` and `overflow`, which the art tests use.
-- **Shading rules** (full list in `docs/STYLE.md`): light from the upper left; lit outline `1` on the top and left, ink `o` on the bottom and right; a `4` rim just inside the lit edge (deeper near the top), a `2` band inside the dark edge, one `w` glint. Every head allele has its own silhouette in every form (fox cheek tufts and chin, woolly lamb crown and cheek puffs, bug brow ridge, bell scallops, owl flat top and brows, gumdrop double shine) and every body allele its texture (fur ticks, wool curls, feather chevrons, jelly gloss, bell glow, segment bands).
-- **Drafting kit:** `tools/art-scripts/pet_kit.py`.
-  - `redraw_head(form, allele)` rebuilds a head from its silhouette and sockets: mask → house shading (`shade`) → the allele's silhouette mod (`MODS`) → interior `details`. Run it on the *committed* plain grid, not on an already-modified head, or the mods stack (see `restore_body` for the git-show trick).
-  - `paint_body(form, allele)` paints a texture inside an existing body silhouette (sockets and outlines untouched); `restore_body(form, allele)` fetches the git HEAD grid first so a repaint starts clean.
-  - `tools/art-scripts/ed.py` has `show`, `rows_of`, `setpart`, `setall`, `widen` and the zone helpers for hand edits; `setpart` must be given a part's options string again (e.g. `"{ pivot: [3, 3] }"`) or they're dropped.
-  - `node tools/dump.mjs Kitsu+wings=feathered adult` prints a composed pet as characters, the quickest way to see what a head or arm hides.
-- **Review pages:** `tools/parts.html?gene=head&z=6` (every allele × every form), `tools/founders.html?grid` (`&stage=child`, `&sil`, `?f=Kitsu&s=400` for one big), `tools/gallery.html?gene=wings&form=biped` (one gene on a plain pet), `tools/compare.html` (founders, children of founder pairs, wild pets, growth, expressions), `tools/lab.html` (the Pairing Lab, with carried alleles, odds and who a child takes after).
-- **Tests** (`tests/art.test.js`): every allele exists in every form; heads and bodies have their sockets; founders, children and wild pets fit the canvas at every stage; every founder part and every optional part shows in every form (≥ 3 px); eyes, nose and mouth never land on an outline; the forehead mark always shows. Run them after any grid change; they catch most mistakes before you look.
+`homeRoom(sky, dark)` in `src/art/town.js` builds it like a town place from the props in `src/art/props-home.js` (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`), one cached picture per time of day plus a lights-off version (`dim` keeps the shapes as moonlit half-tones). The window panes are holes: `src/scenes/room.js` draws the sky, sun and cloud, or moon and stars, and then the room over them. The garland is drawn after the window so it hangs in front. The toy chest and plant are on the front layer (`drawRoomFront`). Room decorations would slot in by swapping props or colours in `homeScene`.
 
-## Genetics: how it works
+## Town art
 
-- `src/game/genetics.js`. Each gene has two alleles; dominance follows the `GENES` numbers (3 common … 1 rare); ties are a coin flip made once at conception (`express`). Forms are codominant. An ancillary part paired with `none` is **always** a coin flip, whatever its rarity, so wings, plumes and tendrils can show in a first mixed litter (before v0.13 `none` beat every rare part).
-- Colours blend (30%) or drift a step round the wheel; neutrals (brown, cream, slate) don't blend. Accent never equals body colour.
-- `randomGenome` (matchmaker partners, town residents, the lab) starts from a founder line, usually in fresh colours, and adds one to three twists, so wild pets look like coherent creatures. `resemblance(child, mom, dad)` counts who a child takes after. `childOdds` simulates a pairing; `carried` lists hidden alleles.
-- Generation 1 is a plain starter that grows into a founder chosen by care (`founderFor`); from generation 2 looks come only from genes. Star Isle's wish sets both alleles of a part on the next egg.
+- **Props** are text grids. Colour roles: `1-4` leaf, `5-8` wood, `a-d` accent, `e-h` stone, `A-D` wall, `r s t u` roof, `x y z Z` glass (each darkest to lightest); fixed `w` white, `k` ink, `m` mist, `v` silver, `n` grey; `.` empty. Scenes recolour them: `k.prop(name, x, y, { accent: 'pink', wood: 'brown', flip, halo: 'white' })`, anchored at the bottom centre. `rampOf()` maps neutral colours onto a ramp.
+- **New props** go in `props-home.js` or a similar file with `defineProp(name, rows)`, written by hand. Every row of a prop must be the same width (short rows are padded on the right, which shifts nothing but hides mistakes; check lengths).
+- **Scenes:** `SCENES.<id>(k)` draws with the kit `k`. Shapes: `rect`, `block`, `ellipse`, `disc`, `puff`, `blob`. Scenery: `field`, `trail`, `canopy`, `pcloud`, `horizonClouds`, `mountain`, `frame`, `tree`, `bush`. Interiors: `wall`, `tiles`, `planks`, `shelf`, `counter`, `lightPool`, `beam`, `vignette`. Charm: `sign`, `face`, `bulbs`, `starString` (hearts option), `heart`, `sun`, `signpost`, `lamp`. Floors paint over everything below the horizon, so draw things that stand on the floor after it.
+- **Review pages** (need the local server): `tools/town.html?only=park&z=3&pets`, `tools/props.html?z=4&only=a,b,c`.
+- `tests/town.test.js` renders every backdrop and runs every place action. A syntax error in `town.js` fails it with "Unexpected identifier"; run `node --check src/art/town.js`.
 
-## Town art: how it works
+## Pet art
 
-- **Props** (`src/art/props.js`): each prop is a text grid.
-  - Colour roles: `1-4` leaf, `5-8` wood, `a-d` accent, `e-h` stone, `A-D` wall, `r s t u` roof, `x y z Z` glass. Each ramp runs from darkest to lightest.
-  - Fixed colours: `w` white, `k` ink, `m` mist, `v` silver, `n` grey.
-  - Scenes recolour props per role: `k.prop(name, x, y, { accent: 'pink', wood: 'brown', flip, halo: 'white' })`. The anchor is the **bottom centre**.
-  - `halo` draws a sticker-style outline.
-- **Scenes** (`src/art/town.js`): `SCENES.<id>(k)` draws with a kit `k`.
-  - Basic shapes: `rect`, `block`, `ellipse`, `disc`, `puff`, `blob`.
-  - Scenery: `field`, `trail`, `canopy`, `pcloud`, `horizonClouds`, `mountain`, `frame`.
-  - Interiors: `wall`, `tiles`, `planks`, `shelf`, `counter`, `lightPool`, `beam`, `vignette`.
-  - Charm helpers: `sign` (lettering in the game font), `face` (the Tamagotchi face), `bulbs`, `starString` (with a hearts option), `heart`, `sun`, `signpost`.
-  - **Draw order matters:** floors (`tiles`, `planks`) paint over everything below the horizon. Anything standing on the floor must be drawn *after* the floor.
-- **Review pages** (each needs the local server):
-  - `tools/town.html`: every backdrop. Add `?only=park&z=3` to enlarge one place, and `&pets` to see two pets for scale.
-  - `tools/props.html`: every prop. `?z=4&only=a,b,c` shows chosen props; a single name shows four colourways.
-- **Making props:** draft with `tools/art-scripts/town_kit.py`, which has the `G`, `box`, `ell`, `tline`, `disc`, `outline` and `write_props` helpers (see its docstring), plus mask painters: build a silhouette as a set of cells (`rr_mask`, `ell_mask`, `rect_mask`, set unions) and `shade` it for the house look; `stones` and `bricks` lay irregular masonry and `circle` draws a glinting ball. The v0.12.8 props (cabinet, claw, oven, keep, tent, escalator, bed, window, fans) were drafted this way, then checked in the review pages.
-  - Pass ramp *characters* (e.g. `'7'`) to `px`, `hl` and `vl`, never ramp names: `hl(g, …, 'wood')` corrupts the row.
-- **Tests:** `tests/town.test.js` renders every backdrop and runs every place action. A syntax error anywhere in `town.js` fails it with "Unexpected identifier"; run `node --check src/art/town.js`.
+- **Parts are text grids** (`src/art/pets/part.js`): `1-4` body ramp (1 darkest, the lit outline; 2 shadow; 3 base; 4 light), `5-8` accent ramp, `e E F` eye colour, `- 9 0 +` hair ramp, `o`/`k` ink, `w` white. Sockets: `@`/`*` face (small/large), `^` top, `=` neck, `[ ]` ears, `< >` arms, `( )` wings, `! ?` feet, `~` tail, `#` the part's own pivot. Left-side parts face left; the right side is mirrored.
+- **Every part is drawn for every form** (`forms/<form>.js`: biped, blob, quad, floater, serpent, avian). Face parts are shared in `face.js` in sizes S and L.
+- **The renderer** (`src/game/pet-art.js`) joins head to body at the neck sockets, hangs the other parts on theirs, recolours patterns inside the drawn shading, softens seams between same-colour parts, moves the forehead mark if hair hides it, then draws the face. It reports `seen` pixels per part, `offFace` and `overflow` for the tests.
+- **Shading rules** are in `docs/STYLE.md`. Each head allele has its own silhouette in every form and each body allele its own texture.
+- **Checks:** `node tools/dump.mjs Kitsu+wings=feathered adult` prints a composed pet as characters. Review pages: `tools/parts.html?gene=head&z=6`, `tools/founders.html?grid` (`&stage=child`, `&sil`), `tools/gallery.html?gene=wings&form=biped`, `tools/compare.html`, `tools/lab.html`. `tests/art.test.js` checks every allele in every form, sockets, canvas fit, that every part shows, and that faces never land on an outline; run it after any grid change.
+- **Candidates:** the baby and child shapes (plain blobs with a face), the egg, the lamb cheeks on the small quad and serpent heads.
 
-## What the owner cares about (art direction)
+## Genetics
 
-- **Original but in the spirit of Tamagotchi:** the town maps (UraTama Town, Tama Street, the space town) and the official backgrounds are the quality bar. Match their quality, not their layouts.
-- **No clip-art or cheap-feeling pixel art, and no rudimentary shapes.** Objects should be hand-pixelled props, not rectangles and lines drawn in code. Code is fine for light, pattern and sky.
-- **Pixel art is drawn by hand, pixel by pixel. Do not use a script to generate or draft it** (the owner, October 2026: "Don't use a script for the pixel art make it yourself pixel by pixel"). Write the text grid row by row in the art file. A check that only reports row lengths is fine. The drafting scripts in `tools/art-scripts/` (`town_kit.py`, `pet_kit.py`) made earlier art and are kept for reference; don't reach for them for new work. The three device buttons (`src/art/buttons.js`) were drafted by a script that has since been removed; the owner is happy with them as they are.
-- **Charm:** buildings and objects with faces, lettered signs, marquee bulbs, hanging stars and hearts, sticker halos, mushroom houses and cone trees. Scenes should be dense around the edges but feel natural. Pets should show every gene: a child with a lamb head should look woolly even without wool hair.
-- **Light from the upper left.** Shading is hue-shifted (cool shadows, warm lights), with outlines in a darker shade of the object's own colour.
-- **Process:** after art changes, look at the result in the review pages (screenshot and zoom) before pushing. For big redesigns, outline the plan first. The owner asks for broad passes ("improve all the art", "continue improving the pet art"): pick the weakest pieces by looking, fix them in batches, verify, push, and say what's left.
+`src/game/genetics.js`. Each gene has two alleles; dominance follows the `GENES` numbers (3 common … 1 rare); ties are a coin flip made once at conception (`express`). Forms are codominant. An ancillary part paired with `none` is always a coin flip. Colours blend (30%) or drift a step round the wheel; neutrals don't blend; accent never equals body colour. `randomGenome` starts from a founder line and adds one to three twists. `resemblance`, `childOdds` and `carried` support the Pairing Lab and Status page. Generation 1 is a plain starter that grows into a founder chosen by care (`founderFor`); from generation 2 looks come only from genes.
 
-## Care, skills and alerts: how it works (v0.14)
+## Care, skills, jobs, alerts, cheats
 
-- **Hygiene** (`pet.dirt`, 0 to 4): rises while awake, faster with poop about. `isDirty` at 3 (more illness), and at 4 `needs()` returns `'dirty'`, an attention call. `bathe()` clears it. The home screen paints mud splats onto the pet's own silhouette (`drawDirt` in `home.js`) and plays the tub animation (`TUB`, `SUDS`, `BUBBLE` in `icons.js`).
-- **Toilet** (`pet.squirm`, `pet.potty`): `TOILET_WARN` minutes before a poop the pet squirms (a `squirm` event). `toilet()` saves the mess and counts a catch; at `POTTY_TRAINED` the pet goes by itself (a `toilet` event, no poop). The Clean icon opens a menu (sweep, bath, toilet); tapping a squirming pet is the shortcut.
-- **Skills** (`pet.skills`, four of them, `SKILL_STEP` points per level, `SKILL_MAX` levels): `train(pet, skill, points)`. Sources: school classes (`lesson` in `town.js`, two a day), `finishGame({ skill })`, chatting, swimming, the playground, performing and work shifts. `marry` passes a third to the egg.
-- **Jobs** (`JOBS` in `town.js`, `pet.job = { id, shifts }`): `applyJob` checks the skill level, `workShift` pays `jobPay` and promotes every `SHIFTS_PER_RANK` shifts. A pet with no job is a Helper.
-- **Alerts:** `alertFor(events, pet)` in `src/game/alerts.js` picks the most urgent event and words it; `src/notify.js` shows it through `sw.js`. `main.js` runs a slow timer while the page is hidden (the frame loop stops then) that advances the pet's clock, sends the alert and flags the tab title. There is no push server, so nothing arrives once the browser has closed or suspended the page.
-- **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. A cheat that returns events is played on the home screen by `done()`.
+- **Hygiene** (`pet.dirt`, 0-4): rises while awake, faster with poop about. `isDirty` at 3 (more illness); at 4 `needs()` returns `'dirty'`. `bathe()` clears it. `drawDirt` in `home.js` paints mud onto the pet's own silhouette.
+- **Toilet** (`pet.squirm`, `pet.potty`): the pet squirms `TOILET_WARN` before a poop; `toilet()` saves the mess; at `POTTY_TRAINED` it goes by itself. The Clean icon opens a menu (sweep, bath, toilet); tapping a squirming pet is the shortcut.
+- **Skills** (`pet.skills`: smart, creative, fit, charm): `train(pet, skill, points)`, `SKILL_STEP` points a level, `SKILL_MAX` levels. Sources: school classes (two a day), good minigames (`finishGame({ skill })`), chatting, swimming, the playground, performing, work shifts. `marry` passes a third to the egg.
+- **Jobs** (`JOBS` in `town.js`, `pet.job = { id, shifts }`): `applyJob` checks the skill level; a shift pays `jobPay` and promotes every `SHIFTS_PER_RANK` shifts.
+- **The player's pet has no old age.** It stays an adult until it marries, or dies or runs away from neglect.
+- **Alerts:** `alertFor(events, pet)` in `alerts.js` picks and words the most urgent event; `notify.js` shows it through `sw.js` with `assets/badge.png` as the status-bar shape. While the page is hidden a slow timer in `main.js` advances the clock and sends alerts. There is no push server, so nothing arrives once the browser has closed or suspended the page. The browser pane blocks notifications, so test with a stand-in and ask the owner to check on the phone.
+- **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. It can grow or change the pet, set needs, illness, dirt and training, skip time, open and age the town, fill the toy box, send a test alert.
 
-## The town's generations: how it works (v0.15)
+## The town's generations
 
-- `src/game/town.js`, section "residents". Nothing is stepped: who keeps a place and how old they are is worked out from `game.simTime - town.epoch` plus a per-place `phase` (so handovers are spread through the week). `clockOf` gives `{ gen, pos }`.
-- A tenure is `TENURE` (14 days; the owner found 6 too short): a teen for `JUNIOR`, a child born at `HEIR_AT` (baby, child, then teen), old from `ELDER_AT`, then the child becomes the next keeper. `AGELESS` places (hidden village, Star Isle, the cottages) never change. The player's own pet has no old age: it stays an adult until it marries or is neglected.
-- `keeper(seed, locId, gen)` builds a family forward: generation 0 is the fixed resident every game shares; each later one is `inherit(parent, randomGenome)` from a seed that includes `town.seed`, so families differ per save but never change within one. Titles (`TITLES`) stay with the place.
-- `resident(locId)` with no game still returns the first keeper (the art tests and photos rely on it); `resident(locId, game)` returns today's keeper with `stage`, `junior`, `elder`, `heir` and `parent`.
-- `townState()` calls `turnTown`, which compares the clock with `town.gens` / `town.born`, files news (`town.news`, last 12, with `town.unread`) and halves the friendship at each handover. `town.met` drives the NEW marker on the map.
-- `PlaceScene` draws the keeper at their stage, the heir beside them, and a cane and a doze for elders. Debug > Town has "Age the town" (moves `town.epoch` only).
-- **Singles:** `sibling(seed, locId, gen)` is the keeper's brother or sister (same two parents; the out-of-town parent is kept as `spouse` on the keeper). `singles(game)` lists those whose keeper has taken over but has no child yet. `findMatch` (used by `MatchmakerScene`) wraps `findPartner` and swaps in a single about half the time; `weddingBells` (called before `marry`) records `town.wed`, adds two hearts and files news.
-- **Cottages:** `retirees(game)` is the previous keeper of every place (so each lives there for one tenure). `resident('cottages', game)` returns Gran Willow or the retiree picked by `town.cottage`; `nextCottager` steps on. The backdrop is `SCENES.cottages`.
-- Tests that count days at one place should call a helper like `freshKeeper` in `tests/town.test.js` first, or a handover can land in the middle.
+- `src/game/town.js`, section "residents". Nothing is stepped: who keeps a place and how old they are follows from `game.simTime - town.epoch` plus a per-place `phase`. `clockOf` gives `{ gen, pos }`.
+- A tenure is `TENURE` (14 days; the owner found 6 too short): a teen for `JUNIOR`, a child born at `HEIR_AT` (baby, child, then teen), old from `ELDER_AT`, then the child takes over. `AGELESS` places (hidden village, Star Isle, the cottages) never change.
+- `keeper(seed, locId, gen)` builds a family forward: generation 0 is the fixed resident every game shares; each later one is `inherit(parent, spouse)` from a seed that includes `town.seed`. Titles (`TITLES`) stay with the place. `resident(locId)` with no game still returns the first keeper; `resident(locId, game)` returns today's, with `stage`, `junior`, `elder`, `heir`, `parent`, `inLaw`.
+- `townState()` calls `turnTown`, which files news (`town.news`, last 12, `town.unread`) and halves the friendship at each handover. `town.met` drives the NEW marker on the map.
+- **Singles:** `sibling()` is the keeper's brother or sister; `singles(game)` lists the free ones; `findMatch` (used by `MatchmakerScene`) swaps one in about half the time; `weddingBells` (called before `marry`) records the match, adds two hearts and files news.
+- **Sunset Cottages:** `retirees(game)` is the previous keeper of every place; `resident('cottages', game)` returns Gran Willow or the retiree picked by `town.cottage`.
+- Tests that count days at one place should call `freshKeeper` (in `tests/town.test.js`) first, or a handover can land in the middle.
 
-## The LCD screen filter (v0.17)
+## The LCD screen filter
 
-- Settings > Screen filter (`settings.lcd`, on by default) calls `scr.setFilter()`. The owner asked for something that hides the pixels a little and feels like a 90s handheld screen, not a blur.
-- With it on, `Screen.present()` in `src/engine/screen.js` keeps the plain 256×448 frame off-screen and composes the visible canvas at three times that size: the frame enlarged with hard edges; the same frame again, offset down and right and multiplied in at low strength (dark shapes cast a soft shadow, like LCD segments over their backing); then the grid of cells from `lcdGlass()`. Since v0.17.1 the owner wanted it over the buttons too, so `app.setFilter()` in `main.js` is the one switch: it sets the screen filter, repaints the buttons with the same enlarge-and-shadow treatment (`paintButtons(true)`), and adds `body.lcd`, under which `style.css` shows `#glass` (the sheen and vignette over the whole device) and lays the cell grid (`--cell`, sized by `--px`) over the button strip. The canvas's CSS `image-rendering` switches to `auto`, so the browser smooths only the last small step to the display size.
-- With it off, the canvas is the plain 256×448 frame with `image-rendering: pixelated`, as before.
-- Anything that reads pixels back from the visible canvas must allow for both sizes (`scr.canvas.width` is 256 or 768).
-- Strengths to tune if asked: the shadow's `globalAlpha` (0.2) and offset, the grid's two alphas in `lcdCell()`, and the sheen and vignette gradients on `#glass` in `style.css`.
+- Settings > Screen filter (`settings.lcd`, on by default). The owner asked for something that hides the pixels a little and feels like a 90s handheld, "not just blurry", and then for it to cover the buttons too.
+- `app.setFilter(on)` in `main.js` is the one switch. It calls `scr.setFilter`, repaints the buttons with the same treatment (`paintButtons(true)`), and sets `body.lcd`.
+- `Screen.present()` (`src/engine/screen.js`) keeps the plain 256×448 frame off-screen and composes the visible canvas at three times that size: the frame enlarged with hard edges; the same frame again, offset down and right and multiplied in faintly (dark shapes cast a soft shadow, like LCD segments over their backing); then the grid of cells (`lcdCell`). The canvas's `image-rendering` becomes `auto`, so the browser smooths only the last small step.
+- Under `body.lcd`, `style.css` shows `#glass` (a sheen and a vignette over the whole device, taps pass through), lays the cell grid over the button strip, and sets the page navy to `#201e4e`, the shade the filtered screen's navy comes out at.
+- With the filter off the canvas is the plain frame with `image-rendering: pixelated`. Anything that reads pixels from the visible canvas must allow for both sizes (`scr.canvas.width` is 256 or 768).
+- To tune: the shadow's `globalAlpha` (0.2) and offset in `present()`, the grid's two alphas in `lcdCell()`, the gradients on `#glass`.
 
-## Updates: how the newest version always shows (v0.14.2)
+## Updates, install, offline
 
-- There is no build step, so file names never change between releases and browsers would otherwise keep old copies (Pages lets them for ten minutes, and installed apps for longer).
-- `sw.js` answers every same-origin GET from the network first with `cache: 'no-cache'`, and keeps the last good copy in the `meetsclone-offline` cache for when there is no connection. It is registered at start-up for everyone.
-- `src/update.js` `checkForUpdate()` runs at boot and whenever the page becomes visible: it fetches `src/version.js` uncached, and if `VERSION` differs from the running one it saves the game and reloads (a `sessionStorage` guard stops it reloading for the same version more than once every three minutes). It also runs every five minutes while the game is open. After the reload the home screen says "Updated to vX".
-- **So every release must bump `src/version.js`**, or open games won't notice it.
-- The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
+- There is no build step, so file names never change and browsers would keep old copies. `sw.js` answers every same-origin GET from the network first with `cache: 'no-cache'` and keeps the last good copy in the `meetsclone-offline` cache for when there is no connection.
+- `checkForUpdate()` in `src/update.js` runs at boot, whenever the page becomes visible, and every five minutes: it fetches `src/version.js` uncached, and if `VERSION` differs it saves the game and reloads (not more than once every three minutes for the same version). After the reload the home screen says "Updated to vX". The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
+- **Install:** Settings > Install app keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. Chrome's own menu install fails on the owner's phone ("already installed", then "could not open app"), probably because another of their apps, Room for Two, is installed from the same site; the in-game button works and the owner prefers it. The manifest `id` is `/MeetsClone/app`; don't change it again.
+- The manifest asks for `display: fullscreen`. An installed copy picks up manifest changes only when Chrome next refreshes it (up to a day, or a reinstall).
+- **App icons:** installers need PNGs. `python tools/art-scripts/app_icons.py` renders `assets/icon-*.png`, `apple-touch-icon.png` and `badge.png` from the 16×16 grid typed in that script (it enlarges a hand grid; it does not draw). `badge.png` must stay a white silhouette on transparent, because Android uses only its alpha.
 
-## Status (v0.17.1, October 2026)
+## Working in this repo: things that cost me time
 
-- **Done:**
-  - Pet life cycle, care, discipline, weight, baths and toilet training.
-  - Skills, school classes and jobs with promotions.
-  - Care alerts (browser notifications) and a debug menu of cheats.
-  - A town that grows up: residents age, have children, retire and are succeeded, with town news.
-  - Genetics with six body plans and six founders (see "Genetics" above; v0.13 fixed the `none` dominance bug and made wild pets line-based).
-  - Wardrobe, shops and points.
-  - Four minigames.
-  - Matchmaker, wedding and generations.
-  - Gene Book.
-  - The town: 23 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
-  - Town art: every town object is a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts) and added an escalator, a hospital bed, curtained windows and concert-hall fans.
-  - Pet art: v0.13.0 proper wings and tendrils on every form; v0.13.1 signature head silhouettes and body textures in every form; v0.13.2 rounded lamb crowns, cloud-puff tails, swept hair tufts, domed nub ears.
-- **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations. Smaller ones: a daycare or sitter, mail and visitors, gardening, daily goals, and job-specific minigames. For the town: shops that change a little with each keeper, visiting a retired keeper who is your pet's in-law, and a family tree per place.
-- **Known gap:** clothes from the wardrobe are stored and shown in menus but `pet-art.js` does not draw them on the pet.
-- **Confirmed by the owner on Android Chrome (October 2026):** Settings > Install app installs the game, and care alerts arrive. The browser pane here blocks notifications, so alert changes can only be tested with a stand-in; ask the owner to check on the phone.
-- **Pet-art candidates:** the baby and child shapes (plain blobs with a face; could carry more of the line), the egg, and the lamb cheeks on the small quad and serpent heads (still a little pointed).
-- **Town-art candidates:** the salon mirrors, the boutique clothes rack and the school blackboard.
-- **The home room** (v0.16.1) is built like a town place: `homeRoom(sky, dark)` in `src/art/town.js` lays out props (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`, hand-pixelled in `src/art/props-home.js`, which registers them with `defineProp`) with the town kit, one cached picture per time of day plus a lights-off version (`dim`). The window panes are holes: `src/scenes/room.js` draws the sky, sun, cloud, moon and stars first and the room over them. Pets stand at `HOME_FEET` (256), lower than in town, and the front layer (toy chest, plant) is drawn over the pet by `drawRoomFront`. Room decorations would slot in here: swap props or colours in `homeScene`.
-
-## Gotchas
-
-- **Saves:** `src/game/save.js` `migrate` fills in new pet fields. Add defaults there whenever the pet shape changes, and keep old saves loading; `tests/save.test.js` covers this.
-- **Deploy list:** the Pages workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
-- **Menu icons:** `src/art/menu-icons.js` holds the ten home-screen icons, pixelled by hand in v0.16.3 as 28×28 hi-res grids (the header comment says what each one shows and why). Edit the grids directly; every row must be 28 characters. On the home screen an icon is drawn through `mutedLut()` (greys only) until the cursor is on it, via the `remap` option of `scr.draw`. Other UI sprites in `icons.js` are still 1x grids that `scr.draw` upscales; `hdSprite(rows, key)` is the way to draw one at full density.
-- **Installing on Android:** the owner also has Room for Two installed from the same site (`garrettgivre.github.io/Room-For-Two/`). Chrome's menu install then says MeetsClone is "already installed" and "could not open app". The likely cause is that Chrome's install sheet checks for an installed app per site, not per app (not confirmed). Changing the manifest `id` to `/MeetsClone/app` (v0.14.5) did not help; leave it as it is now, since a new id makes installed copies look like a different app. v0.14.6 added Settings > Install app, which keeps the `beforeinstallprompt` event (`app.install()` in `main.js`) and shows Chrome's dialog directly. That worked, and the owner prefers it to the browser menu.
-- **Full screen:** the manifest asks for `display: fullscreen` (the game has its own clock in the status bar). An installed copy only picks up manifest changes when Chrome next refreshes it, which can take a day or a reinstall. `installState` in `main.js` treats both `fullscreen` and `standalone` as installed.
-- **App icons:** installers need PNGs, not the SVG. `badge.png` is the status-bar shape for care alerts: Android uses only its alpha, so it must stay a white silhouette on transparent. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
-- **Fonts:** the pixel font (`src/engine/font.js`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`. A new character needs a row set in both `FINE` (twice as wide, ten rows) and `SMALL` (the 3×5 lettering `glyphRows` gives to town signs).
-- **Town colours:** `rampOf()` in `town.js` maps neutral colours (white, mist, ink…) onto a ramp for prop roles.
-- **Git Bash heredocs mangle backslashes:** a `python - <<'EOF'` script containing `\\` (Windows paths, regex) fails with a unicode-escape error, and `git commit -m` with a heredoc is unreliable. Write Python scripts and commit messages to files (the scratchpad is fine) and run them by path.
-- **Part options:** `setpart` from `ed.py` replaces the whole `key: part([...], opts)`; pass the options string back or pivots, `front`, `under` and `spread` are lost. Heads have no options; ears, tails, hair and the small child shapes do.
-- **Don't stack generated mods:** `redraw_head` and `paint_body` add features to whatever grid they're given. Start from the committed grid (`git show HEAD:...`) when regenerating, or the crown grows a crown.
-- **Accuracy:** don't claim art looks good without viewing it; render it and check at zoom. `tools/dump.mjs` is the text-level check for pets.
+- **The browser pane is often hidden, and then the game's frame loop doesn't run.** A screenshot or a read of the canvas shows a stale or blank picture. Force a frame first: `app.scenes[0].draw(app.scr); if (app.scenes.length > 1) app.scene.draw(app.scr); app.scr.present();`. `window.app` is exposed for this.
+- **To judge art at zoom,** copy part of the game canvas into a larger canvas with smoothing off and screenshot that, or use the review pages. Set states through the cheats: `const C = await import('/src/game/cheats.js')`. Time-skip cheats can kill the test pet; `app.reset()` starts it over.
+- **Check at phone size** (`resize_window` to about 412×883 for the owner's phone, and 390×664 for a browser with toolbars), and reset the viewport afterwards.
+- **Git Bash heredocs mangle backslashes and quotes.** Write Python scripts and commit messages to files (the scratchpad is fine) and run them by path. For many exact edits I used a small `patch(path, [(old, new), ...])` helper that fails unless each `old` matches exactly once.
+- **Saves:** `migrate` in `src/game/save.js` fills in new pet fields and merges new settings from `newGame`. Add defaults there whenever the pet's shape changes; `tests/save.test.js` and `tests/care.test.js` cover it.
+- **Seeded tests are sensitive to anything that changes how often a pet falls ill.** A long unattended stretch in a test can kill the pet; top up needs, cure and clean as the helpers in `tests/care.test.js` do.
+- **Old script notes, for reading history only:** `setpart` in `ed.py` drops a part's options unless they're passed back; `redraw_head` and `paint_body` in `pet_kit.py` stack their changes if run on an already-modified grid.
