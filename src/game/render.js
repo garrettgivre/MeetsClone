@@ -56,16 +56,22 @@ function inside(s, u, v) {
 /** Zig-zag 0..1 used for fringes. */
 const zig = (x) => Math.abs((((x % 1) + 1) % 1) - 0.5) * 2;
 
+/** Rounded scallop 0..1 for bangs: locks of width `lock` with round bottoms, one centred. */
+function scallop(u, lock) {
+  const f = (((u / lock) + 0.5) % 1 + 1) % 1;
+  return Math.sqrt(Math.max(0, 1 - (2 * f - 1) ** 2));
+}
+
 function hairAt(hair, u, v) {
   switch (hair) {
     case 'bangs': case 'ponytail': case 'twintails':
-      return v < -0.36 + 0.2 * zig(u * 2.6 + 0.5);
+      return v < -0.42 + 0.2 * scallop(u, 0.44);
     case 'bob':
-      return v < -0.36 + 0.2 * zig(u * 2.6 + 0.5) || (Math.abs(u) > 0.66 && v < 0.5);
+      return v < -0.42 + 0.2 * scallop(u, 0.44) || (Math.abs(u) > 0.62 && v < 0.42 + 0.1 * Math.cos((Math.abs(u) - 0.62) * 8));
     case 'spiky':
-      return v < -0.5 + 0.16 * zig(u * 3.2);
+      return v < -0.5 + 0.22 * zig(u * 2.4 + 0.5);
     case 'curly':
-      return v < -0.42 + 0.12 * Math.cos(u * 14);
+      return v < -0.44 + 0.1 * scallop(u, 0.22);
     default: return false;
   }
 }
@@ -83,34 +89,63 @@ function headPattern(pattern, u, v, y) {
 }
 
 /**
- * Rasterise a shape with a navy outline and flat shading.
- * paint(u, v, x, y) returns a ramp name, { ramp, shade } or a fixed palette index.
- * opts.glint draws a thin highlight arc at the upper left; opts.shadeTop darkens the top rows.
+ * Rasterise a shape into clean pixel art.
+ *  - 4x4 supersampled coverage, mirrored left/right so shapes are symmetric
+ *  - 1px navy outline with "pixel-perfect" cleanup (no doubled corner pixels)
+ *  - cel shading: a shadow band that follows the shape's own edge on the lower
+ *    right, and an oval highlight on the upper left
+ * paint(u, v, x, y, m) returns a ramp name (auto-shaded), { ramp, shade } or a
+ * fixed palette index. m(x, y) tells whether a pixel is inside the shape.
+ * opts: { shine: false } no highlight; { shadeTop: n } shade the top n rows
+ * (where a head casts a shadow); { asym: true } skip mirroring.
  */
 function raster(w, h, s, paint, opts = {}) {
   const bm = makeBitmap(w, h);
   const mask = new Uint8Array(w * h);
   const U = (x) => ((x + 0.5) - w / 2) / (w / 2);
   const V = (y) => ((y + 0.5) - h / 2) / (h / 2);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) mask[y * w + x] = inside(s, U(x), V(y)) ? 1 : 0;
-  const m = (x, y) => x >= 0 && y >= 0 && x < w && y < h && mask[y * w + x];
+  const SS = 4;
+  const half = opts.asym ? w : Math.ceil(w / 2);
+  for (let y = 0; y < h; y++) for (let x = 0; x < half; x++) {
+    let hits = 0;
+    for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
+      const u = ((x + (sx + 0.5) / SS) - w / 2) / (w / 2);
+      const v = ((y + (sy + 0.5) / SS) - h / 2) / (h / 2);
+      if (inside(s, u, v)) hits++;
+    }
+    const on = hits * 2 >= SS * SS ? 1 : 0;
+    mask[y * w + x] = on;
+    if (!opts.asym) mask[y * w + (w - 1 - x)] = on;
+  }
+  const m = (x, y) => x >= 0 && y >= 0 && x < w && y < h && mask[y * w + x] === 1;
+
+  // outline: inside pixels with an outside 4-neighbour
+  const edge = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++)
+    if (m(x, y) && (!m(x - 1, y) || !m(x + 1, y) || !m(x, y - 1) || !m(x, y + 1))) edge[y * w + x] = 1;
+  // pixel-perfect: drop the middle pixel of an "L" so diagonals are single steps
+  const e = (x, y) => x >= 0 && y >= 0 && x < w && y < h && edge[y * w + x] === 1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!e(x, y)) continue;
+    for (const [ax, ay, bx, by] of [[-1, 0, 0, -1], [0, -1, 1, 0], [1, 0, 0, 1], [0, 1, -1, 0]]) {
+      if (e(x + ax, y + ay) && e(x + bx, y + by) && !m(x + ax + bx, y + ay + by)
+        && m(x - ax, y - ay) && !e(x - ax, y - ay) && m(x - bx, y - by) && !e(x - bx, y - by)) {
+        edge[y * w + x] = 0;
+        break;
+      }
+    }
+  }
+
   const ink = C('ink');
+  const k = Math.max(1, Math.round(Math.min(w, h) / 9)); // shadow band thickness
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!m(x, y)) continue;
-    if (!m(x - 1, y) || !m(x + 1, y) || !m(x, y - 1) || !m(x, y + 1)) { bm.px[y * w + x] = ink; continue; }
+    if (edge[y * w + x]) { bm.px[y * w + x] = ink; continue; }
     const u = U(x), v = V(y);
-    const r = paint(u, v, x, y);
+    const r = paint(u, v, x, y, m);
     if (typeof r === 'number') { bm.px[y * w + x] = r; continue; }
     if (typeof r === 'object') { bm.px[y * w + x] = ramp(r.ramp, r.shade); continue; }
-    // flat fill, soft rim shade on the lower right, a thin glint arc on the upper left
-    let shade = 2;
-    if ((!m(x + 2, y + 1) || !m(x + 1, y + 2)) && u + v > 0.15) shade = 1;
-    if (opts.shadeTop && y <= opts.shadeTop) shade = 1;
-    if (opts.glint && u < -0.28 && v < -0.2) {
-      const rr = Math.hypot(u + 0.12, v + 0.12);
-      if (Math.abs(rr - 0.7) < 1.1 / w * 2 && u + v < -0.75) shade = 3;
-    }
-    bm.px[y * w + x] = ramp(r, shade);
+    bm.px[y * w + x] = ramp(r, celShade(m, x, y, u, v, k, opts));
   }
   const rowSpan = (y) => {
     let l = -1, rr = -1;
@@ -118,6 +153,15 @@ function raster(w, h, s, paint, opts = {}) {
     return [l, rr];
   };
   return { bm, w, h, m, rowSpan, U, V };
+}
+
+/** 1 = shadow, 2 = base, 3 = highlight. The shadow follows the shape's own edge. */
+function celShade(m, x, y, u, v, k, opts = {}) {
+  if (opts.shadeTop && y <= opts.shadeTop) return 1;
+  // light from the upper left: pixels near the lower-right edge fall into shadow
+  if (!m(x + k, y + k) || (v > 0.35 && !m(x, y + k + 1))) return 1;
+  if (opts.shine !== false && ((u + 0.42) / 0.2) ** 2 + ((v + 0.5) / 0.12) ** 2 <= 1) return 3;
+  return 2;
 }
 
 const cache = new Map();
@@ -141,18 +185,27 @@ function headBitmap(t, stage) {
   const [hw, hh] = STAGE_SIZE[stage];
   const d = stage === 'adult' ? SIZE_DELTA[t.size] || 0 : 0;
   const w = Math.round((hw + d) * s.aw), h = Math.round((hh + d) * s.ah);
-  const hairy = (u, v) => hairAt(t.hair, u, v);
-  const hairShine = (u, v) => Math.abs(v + 0.62) < 1.2 / h && u > -0.55 && u < -0.05;
-  const r = raster(w, h, s, (u, v, x, y) => {
-    if (hairy(u, v)) {
-      const dv = 2 / h;
-      // a darker line along the bottom edge of the fringe defines it against the face
-      if (!hairy(u, v + dv)) return { ramp: t.hairColor, shade: 0 };
-      if (hairShine(u, v)) return { ramp: t.hairColor, shade: 3 };
-      return { ramp: t.hairColor, shade: u + v > 0.4 ? 1 : 2 };
+  // hair is worked out per pixel (mirrored so both sides match) so it can be outlined
+  const hm = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < Math.ceil(w / 2); x++) {
+    const on = hairAt(t.hair, ((x + 0.5) - w / 2) / (w / 2), ((y + 0.5) - h / 2) / (h / 2)) ? 1 : 0;
+    hm[y * w + x] = on; hm[y * w + (w - 1 - x)] = on;
+  }
+  const hair = (x, y) => x >= 0 && y >= 0 && x < w && y < h && hm[y * w + x] === 1;
+  const k = Math.max(1, Math.round(Math.min(w, h) / 9));
+  const r = raster(w, h, s, (u, v, x, y, m) => {
+    if (hair(x, y)) {
+      // outline the hair where it meets the face, like the head's own outline
+      if ((m(x, y + 1) && !hair(x, y + 1)) || (m(x - 1, y) && !hair(x - 1, y)) || (m(x + 1, y) && !hair(x + 1, y))) return C('ink');
+      // a curved gloss band across the top
+      const gloss = Math.abs(Math.hypot(u * 1.05, v - 0.25) - 0.86) < 1.6 / h && u > -0.62 && u < -0.06;
+      if (gloss) return { ramp: t.hairColor, shade: 3 };
+      // shadow along the head's lower-right edge and just above the fringe line
+      const shade = !m(x + k, y + k) || !hair(x, y + 2) ? 1 : 2;
+      return { ramp: t.hairColor, shade };
     }
     return headPattern(t.pattern, u, v, y) ? t.accent : t.color;
-  }, { glint: t.hair === 'none' });
+  }, { shine: t.hair === 'none' });
   const earY = Math.max(1, Math.round(h * 0.18));
   let top = 0;
   while (top < h && !r.m(Math.floor(w / 2), top)) top++;
@@ -252,7 +305,7 @@ function earBitmap(kind, headW, t) {
       break;
     }
   }
-  const r = raster(w, h, { fn }, paint);
+  const r = raster(w, h, { fn }, paint, { asym: kind === 'cat' || kind === 'floppy', shine: false });
   b = { ...r, angle, pivot, front };
   cache.set(key, b);
   return b;
@@ -393,26 +446,28 @@ export function composePet(phenotype, stage, pose = {}) {
   }
 
   // ----- body -----
-  let armsY = 0;
-  if (torso) {
-    // feet first so the body sits on them
-    if (feet) drawFeet(out, feet, feetCtx, cx, ty + torso.h - 2, Math.max(3, Math.round(torso.w * 0.22)), step, even);
-    blit(out, torso.bm, tx, ty);
-    if (t.outfit === 'bowtie') stamp(out, BOWTIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx('bowtie'));
-    if (t.outfit === 'tie' || t.outfit === 'collar') stamp(out, TIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx(t.outfit));
-    armsY = ty + 4;
-  } else if (feet) {
-    drawFeet(out, feet, feetCtx, cx, hy + head.h - 3 - bob, Math.max(3, Math.round(head.w * 0.22)), step, even);
-  }
-
-  // arms are drawn in front, after the head
+  let armsY = torso ? ty + 4 : 0;
+  // arms: lowered arms tuck behind the body (the body's outline joins them
+  // cleanly); raised arms go in front so they aren't hidden by the big head
   const armPose = pose.arms || 'down';
   const [armL, armR] = armPose === 'wave' ? ['up', 'down'] : [armPose, armPose];
   const drawArm = (which, side) => {
     const a = ARMS[which] || ARMS.down;
-    if (side < 0) stamp(out, a, tx + torso.sideL + 1, armsY, ctx);
-    else stamp(out, a, tx + torso.sideR - 1, armsY, ctx, true);
+    if (side < 0) stamp(out, a, tx + torso.sideL + (which === 'up' ? 1 : 2), armsY, ctx);
+    else stamp(out, a, tx + torso.sideR - (which === 'up' ? 1 : 2), armsY, ctx, true);
   };
+
+  if (torso) {
+    // feet first so the body sits on them
+    if (feet) drawFeet(out, feet, feetCtx, cx, ty + torso.h - 2, Math.max(3, Math.round(torso.w * 0.22)), step, even);
+    if (armL !== 'up') drawArm(armL, -1);
+    if (armR !== 'up') drawArm(armR, 1);
+    blit(out, torso.bm, tx, ty);
+    if (t.outfit === 'bowtie') stamp(out, BOWTIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx('bowtie'));
+    if (t.outfit === 'tie' || t.outfit === 'collar') stamp(out, TIE, Math.round(cx) - 1 + (torso.w % 2), ty + 3, itemCtx(t.outfit));
+  } else if (feet) {
+    drawFeet(out, feet, feetCtx, cx, hy + head.h - 3 - bob, Math.max(3, Math.round(head.w * 0.22)), step, even);
+  }
 
   // ----- head -----
   // ears drawn to scale sit on the head outline at an angle from the top
@@ -445,7 +500,7 @@ export function composePet(phenotype, stage, pose = {}) {
   blit(out, head.bm, hx, hy);
   if (crest && crest.front) stamp(out, crest, crestX, hy + head.top + 1, crestCtx);
   frontEars?.();
-  if (torso) { drawArm(armL, -1); drawArm(armR, 1); }
+  if (torso) { if (armL === 'up') drawArm('up', -1); if (armR === 'up') drawArm('up', 1); }
 
   // ----- face -----
   const expr = pose.expr || 'idle';
@@ -575,7 +630,7 @@ export function composeEgg(phenotype, crack = 0, wobble = 0) {
     const isSpot = [[-0.4, -0.25, 0.2], [0.38, 0.12, 0.22], [-0.12, 0.6, 0.18], [0.22, -0.62, 0.14]].some(([a, b, rr]) => (u - a) ** 2 + (v - b) ** 2 < rr * rr);
     const band = Math.abs(v - 0.05 - 0.1 * (zig(u * 3) - 0.5)) < 0.08;
     return isSpot || band ? spot : base;
-  }, { glint: true });
+  });
   blit(out, r.bm, x0, y0);
   const cracks = [[9, 3], [8, 4], [9, 5], [10, 6], [9, 7], [11, 4], [12, 5], [7, 6], [6, 7]];
   for (let i = 0; i < Math.min(cracks.length, crack * 3); i++) put(out, x0 + cracks[i][0], y0 + cracks[i][1], C('ink'));

@@ -25,7 +25,7 @@ export const EYES = {
   star:    P(['..o..', '.oYo.', 'oYYYo', '.oYo.', 'oo.oo'], [2, 2]),
   gem:     P(['..k..', '.kFk.', 'kFwek', 'keeEk', '.kek.', '..k..'], [2, 3]),
   heart:   P(['.k.k.', 'kqkqk', 'kqqqk', '.kqk.', '..k..'], [2, 2]),
-  droopy:  P(['kk...', '.kkkk', 'kkwkk', 'kkkkk', '.kkk.'], [2, 2]),
+  droopy:  P(['...kk', 'kkkk.', 'kkwkk', 'kkkkk', '.kkk.'], [2, 2]),
 };
 // Small eyes used by babies (big heads come later).
 export const BABY_EYES = P(['kk', 'wk', 'kk', 'kk'], [1, 2]);
@@ -124,9 +124,9 @@ export const BACKS = {
 
 // ---------- Arms (left arm, mirrored). Pivot = shoulder on the body's edge. ----------
 export const ARMS = {
-  down: P(['..oo', '.o3o', 'o33o', 'o3o.', '.o..'], [3, 0]),
-  out:  P(['.ooo.', 'o333o', '.ooo.'].map(r => r), [4, 1]),
-  up:   P(['oo..', 'o3o.', 'o33o', '.o3o', '..oo'], [3, 4]),
+  down: P(['...ooo', '..o33o', '.o333o', 'o333o.', 'o223o.', '.ooo..'], [4, 0]),
+  out:  P(['.oooooo', 'o333333', 'o223333', '.oooooo'], [5, 1]),
+  up:   P(['.oo..', 'o33o.', 'o233o', '.o33o', '..ooo'], [3, 4]),
 };
 
 // ---------- Feet (front, under the body) ----------
