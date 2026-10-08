@@ -38,6 +38,7 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - **One-pixel lines with no doubles**, and curves that step evenly.
 - **Both eyes keep their glint on the upper left.** The right eye is drawn the same way round; only eyes marked `mirror` are flipped.
 - **Grounded:** a pet stands on its body and feet; a tail or wing that dangles lower never lifts it off the floor (floaters count everything, so their tendrils stay on the canvas).
+- **Every gene shows:** hair and toppers sit over the forehead mark, but if they hide more than half of it the renderer moves the mark down onto bare forehead, or onto the chest; a test checks every form, head and hair.
 - **Joined seams:** where connected parts of the body or hair colour meet (ears and head, tail and body, shoulders, toppers), the renderer turns the outline into a soft crease. One-piece forms (blob, avian) also melt the head into the body.
 - **Faces fit their heads:** a head with a large face (`*`) should be about as wide as its siblings in that form at the face row; put the face socket on the widest rows. A small head or child shape can bring the eyes closer with a `spread` option on its part. The tests fail if any eye in any form, head and stage lands over the outline.
 - **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).

@@ -118,3 +118,18 @@ test('faces fit: eyes, nose and mouth stay inside every head and child shape, in
   }
   assert.deepEqual(misses, [], 'face parts over the outline or over each other');
 });
+
+test('the forehead mark always shows (it moves off the forehead when hair covers it)', () => {
+  const hidden = [];
+  const faceAt = (g) => composePetArt(express(pureGenome(g), makeRng(1)), 'adult', {}).seen.face || 0;
+  for (const form of Object.keys(FORMS)) for (const head of Object.keys(GENES.head)) for (const hair of Object.keys(GENES.hair)) {
+    const base = { ...STARTER, form, head, hair, topper: 'none' };
+    const without = faceAt({ ...base, mark: 'none' });
+    for (const mark of Object.keys(GENES.mark)) {
+      if (mark === 'none') continue;
+      const shows = faceAt({ ...base, mark }) - without; // mark pixels still on top (at least half of the smallest mark)
+      if (shows < 2) hidden.push(`${form} ${head} ${hair} ${mark} (${shows}px)`);
+    }
+  }
+  assert.deepEqual(hidden, [], 'hidden marks');
+});

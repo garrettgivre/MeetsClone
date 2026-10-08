@@ -115,6 +115,36 @@ function crop(L, floats = false) {
   return { px, dx, dy, seen, overflow: x1 - x0 + 1 > PW || ground - y0 + 4 > PH };
 }
 
+/**
+ * Hair and toppers sit over the forehead mark. If they hide more than half of
+ * it, move the mark down onto bare forehead (staying above the eyes), or failing
+ * that, put the small mark on the chest, so the gene always shows.
+ */
+function settleMark(L, { mark, small, y, size }, fx, fy, ctx) {
+  const cellsOf = (m) => {
+    const out = [];
+    m.rows.forEach((r, j) => [...r].forEach((c, i) => { if (c !== '.') out.push([i - m.pivot[0], j - m.pivot[1]]); }));
+    return out;
+  };
+  const cells = cellsOf(mark);
+  const count = (cs, x, yy, ok) => cs.filter(([dx, dy]) => ok(L.ids[(yy + dy) * TW + x + dx])).length;
+  if (count(cells, fx, y, (id) => id === PART.face) * 2 >= cells.length) return;
+  const skin = (id) => id === PART.head || id === PART.face;
+  const lowest = fy - (size === 'L' ? 3 : 2); // the mark's bottom row stays above the eyes
+  const bottom = Math.max(...cells.map(([, d]) => d));
+  for (let dy = 1; y + dy + bottom <= lowest; dy++) {
+    if (count(cells, fx, y + dy, skin) === cells.length) { L.part('face'); L.stamp(mark, fx, y + dy, ctx); return; }
+  }
+  // the chest: the first stretch of bare body under the face
+  const cs = cellsOf(small);
+  // (below the mouth; in one-piece forms the chest is still the head part)
+  const bare = (id) => id === PART.body || id === PART.head;
+  const from = fy + (size === 'L' ? 8 : 6);
+  for (let yy = from; yy < Math.min(TH - 4, from + 14); yy++) {
+    if (count(cs, fx, yy, bare) === cs.length) { L.part('face'); L.stamp(small, fx, yy, ctx); return; }
+  }
+}
+
 /** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
 function drawFace(L, p, stage, pose, ctx, [fx, fy], size, on = {}) {
   // layout: house defaults, then the form's, then the part's own (a small head can set a closer eye spread)
@@ -220,6 +250,7 @@ export function composePetArt(p, stage, pose = {}) {
       if (l) L.stamp(ears, l[0], l[1], ctx);
       if (r) L.stamp(ears, r[0], r[1], ctx, true);
     };
+    let markAt = null; // where the forehead mark went, so it can move if hair hides it
     const steps = {
       wings: () => {
         if (!showWings) return;
@@ -246,13 +277,14 @@ export function composePetArt(p, stage, pose = {}) {
         // the forehead mark goes on with the head, so hair and toppers can sit over it
         const lay = { ...FACE_LAYOUT[faceSock[0]], ...(F.faceLayout || {}) };
         const mark = MARKS[p.mark]?.[lay.markSize || faceSock[0]];
-        if (mark) { L.part('face'); L.stamp(mark, fx, fy + lay.mark, ctx); L.part('head'); }
+        if (mark) { L.part('face'); L.stamp(mark, fx, fy + lay.mark, ctx); L.part('head'); markAt = { mark, small: MARKS[p.mark].S, y: fy + lay.mark, size: faceSock[0] }; }
         if (ears?.front) drawEars();
       },
       hair: () => { if (has('hair')) { L.part('hair'); const [t] = Hs('top'); if (t) L.stamp(F.hair[p.hair], t[0], t[1], ctx); } },
       topper: () => { if (adult && has('topper')) { L.part('topper'); const [t] = Hs('top'); if (t) L.stamp(F.topper[p.topper], t[0], t[1], ctx); } },
     };
     for (const step of F.order) steps[step]?.();
+    if (markAt) settleMark(L, markAt, fx, fy, ctx);
     drawArms((k) => k === 'up'); // raised arms go in front of the head
     joinSeams(L, [p.color, p.hairColor || p.color], joinSet(F.merge ? ['1-2'] : []), F.merge ? new Set(['1-2', '2-1']) : undefined);
     face = drawFace(L, p, stage, pose, ctx, [fx, fy], faceSock[0], head);
