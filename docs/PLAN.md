@@ -165,4 +165,5 @@ Each phase ends with something playable that's pushed and live on GitHub Pages.
 
 ## Status
 - **First build (done):** Phases 0, 1, 3, 4 and 5, most of 6 and 9, and the first minigame from Phase 7.
-- **Next:** travel and locations with residents (Phase 8), Meet Codes (Phase 10), more minigames, and room decorations.
+- **Since then:** Phase 8 (the town: 22 places in four districts plus a hidden village, residents, travel passes), three more minigames, discipline, weight and the Gene Book.
+- **Next:** Meet Codes (Phase 10), twins, seasons and holidays, and room decorations.

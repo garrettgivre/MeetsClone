@@ -12,11 +12,11 @@ import { drawRoom as drawRoomHD } from './room.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
-const BOTTOM = ['games', 'items', 'shop', 'family', 'settings'];
+const BOTTOM = ['games', 'items', 'town', 'family', 'settings'];
 const ALL = [...TOP, ...BOTTOM];
 const LABEL = {
   status: 'STATUS', food: 'FOOD', clean: 'CLEAN UP', medicine: 'MEDICINE', lights: 'LIGHTS',
-  games: 'GAMES', items: 'ITEMS', shop: 'SHOP', family: 'FAMILY', settings: 'SETTINGS',
+  games: 'GAMES', items: 'ITEMS', town: 'TOWN', family: 'FAMILY', settings: 'SETTINGS',
 };
 const STAGE_NAME = { egg: 'EGG', baby: 'BABY', child: 'CHILD', teen: 'TEEN', adult: 'ADULT' };
 const POOP_X = [104, 116, 92, 80];
@@ -168,10 +168,10 @@ export class HomeScene {
     const app = this.app, pet = this.pet;
     const waiting = !pet || pet.stage === 'egg';
     const sleeping = pet?.asleep && !pet.lights;
-    if (waiting && ['food', 'clean', 'medicine', 'games', 'items', 'family'].includes(name)) {
+    if (waiting && ['food', 'clean', 'medicine', 'games', 'items', 'family', 'town'].includes(name)) {
       app.sfx('nope'); app.toast(pet?.stage === 'egg' ? 'Wait for it to hatch!' : '...'); return;
     }
-    if (sleeping && ['food', 'clean', 'medicine', 'games', 'items'].includes(name)) {
+    if (sleeping && ['food', 'clean', 'medicine', 'games', 'items', 'town'].includes(name)) {
       app.sfx('nope'); app.toast('Shh! Sleeping...'); return;
     }
     switch (name) {

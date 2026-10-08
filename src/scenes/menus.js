@@ -9,17 +9,20 @@ import { StatusScene } from './status.js';
 import { JumpRopeScene } from './jumprope.js';
 import { WhichWayScene, SnackCatchScene, CopyMeScene } from './minigames.js';
 import { GeneBookScene } from './genebook.js';
+import { TownScene } from './town.js';
 import { foundTotal, BOOK_SIZE } from '../game/book.js';
 import { MatchmakerScene, AlbumScene } from './family.js';
 import { WardrobeScene, clothesIcon } from './wardrobe.js';
 import { VERSION } from '../version.js';
 
 export function openMenu(app, name, home) {
-  const menus = { status, food, games, items, shop, family, settings };
+  const menus = { status, food, games, items, town, family, settings };
   menus[name]?.(app, home);
 }
 
 function status(app) { app.push(new StatusScene(app)); }
+
+function town(app) { app.push(new TownScene(app)); }
 
 function food(app, home) {
   const g = app.game, pet = g.pet;
@@ -55,54 +58,51 @@ function items(app, home) {
   const toys = () => app.push(new ListMenu(app, 'TOYS', g.toys.map(id => ({
     label: TOYS[id].name, icon: TOY_ART[id],
     action: () => { app.home(); home.doPlay(id); },
-  })), { footer: 'BUY MORE IN THE SHOP' }));
+  })), { footer: 'BUY MORE IN TOWN' }));
   app.push(new ListMenu(app, 'ITEMS', [
     { label: 'Toys', icon: TOY_ART.ball, right: g.toys.length, action: toys },
     { label: 'Wardrobe', icon: ICONS.items, right: g.wardrobe.length, action: () => app.push(new WardrobeScene(app)) },
   ]));
 }
 
-function shop(app) {
+/**
+ * A shop list: 'food' (everything on sale), 'snacks', 'toys' or 'clothes'.
+ * Used by the town's shops.
+ */
+export function shopList(app, kind, title = null) {
   const g = app.game;
-  const foodList = () => {
-    const m = new ListMenu(app, 'FOOD SHOP', Object.keys(FOODS).filter(id => !FOODS[id].free).map(id => ({
+  const footer = () => `POINTS: ${g.points}`;
+  if (kind === 'food' || kind === 'snacks') {
+    const ids = Object.keys(FOODS).filter(id => !FOODS[id].free && (kind === 'food' || FOODS[id].kind === 'snack'));
+    return new ListMenu(app, title || (kind === 'snacks' ? 'TREATS' : 'FOOD'), ids.map(id => ({
       label: FOODS[id].name, right: FOODS[id].price, icon: FOOD_ART[id],
       action: () => {
         const r = buy(g, 'food', id);
-        if (r.ok) { app.sfx('coin'); app.toast(`Bought ${FOODS[id].name}! (x${g.inventory[id]})`, 1400); }
+        if (r.ok) { app.sfx('coin'); app.toast(`Bought ${FOODS[id].name}! (x${g.inventory[id]})`, 1400); app.save(); }
         else { app.sfx('nope'); app.toast(r.msg); }
       },
-    })), { footer: () => `POINTS: ${g.points}` });
-    app.push(m);
-  };
-  const toyList = () => {
-    const m = new ListMenu(app, 'TOY SHOP', Object.keys(TOYS).map(id => ({
+    })), { footer });
+  }
+  if (kind === 'toys') {
+    return new ListMenu(app, title || 'TOYS', Object.keys(TOYS).map(id => ({
       label: TOYS[id].name, right: g.toys.includes(id) ? 'OWNED' : TOYS[id].price, icon: TOY_ART[id],
       action: (_, item) => {
         const r = buy(g, 'toy', id);
-        if (r.ok) { app.sfx('coin'); item.right = 'OWNED'; app.toast(`Bought the ${TOYS[id].name}!`, 1400); }
+        if (r.ok) { app.sfx('coin'); item.right = 'OWNED'; app.toast(`Bought the ${TOYS[id].name}!`, 1400); app.save(); }
         else { app.sfx('nope'); app.toast(r.msg); }
       },
-    })), { footer: () => `POINTS: ${g.points}` });
-    app.push(m);
-  };
-  const clothesList = () => {
-    const ids = Object.keys(CLOTHES).sort((a, b) => SLOTS.indexOf(CLOTHES[a].slot) - SLOTS.indexOf(CLOTHES[b].slot) || CLOTHES[a].price - CLOTHES[b].price);
-    app.push(new ListMenu(app, 'CLOTHES SHOP', ids.map(id => ({
-      label: CLOTHES[id].name, ...clothesIcon(id),
-      right: g.wardrobe.includes(id) ? 'OWNED' : CLOTHES[id].price,
-      action: (_, item) => {
-        const r = buy(g, 'clothes', id);
-        if (r.ok) { app.sfx('coin'); item.right = 'OWNED'; app.toast(`Bought the ${CLOTHES[id].name}! Try it on in Items.`, 1800); app.save(); }
-        else { app.sfx('nope'); app.toast(r.msg); }
-      },
-    })), { footer: () => `POINTS: ${g.points}` }));
-  };
-  app.push(new ListMenu(app, 'SHOP', [
-    { label: 'Food', icon: ICONS.food, right: '▶', action: foodList },
-    { label: 'Toys', icon: TOY_ART.ball, right: '▶', action: toyList },
-    { label: 'Clothes', icon: ICONS.items, right: '▶', action: clothesList },
-  ], { footer: () => `POINTS: ${g.points}` }));
+    })), { footer });
+  }
+  const ids = Object.keys(CLOTHES).sort((a, b) => SLOTS.indexOf(CLOTHES[a].slot) - SLOTS.indexOf(CLOTHES[b].slot) || CLOTHES[a].price - CLOTHES[b].price);
+  return new ListMenu(app, title || 'CLOTHES', ids.map(id => ({
+    label: CLOTHES[id].name, ...clothesIcon(id),
+    right: g.wardrobe.includes(id) ? 'OWNED' : CLOTHES[id].price,
+    action: (_, item) => {
+      const r = buy(g, 'clothes', id);
+      if (r.ok) { app.sfx('coin'); item.right = 'OWNED'; app.toast(`Bought the ${CLOTHES[id].name}! Try it on in Items.`, 1800); app.save(); }
+      else { app.sfx('nope'); app.toast(r.msg); }
+    },
+  })), { footer });
 }
 
 function family(app) {

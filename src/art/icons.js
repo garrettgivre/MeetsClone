@@ -86,6 +86,18 @@ export const ICONS = {
     '.ovvPPvvo.',
     '.oooooooo.',
   ]),
+  town: sprite([
+    '....oo....',
+    '.ooooooo..',
+    '.oyyyyYyo.',
+    '.ooooooo..',
+    '....on....',
+    '..ooooooo.',
+    '.oBsssssBo',
+    '..ooooooo.',
+    '....on....',
+    '..oooooo..',
+  ]),
   shop: sprite([
     '...oooo...',
     '..o....o..',

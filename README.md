@@ -51,9 +51,15 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - The status screen shows the hidden genes a pet carries.
 - **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu).
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
-- **Economy:** Gotchi Points, a food and toy shop, and favourite foods and toys.
+- **Economy:** Gotchi Points, shops in town for food, toys and clothes, and favourite foods and toys.
 - **Minigames:** Jump Rope, Which Way? (guess where your pet hops), Snack Catch (catch treats, dodge rocks) and Copy Me (repeat your pet's left/right dance).
 - **Family:** a matchmaker (3 partners a day), a wedding, the next-generation egg, and a family album.
+- **Town** (bottom row): 22 places to visit, each with its own backdrop and a resident who becomes a friend the more you chat (with gifts at 3 and 7 hearts).
+  - **Downtown** (walk): Town Square (fountain fortunes), Park (daily stroll finds), Playground, Cafe (dish of the day), Bakery, Toy Shop, Boutique, Arcade (all the minigames) and Hospital (treatment and check-ups).
+  - **Uptown** (Bus Pass): Department Store (with a daily sale), Beauty Salon (hair dye, not inherited), School (a daily lesson in manners), Workshop (adult shifts for pay), Wedding Chapel (the matchmaker) and Photo Studio (a photo album).
+  - **Seaside** (Train Pass): Beach (swimming and shells), Forest (foraging), Amusement Park and Concert Hall (daily shows and fans).
+  - **Far Away** (Balloon Ticket): Royal Castle (well-mannered pets only, and a crown on the first visit) and Star Isle (a wish gives your next egg a part you've never found).
+  - **Hidden Village:** find three pieces of an old map in the park and forest. Its elder introduces you to a founder's family, for a partner with pure founder genes.
 - **Gene Book** (Family menu): every body plan, part and body colour, shown on a little pet, with silhouettes for ones not found yet. Your pets fill it in as they grow into their looks, and so do the partners they marry. Each find pays points, and finding every part of a founder's line pays a bonus.
 - **Saving:** automatic saves, catch-up for time spent away, and backup and restore codes.
 

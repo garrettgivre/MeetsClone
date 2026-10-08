@@ -523,6 +523,10 @@ export function marry(game, partner, rng = defaultRng) {
   const pet = game.pet;
   const [mom, dad] = pet.gender === 'f' ? [pet, partner] : [partner, pet];
   const genome = inherit(mom.genome, dad.genome, rng);
+  // a wish made on Star Isle (src/game/town.js): the egg gets two copies of a part
+  // the family has never seen, so it shows
+  const wish = game.town?.wish;
+  if (wish) { genome[wish.gene] = [wish.allele, wish.allele]; game.town.wish = null; }
   discover(game, partner.phenotype);
   retire(game, pet, 'married', { partner: { name: partner.name, phenotype: partner.phenotype, wear: partner.wear || {} } });
   game.generation = pet.generation + 1;

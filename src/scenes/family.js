@@ -9,10 +9,11 @@ import { findPartner, marry } from '../game/pet.js';
 const sym = (g) => (g === 'f' ? '♀' : '♂');
 
 export class MatchmakerScene {
-  constructor(app) {
+  /** partner: someone to introduce (the hidden village's founder kin), or a random match. */
+  constructor(app, partner = null) {
     this.app = app;
     this.t = 0;
-    this.partner = findPartner(app.game);
+    this.partner = partner || findPartner(app.game);
   }
   enter() {
     if (!this.partner) {
