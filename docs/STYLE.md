@@ -54,6 +54,7 @@ Parts are text grids (`src/art/pets/part.js`). Role characters recolour with gen
 - `tools/compare.html`: founders, children of founder pairs, wild pets, growth and expressions.
 - `tools/lab.html`: the Pairing Lab.
 - `node tools/dump.mjs <Founder|random:seed> [stage] [expr]`: prints a composed pet as characters, for pixel-level review.
+- `tools/art-scripts/ed.py`: Python helpers to read and rewrite any part's grid by name (`show`, `rows_of`, `setpart`, `setall`), and to block in a silhouette from row extents with the house shading (`from_extents`, `paint`). `draft.py` holds the shape and shading tools the forms were first drafted with (it won't overwrite the finished grids unless given `--force`).
 
 ## Adding things
 - **A new part:** add the allele to `GENES`, give it to a founder, draw it in every form file. The tests list anything missing.
