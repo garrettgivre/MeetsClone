@@ -2,7 +2,7 @@
 import { C } from '../engine/palette.js';
 import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
-import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BATH_ICON, POTTY_ICON } from '../art/icons.js';
+import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BROOM_ICON, BATH_ICON, POTTY_ICON } from '../art/icons.js';
 import { hash } from '../engine/rng.js';
 import { composePet, composeEgg, composeGhost, CANVAS, GROUND } from '../game/render.js';
 import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
@@ -208,7 +208,7 @@ export class HomeScene {
     const app = this.app, pet = this.pet;
     const go = (fn) => () => { app.home(); fn.call(this); };
     app.push(new ListMenu(app, 'CLEAN', [
-      { label: 'Sweep up', icon: ICONS.clean, right: pet.poop ? `x${pet.poop}` : 'TIDY', action: go(this.sweep) },
+      { label: 'Sweep up', icon: BROOM_ICON, right: pet.poop ? `x${pet.poop}` : 'TIDY', action: go(this.sweep) },
       { label: 'Bath', icon: BATH_ICON, right: GRIME[Math.min(4, Math.floor(pet.dirt || 0))], action: go(this.doBath) },
       { label: 'Toilet', icon: POTTY_ICON, right: pet.squirm ? 'NOW!' : isPottyTrained(pet) ? 'TRAINED' : `${pet.potty || 0}/${POTTY_TRAINED}`, action: go(this.doToilet) },
     ], { footer: 'SQUIRMING? TAP YOUR PET!' }));

@@ -109,6 +109,8 @@ export class ListMenu {
     const { y: ry, h: rh } = LAYOUT.room;
     scr.rect(0, ry, W, rh, COL.panel);
     titleBar(scr, '◀ ' + this.title, ry);
+    // icons of different sizes share one column, so the labels line up
+    const iconCol = Math.max(13, ...this.items.filter(it => it.icon).map(it => it.icon.w + 3));
     for (let r = 0; r < this.rows; r++) {
       const i = this.scroll + r;
       const it = this.items[i];
@@ -118,7 +120,7 @@ export class ListMenu {
       if (selected) scr.panel(2, y, W - 4, this.rowH - 1, COL.hi, COL.ink);
       const color = it.disabled ? COL.silver : COL.ink;
       let x = 6;
-      if (it.icon) { scr.draw(it.icon, x, y + Math.floor((this.rowH - 1 - it.icon.h) / 2), { ctx: it.iconCtx }); x += Math.max(13, it.icon.w + 3); }
+      if (it.icon) { scr.draw(it.icon, x + Math.floor((iconCol - 3 - it.icon.w) / 2), y + Math.floor((this.rowH - 1 - it.icon.h) / 2), { ctx: it.iconCtx }); x += iconCol; }
       text(scr, it.label, x, y + 5, color);
       if (it.right !== undefined) text(scr, String(it.right), W - 8, y + 5, it.disabled ? COL.silver : COL.shade, { align: 'right' });
     }

@@ -29,6 +29,7 @@ src/scenes/                home, room, menus, status, minigames, family, gene bo
 src/notify.js, sw.js       care alerts: browser notifications through the service worker
 src/update.js, sw.js       update check at start; the service worker fetches files fresh and keeps an offline copy
 src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg
+src/art/menu-icons.js      the ten home-screen menu icons: hi-res sprites (28×28 at double density) made with `hdSprite`, with their own colour KEY
 src/art/props.js           hand-pixelled TOWN props (text grids with colour roles)
 src/art/town.js            the 22 town backdrops: a drawing kit + one function per place in SCENES
 tests/                     unit tests (art coverage, genetics, pet sim, save, town, book, discipline, care: baths, toilet, skills, jobs, alerts, cheats)
@@ -114,7 +115,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **So every release must bump `src/version.js`**, or open games won't notice it.
 - The regex in `latestVersion()` reads the line `export const VERSION = '…';`; keep that line's shape.
 
-## Status (v0.14.3, October 2026)
+## Status (v0.14.4, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline, weight, baths and toilet training.
@@ -137,6 +138,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 
 - **Saves:** `src/game/save.js` `migrate` fills in new pet fields. Add defaults there whenever the pet shape changes, and keep old saves loading; `tests/save.test.js` covers this.
 - **Deploy list:** the Pages workflow copies named files into `_site`. A new top-level file (like `sw.js`) must be added to that `cp` line or it won't be published.
+- **Menu icons:** `tools/art-scripts/icon_kit.py` rewrites `src/art/menu-icons.js` from masks (one function per icon). Hand edits made in the JS file are lost if the script is run again, so either edit the script or stop running it. Other UI sprites in `icons.js` are still 1x grids that `scr.draw` upscales; `hdSprite(rows, key)` is the way to draw one at full density.
 - **App icons:** installers need PNGs, not the SVG. `python tools/art-scripts/app_icons.py` regenerates `assets/icon-*.png` and `apple-touch-icon.png` from the 16×16 grid in that script; keep it in step with `assets/icon.svg`.
 - **Fonts:** the pixel font (`src/engine/font.js`, `glyphRows`) has letters, digits, basic punctuation and `★ ♥ ▶ ◀ ♂ ♀`, but no `&`.
 - **Town colours:** `rampOf()` in `town.js` maps neutral colours (white, mist, ink…) onto a ramp for prop roles.

@@ -54,6 +54,16 @@ export function sprite(frames, key = null) {
   return { w, h, frames: data, key, lutCache: new Map() };
 }
 
+/**
+ * A sprite drawn directly at the screen's double density (one character per
+ * hi-res pixel), for art that needs the finer detail. Its w and h are still in
+ * screen pixels, so scenes place it like any other sprite.
+ */
+export function hdSprite(frames, key = null) {
+  const hd = sprite(frames, key);
+  return { w: hd.w / 2, h: hd.h / 2, frames: hd.frames, key, lutCache: hd.lutCache, _hd: hd };
+}
+
 /** Colour context: which ramps the P/S/Y/H roles map to. */
 export function colors(primary = 'slate', secondary = 'cream', eye = 'ink', hair = 'brown') {
   return { primary, secondary, eye, hair, id: primary + '|' + secondary + '|' + eye + '|' + hair };
