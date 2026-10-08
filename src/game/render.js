@@ -1,12 +1,12 @@
-// Pet rendering entry point. Every pet, founders included, is sprite-resolution
-// pixel art assembled from the hand-pixelled parts kit (src/art/kit.js) by
-// src/game/render-kit.js, then scaled and animated by src/game/sprite-pet.js.
+// Pet rendering entry point. Every pet is sprite-resolution pixel art assembled
+// from its form's hand-pixelled parts (src/art/pets/) by src/game/pet-art.js,
+// then scaled and animated by src/game/sprite-pet.js.
 
 import { C } from '../engine/palette.js';
 import { makeBitmap } from '../engine/screen.js';
 import { scale2x, thinOutlines } from '../engine/upscale.js';
 import { composeKitSprite } from './sprite-pet.js';
-import { composeKit, composeKitEgg } from './render-kit.js';
+import { composePetArt, composeEggArt } from './pet-art.js';
 
 // Pets are drawn into a double-density bitmap. CANVAS and GROUND are in
 // screen pixels (what scenes use to place a pet); the bitmap is S times larger.
@@ -24,12 +24,12 @@ const HC = CANVAS * S, HG = GROUND * S;
  * }
  */
 export function composePet(phenotype, stage, pose = {}) {
-  return composeKitSprite(composeKit(phenotype, stage, pose), pose, HC, HG, S);
+  return composeKitSprite(composePetArt(phenotype, stage, pose), pose, HC, HG, S);
 }
 
 /** Egg: colours hint at the baby inside. */
 export function composeEgg(phenotype, crack = 0, wobble = 0) {
-  return composeKitSprite(composeKitEgg(phenotype, crack, wobble), {}, HC, HG, S);
+  return composeKitSprite(composeEggArt(phenotype, crack, wobble), {}, HC, HG, S);
 }
 
 /** Ghost for a pet that has passed away. */

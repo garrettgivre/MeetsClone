@@ -1,9 +1,9 @@
 // Saving to localStorage, plus a copy-paste backup code.
 import { newGame } from './pet.js';
-import { CLOTHES } from './items.js';
+import { GENES } from './genetics.js';
 
-const KEY = 'meetsclone.save.v1';
-export const SAVE_VERSION = 1;
+const KEY = 'meetsclone.save.v2';
+export const SAVE_VERSION = 2;
 
 export function load() {
   try {
@@ -23,9 +23,13 @@ export function clear() {
   try { localStorage.removeItem(KEY); } catch { /* storage blocked */ }
 }
 
-/** Fill in fields added in later versions so old saves keep working. */
+/**
+ * Bring a save up to date. Saves from before the form rebuild (v0.9) are
+ * retired: their pets used a different set of genes, so the game starts fresh.
+ * From v2 on, newly added genes are filled in so pets keep working.
+ */
 export function migrate(g) {
-  if (!g || typeof g !== 'object' || !g.version) return null;
+  if (!g || typeof g !== 'object' || !g.version || g.version < SAVE_VERSION) return null;
   const fresh = newGame(g.simTime || Date.now());
   for (const k of Object.keys(fresh)) if (g[k] === undefined) g[k] = fresh[k];
   g.settings = { ...fresh.settings, ...g.settings };
@@ -33,35 +37,11 @@ export function migrate(g) {
   if (g.pet) {
     const pet = g.pet;
     pet.wear = pet.wear || {};
-    const fill = { hair: 'none', hairColor: 'brown', aura: 'none', eyeSet: 'normal', nose: 'none', mark: 'none', build: 'round', belly: 'none', fluff: 'none' };
-    for (const [gene, v] of Object.entries(fill)) {
+    // genes added after this save was made: absent ancillaries, a default for the rest
+    for (const gene of Object.keys(GENES)) {
+      const v = 'none' in GENES[gene] ? 'none' : Object.keys(GENES[gene])[0];
       if (pet.phenotype && !pet.phenotype[gene]) pet.phenotype[gene] = v;
       if (pet.genome && !pet.genome[gene]) pet.genome[gene] = [v, v];
-    }
-    // Early builds had clothing as genes. Move it to the wardrobe instead.
-    const asClothes = (gene, value) => {
-      if (!CLOTHES[value]) return false;
-      pet.wear[CLOTHES[value].slot] = pet.wear[CLOTHES[value].slot] || value;
-      if (!g.wardrobe.includes(value)) g.wardrobe.push(value);
-      return true;
-    };
-    const p = pet.phenotype || {};
-    if (p.outfit && p.outfit !== 'none') asClothes('outfit', p.outfit);
-    if (p.face && p.face !== 'none') asClothes('face', p.face);
-    if (asClothes('crest', p.crest)) p.crest = 'none';
-    if (asClothes('back', p.back)) p.back = 'none';
-    if (asClothes('feet', p.feet)) p.feet = 'stubs';
-    delete p.outfit; delete p.face;
-    // retired / renamed parts (v0.8)
-    const RENAMED = { ears: { flower: 'leaf', pigtail: 'puff' }, back: { shell: 'none' }, mouth: { beak: 'teeth' } };
-    for (const [gene, map] of Object.entries(RENAMED)) {
-      if (map[p[gene]]) p[gene] = map[p[gene]];
-      if (pet.genome?.[gene]) pet.genome[gene] = pet.genome[gene].map(a => map[a] || a);
-    }
-    if (pet.genome) {
-      delete pet.genome.outfit; delete pet.genome.face;
-      const fix = { crest: 'none', back: 'none', feet: 'stubs' };
-      for (const [gene, def] of Object.entries(fix)) if (pet.genome[gene]) pet.genome[gene] = pet.genome[gene].map(a => CLOTHES[a] ? def : a);
     }
   }
   g.version = SAVE_VERSION;

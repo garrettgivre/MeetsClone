@@ -58,16 +58,17 @@ function render() {
   for (const [label, pose] of [['arms up', { arms: 'up', expr: 'happy' }], ['wave', { arms: 'wave', expr: 'wink' }], ['arms out', { arms: 'out' }], ['step 1', { step: 1 }], ['step 2', { step: 2 }]])
     show(composePet(p, 'adult', { gender: 'f', ...pose }), label, r);
   show(composePet(express(STARTER ? pureGenome(STARTER) : p), 'child'), 'starter', r);
-  parts(['shape', 'build', 'belly', 'pattern', 'hair', 'back', 'fluff', 'ears', 'crest', 'feet']);
+  parts(['form', 'head', 'body', 'ears', 'pattern', 'tail', 'topper', 'feet', 'wings', 'hair', 'eyes', 'mouth', 'mark', 'nose']);
   r = section('Random adults');
   for (let i = 0; i < 16; i++) show(composePet(express(randomGenome()), 'adult', { gender: i % 2 ? 'm' : 'f' }), '#' + (i + 1), r);
-  r = section('Family: Lumi x Grumbit children');
+  r = section(`Family: ${FOUNDERS[0].name} x ${FOUNDERS[5].name} children`);
   const mom = pureGenome(FOUNDERS[0].traits), dad = pureGenome(FOUNDERS[5].traits);
   for (let i = 0; i < 12; i++) show(composePet(express(inherit(mom, dad)), 'adult'), 'child ' + (i + 1), r);
 }
 // every option of a gene on one plain base pet (?gene=shape shows just one)
 function parts(genes) {
-  const base = express(pureGenome({ shape: 'round', color: 'orange', accent: 'cream', eyes: 'bean', mouth: 'smile', cheeks: 'blush', ears: 'none', belly: 'none', build: 'round', feet: 'stubs' }));
+  // a plain base pet in each form; ?form=quad picks the form
+  const base = express(pureGenome({ ...STARTER, form: new URLSearchParams(location.search).get('form') || 'biped', color: 'orange', accent: 'cream' }));
   for (const gene of genes) {
     const r = section('Parts: ' + gene);
     for (const v of Object.keys(GENES[gene])) show(composePet({ ...base, [gene]: v, hairColor: 'brown' }, 'adult', { gender: 'm' }), v, r);

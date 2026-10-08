@@ -1,71 +1,58 @@
 # Pet Art Style Guide
 
-Pets are hand-pixelled characters in a classic colour-screen virtual pet style, drawn with the charm of collectible creature games. Every pet, founders included, is assembled from the hand-pixelled **parts kit** (`src/art/kit.js`) by `src/game/render-kit.js`. See "Founders and genetic lines" below.
+Pets are hand-pixelled characters in a classic colour-screen virtual pet style, drawn with the charm of collectible creature games. Every pet is built from parts drawn **for its body plan**, so any mix of genes still looks like it was drawn on purpose.
 
-## Canvas and scale
-- **Sprite canvas:** 48 × 52 pixels, feet on row 50. An adult is about 30–40 pixels wide.
-- **On screen:** each sprite pixel is one normal screen pixel (2×2 at the game's double density). Small sprites keep every pixel deliberate.
-- **Anchors** come from the kit composer: eye centres and box (for closing eyes), face colour, mouth, `neck` (the head bobs above it) and `floats` (hovers with a dotted shadow).
+## The model
 
-## Proportions
-- **Head:** about 70% of the height. **Body:** small and rounded, stubby arms, feet drawn in front of the body.
-- **Silhouette:** each founder must read on its own, with one signature feature that's obvious at a glance (Mogumo's muzzle, Kometchi's comet, Pipolin's ears and ribboned tails, Spookit's horns and bandit mask, Fawnly's antlers, Gillybop's gills, Drakko's frill, Nocti's wings, and so on).
+| Group | Genes | Notes |
+|---|---|---|
+| Form | `form` | the body plan: biped, blob, quad, floater, serpent, avian. Codominant, so lines mix. |
+| Base | `head`, `body`, `eyes`, `ears`, `mouth`, `pattern`, `mark` | every pet has all of these |
+| Ancillary | `tail`, `topper`, `feet`, `nose`, `wings`, `hair` | optional (`none`) |
+| Colour | `color`, `accent`, `eyeColor`, `hairColor` | recolour the role characters in every part |
+| Temperament | `appetite`, `energy`, `taste` | not drawn |
 
-## Line
-- **1px outlines everywhere.**
-- **Selective outlining:**
-  - `O` (lit outline): a dark shade of the part's own colour, on top and left edges facing the light.
-  - `o` (shadow outline): navy ink, on bottom and right edges.
-- **Inner lines** (muzzle edges, bib scallops, bangs) use a darker shade of the colour, not ink, so they stay soft.
-- **Curves step evenly** (1, 1, 2, 3…), with no doubled corner pixels.
+- **Every part belongs to one founder's line** (`LINEAGE` / `lineOf` in `src/game/genetics.js`); there is one founder per form.
+- **Every part is drawn for every form.** The art lives in `src/art/pets/forms/<form>.js`: heads, bodies, ears, hair, toppers, tails, feet and wings, plus the form's baby and child shapes and its arms. Face parts (eyes, mouths, marks, noses) are shared, drawn in two sizes (S and L) in `src/art/pets/face.js`. Patterns are recolour maps in `src/art/pets/patterns.js` that keep the hand-drawn shading.
+- `tests/art.test.js` fails if any allele is missing for any form, if a head or body lacks a socket, or if any founder, child or wild pet overflows the canvas.
 
-## Light and colour
-- **Light comes from the upper left.**
-- **Shading per part:**
-  - `2` base.
-  - `3` a rounded light cluster on the upper left, not a diagonal band.
-  - `4` one small shine spot.
-  - `1` a shadow band on the lower right and under the head (the "neck shadow").
-- **Palette:** each founder has a small curated palette of 2–3 ramps plus ink, white and blush, mapped through the sprite `key`. Keep it tight.
-- **Eyes:**
-  - Ink with a white glint in the upper left.
-  - Coloured eyes fade to the iris colour at the bottom.
-  - Girls get a single eyelash pixel at the outer top.
+## The founders
 
-## Expressions (generated from anchors, no extra frames to draw)
-| Pose | What happens |
-|---|---|
-| idle | the drawn sprite |
-| breathe | head bobs 1px above `neck` |
-| hop | whole sprite up 1px (walking) |
-| blink / sleep | eye boxes filled with skin, a content curve drawn |
-| happy / wink | ^ eyes; open mouth with a tongue pixel |
-| sad / sick | droopy closed eyes |
-| dizzy | X eyes |
-| eat / chew | open mouth / mouth line |
+| Founder | Form | Theme |
+|---|---|---|
+| Kitsu | biped | ember fox kit: fox ears, brush tail, sly eyes, fang smile, pale muzzle |
+| Gloop | blob | cherry jelly: a wobbly mint gumdrop with a cherry on top and jelly drips |
+| Fleece | quad | cloud lamb: woolly body, curled horns, sooty face and legs, hooves |
+| Glimmer | floater | lantern jellyfish: a bell head, glowing eyes, a lure light, veils and tendrils |
+| Inchy | serpent | garden caterpillar: segmented S-coil, antennae, a leaf hat, banded body |
+| Hoolet | avian | moon owlet: feathered egg body, ear tufts, huge owl eyes, beak, talons |
 
-## Clothes
-Clothes are a wardrobe feature, not genes, and aren't drawn on pets yet.
+## Drawing format
 
-## Workflow for a new character
-1. Block in the silhouette with `node tools/sketch.mjs <name>` (layered ellipses and triangles).
-2. Paint over it by hand: outline pass, light clusters, signature features, face.
-3. Check it large and at game size in `tools/founders.html` (`?f=Name&s=560` for one founder, `?grid` for the set), including the expression sheet.
-4. Fix stray pixels, uneven curves and anything that hurts readability at game size.
+Parts are text grids (`src/art/pets/part.js`). Role characters recolour with genes: `1-4` body ramp (1 darkest, used for the lit outline), `5-8` accent ramp, `e E F` eye colour, `- 9 0 +` hair ramp. Fixed colours come from `KEY` in `src/engine/sprite.js` (`o`/`k` ink, `w` white...).
 
-## Founders and genetic lines
-- **Every part belongs to exactly one founder.** The 14 founders are the roots of the genetic lines; every ear, eye, mouth, tail, shape, build, foot, pattern and so on comes down from one of them, and no two founders share a part (`LINEAGE` / `lineOf` in `src/game/genetics.js`, enforced by tests). Colours, size and eye spacing are shared traits, not parts.
-- **Parts** are hand-pixelled in role colours (`1-4` body, `5-8` accent, `e E F` eyes, `- 9 0 +` hair) so genes can recolour them; each one is labelled with its founder in `src/art/kit.js`. A part must read on any head, so it's checked on mixed children in `tools/compare.html`, not just on its founder.
-- **Heads and bodies** are shaped by genes (`shape`, `size`, `build`) and painted with the founder rules:
-  - The lit outline is the darkest shade of the part's own colour, with ink on the shadow side.
-  - A small rounded light cluster with a white shine pixel.
-  - A one-pixel shadow band on the lower right, and a neck shadow under the head.
-- **Hair** sits a pixel beyond the skull for volume and is outlined in its darkest shade, with strand lines and a gloss row. Fringes: pointed bangs, Lumipom's notched bob, Gillybop's swept fringe, spiky, curly.
-- **Hand-finishing passes** (applied automatically to every pet, as a pixel artist would by hand):
-  - *Joined seams:* where two connected parts in the body or hair colour meet (ears and head, tail and body, shoulders, toppers, cheek fluff, mane), the outline between them becomes a soft crease in the darker shade. Silhouette edges, chins, faces and accent-coloured parts keep their lines. See `joinSeams` in `render-kit.js`.
-  - *No doubles:* corner pixels that make a curve's outline two pixels thick are removed, so curves step cleanly.
-  - *Rim light:* a crescent of the lightest shade just inside the lit (upper-left) outline of heads and bodies, plus one white glint with a soft halo on the head.
-  - *One light direction:* both eyes keep their glint on the upper left; only eyes marked `mirror` (inward-looking pupils) are flipped.
-- **No look-alikes:** every part must be clearly different from the others in its category (shape first, then colour). Check with `tools/parts.html` (every kit part side by side, `?cat=EARS` for one category) and `tools/gallery.html?gene=shape,build` for the drawn genes.
-- **Arms** are drawn in front of the body with a soft inner edge and a round hand, so every pet has visible arms and hands.
-- **Review:** design each founder, then critique and fix it at least five times in `tools/founders.html` before calling it final. Use `tools/compare.html` for children, wild pets, growth stages and expressions after any art change.
+**Sockets** are marked in the grids: `@`/`*` face (small/large), `^` top of the head, `=` neck (head and body meet here), `[ ]` ears, `< >` arms, `( )` wings, `! ?` feet, `~` tail, `#` a part's own pivot. Left-side parts are drawn facing left; the right side is mirrored.
+
+## House rules
+- **Light from the upper left.** Lit outline in the darkest shade of the part's own colour (`1`), ink (`o`) on the shadow side; a light rim (`4`) just inside the lit edge, a shadow band (`2`) inside the lower right, and one white glint with a soft halo on heads.
+- **One-pixel lines with no doubles**, and curves that step evenly.
+- **Both eyes keep their glint on the upper left.** The right eye is drawn the same way round; only eyes marked `mirror` are flipped.
+- **Joined seams:** where connected parts of the body or hair colour meet (ears and head, tail and body, shoulders, toppers), the renderer turns the outline into a soft crease. One-piece forms (blob, avian) also melt the head into the body.
+- **Silhouette first:** each form must be recognisable in solid black (`tools/founders.html?grid&sil`).
+
+## Life stages
+- **Baby:** the form's simple baby shape with baby eyes and a little mouth.
+- **Child:** the form's child shape with the pet's own eyes, mouth and markings.
+- **Teen:** the full pet, without topper or wings (those grow in).
+- **Adult:** everything.
+
+## Tools
+- `tools/founders.html`: each founder's sheet (`?f=Name&s=560`), the set (`?grid`), silhouettes (`?grid&sil`).
+- `tools/parts.html`: every part, one row per allele and one column per form (`?gene=ears`).
+- `tools/gallery.html`: every option of each gene on a plain pet (`?gene=tail&form=quad`).
+- `tools/compare.html`: founders, children of founder pairs, wild pets, growth and expressions.
+- `tools/lab.html`: the Pairing Lab.
+
+## Adding things
+- **A new part:** add the allele to `GENES`, give it to a founder, draw it in every form file. The tests list anything missing.
+- **A new form:** add `forms/<name>.js` with the same sections, register it in `src/art/pets/index.js`, add the allele to `GENES.form`, and give it a founder.

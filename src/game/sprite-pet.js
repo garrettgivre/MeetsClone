@@ -1,4 +1,4 @@
-// Drawing and animating sprite-resolution pets built from the parts kit.
+// Drawing and animating sprite-resolution pets built from their form's parts.
 // Each sprite pixel becomes a normal screen pixel (2x2 at double density). Animation is layered on the frame:
 //   breathing   the head (rows above `neck`) bobs down a pixel
 //   walking     a one-pixel hop
@@ -97,7 +97,7 @@ export function animateSprite(src, pose, canvas, ground, scale) {
   return { out, at, ox, oy, bob };
 }
 
-/** Wrap a kit-built pet (from render-kit.js) for scaling and animation. */
+/** Wrap a pet built by pet-art.js for scaling and animation. */
 export function composeKitSprite(kit, pose, canvas, ground, scale) {
   if (kit.egg) {
     return animateSprite({ ...kit, eyeBoxes: [], neck: 0, mouth: [0, 0], keepMouth: true, faceColour: 0 }, {}, canvas, ground, scale).out;

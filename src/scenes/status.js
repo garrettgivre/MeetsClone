@@ -72,7 +72,8 @@ export class StatusScene {
         break;
       case 'LOOKS':
         if (pet.stage === 'egg') { line('???', 'HATCH FIRST!'); break; }
-        for (const [k, label] of [['shape', 'HEAD'], ['eyes', 'EYES'], ['hair', 'HAIR'], ['ears', 'EARS'], ['crest', 'TOP'], ['back', 'BACK'], ['feet', 'FEET'], ['size', 'SIZE'], ['color', 'COLOUR']]) {
+        for (const [k, label] of [['form', 'FORM'], ['head', 'HEAD'], ['body', 'BODY'], ['eyes', 'EYES'], ['ears', 'EARS'], ['pattern', 'MARKINGS'], ['tail', 'TAIL'], ['topper', 'TOPPER'], ['wings', 'WINGS'], ['hair', 'HAIR'], ['feet', 'FEET'], ['color', 'COLOUR']]) {
+          if (p[k] === 'none') continue;
           if (y > ry + rh - 8) break;
           line(label, p[k]);
         }

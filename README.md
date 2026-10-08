@@ -39,11 +39,12 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Attention calls and care mistakes.
   - Toothaches from too many snacks.
 - **Pets can die or run away:** from untreated illness or starvation, or from long unhappiness.
-- **Generation 1:** the quality of your care decides which of 14 original founder characters your pet becomes (Mogumo the sleepy bear, Kometchi the comet kitty, Ducklet, Pipolin the bunny idol, Lumipom the pom-pom fairy, Spookit the little imp, Fawnly the forest fawn, Pupplo the puppy, Hamuchi the hamster, Gillybop the axolotl, Sproutle the plant sprite, Drakko the baby dragon, Bolto the robot and Nocti the night bat). Every pet is hand-pixel art built from the parts kit, with breathing, blinking and expression animation (see `docs/STYLE.md`).
-- **Founders are the genetic lines:** every body part in the game belongs to exactly one founder, and no two founders share a part. The Pairing Lab shows which line each part comes from.
+- **Generation 1:** the quality of your care decides which of 6 original founders your pet becomes: Kitsu the ember fox, Gloop the cherry jelly, Fleece the cloud lamb, Glimmer the lantern jellyfish, Inchy the garden caterpillar or Hoolet the moon owlet. Every pet is hand-pixel art with breathing, blinking and expression animation (see `docs/STYLE.md`).
+- **Six body plans:** biped, blob, four-legged, floater, serpent and bird. A pet's form is a gene, and every body part is drawn separately for every form, so a lamb-line child with a jellyfish's body plan still looks hand-made.
+- **Founders are the genetic lines:** every body part belongs to exactly one founder, and no two founders share a part. The Pairing Lab shows which line each part comes from.
 - **Genetics:** every trait has two alleles with dominance, so recessive traits can skip a generation.
-  - Size blends (small × large = medium), colours can blend or drift around the colour wheel, and rare mutations happen.
-  - Looks: head shape, size, eyes, eye spacing, mouth, nose, forehead mark, hair, ears (drawn to scale with the head), top, back, body build, belly, feet, markings, cheeks, a very rare sparkle aura, and body, accent, eye and hair colour.
+  - Body plans are codominant (a coin flip between the parents), colours can blend or drift around the colour wheel, and rare mutations happen.
+  - Base parts every pet has: head, body, eyes, ears, mouth, markings and forehead mark. Optional parts: tail, topper, feet, nose, wings and hair. Plus body, accent, eye and hair colour.
   - Temperament genes (appetite, energy, taste) change how the pet plays.
   - The status screen shows the hidden genes a pet carries.
 - **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu).
@@ -57,15 +58,15 @@ Tap your pet to give it a pat, and tap poop to clean it up.
 ```
 index.html, style.css     device shell (portrait, phone-first)
 src/engine/               pixel engine: palette, screen, sprites, font, input, audio
-src/art/                  all pixel art (sprites as text grids)
+src/art/                  all pixel art (sprites as text grids); pets in src/art/pets/forms/
 src/game/                 simulation, genetics, rendering, items, saving
 src/scenes/               home, menus, status, minigames, family, endings
 tests/                    node --test unit tests for game logic
 tools/sprite-editor/      in-browser editor for the sprite format
-tools/gallery.html        preview growth stages, expressions, poses and every part (?gene=shape,build)
-tools/parts.html          every kit part side by side, by category, to keep parts distinct
+tools/gallery.html        preview growth stages, expressions, poses and every option of each gene (?gene=tail&form=quad)
+tools/parts.html          every hand-drawn part: one row per allele, one column per form
 tools/lab.html            Pairing Lab: breed any two pets, inspect genes, odds, random pairings, lineages
-tools/founders.html       founder review sheets (?f=Name&s=560 for one, ?grid for the set)
+tools/founders.html       founder review sheets (?f=Name&s=560 for one, ?grid for the set, ?grid&sil for silhouettes)
 tools/compare.html        art review: founders, children, wild pets, growth, expressions
 tools/sketch.mjs          silhouette drafts for hand-pixelling new characters
 docs/                     research notes and the build plan

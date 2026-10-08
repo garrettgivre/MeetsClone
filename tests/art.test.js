@@ -1,0 +1,62 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { makeRng } from '../src/engine/rng.js';
+import { GENES, FOUNDERS, randomGenome, inherit, express, pureGenome, starterGenome } from '../src/game/genetics.js';
+import { FORMS, FORM_SECTIONS, EYES, MOUTHS, MARKS, NOSES, PATTERNS } from '../src/art/pets/index.js';
+import { composePetArt } from '../src/game/pet-art.js';
+
+const FACE = { eyes: EYES, mouth: MOUTHS, mark: MARKS, nose: NOSES };
+
+test('every form has art for every allele of every part', () => {
+  for (const [form, F] of Object.entries(FORMS)) {
+    for (const [gene, section] of Object.entries(FORM_SECTIONS)) {
+      for (const allele of Object.keys(GENES[gene])) {
+        if (allele === 'none') continue;
+        assert.ok(F[section]?.[allele], `${form} has no ${gene}: ${allele}`);
+      }
+    }
+    for (const stage of ['baby', 'child']) assert.ok(F[stage]?.sockets.faceS, `${form} ${stage} needs a face socket`);
+  }
+  assert.deepEqual(Object.keys(FORMS).sort(), Object.keys(GENES.form).sort(), 'one form file per form allele');
+});
+
+test('face parts come in both sizes, and every pattern exists', () => {
+  for (const [gene, set] of Object.entries(FACE)) {
+    for (const allele of Object.keys(GENES[gene])) {
+      if (allele === 'none') continue;
+      assert.ok(set[allele]?.S && set[allele]?.L, `${gene}: ${allele} needs S and L`);
+    }
+  }
+  for (const allele of Object.keys(GENES.pattern)) assert.equal(typeof PATTERNS[allele], 'function', allele);
+});
+
+test('heads and bodies have the sockets their parts attach to', () => {
+  for (const [form, F] of Object.entries(FORMS)) {
+    for (const [name, h] of Object.entries(F.head)) {
+      for (const s of ['neck', 'top', 'earL', 'earR']) assert.ok(h.sockets[s], `${form} head ${name} is missing ${s}`);
+      assert.ok(h.sockets.faceL || h.sockets.faceS, `${form} head ${name} has no face`);
+    }
+    for (const [name, b] of Object.entries(F.body)) {
+      for (const s of ['neck', 'tail', 'footL', 'wingL', 'wingR']) assert.ok(b.sockets[s], `${form} body ${name} is missing ${s}`);
+      if (F.arms) assert.ok(b.sockets.armL && b.sockets.armR, `${form} body ${name} needs arm sockets`);
+    }
+  }
+});
+
+test('founders, mixed children and wild pets all render and fit the canvas', () => {
+  const rng = makeRng(21);
+  const pets = FOUNDERS.map(f => express(pureGenome(f.traits), rng));
+  for (let i = 0; i < 120; i++) {
+    const a = rng.pick(FOUNDERS), b = rng.pick(FOUNDERS);
+    pets.push(express(inherit(pureGenome(a.traits), pureGenome(b.traits), rng), rng));
+    pets.push(express(randomGenome(rng), rng));
+  }
+  pets.push(express(starterGenome(rng), rng));
+  for (const p of pets) {
+    for (const stage of ['baby', 'child', 'teen', 'adult']) {
+      const k = composePetArt(p, stage, { gender: 'f', arms: 'wave' });
+      assert.ok(!k.overflow, `${p.form} ${p.head}/${p.body} ${stage} overflows the canvas`);
+      assert.ok(k.px.some(c => c), 'drew something');
+    }
+  }
+});

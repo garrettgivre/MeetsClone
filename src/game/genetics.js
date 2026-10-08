@@ -1,33 +1,39 @@
 // Genetics: every trait is a gene with two alleles (one from each parent).
 // The higher-dominance allele is expressed; ties are a coin flip made once,
 // at conception. Recessive alleles can skip a generation and come back.
-// Size is incompletely dominant (small x large = medium), colours can blend
-// or drift a step around the colour wheel, and rare mutations bring
-// brand-new alleles.
+// Colours can blend or drift a step around the colour wheel, and rare
+// mutations bring brand-new alleles.
 
 import { RAMP_NAMES } from '../engine/palette.js';
 import { rand as defaultRng } from '../engine/rng.js';
 
-// dominance: 3 = common/dominant, 2 = normal, 1 = rare/recessive
+// dominance: 3 = common/dominant, 2 = normal, 1 = rare/recessive.
+// The numbers are also how common an allele is in the wild.
+//
+// Every pet has a FORM (its body plan) and the BASE parts; ANCILLARY parts
+// are optional ('none' = doesn't have one). Every part is drawn separately
+// for every form (src/art/pets/), so any mix of genes still fits together.
+export const FORM_GENES = ['form'];
+export const BASE_GENES = ['head', 'body', 'eyes', 'ears', 'mouth', 'pattern', 'mark'];
+export const ANCILLARY_GENES = ['tail', 'topper', 'feet', 'nose', 'wings', 'hair'];
+export const TEMPERAMENT_GENES = ['appetite', 'energy', 'taste'];
+
 export const GENES = {
-  shape:   { round: 3, mochi: 3, bean: 2, egg: 2, tall: 2, pear: 2, bun: 2, onigiri: 1, drop: 1, blocky: 1, heart: 1, cloud: 1, acorn: 1, peach: 1 },
-  size:    { medium: 3, small: 1, large: 1 },
-  eyes:    { bean: 3, button: 3, dot: 2, wide: 2, sparkle: 2, shiny: 2, sleepy: 2, droopy: 2, arc: 1, cat: 1, star: 1, gem: 1, heart: 1, pixel: 1 },
-  eyeSet:  { normal: 3, wide: 2, close: 2, low: 1 },
-  mouth:   { smile: 3, open: 3, tiny: 2, cat: 2, ooh: 2, flat: 2, smirk: 2, grin: 2, teeth: 1, bill: 1, fang: 1, blep: 1, wobble: 1, grill: 1 },
-  nose:    { none: 3, dot: 2, button: 2, snout: 1, whiskers: 1 },
-  mark:    { none: 3, star: 1, heart: 1, moon: 1, drop: 1, diamond: 1 },
-  hair:    { none: 3, bangs: 2, bob: 2, spiky: 1, ponytail: 1, twintails: 1, curly: 1 },
-  ears:    { none: 3, bear: 2, cat: 2, floppy: 2, bunny: 2, mouse: 2, puff: 1, horns: 1, fins: 1, antenna: 1, leaf: 1, wings: 1, antlers: 1 },
-  crest:   { none: 3, tuft: 2, curl: 2, sprout: 2, bobble: 2, swirl: 2, bud: 2, horn: 1, flame: 1, halo: 1, star: 1, comet: 1 },
-  back:    { none: 3, pomtail: 2, longtail: 2, fox: 2, curly: 2, wings: 1, bat: 1, fairy: 1, butterfly: 1, fishtail: 1, dragon: 1, bolt: 1, devil: 1 },
-  fluff:   { none: 3, cheeks: 2, mane: 1 },
-  build:   { round: 3, chubby: 2, slim: 2, pear: 2, egg: 2, barrel: 2, wide: 2, bell: 1, long: 1, stout: 1, cone: 1, peanut: 1, square: 1, tiny: 1 },
-  belly:   { none: 3, patch: 2, suit: 1, bib: 1, heart: 1 },
-  feet:    { stubs: 3, paws: 2, puffs: 2, float: 1, legs: 1, flippers: 1, tiny: 1, talons: 1, hooves: 1, tentacles: 1, roots: 1, claws: 1, cloud: 1, wheels: 1 },
-  pattern: { none: 3, socks: 2, tips: 2, mask: 1, spots: 1, stripes: 1, twotone: 1 },
-  cheeks:  { blush: 3, none: 2, dots: 2, freckles: 1, hearts: 1 },
-  aura:    { none: 3, sparkle: 1 }, // very rare: a twinkling pet
+  // body plans are codominant (a coin flip between the parents' forms), so lines mix
+  form:    { biped: 2, blob: 2, quad: 2, floater: 2, serpent: 2, avian: 2 },
+  head:    { gumdrop: 3, fox: 2, lamb: 2, bug: 2, bell: 1, owl: 1 },
+  body:    { jelly: 3, fluffy: 2, woolly: 2, segmented: 2, bell: 1, feathered: 1 },
+  eyes:    { jelly: 3, bead: 3, sly: 2, sleepy: 2, glow: 1, owl: 1 },
+  ears:    { nubs: 3, fox: 2, lamb: 2, antennae: 2, frills: 1, tufts: 1 },
+  mouth:   { o: 3, fang: 2, baa: 2, dot: 2, munch: 2, beak: 1 },
+  pattern: { bubbles: 2, muzzle: 2, sooty: 2, bands: 2, glowspots: 1, facedisk: 1 },
+  mark:    { dots: 3, heart: 2, clover: 2, flame: 1, spark: 1, moon: 1 },
+  tail:    { none: 3, brush: 2, puff: 2, spike: 1, tendrils: 1 },
+  topper:  { none: 3, cherry: 2, horns: 2, leaf: 2, lure: 1, plume: 1 },
+  feet:    { none: 2, nubs: 3, paws: 2, hooves: 2, talons: 1 },
+  nose:    { none: 3, button: 2, snoot: 2 },
+  wings:   { none: 3, veils: 1, feathered: 1 },
+  hair:    { none: 3, tuft: 2, drip: 2, wool: 2 },
   // temperament (shown on the status screen, changes care)
   appetite: { normal: 3, light: 2, hearty: 2 },
   energy:   { normal: 3, calm: 2, lively: 2 },
@@ -50,9 +56,10 @@ function choices(gene) {
 }
 // The GENES numbers are how common an allele is in the wild, and dominance
 // follows them. Having no ears, top, nose and so on doesn't beat having one.
-const NONE_TIES = ['hair', 'ears', 'crest', 'back', 'nose', 'mark', 'belly'];
+const NONE_TIES = ANCILLARY_GENES;
 function dom(gene, allele) {
   if (allele === 'none' && NONE_TIES.includes(gene)) return 2;
+  if (gene === 'form') return 2;
   return GENES[gene]?.[allele] ?? 2;
 }
 
@@ -107,13 +114,6 @@ export function express(genome, rng = defaultRng) {
     const da = dom(gene, a), db = dom(gene, b);
     p[gene] = da > db ? a : db > da ? b : rng.chance(0.5) ? a : b;
   }
-  // Size is incompletely dominant: the child lands between its two alleles.
-  const SZ = { small: -1, medium: 0, large: 1 };
-  if (genome.size) {
-    const avg = (SZ[genome.size[0]] + SZ[genome.size[1]]) / 2;
-    const v = Number.isInteger(avg) ? avg : (rng.chance(0.5) ? Math.floor(avg) : Math.ceil(avg));
-    p.size = ['small', 'medium', 'large'][v + 1];
-  }
   for (const gene of COLOR_GENES) {
     const [a, b] = genome[gene];
     if (a === b) p[gene] = a;
@@ -157,7 +157,7 @@ export function carried(genome, phenotype) {
   for (const gene of ALL_GENES) {
     const pair = genome[gene];
     if (!pair) continue;
-    for (const a of new Set(pair)) if (a !== phenotype[gene] && !(gene === 'size')) out.push({ gene, allele: a });
+    for (const a of new Set(pair)) if (a !== phenotype[gene]) out.push({ gene, allele: a });
   }
   return out;
 }
@@ -178,8 +178,8 @@ export function childOdds(mom, dad, n = 400, rng = defaultRng) {
 }
 
 export const GENE_LABELS = {
-  shape: 'Head', size: 'Size', eyes: 'Eyes', mouth: 'Mouth', hair: 'Hair', ears: 'Ears', crest: 'Top',
-  back: 'Back', fluff: 'Fur', feet: 'Feet', eyeSet: 'Eye spacing', nose: 'Nose', mark: 'Forehead', build: 'Build', belly: 'Belly', pattern: 'Markings', cheeks: 'Cheeks', aura: 'Aura',
+  form: 'Body plan', head: 'Head', body: 'Body', eyes: 'Eyes', ears: 'Ears', mouth: 'Mouth', pattern: 'Markings', mark: 'Forehead',
+  tail: 'Tail', topper: 'Topper', feet: 'Feet', nose: 'Nose', wings: 'Wings', hair: 'Hair',
   appetite: 'Appetite', energy: 'Energy', taste: 'Taste',
   color: 'Body colour', accent: 'Accent colour', eyeColor: 'Eye colour', hairColor: 'Hair colour',
 };
@@ -195,65 +195,52 @@ export function difference(a, b) {
 // Generation 1 looks are decided by care, like the original device.
 // From generation 2 on, looks come only from genes.
 
+// Before it grows up, a generation-1 pet is a plain little jelly; at adulthood
+// it becomes one of the founders.
 export const STARTER = {
-  shape: 'round', size: 'medium', eyes: 'bean', mouth: 'open', hair: 'none', ears: 'none', crest: 'none',
-  back: 'none', feet: 'stubs', pattern: 'none', cheeks: 'blush',
-  color: 'cream', accent: 'pink', eyeColor: 'ink', hairColor: 'brown',
+  form: 'blob', head: 'gumdrop', body: 'jelly', eyes: 'bead', ears: 'nubs', mouth: 'o', pattern: 'bubbles', mark: 'dots',
+  tail: 'none', topper: 'none', feet: 'none', nose: 'none', wings: 'none', hair: 'none',
+  color: 'cream', accent: 'pink', eyeColor: 'ink', hairColor: 'cream',
 };
 
-// The founders. Every body part belongs to exactly one founder: each founder
-// is the root of a genetic line, and every part in the game descends from one
-// of them. No two founders share a part (or a body colour).
+// The founders: one per body plan. Every part belongs to exactly one founder,
+// so each founder is the root of a genetic line and every part in the game
+// descends from one of them. No two founders share a part or a body colour.
 // tier: 0 = best care, 2 = poorest care (generation 1 grows into one of these).
 export const FOUNDERS = [
-  { name: 'Mogumo', line: 'sleepy bear', tier: 2, traits: {
-    color: 'brown', accent: 'cream', eyeColor: 'ink', shape: 'round', build: 'stout', size: 'large', eyes: 'droopy', eyeSet: 'close',
-    mouth: 'tiny', nose: 'snout', ears: 'bear', crest: 'curl', belly: 'heart', feet: 'paws', cheeks: 'blush', taste: 'sweet', energy: 'calm' } },
-  { name: 'Kometchi', line: 'comet kitty', tier: 0, traits: {
-    color: 'sky', accent: 'gold', eyeColor: 'blue', shape: 'bean', build: 'slim', eyes: 'cat', mouth: 'cat', nose: 'whiskers', mark: 'star',
-    ears: 'cat', crest: 'comet', back: 'longtail', belly: 'patch', feet: 'legs', pattern: 'tips', taste: 'savory', energy: 'lively' } },
-  { name: 'Ducklet', line: 'duckling', tier: 1, traits: {
-    color: 'lime', accent: 'cream', eyeColor: 'ink', shape: 'bun', build: 'chubby', eyes: 'dot', eyeSet: 'wide', mouth: 'bill',
-    crest: 'tuft', back: 'wings', belly: 'bib', feet: 'flippers', taste: 'savory', appetite: 'hearty' } },
-  { name: 'Pipolin', line: 'bunny idol', tier: 1, traits: {
-    color: 'pink', accent: 'cream', eyeColor: 'violet', hairColor: 'violet', shape: 'egg', build: 'bell', size: 'small', eyes: 'shiny', eyeSet: 'close',
-    mouth: 'smile', nose: 'button', hair: 'twintails', ears: 'bunny', crest: 'bobble', back: 'pomtail', feet: 'tiny', cheeks: 'hearts', taste: 'fruity' } },
-  { name: 'Lumipom', line: 'pom-pom fairy', tier: 0, traits: {
-    color: 'cream', accent: 'pink', eyeColor: 'sky', hairColor: 'gold', shape: 'mochi', build: 'round', eyes: 'sparkle', eyeSet: 'wide',
-    mouth: 'open', hair: 'bob', ears: 'puff', crest: 'halo', back: 'fairy', feet: 'cloud', cheeks: 'dots', aura: 'sparkle', taste: 'sweet', energy: 'calm' } },
-  { name: 'Spookit', line: 'little imp', tier: 2, traits: {
-    color: 'violet', accent: 'indigo', eyeColor: 'red', hairColor: 'indigo', shape: 'drop', build: 'long', eyes: 'wide', eyeSet: 'low',
-    mouth: 'fang', mark: 'moon', hair: 'spiky', ears: 'horns', back: 'devil', belly: 'suit', feet: 'claws', pattern: 'mask', taste: 'spicy' } },
-  { name: 'Fawnly', line: 'forest fawn', tier: 0, traits: {
-    color: 'orange', accent: 'cream', eyeColor: 'green', hairColor: 'orange', shape: 'tall', build: 'egg', eyes: 'gem', mouth: 'ooh', mark: 'drop',
-    hair: 'bangs', ears: 'antlers', crest: 'bud', feet: 'hooves', pattern: 'spots', cheeks: 'freckles', taste: 'fruity', energy: 'calm' } },
-  { name: 'Pupplo', line: 'puppy', tier: 1, traits: {
-    color: 'gold', accent: 'brown', eyeColor: 'brown', shape: 'pear', build: 'pear', eyes: 'heart', mouth: 'blep', nose: 'dot', mark: 'heart',
-    ears: 'floppy', back: 'fox', feet: 'stubs', pattern: 'twotone', taste: 'savory', energy: 'lively' } },
-  { name: 'Hamuchi', line: 'hamster', tier: 2, traits: {
-    color: 'slate', accent: 'cream', eyeColor: 'ink', shape: 'onigiri', build: 'barrel', eyes: 'button', mouth: 'teeth', ears: 'mouse',
-    crest: 'star', back: 'curly', fluff: 'cheeks', feet: 'puffs', pattern: 'stripes', taste: 'savory', appetite: 'hearty' } },
-  { name: 'Gillybop', line: 'axolotl', tier: 1, traits: {
-    color: 'mint', accent: 'pink', eyeColor: 'gold', hairColor: 'pink', shape: 'cloud', build: 'peanut', eyes: 'star', mouth: 'wobble',
-    hair: 'ponytail', ears: 'fins', crest: 'swirl', back: 'fishtail', feet: 'tentacles', taste: 'fruity' } },
-  { name: 'Sproutle', line: 'plant sprite', tier: 1, traits: {
-    color: 'green', accent: 'lime', eyeColor: 'brown', hairColor: 'lime', shape: 'acorn', build: 'cone', eyes: 'sleepy', mouth: 'flat',
-    mark: 'diamond', hair: 'curly', ears: 'leaf', crest: 'sprout', back: 'butterfly', feet: 'roots', taste: 'fruity', energy: 'calm' } },
-  { name: 'Drakko', line: 'baby dragon', tier: 0, traits: {
-    color: 'red', accent: 'gold', eyeColor: 'gold', hairColor: 'orange', shape: 'peach', build: 'wide', eyes: 'bean', mouth: 'grin',
-    crest: 'flame', back: 'dragon', fluff: 'mane', feet: 'talons', taste: 'spicy', energy: 'lively' } },
-  { name: 'Bolto', line: 'robot', tier: 2, traits: {
-    color: 'blue', accent: 'slate', eyeColor: 'sky', shape: 'blocky', build: 'square', eyes: 'pixel', mouth: 'grill', ears: 'antenna',
-    crest: 'horn', back: 'bolt', feet: 'wheels', taste: 'savory' } },
-  { name: 'Nocti', line: 'night bat', tier: 0, traits: {
-    color: 'indigo', accent: 'violet', eyeColor: 'ink', shape: 'heart', build: 'tiny', eyes: 'arc', mouth: 'smirk', ears: 'wings',
-    back: 'bat', feet: 'float', pattern: 'socks', taste: 'sweet', energy: 'calm' } },
+  { name: 'Kitsu', line: 'ember fox', tier: 1, traits: {
+    form: 'biped', head: 'fox', body: 'fluffy', eyes: 'sly', ears: 'fox', mouth: 'fang', pattern: 'muzzle', mark: 'flame',
+    tail: 'brush', feet: 'paws', nose: 'button', hair: 'tuft',
+    color: 'orange', accent: 'cream', eyeColor: 'gold', hairColor: 'orange', taste: 'spicy', energy: 'lively' } },
+  { name: 'Gloop', line: 'cherry jelly', tier: 2, traits: {
+    form: 'blob', head: 'gumdrop', body: 'jelly', eyes: 'jelly', ears: 'nubs', mouth: 'o', pattern: 'bubbles', mark: 'heart',
+    topper: 'cherry', hair: 'drip',
+    color: 'mint', accent: 'cream', eyeColor: 'blue', hairColor: 'mint', taste: 'sweet', appetite: 'hearty' } },
+  { name: 'Fleece', line: 'cloud lamb', tier: 1, traits: {
+    form: 'quad', head: 'lamb', body: 'woolly', eyes: 'sleepy', ears: 'lamb', mouth: 'baa', pattern: 'sooty', mark: 'clover',
+    tail: 'puff', topper: 'horns', feet: 'hooves', nose: 'snoot', hair: 'wool',
+    color: 'cream', accent: 'slate', eyeColor: 'ink', hairColor: 'cream', taste: 'fruity', energy: 'calm' } },
+  { name: 'Glimmer', line: 'lantern jellyfish', tier: 0, traits: {
+    form: 'floater', head: 'bell', body: 'bell', eyes: 'glow', ears: 'frills', mouth: 'dot', pattern: 'glowspots', mark: 'spark',
+    tail: 'tendrils', topper: 'lure', wings: 'veils',
+    color: 'sky', accent: 'violet', eyeColor: 'pink', hairColor: 'sky', taste: 'sweet', energy: 'calm' } },
+  { name: 'Inchy', line: 'garden caterpillar', tier: 2, traits: {
+    form: 'serpent', head: 'bug', body: 'segmented', eyes: 'bead', ears: 'antennae', mouth: 'munch', pattern: 'bands', mark: 'dots',
+    tail: 'spike', topper: 'leaf', feet: 'nubs',
+    color: 'lime', accent: 'gold', eyeColor: 'ink', hairColor: 'lime', taste: 'fruity', appetite: 'hearty' } },
+  { name: 'Hoolet', line: 'moon owlet', tier: 0, traits: {
+    form: 'avian', head: 'owl', body: 'feathered', eyes: 'owl', ears: 'tufts', mouth: 'beak', pattern: 'facedisk', mark: 'moon',
+    topper: 'plume', feet: 'talons', wings: 'feathered',
+    color: 'brown', accent: 'cream', eyeColor: 'gold', hairColor: 'brown', taste: 'savory', energy: 'lively' } },
 ];
+
+// Traits that are shared, not parts owned by a line.
+export const NOT_PARTS = [...TEMPERAMENT_GENES];
 
 /** Which founder's line each part comes from: LINEAGE[gene][allele] -> founder name. */
 export const LINEAGE = {};
 for (const f of FOUNDERS) for (const [gene, v] of Object.entries(f.traits)) {
-  if (!GENES[gene] || v === 'none' || ['size', 'eyeSet', 'appetite', 'energy', 'taste'].includes(gene)) continue;
+  if (!GENES[gene] || v === 'none' || NOT_PARTS.includes(gene)) continue;
   (LINEAGE[gene] ||= {})[v] = f.name;
 }
 export const lineOf = (gene, allele) => LINEAGE[gene]?.[allele] || null;
@@ -266,25 +253,8 @@ export function founderFor(careMistakes, rng = defaultRng) {
 /** Starter genome for a new generation-1 egg: plain look, random temperament and colour. */
 export function starterGenome(rng = defaultRng) {
   const g = pureGenome(STARTER);
-  for (const gene of ['appetite', 'energy', 'taste']) g[gene] = [randomAllele(gene, rng), randomAllele(gene, rng)];
+  for (const gene of TEMPERAMENT_GENES) g[gene] = [randomAllele(gene, rng), randomAllele(gene, rng)];
   return g;
-}
-
-/** Ears drawn in proportion to the head (others are fixed-size sprites). */
-export const SCALED_EARS = ['bear', 'mouse', 'cat', 'bunny', 'floppy'];
-
-/** Which visible traits a stage shows. Babies are simple; adults show everything. */
-export function stageTraits(p, stage) {
-  const t = { ...p };
-  if (stage === 'baby') {
-    Object.assign(t, { fluff: 'none', eyes: 'baby', eyeSet: 'normal', mouth: p.mouth === 'bill' ? 'bill' : 'open', nose: 'none', mark: 'none', hair: 'none', ears: 'none', crest: 'none', back: 'none', feet: 'float', pattern: 'none', cheeks: 'blush', size: 'medium' });
-  } else if (stage === 'child') {
-    // kids already show their ear shape (drawn to scale), their nose and the start of their hair
-    Object.assign(t, { fluff: p.fluff === 'cheeks' ? 'cheeks' : 'none', hair: p.hair === 'bangs' || p.hair === 'bob' ? 'bangs' : 'none', ears: SCALED_EARS.includes(p.ears) ? p.ears : 'none', mark: 'none', crest: 'none', back: 'none', feet: p.feet === 'flippers' ? 'flippers' : 'stubs', size: 'medium' });
-  } else if (stage === 'teen') {
-    Object.assign(t, { crest: 'none', back: 'none', feet: ['float', 'flippers'].includes(p.feet) ? p.feet : 'stubs', size: 'medium' });
-  }
-  return t;
 }
 
 const SYL = ['mo', 'pi', 'ku', 'la', 'ri', 'to', 'nu', 'be', 'chi', 'pa', 'mi', 'so', 'fu', 'ra', 'ko', 'ne', 'bo', 'lu', 'ta', 'shi', 'po', 'yu', 'ma', 'ki'];

@@ -36,7 +36,7 @@ export const MAX_CRITICAL = 4;
 
 export function newGame(now = Date.now(), rng = defaultRng) {
   return {
-    version: 1,
+    version: 2, // keep in step with SAVE_VERSION in save.js
     simTime: now,
     lastReal: now,
     points: 100,
