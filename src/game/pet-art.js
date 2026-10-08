@@ -55,7 +55,7 @@ function patternRemap(pattern, region, p, info) {
   if (!fn) return null;
   return (code, i, j) => {
     if (code !== C2 && code !== C3 && code !== C4) return code;
-    const r = fn(region, ((i + 0.5) / p.w) * 2 - 1, ((j + 0.5) / p.h) * 2 - 1, { ...info, w: p.w, h: p.h });
+    const r = fn(region, ((i + 0.5) / p.w) * 2 - 1, ((j + 0.5) / p.h) * 2 - 1, { ...info, w: p.w, h: p.h, zone: p.zones?.[j]?.[i] });
     return r === 'accent' ? ACCENT[code] : r === 'bright' ? BRIGHT[code] : code;
   };
 }

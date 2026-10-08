@@ -91,3 +91,16 @@ test('every optional part and every ear shows in every form', () => {
   }
   assert.deepEqual(failures, [], 'hidden parts');
 });
+
+test('pattern zones, where a part has them, match the part size', () => {
+  for (const [form, F] of Object.entries(FORMS)) {
+    for (const section of ['head', 'body', 'baby', 'child']) {
+      const parts = F[section]?.spr ? { [section]: F[section] } : F[section] || {};
+      for (const [name, p] of Object.entries(parts)) {
+        if (!p.zones) continue;
+        assert.equal(p.zones.length, p.h, `${form} ${section} ${name} zones height`);
+        for (const r of p.zones) assert.equal(r.length, p.w, `${form} ${section} ${name} zones width`);
+      }
+    }
+  }
+});

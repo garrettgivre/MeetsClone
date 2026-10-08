@@ -94,3 +94,41 @@ def paint(g, marks):
 
 def mirror_pts(pts, w):
     return pts + [(w - 1 - x, y) for x, y in pts]
+
+# ---- pattern zones: a second grid on a part that patterns can read (info.zone)
+def spine_zones(rows, spine, seg=5, offset=0, chars='ab'):
+    """Band a part across a hand-placed spine (a list of (x, y) points along the
+    middle of a body): each filled pixel takes chars[k % len(chars)], where k is
+    which `seg`-pixel stretch of the spine it sits beside. Returns zone rows."""
+    import math
+    segs, total = [], 0.0
+    for (x0, y0), (x1, y1) in zip(spine, spine[1:]):
+        L = math.hypot(x1 - x0, y1 - y0); segs.append((x0, y0, x1, y1, L, total)); total += L
+    out = []
+    for y, r in enumerate(rows):
+        line = ''
+        for x, c in enumerate(r):
+            if c == '.':
+                line += '.'; continue
+            best = None
+            for x0, y0, x1, y1, L, t0 in segs:
+                t = max(0, min(1, ((x + .5 - x0) * (x1 - x0) + (y + .5 - y0) * (y1 - y0)) / (L * L or 1)))
+                d = math.hypot(x + .5 - (x0 + t * (x1 - x0)), y + .5 - (y0 + t * (y1 - y0)))
+                if best is None or d < best[0]: best = (d, t0 + t * L)
+            line += chars[int((best[1] + offset) // seg) % len(chars)]
+        out.append(line)
+    return out
+
+def setzones(form, section, key, zones):
+    """Store a zones grid on a part as its `zones` option."""
+    rows = rows_of(form, section, key)
+    assert len(zones) == len(rows) and all(len(z) == len(rows[0]) for z in zones)
+    s = open(_path(form), encoding='utf8').read()
+    i, k, indent = _find(s, section, key)
+    block = s[i:k]
+    import re as _re
+    block = _re.sub(r",\s*\{\s*zones:\s*\[[^\]]*\]\s*\}\)", ")", block)  # replace any old zones
+    z = '\n'.join(f"{indent}    '{r}'," for r in zones)
+    assert block.rstrip().endswith(']),'), 'setzones only handles parts without other options'
+    block = block.rstrip()[:-2] + f", {{ zones: [\n{z}\n{indent}  ] }}),\n"
+    open(_path(form), 'w', encoding='utf8').write(s[:i] + block + s[k:])

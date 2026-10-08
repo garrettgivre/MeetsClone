@@ -5,8 +5,10 @@
 // pattern(region, u, v, info) -> 'accent' | 'bright' | null
 //   region  'head' | 'body'
 //   u, v    -1..1 across the part's bounding box
-//   info    { form, fu, fv, w, h }  fu/fv: the face centre on the head, in the same units;
-//           w/h: the part's size in pixels, for shapes that should stay round
+//   info    { form, fu, fv, w, h, zone }  fu/fv: the face centre on the head, in the same units;
+//           w/h: the part's size in pixels, for shapes that should stay round;
+//           zone: the character under this pixel in the part's hand-painted `zones` grid, if it has one
+//           (e.g. 'a'/'b' for alternating segments), so a pattern can follow the drawing
 
 export const PATTERNS = {
   // Kitsu: a pale muzzle and chest
@@ -50,8 +52,9 @@ export const PATTERNS = {
     return null;
   },
   // Inchy: bands around the body
-  bands(region, u, v, { form }) {
+  bands(region, u, v, { form, zone }) {
     if (region === 'head') return null; // a caterpillar's head stays plain
+    if (zone) return zone === 'b' ? 'accent' : null; // bands painted to follow the segments
     const t = form === 'quad' ? u : v;
     return Math.floor((t + 1) * 3.2) % 2 === 1 ? 'accent' : null;
   },

@@ -26,6 +26,7 @@ const SOCKETS = {
  *   opts.under   colour drawn under socket markers: a char, or { marker: char }
  *   opts.pivot   [x, y] if the grid has no '#'
  *   opts.key     extra/override colours for this sprite (see sprite())
+ *   opts.zones   optional grid the same size, read by patterns (info.zone) so markings can follow the drawing
  *   any other opts (front, mirror, bill, ...) are kept on the part
  */
 export function part(rows, opts = {}) {
