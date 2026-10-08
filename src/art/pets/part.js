@@ -40,7 +40,12 @@ export function part(rows, opts = {}) {
       if (!name) return ch;
       (sockets[name] ||= []).push([x, y]);
       if (empty(x - 1, y) && empty(x + 1, y) && empty(x, y - 1) && empty(x, y + 1)) return '.';
-      return typeof opts.under === 'object' ? (opts.under[ch] ?? '3') : (opts.under ?? '3');
+      const given = typeof opts.under === 'object' ? opts.under[ch] : opts.under;
+      if (given) return given;
+      // a marker on the silhouette edge keeps the outline: lit on the top and left, ink below and right
+      if (empty(x - 1, y) || empty(x, y - 1)) return '1';
+      if (empty(x + 1, y) || empty(x, y + 1)) return 'o';
+      return '3';
     }).join('');
   });
   const pivot = opts.pivot || sockets.pivot?.[0] || [w >> 1, rows.length - 1];
