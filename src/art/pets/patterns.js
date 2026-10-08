@@ -36,13 +36,15 @@ export const PATTERNS = {
     if (form === 'quad') return v > 0.45 ? 'accent' : null;
     return v > 0.5 ? 'accent' : null;
   },
-  // Glimmer: glowing spots around the rim
-  glowspots(region, u, v) {
-    const n = region === 'head' ? 5 : 4;
+  // Glimmer: little round glowing spots around the rim (sized in pixels)
+  glowspots(region, u, v, { w, h }) {
+    const n = region === 'head' ? 5 : 3;
     for (let i = 0; i < n; i++) {
       const a = -Math.PI * 0.9 + (i / (n - 1)) * Math.PI * 1.8 - Math.PI / 2;
-      const x = Math.cos(a) * 0.68, y = Math.sin(a) * 0.62 + (region === 'head' ? 0 : 0.1);
-      if ((u - x) ** 2 + (v - y) ** 2 <= 0.024) return 'bright';
+      const x = Math.cos(a) * (region === 'head' ? 0.7 : 0.45), y = Math.sin(a) * 0.6 + (region === 'head' ? 0 : 0.05);
+      const d = Math.hypot(((u - x) * w) / 2, ((v - y) * h) / 2);
+      if (d <= 0.7) return 'bright';
+      if (d <= 1.5) return 'accent';
     }
     return null;
   },
