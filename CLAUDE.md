@@ -60,7 +60,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Review pages** (each needs the local server):
   - `tools/town.html`: every backdrop. Add `?only=park&z=3` to enlarge one place, and `&pets` to see two pets for scale.
   - `tools/props.html`: every prop. `?z=4&only=a,b,c` shows chosen props; a single name shows four colourways.
-- **Making props:** draft with `tools/art-scripts/town_kit.py`, which has the `G`, `box`, `ell`, `tline`, `disc`, `outline` and `write_props` helpers (see its docstring).
+- **Making props:** draft with `tools/art-scripts/town_kit.py`, which has the `G`, `box`, `ell`, `tline`, `disc`, `outline` and `write_props` helpers (see its docstring), plus mask painters: build a silhouette as a set of cells (`rr_mask`, `ell_mask`, `rect_mask`, set unions) and `shade` it for the house look; `stones` and `bricks` lay irregular masonry and `circle` draws a glinting ball. The v0.12.8 props (cabinet, claw, oven, keep, tent, escalator, bed, window, fans) were drafted this way, then checked in the review pages.
   - On Windows / Git Bash, write Python to a file and run it; complex heredoc quoting breaks.
   - Pass ramp *characters* (e.g. `'7'`) to `px`, `hl` and `vl`, never ramp names: `hl(g, …, 'wood')` corrupts the row.
 - **Tests:** `tests/town.test.js` renders every backdrop and runs every place action. A syntax error anywhere in `town.js` fails it with "Unexpected identifier"; run `node --check src/art/town.js`.
@@ -73,7 +73,7 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
 - **Light from the upper left.** Shading is hue-shifted (cool shadows, warm lights), with outlines in a darker shade of the object's own colour.
 - **Process:** after art changes, look at the result in the review pages (screenshot and zoom) before pushing. For big redesigns, outline the plan first.
 
-## Status (v0.12.7, October 2026)
+## Status (v0.12.8, October 2026)
 
 - **Done:**
   - Pet life cycle, care, discipline and weight.
@@ -83,9 +83,9 @@ docs/PLAN.md               architecture, roadmap and status;  docs/RESEARCH.md  
   - Matchmaker, wedding and generations.
   - Gene Book.
   - The town: 22 places in four districts plus a hidden village, with residents, friendship, gifts, travel passes and the Star Isle wish.
-  - Many art passes: every town object is now a hand-pixelled prop (about 105 props).
+  - Many art passes: every town object is now a hand-pixelled prop (about 117 props). v0.12.8 redrew the big buildings and machines (arcade cabinets, claw machine, oven, keep, towers, tent, shop and town-hall fronts), added an escalator, a hospital bed, curtained windows and three concert-hall fans (`fanA`..`fanC`).
 - **Next ideas** (from `docs/PLAN.md`): Meet Codes (share a pet by code), twins, seasons and holidays, and room decorations.
-- **Art polish candidates:** the larger buildings and machines (shop, town hall, tent, castle keep, arcade cabinets, oven) and the concert-hall audience.
+- **Art polish candidates:** the home room in `src/scenes/room.js` (its window, shelf, plant and lamp are still drawn in code), the salon mirrors, the boutique clothes rack and the school blackboard.
 
 ## Gotchas
 

@@ -292,15 +292,6 @@ function kit() {
     if (glow) for (let j = -13; j <= 13; j++) for (let i = -13; i <= 13; i++) if (i * i + j * j < 160 && ((x + i + j) & 1) === 0) set(x + i, y - 51 + j, 'gold.3');
     prop('lamp', x, y, { glass: 'gold' });
   };
-  /** A window: frame, sky glass with a reflection, sill. */
-  const window_ = (x, y, w, h, glass = 'sky.3', frame = 'white', { cross = true } = {}) => {
-    block(x - 3, y - 3, w + 6, h + 6, frame);
-    rect(x, y, w, h, glass);
-    for (let j = 0; j < h; j++) if (j > h * 0.55) for (let i = 0; i < w; i++) if (((i + j) & 1) === 0) set(x + i, y + j, dk(glass));
-    for (let i = 0; i < Math.min(w, h) / 2; i++) set(x + 3 + i, y + h / 2 - i, lt(glass, 2) === glass ? 'white' : 'white');
-    if (cross) { rect(x + (w >> 1) - 1, y, 2, h, frame); rect(x, y + (h >> 1) - 1, w, 2, frame); }
-    rect(x - 5, y + h + 3, w + 10, 3, frame); rect(x - 5, y + h + 5, w + 10, 1, dk(frame));
-  };
   const awning = (x, y, w, c1 = 'red.2', c2 = 'white') => {
     for (let i = 0; i < w; i++) { const c = Math.floor(i / 8) % 2 ? c2 : c1; rect(x + i, y, 1, 10, c); set(x + i, y + 10, dk(c)); }
     for (let i = 0; i < w; i += 8) { const c = Math.floor(i / 8) % 2 ? c2 : c1; ellipse(x + i + 4, y + 11, 4, 3, c, { outline: dk(c, 2) }); }
@@ -569,7 +560,7 @@ function kit() {
     bm, front, layer, usedFront: () => frontUsed, set, sign, face, bulbs, starString, heart, sun, signpost, field, horizonClouds, frame, prop, blob,
     mist, trunk, trail, flowerPatch, rocks, tufts, lightPool, beam, vignette, plant, hangingPlant, mobile, puff, canopy, pcloud, bands, mountain,
     mottle, star5, sparkle, mushroom, rock, get, rect, box, line, dither, block, flat, ellipse, disc, shadow, skyline, tiles, planks, cobbles, wall,
-    floorShadow, tree, bush, flower, flowers, lamp, window: window_, awning, shopFront, counter, shelf, rug, clock, star, curtain, bunting,
+    floorShadow, tree, bush, flower, flowers, lamp, awning, shopFront, counter, shelf, rug, clock, star, curtain, bunting,
     stringLights, pictureFrame,
   };
 }
@@ -668,7 +659,7 @@ const SCENES = {
   },
   cafe(k) {
     k.wall('cream.3', 'pink.3', 'stripes', { wainscot: 'pink.2' });
-    k.window(16, 34, 60, 46); k.window(180, 34, 60, 46);
+    k.prop('window', 46, 84, { glass: 'sky', accent: 'pink' }); k.prop('window', 210, 84, { glass: 'sky', accent: 'pink' });
     k.awning(14, 26, 66, 'pink.2', 'white'); k.awning(178, 26, 66, 'pink.2', 'white');
     k.block(102, 22, 52, 36, 'brown.1'); k.flat(105, 25, 46, 30, 'green.0');
     k.sign(128, 29, 'MENU', { fg: 'gold.3', bg: 'green.0', board: false });
@@ -764,9 +755,9 @@ const SCENES = {
     k.bulbs(80, 4, 176, 4, 6); k.bulbs(80, 25, 176, 25, 6); k.bulbs(80, 4, 80, 25, 7); k.bulbs(176, 4, 176, 25, 7);
     k.sign(128, 12, 'ARCADE', { fg: 'pink.3', bg: 'indigo.0', board: false }); k.star5(94, 14, 3, 'gold.3'); k.star5(162, 14, 3, 'gold.3');
     k.rect(0, 30, RW, 1, 'pink.2'); k.rect(0, 32, RW, 1, 'sky.2'); // neon strips
-    for (const [x, c] of [[8, 'red'], [64, 'sky'], [148, 'gold'], [204, 'green']]) {
+    for (const [x, c, knob] of [[8, 'red', 'gold'], [64, 'sky', 'red'], [148, 'gold', 'red'], [204, 'green', 'pink']]) {
       k.shadow(x + 22, 206, 26, 'night');
-      k.prop('cabinet', x + 22, 206, { accent: c, wall: 'cream', glass: 'indigo', stone: 'slate' });
+      k.prop('cabinet', x + 22, 206, { accent: c, wall: 'cream', glass: 'indigo', stone: 'slate', roof: knob });
     }
     k.prop('claw', 128, 206, { accent: 'pink', glass: 'sky', wall: 'gold' });
     k.rect(0, HZ + 32, RW, RH - HZ - 32, 'indigo.1'); k.dither(0, HZ + 32, RW, 10, C('indigo.0'));
@@ -790,7 +781,7 @@ const SCENES = {
     k.wall('white', 'mint.3', 'stripes', { wainscot: 'mint.2' });
     k.prop('crossSign', 41, 69, { wall: 'cream', accent: 'red' });
     k.sign(41, 78, 'CLINIC', { bg: 'red.1', pad: 2 });
-    k.window(84, 30, 50, 40);
+    k.prop('window', 109, 79, { glass: 'sky', accent: 'mint' });
     k.clock(160, 44, 9);
     k.pictureFrame(140, 76, 22, 18, 'mint.2'); k.hangingPlant(66, 82, 14);
     k.rect(176, 20, 80, 2, 'slate.1');
@@ -815,23 +806,8 @@ const SCENES = {
     k.sign(128, 18, 'DEPT STORE', { fg: 'gold.3', bg: 'red.0', board: false });
     k.bulbs(84, 10, 172, 10, 6); k.bulbs(84, 31, 172, 31, 6);
     for (let i = 0; i < 3; i++) { k.shelf(6, 64 + i * 30, 66, 'boxes'); k.shelf(184, 64 + i * 30, 66, 'boxes', ['red.2', 'blue.2', 'gold.2']); }
-    // a grand staircase up to the next floor
-    for (let i = 13; i >= 0; i--) {
-      const x = 92 + i * 5, y = 164 - i * 8;
-      k.rect(x, y, 26, 8, 'gold.2'); k.rect(x, y, 26, 2, 'cream.3'); k.rect(x, y + 2, 26, 1, 'gold.3'); k.rect(x, y + 7, 26, 1, 'gold.1');
-      k.set(x, y, 'gold.1'); k.set(x + 25, y, 'gold.1');
-    }
-    k.rect(92, 172, 26, 2, 'gold.1');
-    // glass balustrades, then the handrails on top
-    for (const off of [-2, 26]) for (let i = 0; i < 70; i++) {
-      const x = 90 + off + i, top = 156 - i * 1.6;
-      for (let j = 0; j < 12; j++) if (((x + j) & 1) === 0 || j === 0) k.set(x, top + j, j === 0 ? 'white' : 'sky.3');
-    }
-    for (const off of [-2, 26]) for (let i = 0; i < 72; i++) {
-      const x = 89 + off + i, y = 155 - i * 1.6;
-      k.set(x, y - 1, 'slate.0'); k.set(x, y, 'red.2'); k.set(x, y + 1, 'red.1'); k.set(x, y + 2, 'slate.0');
-    }
-    for (const off of [-2, 26]) { k.rect(88 + off, 152, 3, 22, 'slate.1'); k.disc(89 + off, 151, 2, 'gold.2', { outline: 'gold.0' }); }
+    // a grand escalator up to the next floor: golden steps between glass balustrades
+    k.prop('escalator', 136, 174, { wall: 'gold', accent: 'red', glass: 'sky', stone: 'slate', roof: 'gold' });
     k.vignette('gold.2', 30);
     k.plant(66, HZ - 2, 0.9, 'green.2', 'gold.2', 21); k.plant(190, HZ - 2, 0.9, 'green.2', 'gold.2', 22);
     k.tiles(HZ, 'white', 'mist', 24); k.floorShadow('silver');
@@ -883,7 +859,6 @@ const SCENES = {
   },
   work(k) {
     k.wall('slate.3', 'slate.2', 'bricks');
-    k.window(18, 30, 54, 40);
     k.pictureFrame(18, 92, 30, 22, 'blue.2'); for (let i = 0; i < 4; i++) k.rect(22, 98 + i * 4, 20 - i * 3, 1, 'white');
     k.prop('pegboard', 142, 86, { wood: 'brown', stone: 'slate', accent: 'red', wall: 'cream' });
     const gear = (cx, cy, r, c) => { for (let a = 0; a < 10; a++) k.disc(cx + Math.cos(a * Math.PI / 5) * r, cy + Math.sin(a * Math.PI / 5) * r, 4, c); k.disc(cx, cy, r, c, { outline: dk(c, 2), shade: true }); k.disc(cx, cy, r / 3, 'slate.3', { outline: dk(c, 2) }); };
@@ -1081,15 +1056,13 @@ const SCENES = {
     k.shadow(128, 226, 9); k.prop('mic', 128, 226, { stone: 'slate', accent: 'red' });
     k.rect(0, HZ + 44, RW, RH - HZ - 44, 'indigo.0');
     k.layer('front');
-    // the audience, in silhouette
+    // the audience: hand-pixelled fans seen from behind, with bows, ear tufts and glow sticks
+    const fans = ['fanA', 'fanB', 'fanC'];
     for (let r = 0; r < 2; r++) for (let x = r * 13 - 4, i = 0; x < RW + 14; x += 26, i++) {
       const y = 256 + r * 16;
-      if ((i + r) % 3 !== 1) { // someone's sitting here: a round head with little ears
-        const hx = x + (i % 2 ? 1 : -1), hy = y - 22;
-        const hc = r ? 'indigo.1' : 'indigo.2';
-        if (i % 2) { k.puff(hx - 6, hy - 6, 3, hc, { line: 'indigo.0', hi: 'violet.1' }); k.puff(hx + 6, hy - 6, 3, hc, { line: 'indigo.0', hi: 'violet.1' }); }
-        k.puff(hx, hy, 8, hc, { line: 'indigo.0', hi: 'violet.1' });
-        if (i % 2 === 0) k.puff(hx + 4, hy - 7, 3, 'pink.2', { line: 'pink.0' }); // a bow
+      if ((i + r) % 3 !== 1) { // someone's sitting here
+        const hx = x + (i % 2 ? 1 : -1);
+        k.prop(fans[(i + r * 2) % 3], hx, y - 14, { accent: r ? 'indigo' : 'violet', roof: i % 2 ? 'pink' : 'red', glass: ['sky', 'mint', 'gold'][i % 3], flip: i % 2 === 1 });
       }
       k.prop('theatreSeat', x, y, { accent: 'red', wall: 'gold', wood: 'brown' });
     }

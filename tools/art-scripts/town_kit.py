@@ -139,3 +139,112 @@ def write_props(props, section='// ---------------------------------------------
             k = s.index(section)
             s = s[:k] + body + ');\n' + s[k:]
     open(PROPS_JS, 'w', encoding='utf8').write(s)
+
+import random
+
+# ---- masks and painters (added with the v0.12.8 polish pass) ----
+# Build a silhouette as a set of (x, y) cells, then `shade` it: darkest outline,
+# a light rim inside the top/left edge and a shadow band inside the bottom/right.
+# `stones` and `bricks` lay irregular masonry; `circle` is a glinting ball.
+def rr_mask(x, y, w, h, r=2):
+    """Cells of a rounded rectangle; r is the corner radius in pixels."""
+    cells = set()
+    for j in range(h):
+        for i in range(w):
+            # distance to the nearest corner centre
+            cx = x + r if i < r else x + w - 1 - r if i >= w - r else None
+            cy = y + r if j < r else y + h - 1 - r if j >= h - r else None
+            if cx is not None and cy is not None:
+                dx, dy = x + i - cx, y + j - cy
+                if dx * dx + dy * dy > r * r + r * 0.6: continue
+            cells.add((x + i, y + j))
+    return cells
+
+
+def ell_mask(cx, cy, rx, ry):
+    cells = set()
+    for y in range(int(cy - ry - 1), int(cy + ry + 2)):
+        for x in range(int(cx - rx - 1), int(cx + rx + 2)):
+            nx, ny = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
+            if nx * nx + ny * ny <= 1: cells.add((x, y))
+    return cells
+
+
+def rect_mask(x, y, w, h):
+    return {(x + i, y + j) for j in range(h) for i in range(w)}
+
+
+def shade(g, cells, r, rim=True, band=2, outline=True, fillch=None, light='ul', only=None):
+    """Paint a mask with the house shading. light='ul' lights the upper left."""
+    d0, d1, d2, d3 = ramp(r)
+    if fillch: d2 = fillch
+    for (x, y) in cells:
+        edge = any((x + a, y + b) not in cells for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        v = d2
+        if band:
+            if any((x + a, y + b) not in cells for a in range(1, band + 1) for b in (0,)) or \
+               any((x, y + b) not in cells for b in range(1, band + 1)): v = d1
+        if rim and ((x - 1, y) not in cells or (x, y - 1) not in cells or (x - 1, y - 1) not in cells) and \
+           not any((x + a, y + b) not in cells for a, b in ((1, 0), (0, 1))): v = d3
+        if outline and edge: v = d0
+        if only is None or (x, y) in only: px(g, x, y, v)
+
+
+def circle(g, cx, cy, r, rp, glint=True):
+    """A small shaded ball with a glint."""
+    cells = ell_mask(cx, cy, r, r)
+    shade(g, cells, rp, band=1)
+    if glint and r >= 2: px(g, cx - r * 0.4, cy - r * 0.4, 'w')
+
+
+def stones(g, x, y, w, h, seed=1, shade_x=None, courses=5, mortar='f', face='g', lit='h', dark='f', ink='e', only=None):
+    """Irregular stone blocks: staggered courses of varied widths with light tops and a
+    mortar line, a few paler and darker blocks. Columns at or past shade_x go a shade darker."""
+    rnd = random.Random(seed)
+    j, row = 0, 0
+    while j < h:
+        ch = courses + (1 if rnd.random() < 0.3 else 0)
+        i = -rnd.randint(0, 6) if row % 2 else 0
+        while i < w:
+            bw = rnd.choice([6, 7, 8, 9, 10, 11, 12])
+            tone = rnd.random()
+            for jj in range(ch):
+                for ii in range(bw):
+                    X, Y = i + ii, j + jj
+                    if X < 0 or X >= w or Y >= h: continue
+                    if only is not None and (x + X, y + Y) not in only: continue
+                    shaded = shade_x is not None and X >= shade_x
+                    v = face
+                    if tone < 0.12: v = lit
+                    elif tone > 0.86: v = dark
+                    if jj == 0 and tone >= 0.12: v = lit
+                    if jj == ch - 1 or ii == bw - 1: v = mortar
+                    if shaded: v = {lit: face, face: dark, dark: ink, mortar: ink}.get(v, v)
+                    px(g, x + X, y + Y, v)
+            i += bw
+        j += ch
+        row += 1
+
+
+def bricks(g, cells, rp, seed=1, bw=7, bh=4, shade_fn=None):
+    """Brick courses clipped to a mask. shade_fn(x, y) -> 0 lit, 1 mid, 2 dark picks the tone."""
+    d0, d1, d2, d3 = ramp(rp)
+    rnd = random.Random(seed)
+    xs = [c[0] for c in cells]; ys = [c[1] for c in cells]
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    tones = {}
+    for (x, y) in cells:
+        row = (y - y0) // bh
+        off = (row % 2) * (bw // 2)
+        col = (x - x0 + off) // bw
+        key = (row, col)
+        if key not in tones: tones[key] = rnd.random()
+        t = tones[key]
+        mortar = (y - y0) % bh == bh - 1 or (x - x0 + off) % bw == bw - 1
+        tone = shade_fn(x, y) if shade_fn else 1
+        if mortar: v = [d1, d1, d0][tone]
+        else:
+            v = [d3, d2, d1][tone]
+            if t < 0.1: v = [d3, d3, d2][tone]
+            elif t > 0.88: v = [d2, d1, d1][tone]
+        px(g, x, y, v)
