@@ -108,11 +108,24 @@ function headPattern(pattern, u, v, y) {
  * Paint a shape in the founder style. paint(u, v, x, y) may return:
  *   a ramp name (auto shaded), { ramp, shade } or a palette index.
  */
-function paintShape(w, h, mask, paint, opts = {}) {
+function paintShape(w, h, mask0, paint, opts = {}) {
   const px = new Uint8Array(w * h);
+  // remove doubles: drop corner pixels that make a curve's outline two pixels
+  // thick, so the line steps cleanly from one run to the next
+  const mask = mask0.slice();
+  const m0 = (x, y) => x >= 0 && y >= 0 && x < w && y < h && mask0[y * w + x] === 1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!m0(x, y)) continue;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      if (!m0(x + dx, y) && !m0(x, y + dy) && m0(x - dx, y) && m0(x, y - dy) && m0(x - dx, y - dy) && m0(x - 2 * dx, y) && m0(x, y - 2 * dy)) { mask[y * w + x] = 0; break; }
+    }
+  }
+  mask0.set(mask);
   const m = (x, y) => x >= 0 && y >= 0 && x < w && y < h && mask[y * w + x] === 1;
   const ink = C('ink');
-  // light cluster: a rounded patch on the upper left, and a shine pixel in it
+  const lighter = new Map();
+  const edgeAt = (x, y) => m(x, y) && (!m(x - 1, y) || !m(x + 1, y) || !m(x, y - 1) || !m(x, y + 1));
+  // a shine pixel near the top left
   const lcx = w * 0.3, lcy = h * 0.26, lrx = Math.max(1.5, w * 0.085), lry = Math.max(1.1, h * 0.065);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     if (!m(x, y)) continue;
@@ -133,17 +146,28 @@ function paintShape(w, h, mask, paint, opts = {}) {
     const nearBottom = !m(x, y + 2);
     if ((nearRight && u > -0.1) || (nearBottom && v > 0.2)) shade = 1;
     if (opts.shadeTop && y < opts.shadeTop) shade = 1;
-    if (opts.shine !== false && ((x + 0.5 - lcx) / lrx) ** 2 + ((y + 0.5 - lcy) / lry) ** 2 <= 1) shade = 3;
+    // rim light: a crescent just inside the lit outline on the upper left
+    if ((opts.rim ?? opts.shine !== false) && u + v < -0.55 && (edgeAt(x, y - 1) || edgeAt(x - 1, y))) shade = 3;
     px[y * w + x] = ramp(r, shade);
+    lighter.set(ramp(r, shade), ramp(r, Math.min(3, shade + 1)));
   }
   if (opts.shine !== false && w >= 14) {
-    const sx = Math.round(lcx - lrx * 0.35), sy = Math.round(lcy - lry * 0.2);
-    if (m(sx, sy) && px[sy * w + sx] !== ink) px[sy * w + sx] = C('white');
+    const sx = Math.round(lcx), sy = Math.round(lcy);
+    if (m(sx, sy) && px[sy * w + sx] !== ink) {
+      // a white glint with a soft light halo beside and below it
+      const base = px[sy * w + sx];
+      for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0]]) {
+        const i = (sy + dy) * w + sx + dx;
+        if (m(sx + dx, sy + dy) && px[i] === base && !edgeAt(sx + dx, sy + dy)) px[i] = lighter.get(base) ?? base;
+      }
+      px[sy * w + sx] = C('white');
+    }
   }
   return { w, h, px, m };
 }
 
 const cache = new Map();
+const edgeOf = (b, x, y) => !b.m(x - 1, y) || !b.m(x + 1, y) || !b.m(x, y - 1) || !b.m(x, y + 1);
 
 function headBM(t, stage) {
   const key = ['h', stage, t.shape, t.size, t.pattern, t.color, t.accent, t.hair, t.hairColor].join('|');
@@ -191,6 +215,14 @@ function headBM(t, stage) {
     if (pat === 'deep') return { ramp: t.color, shade: 0 };
     return pat ? t.accent : t.color;
   }, { shine: !hasHair || t.hair === 'spiky' });
+  // blocky heads are built from panels: a faceplate seam across the brow
+  if (t.shape === 'blocky' && w >= 14) {
+    const sy = P + Math.round(h * 0.3);
+    for (let x = 0; x < W; x++) {
+      const i = sy * W + x;
+      if (b.m(x, sy) && b.px[i] !== C('ink') && !edgeOf(b, x, sy)) b.px[i] = ramp(t.color, 1);
+    }
+  }
   // anchors (in padded coordinates)
   let top = 0; while (top < H && !base[Math.max(0, top - P) * w + (w >> 1)]) top++;
   top += P;
@@ -224,7 +256,7 @@ function bodyBM(t, stage) {
       case 'heart': { const x = u / 0.55, y = -(v - 0.2) / 0.62; if ((x * x + y * y - 1) ** 3 - x * x * y ** 3 <= 0) return t.accent; break; }
     }
     return t.color;
-  }, { shadeTop: 2, shine: false });
+  }, { shadeTop: 2, shine: false, rim: true });
   // square bodies have a little gold power light on the chest
   if (t.build === 'square' && w >= 10) {
     const lx = w >> 1, ly = Math.round(h * 0.45);
@@ -237,9 +269,15 @@ function bodyBM(t, stage) {
 }
 
 /** A sprite-resolution canvas with layered drawing helpers. */
+// Which part drew each pixel, so joins between connected parts can be cleaned up
+const PART = { head: 1, body: 2, ears: 3, back: 4, arms: 5, feet: 6, tufts: 7, hair: 8, crest: 9, mane: 10, face: 11 };
+// parts that grow out of each other: where they meet in the same colour, the outline between them goes
+const JOINS = new Set(['1-3', '1-7', '1-8', '1-9', '2-4', '2-5', '2-6', '1-10'].flatMap(k => [k, k.split('-').reverse().join('-')]));
+
 function layer() {
-  const px = new Uint8Array(KW * KH);
-  const set = (x, y, c) => { if (c && x >= 0 && y >= 0 && x < KW && y < KH) px[y * KW + x] = c; };
+  const px = new Uint8Array(KW * KH), ids = new Uint8Array(KW * KH);
+  let cur = 0;
+  const set = (x, y, c) => { if (c && x >= 0 && y >= 0 && x < KW && y < KH) { px[y * KW + x] = c; ids[y * KW + x] = cur; } };
   const blit = (b, x0, y0, flip = false) => {
     for (let y = 0; y < b.h; y++) for (let x = 0; x < b.w; x++) {
       const c = b.px[y * b.w + (flip ? b.w - 1 - x : x)];
@@ -257,7 +295,35 @@ function layer() {
       set(x, ay - py0 + j, c);
     }
   };
-  return { px, set, blit, stamp };
+  return { px, ids, set, blit, stamp, part: (name) => { cur = PART[name]; } };
+}
+
+/**
+ * Erase the outline where two connected parts of the same colour meet (an ear
+ * growing out of the head, a tail out of the body, a shoulder on the body),
+ * leaving a soft crease in the darker shade, the way a pixel artist joins
+ * shapes by hand. Lines between different colours and silhouette edges stay.
+ */
+function joinSeams(L, ramps) {
+  const ink = C('ink');
+  const info = new Map(); // palette index -> [ramp, shade]
+  for (const r of ramps) for (let k = 0; k < 4; k++) if (!info.has(ramp(r, k))) info.set(ramp(r, k), [r, k]);
+  const isLine = (c) => c === ink || info.get(c)?.[1] === 0;
+  const out = L.px.slice();
+  for (let y = 1; y < KH - 1; y++) for (let x = 1; x < KW - 1; x++) {
+    const i = y * KW + x, c = L.px[i];
+    if (!c || !isLine(c)) continue;
+    for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+      const a = i - dy * KW - dx, b = i + dy * KW + dx;
+      const ca = L.px[a], cb = L.px[b], ia = info.get(ca), ib = info.get(cb);
+      if (!ia || !ib || ia[1] === 0 || ib[1] === 0 || ia[0] !== ib[0]) continue;
+      const pa = L.ids[a], pb = L.ids[b];
+      if (pa === pb || !JOINS.has(pa + '-' + pb) || (L.ids[i] !== pa && L.ids[i] !== pb)) continue;
+      out[i] = ramp(ia[0], Math.max(1, Math.min(ia[1], ib[1]) - 1));
+      break;
+    }
+  }
+  L.px.set(out);
 }
 
 /**
@@ -291,6 +357,7 @@ export function composeKit(phenotype, stage, pose = {}) {
   const mirrorX = (x) => hx + head.w - 1 - (x - hx); // mirror a head x across the head centre
 
   // ----- back parts -----
+  L.part('back');
   const back = BACKS[t.back];
   if (back && body) {
     const [l, r] = body.span(Math.min(body.h - 1, 3));
@@ -298,6 +365,7 @@ export function composeKit(phenotype, stage, pose = {}) {
     else if (back.tail) L.stamp(back, bx + r - 1, by + body.h - 2, ctx);
   }
   // fur mane behind the head
+  L.part('mane');
   if (t.fluff === 'mane') {
     // a ring of ten even, symmetric points, lit from the upper left
     const R = head.w * 0.6;
@@ -310,6 +378,7 @@ export function composeKit(phenotype, stage, pose = {}) {
     }
   }
   // twin tails, ponytail, curly puff
+  L.part('hair');
   if (t.hair === 'twintails') {
     // tied just outside the head outline, high up, so they flare out
     const ty = Math.round(head.h * 0.2), [l] = head.span(ty);
@@ -323,12 +392,15 @@ export function composeKit(phenotype, stage, pose = {}) {
   const armPose = pose.arms || 'down';
   const [armL, armR] = armPose === 'wave' ? ['up', 'down'] : [armPose, armPose];
   const drawArm = (which, side) => {
+    L.part('arms');
     const [l, r] = body.span(3);
     if (side < 0) L.stamp(ARMS[which], bx + l + 2, by + 3, ctx);
     else L.stamp(ARMS[which], bx + r - 2, by + 3, ctx, true);
   };
   if (body) {
+    L.part('body');
     L.blit(body, bx, by);
+    L.part('feet');
     // feet sit in front of the body's lower edge
     if (feet) {
       const span = Math.max(3, Math.round(body.w * 0.25));
@@ -340,6 +412,7 @@ export function composeKit(phenotype, stage, pose = {}) {
     if (armL !== 'up') drawArm(armL, -1);
     if (armR !== 'up') drawArm(armR, 1);
   } else if (feet) {
+    L.part('feet');
     const span = Math.max(3, Math.round(head.w * 0.22));
     L.stamp(feet, cx - span - (odd ? 0 : 1), hy + head.h - 2, ctx);
     L.stamp(feet, cx + span, hy + head.h - 2, ctx, true);
@@ -353,19 +426,23 @@ export function composeKit(phenotype, stage, pose = {}) {
     // side ears hang from the widest part of the head, the rest sit on top
     const [l] = head.span(ears.side ? Math.round(head.h * 0.45) : ey - hy);
     const ex = ears.side ? hx + l + 2 : hx + l + Math.round(head.w * 0.12);
-    const draw = () => { L.stamp(ears, ex, ey, ctx); L.stamp(ears, mirrorX(ex), ey, ctx, true); };
+    const draw = () => { L.part('ears'); L.stamp(ears, ex, ey, ctx); L.stamp(ears, mirrorX(ex), ey, ctx, true); };
     if (ears.front) frontEars = draw; else draw();
   }
   let tufts = null;
   if (t.fluff === 'cheeks') {
     const ty = hy + Math.round(head.h * 0.66);
     const [l] = head.span(ty - hy);
-    tufts = () => { L.stamp(TUFT, hx + l + 2, ty, ctx); L.stamp(TUFT, mirrorX(hx + l + 2), ty, ctx, true); };
+    tufts = () => { L.part('tufts'); L.stamp(TUFT, hx + l + 2, ty, ctx); L.stamp(TUFT, mirrorX(hx + l + 2), ty, ctx, true); };
   }
+  L.part('hair');
   if (t.hair === 'spiky') L.stamp(HAIR.spikes, hcx, hy + head.top + 2, ctx);
   const crest = CRESTS[t.crest];
+  L.part('crest');
   if (crest && !crest.front) L.stamp(crest, hcx, hy + head.top + 1, ctx);
+  L.part('head');
   L.blit(head, hx, hy);
+  L.part('crest');
   if (crest && crest.front) L.stamp(crest, hcx, hy + head.top + 1, ctx);
   frontEars?.();
   tufts?.(); // cheek pouches puff out over the face edge
@@ -376,6 +453,8 @@ export function composeKit(phenotype, stage, pose = {}) {
     if (body.m(x, 2) && L.px[i] && L.px[i] !== C('ink')) L.px[i] = ramp(t.belly === 'suit' ? t.accent : t.color, 1);
   }
   if (body) { if (armL === 'up') drawArm('up', -1); if (armR === 'up') drawArm('up', 1); }
+  joinSeams(L, [t.color, t.hairColor || 'brown']); // accent parts (ears, patches) keep their lines
+  L.part('face');
 
   // ----- face -----
   const ey = hy + head.eyeY;
@@ -390,7 +469,11 @@ export function composeKit(phenotype, stage, pose = {}) {
   }
   const closed = ['blink', 'sleep', 'chew', 'happy', 'sad', 'sick', 'dizzy'].includes(pose.expr);
   L.stamp(eye, exL, ey, ctx);
-  if (pose.expr !== 'wink') L.stamp(eye, exR, ey, ctx, true);
+  // the right eye keeps its glint on the lit (left) side unless the eye is meant to mirror
+  if (pose.expr !== 'wink') {
+    if (eye.mirror) L.stamp(eye, exR, ey, ctx, true);
+    else L.stamp(eye, exR + 2 * eye.pivot[0] - eye.spr.w + 1, ey, ctx);
+  }
   if (pose.gender === 'f' && stage !== 'baby' && !closed) {
     const topY = ey - eye.pivot[1] - 1;
     L.set(exL - eye.pivot[0] - 0, topY + 1, C('ink'));

@@ -61,6 +61,11 @@ Clothes are a wardrobe feature, not genes, and aren't drawn on pets yet.
   - A small rounded light cluster with a white shine pixel.
   - A one-pixel shadow band on the lower right, and a neck shadow under the head.
 - **Hair** sits a pixel beyond the skull for volume and is outlined in its darkest shade, with strand lines and a gloss row. Fringes: pointed bangs, Lumipom's notched bob, Gillybop's swept fringe, spiky, curly.
+- **Hand-finishing passes** (applied automatically to every pet, as a pixel artist would by hand):
+  - *Joined seams:* where two connected parts in the body or hair colour meet (ears and head, tail and body, shoulders, toppers, cheek fluff, mane), the outline between them becomes a soft crease in the darker shade. Silhouette edges, chins, faces and accent-coloured parts keep their lines. See `joinSeams` in `render-kit.js`.
+  - *No doubles:* corner pixels that make a curve's outline two pixels thick are removed, so curves step cleanly.
+  - *Rim light:* a crescent of the lightest shade just inside the lit (upper-left) outline of heads and bodies, plus one white glint with a soft halo on the head.
+  - *One light direction:* both eyes keep their glint on the upper left; only eyes marked `mirror` (inward-looking pupils) are flipped.
 - **No look-alikes:** every part must be clearly different from the others in its category (shape first, then colour). Check with `tools/parts.html` (every kit part side by side, `?cat=EARS` for one category) and `tools/gallery.html?gene=shape,build` for the drawn genes.
 - **Arms** are drawn in front of the body with a soft inner edge and a round hand, so every pet has visible arms and hands.
 - **Review:** design each founder, then critique and fix it at least five times in `tools/founders.html` before calling it final. Use `tools/compare.html` for children, wild pets, growth stages and expressions after any art change.

@@ -15,14 +15,15 @@ const P = (rows, pivot, extra = {}) => ({ spr: sprite(rows, extra.key || null), 
 const ORANGE = { a: 'orange.0', b: 'orange.1', n: 'orange.2', N: 'orange.3' };
 
 // ---------------------------------------------------------------------------
-// Eyes (left eye; mirrored). Pivot = eye centre.
+// Eyes (left eye). The right eye is drawn the same way round so the glint stays on the
+// lit side; eyes marked `mirror` (pupils that look inward) are flipped. Pivot = eye centre.
 export const EYES = {
   droopy:  P(['kkkkk', '.kwk.'], [2, 0]),                                     // Mogumo: a heavy lid, the eye just peeking
   cat:     P(['.kk.', 'kFek', 'kekk', 'kekk', 'kEek', '.kk.'], [2, 3]),      // Kometchi: slit pupils
   dot:     P(['.k.', 'kwk', 'kwk', 'kkk', '.k.'], [1, 2]),                            // Ducklet
   shiny:   P(['.kkk.', 'kwwek', 'kweEk', 'keeEk', 'kFwEk', '.kkk.'], [2, 3]),   // Pipolin: big coloured irises
   sparkle: P(['.kkk.', 'kwwkk', 'kwkkk', 'kkkkk', 'kFFwk', '.kkk.'], [2, 3]),   // Lumipom: dark eyes with two glints
-  wide:    P(['.kkk.', 'kwwwk', 'kwwwk', 'kweEk', 'kwEEk', '.kkk.'], [2, 3]), // Spookit
+  wide:    P(['.kkk.', 'kwwwk', 'kwwwk', 'kweEk', 'kwEEk', '.kkk.'], [2, 3], { mirror: true }), // Spookit
   gem:     P(['..k..', '.kFk.', 'kFwek', 'keeEk', '.kEk.', '..k..'], [2, 3]),  // Fawnly: faceted, glassy
   heart:   P(['.k.k.', 'kqkqk', 'kQqqk', '.kqk.', '..k..'], [2, 2]),        // Pupplo
   button:  P(['.kk.', 'kwkk', 'kkkk', '.kk.'], [2, 2]),                      // Hamuchi
@@ -115,14 +116,16 @@ export const EARS = {
     '13ffff3o',
     '1333332o',
   ], [4, 5]),
-  cat: P([                     // Kometchi: short upright points with a fur tuft
-    '1.....',
-    '141...',
-    '14f1..',
-    '13fwo.',
-    '13ffwo',
-    '133332',
-  ], [3, 5]),
+  cat: P([                     // Kometchi: upright points with a fur tuft
+    '1......',
+    '11.....',
+    '141....',
+    '14f1...',
+    '13fwo..',
+    '13ffwo.',
+    '133ff3o',
+    '1333332',
+  ], [3, 6]),
   bunny: P([                   // Pipolin
     '.1111.',
     '144332',
@@ -162,19 +165,19 @@ export const EARS = {
     '..o3332oN..',
     '...oooo....',
   ], [8, 9]),
-  floppy: P([                  // Pupplo: long soft ears in the accent colour
+  floppy: P([                  // Pupplo: long soft ears in the accent colour, ink on the shadow side
     '.5555..',
-    '588775.',
-    '5877765',
-    '5777665',
-    '5777665',
-    '5777665',
-    '.577665',
-    '.577665',
-    '.57766.',
-    '..5765.',
-    '..566..',
-    '...55..',
+    '588776o',
+    '587776o',
+    '577766o',
+    '577766o',
+    '577766o',
+    '.57766o',
+    '.57766o',
+    '.5766o.',
+    '..576o.',
+    '..56o..',
+    '...oo..',
   ], [4, 1], { side: true, front: true, at: 0.1 }),
   mouse: P([                   // Hamuchi: big thin round ears
     '....1111....',
