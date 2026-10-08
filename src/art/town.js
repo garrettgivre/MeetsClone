@@ -301,18 +301,13 @@ function kit() {
     disc(x - 3, y - 25, 3, lt(plant));
     block(x - 8, y - 12, 16, 12, potC);
   };
+  /** A hand-pixelled lamp post; lit ones throw a soft glow. */
   const lamp = (x, y, glow = true) => {
-    shadow(x, y, 6);
-    rect(x - 1, y - 56, 3, 56, 'ink'); rect(x - 4, y - 3, 9, 3, 'ink');
-    if (glow) for (let j = -12; j <= 12; j++) for (let i = -12; i <= 12; i++) if (i * i + j * j < 140 && ((x + i + j) & 1) === 0) set(x + i, y - 60 + j, 'gold.3');
-    flat(x - 5, y - 66, 11, 10, 'gold.3', 'ink'); rect(x - 4, y - 65, 3, 8, 'white'); rect(x - 7, y - 68, 15, 3, 'ink');
+    shadow(x, y, 7);
+    if (glow) for (let j = -13; j <= 13; j++) for (let i = -13; i <= 13; i++) if (i * i + j * j < 160 && ((x + i + j) & 1) === 0) set(x + i, y - 51 + j, 'gold.3');
+    prop('lamp', x, y, { glass: 'gold' });
   };
-  const bench = (x, y, c = 'brown.2') => {
-    shadow(x + 20, y, 24);
-    for (const yy of [y - 22, y - 16]) flat(x, yy, 40, 4, c);
-    flat(x - 2, y - 11, 44, 4, lt(c), dk(c, 2));
-    rect(x + 3, y - 7, 3, 7, 'ink'); rect(x + 34, y - 7, 3, 7, 'ink');
-  };
+  const bench = (x, y, c = 'brown.2') => { shadow(x + 22, y, 24); prop('bench', x + 23, y, { wood: rampOf(c) }); };
   /** A window: frame, sky glass with a reflection, sill. */
   const window_ = (x, y, w, h, glass = 'sky.3', frame = 'white', { cross = true } = {}) => {
     block(x - 3, y - 3, w + 6, h + 6, frame);
@@ -332,13 +327,10 @@ function kit() {
     for (let i = 0; i < w; i += 8) { const c = Math.floor(i / 8) % 2 ? c2 : c1; ellipse(x + i + 4, y + 11, 4, 3, c, { outline: dk(c, 2) }); }
     rect(x, y, w, 2, dk(c1)); rect(x, y - 2, w, 2, 'ink');
   };
+  /** A hand-pixelled shopfront: wall colour, awning colour (awn[0]) and its sign. */
   const shopFront = (x, y, w, h, wallC, awn, { sign = null } = {}) => {
-    block(x, y - h, w, h, wallC);
-    awning(x - 3, y - h + 14, w + 6, ...awn);
-    if (sign) { block(x + 8, y - h + 3, w - 16, 9, sign); rect(x + 12, y - h + 7, w - 24, 1, lt(sign, 2)); }
-    window_(x + 8, y - h + 34, (w * 0.42) | 0, 22);
-    door(x + w - 28, y, 20, 32);
     shadow(x + w / 2, y, w / 2, 'shade', 3);
+    prop('shop', x + w / 2, y, { wall: rampOf(wallC), accent: rampOf(awn[0]), flip: x > RW / 2 });
   };
   const counter = (x, y, w, c = 'brown.2', top = 'cream.3') => {
     shadow(x + w / 2, y, w / 2 + 4);
@@ -614,22 +606,11 @@ const SCENES = {
     k.canopy(-8, HZ - 92, 44, 40, 'green.2', { seed: 21, r: 9 }); k.canopy(222, HZ - 98, 44, 42, 'green.2', { seed: 22, r: 9 });
     k.shopFront(4, HZ, 72, 74, 'pink.3', ['pink.2', 'white'], { sign: 'pink.1' });
     k.shopFront(180, HZ, 72, 80, 'gold.3', ['sky.2', 'white'], { sign: 'sky.1' });
-    // town hall
-    k.block(90, HZ - 100, 76, 100, 'cream.3');
-    for (let j = 0; j < 22; j++) k.rect(128 - (j * 2 + 6), HZ - 122 + j, j * 4 + 12, 1, j % 6 === 5 ? 'red.0' : 'red.1'); // pediment roof
-    k.rect(86, HZ - 101, 84, 3, 'red.0');
-    k.clock(128, HZ - 104, 8);
-    for (const x of [96, 150]) k.block(x, HZ - 92, 8, 92, 'white');
-    for (const x of [108, 136]) k.window(x, HZ - 80, 12, 18);
-    k.door(117, HZ, 22, 38, 'red.1');
+    k.prop('townhall', 128, HZ, { roof: 'red', accent: 'red' });
     k.cobbles(HZ, 'slate.3');
     k.bunting(8, 14);
-    // fountain
-    k.shadow(128, 244, 54, 'slate.1', 6);
-    k.ellipse(128, 236, 52, 13, 'slate.2', { outline: 'slate.0' }); k.ellipse(128, 234, 45, 9, 'sky.2'); k.dither(84, 234, 88, 4, C('sky.3'));
-    k.block(124, 198, 8, 38, 'slate.3');
-    k.ellipse(128, 198, 20, 5, 'slate.2', { outline: 'slate.0' }); k.ellipse(128, 197, 15, 3, 'sky.2');
-    for (const [dx, dy] of [[-10, -8], [10, -8], [-16, -2], [16, -2], [0, -16], [-5, -13], [5, -13]]) { k.set(128 + dx, 194 + dy, 'sky.3'); k.set(128 + dx, 195 + dy, 'white'); }
+    k.shadow(128, 252, 54, 'slate.1', 6);
+    k.prop('fountain', 128, 252);
     k.lamp(26, 246); k.lamp(230, 246);
     k.pot(56, 214, 'green.2', 'brown.2'); k.pot(200, 214, 'green.2', 'brown.2');
     k.layer('front');
@@ -663,11 +644,7 @@ const SCENES = {
     // the bandstand
     const bx = 154, by = 150;
     k.blob(bx + 6, by + 4, 44, 6, 'green.1', { seed: 7, line: null, shade: false, wob: 0.2 });
-    k.blob(bx, by, 38, 8, 'cream.3', { seed: 8, line: 'cream.1', wob: 0.03 });
-    for (const dx of [-28, -14, 0, 14, 28]) k.block(bx + dx - 2, by - 40, 5, 38, 'white', { r: 1 });
-    k.roofCurve(bx, by - 70, 84, 28, 'pink.2');
-    for (let x = bx - 40; x < bx + 40; x += 6) k.puff(x, by - 41, 3, 'pink.3');
-    k.rect(bx, by - 78, 1, 8, 'ink'); k.rect(bx + 1, by - 78, 6, 4, 'gold.2');
+    k.prop('bandstand', bx, by + 6, { accent: 'pink', wall: 'cream' });
     // a winding trail from you to the bandstand
     k.trail(by + 6, RH, (y) => bx - 8 - (y - by) * 0.6 + Math.sin(y / 16) * 5, (y) => 8 + (y - by) * 0.16, 'cream.3', { seed: 4 });
     // flowers in clumps
@@ -1076,13 +1053,9 @@ const SCENES = {
     k.trail(HZ, RH, (y) => 128 + Math.sin((y - HZ) / 26) * 10, (y) => 22 + (y - HZ) * 0.5, 'pink.3', { seed: 9, pebbles: false });
     k.stringLights(12, 10);
     // striped tents with bell roofs and scalloped trims, and a popcorn cart
-    for (const [x, c] of [[176, 'red.2'], [230, 'sky.2']]) {
-      k.blob(x + 4, HZ + 4, 26, 4, 'green.2', { seed: x, line: null, shade: false });
-      k.block(x - 20, HZ - 24, 40, 26, c); k.blob(x, HZ - 6, 6, 10, 'night', { seed: 2, line: null, shade: false, flat: 0 });
-      const top = HZ - 58, h = 36, w = 50;
-      for (let j = 0; j < h; j++) { const t = j / h, half = Math.max(1, (w / 2) * Math.sqrt(t)); for (let i = Math.round(-half); i < Math.round(half); i++) { const band = Math.floor((i / half + 1) * 3.5) % 2; let v = band ? 'white' : c; if (i > half * 0.5) v = dk(v); else if (i < -half * 0.5) v = lt(v); k.set(x + i, top + j, v); } k.set(x - half - 1, top + j, dk(c, 2)); k.set(x + half, top + j, dk(c, 2)); }
-      for (let i = -24; i < 26; i += 7) k.puff(x + i, top + h, 4, ((i + 24) / 7) % 2 ? 'white' : c, { line: dk(c, 2) });
-      k.rect(x, top - 7, 1, 7, 'ink'); k.rect(x + 1, top - 7, 6, 4, 'gold.2');
+    for (const [x, c] of [[176, 'red'], [230, 'sky']]) {
+      k.blob(x + 4, HZ + 4, 28, 4, 'green.2', { seed: x, line: null, shade: false });
+      k.prop('tent', x, HZ + 2, { accent: c, wall: 'cream', flip: x > 200 });
     }
     k.shadow(26, 226, 18); k.block(10, 192, 32, 30, 'red.2'); k.flat(14, 180, 24, 12, 'sky.3', 'slate.1'); for (const [x, y] of [[18, 184], [24, 182], [30, 185], [21, 188], [28, 188]]) k.disc(x, y, 2, 'cream.3'); k.disc(16, 224, 4, 'ink'); k.disc(36, 224, 4, 'ink');
     k.layer('front');
@@ -1120,13 +1093,8 @@ const SCENES = {
     k.groundShade(200, 'green.2'); k.tufts(120, 270, 'green.2', 36, 9);
     // the castle on its hill
     const B = 124;
-    for (const x of [62, 166]) { k.block(x, 46, 28, B - 46, 'slate.3'); k.roofCurve(x + 14, 10, 38, 36, 'violet.1'); k.window(x + 10, 66, 8, 12, 'gold.3', 'slate.2', { cross: false }); k.rect(x + 13, 4, 1, 10, 'ink'); k.rect(x + 14, 4, 9, 5, 'red.2'); }
-    k.block(88, 66, 80, B - 66, 'slate.3');
-    for (let x = 88; x < 168; x += 10) k.block(x, 58, 7, 10, 'slate.3');
-    for (let y = 74; y < B - 4; y += 8) for (let x = 92 + (y % 16 ? 0 : 6); x < 164; x += 12) k.rect(x, y, 8, 1, 'slate.2');
-    for (const x of [96, 152]) { k.block(x, 72, 9, 24, 'red.2'); k.disc(x + 4, 80, 2, 'gold.2'); }
-    k.rect(114, 92, 28, B - 92, 'brown.1'); k.disc(128, 92, 14, 'brown.1', { outline: 'slate.0' }); k.box(114, 92, 28, B - 92, 'slate.0');
-    for (let x = 117; x < 140; x += 5) k.rect(x, 80, 1, B - 80, 'brown.0');
+    k.prop('keep', 128, B, { accent: 'red', glass: 'gold' });
+    for (const x of [58, 198]) { k.prop('tower', x, B, { roof: 'violet', glass: 'gold' }); k.rect(x, B - 124, 1, 8, 'ink'); k.rect(x + 1, B - 124, 8, 4, 'red.2'); }
     k.shadow(128, B + 2, 70, 'green.2');
     // a winding path down to you
     for (let y = B; y < RH; y++) { const cx = 128 + Math.sin((y - B) / 30) * 18, half = 12 + (y - B) * 0.32; k.rect(cx - half, y, half * 2, 1, 'cream.3'); k.set(cx - half, y, 'cream.1'); k.set(cx + half, y, 'cream.1'); }
@@ -1192,11 +1160,7 @@ const SCENES = {
       for (const [dx, dy] of [[-6, 100], [5, 40], [-8, 130]]) k.blob(x + dx, dy, 6, 3, 'green.2', { seed: sd + dy, wob: 0.3 });
     }
     // treehouses on platforms
-    const house = (x, y, c) => {
-      k.block(x - 26, y + 22, 52, 5, 'brown.2');
-      k.block(x - 18, y - 2, 36, 24, 'cream.3'); k.disc(x + 6, y + 9, 5, 'gold.3', { outline: 'brown.1' }); k.door(x - 14, y + 22, 10, 16, 'brown.1');
-      k.roofCurve(x, y - 24, 50, 22, c);
-    };
+    const house = (x, y, c) => k.prop('hut', x, y + 27, { roof: rampOf(c), glass: 'gold', flip: x > RW / 2 });
     house(34, 48, 'orange.2'); house(212, 64, 'red.2');
     // the rope bridge between them, with lanterns
     for (let x = 60; x < 186; x++) { const y = 76 + Math.sin(((x - 60) / 126) * Math.PI) * 18; k.set(x, y, 'brown.0'); k.set(x, y + 8, 'brown.1'); if (x % 6 === 0) k.rect(x, y, 1, 9, 'brown.1'); if (x % 6 === 3) k.rect(x - 2, y + 9, 5, 2, 'brown.2'); }
