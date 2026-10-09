@@ -308,6 +308,7 @@ function gardenScene(k, sky, layout) {
   }
   k.dither(0, 154, RW, 2, C(shade));
   k.shadow(44, 198, 20, shade, 4); k.prop(tree.prop, 40, 198, tree.ramps);
+  for (const [name, dx, dy, opts] of tree.extras || []) k.prop(name, 40 + dx, 198 + dy, opts); // (things hung in the tree)
   k.shadow(176, 206, feature.shadow, shade, 5); k.prop(feature.prop, 176, 206, feature.ramps);
   frontCorners(k, [art('flowers'), art('seat')], shade);
 }

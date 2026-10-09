@@ -64,7 +64,7 @@ export const SETS = {
       bedroom: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Arched Window', picture: 'Star Chart', shelf: 'Cloud Shelf', lamp: 'Moon Floor Lamp', bed: 'Moon Cradle', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Moonflowers' },
       kitchen: { wall: 'Moon Paper', floor: 'Star Tiles', window: 'Round Sky Window', stove: 'Rocket Oven', counter: 'Star Cupboard', shelf: 'Kitchen Cloud Shelf', table: 'Moon Table', seat: 'Star Stool' },
       bathroom: { wall: 'Night Tiles', floor: 'Twilight Tiles', window: 'Moon Window', mirror: 'Moon Mirror', cabinet: 'Star Cabinet', mat: 'Comet Mat', towels: 'Towel Stand', plant: 'Bath Moonflower' },
-      garden: { ground: 'Night Meadow', fence: 'Star Railings', tree: 'Lantern Tree', feature: 'Telescope', flowers: 'Moonflower Pot', seat: 'Crescent Bench' },
+      garden: { ground: 'Night Meadow', fence: 'Star Railings', tree: 'Lantern Tree', feature: 'Telescope', flowers: 'Moonflower Pot', seat: 'Star Bench' },
     },
   },
   forest: {
@@ -82,7 +82,7 @@ export const SETS = {
       bedroom: { wall: 'Wave Paper', floor: 'Driftwood Boards', window: 'Porthole Window', picture: 'Life Ring', shelf: 'Rope Shelf', lamp: 'Lighthouse Lamp', bed: 'Clam Bed', rug: 'Tide Rug', corner: 'Beach Ball', plant: 'Dune Grass' },
       kitchen: { wall: 'Deckchair Stripes', floor: 'Sea Tiles', window: 'Shutter Window', stove: 'Potbelly Stove', counter: 'Crate Counter', shelf: 'Galley Shelf', table: 'Barrel Table', seat: 'Keg Stool' },
       bathroom: { wall: 'Ripple Tiles', floor: 'Lagoon Tiles', window: 'Shore Shutters', mirror: 'Shell Mirror', cabinet: 'Beach Hut Cabinet', mat: 'Tide Mat', towels: 'Towel Basket', plant: 'Shell Pot' },
-      garden: { ground: 'Sandy Beach', fence: 'Rope Fence', tree: 'Beach Parasol', feature: 'Rowing Boat', flowers: 'Driftwood', seat: 'Deck Chair' },
+      garden: { ground: 'Sandy Beach', fence: 'Rope Fence', tree: 'Beach Parasol', feature: 'Rowing Boat', flowers: 'Driftwood', seat: 'Sun Lounger' },
     },
   },
   modern: {

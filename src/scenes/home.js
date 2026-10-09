@@ -614,6 +614,7 @@ export class HomeScene {
     const edge = over?.openAir ? edgeColours(over.openAir, skyState(new Date(game.simTime).getHours())) : null;
     const open = edge ? true : !over && !!ROOMS[roomOf(game)].outdoor;
     const lawn = DECOR_ART[layoutOf(game, 'garden').ground] || DECOR_ART['sweet-garden-ground'];
+    this.app.setButtons?.(lawn.bar || lawn.c); // the garden's ground picks the buttons' colour, whatever the hour or the screen
     // An outdoor place shows the sky of the hour like home does, over its own ground (sand, cobbles, grass);
     // one that keeps its own sky (`ownSky`) gives the bars above their colour too.
     const ground = edge ? { c: edge.bottom, stroke: edge.stroke, bare: true, cobbles: edge.cobbles } : lawn.bar ? { c: lawn.bar, stroke: tone(lawn.bar, -1) } : { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) };

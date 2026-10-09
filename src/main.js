@@ -1,6 +1,6 @@
 // Boot: screen, input, the scene stack, the simulation clock and saving.
 import { Screen, W, H, lcdCell } from './engine/screen.js';
-import { C, COLORS, NAMES } from './engine/palette.js';
+import { C, COLORS } from './engine/palette.js';
 import { setupInput } from './engine/input.js';
 import { unlockAudio, play, setMuted } from './engine/audio.js';
 import { newGame, advance, needs, MIN } from './game/pet.js';
@@ -51,6 +51,15 @@ const app = {
     document.documentElement.style.setProperty('--cell', on ? `url(${lcdCell().toDataURL()})` : 'none');
     if (this.sky) this.pageSky(...this.sky);
   },
+  /**
+   * The buttons' colour: a deep one from across the wheel from the garden's
+   * ground (`ground` is that ground's colour name). It is the same all day and
+   * on every screen; only changing the garden's ground changes it.
+   */
+  setButtons(ground) {
+    const ramp = CONTRAST[String(ground).split('.')[0]] || 'violet';
+    if (ramp !== this.buttonRamp) { this.buttonRamp = ramp; paintButtons(undefined, ramp); }
+  },
   /** Lights out: the buttons under the screen go dark with the room. */
   setDark(on) { document.body.classList.toggle('dark', !!on); },
   /**
@@ -61,9 +70,6 @@ const app = {
    */
   pageSky(top, bottom) {
     this.sky = [top, bottom];
-    // the buttons stand out from the ground under them: a deep colour from across the wheel
-    const ground = (typeof bottom === 'number' ? NAMES[bottom] : bottom).split('.')[0], ramp = CONTRAST[ground] || 'violet';
-    if (ramp !== this.buttonRamp) { this.buttonRamp = ramp; paintButtons(undefined, ramp); }
     // (a colour's name, or its palette index)
     const css = (c) => {
       const lcd = document.body.classList.contains('lcd');
