@@ -258,33 +258,3 @@ drawn('tulipBed', [
   'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
 ], { at: [24, 11], ramps: { accent: 'pink', roof: 'gold', leaf: 'green', stone: 'cream' } });
 
-// A garden swing seat: a slatted bench hung on chains from a frame, a heart on its back.
-drawn('gardenSwing', [
-  '..pppppppppppppppppppppppppppppppppppppppppppppppp',
-  '.pPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPQp',
-  '..pppppppppppppppppppppppppppppppppppppppppppppppp',
-  '...pqp...n...............................n....pqp',
-  '...pqp...n...............................n....pqp',
-  '...pqp...n...............................n....pqp',
-  '...pqp...n...............................n....pqp',
-  '...pqp...n...............................n....pqp',
-  '...pqp...n...............................n....pqp',
-  '...pqp...n...............................n....pqp',
-  '...pqp..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa..pqp',
-  '...pqp..adddddddddddddddwwdwwddddddddddddcba..pqp',
-  '...pqp..adccccccccccccccwwwwwccccccccccccbba..pqp',
-  '...pqp..adcccccccccccccccwwwcccccccccccccbba..pqp',
-  '...pqp..adccccccccccccccccwccccccccccccccbba..pqp',
-  '...pqp..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa..pqp',
-  '...pqp..adccba....................adccba......pqp',
-  '...pqp.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.pqp',
-  '...pqp.adddddddddddddddddddddddddddccccccbba.pqp',
-  '...pqp.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba.pqp',
-  '...pqp..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa..pqp',
-  '...pqp........................................pqp',
-  '...pqp........................................pqp',
-  '...pqp........................................pqp',
-  '..pPqQp......................................pPqQp',
-  '.pPqqQQp....................................pPqqQQp',
-  'ppppppppp..................................ppppppppp',
-], { at: [25, 26], ramps: { wood: 'brown', accent: 'pink' } });

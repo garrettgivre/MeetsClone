@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.26.9, 9 October 2026)
+## Where things stand (v0.26.10, 9 October 2026)
 
 Everything is committed, pushed and live. `npm test` passes (95 tests).
 
@@ -140,6 +140,26 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 - **Screens:** `src/scenes/decorate.js` decorates the room on show, three-button style over the live room (A next slot, B next owned item, C done; tap a spot to pick its slot, tap the bar to change it). `SPOT` holds where each room's slots are; the bar moves to the top for slots low in the room. The shop page is `decorShop` in `menus.js`, reached from the Department Store.
 - **To add a set:** an entry in `SETS` with a name for every slot of each room it covers, an entry per item in `DECOR_ART`, and any new props. `tests/decor.test.js` fails if a slot is missed or a prop doesn't exist.
 - **To add a room:** an entry in `ROOMS` and its place in `HOUSE`, pieces for it in the starter set, a builder in `ROOM_SCENES`, and its slots' spots in `SPOT`.
+
+## Furniture sizes
+
+The owner (9 October): "Make sure all furniture is sized correctly, eventually I want to add animations to use everything so it needs to be the correct size." Furniture is for the pet to use, so it is sized to the pet, in fine pixels (the units props are typed in).
+
+- **The pet, measured from the six founders:** an adult is 48 to 72 wide and 58 to 104 tall (Kitsu 60x70, Gloop 64x62, Fleece 72x58, Glimmer 60x104, Inchy 48x76, Hoolet 60x76); a teen much the same; a child 30 to 54 wide and 26 to 48 tall; a baby 24 to 34 by 20 to 30. Design for an adult of about 60 by 70.
+- **Targets** (my standard, worked out from those numbers; the owner has seen the first three pieces drawn to it, not the list):
+  - chair, stool, bench, swing: seat 52 to 64 wide and 28 to 34 off the floor; a chair's back reaches 60 to 66;
+  - table: top 40 to 46 high, 60 to 70 across;
+  - kitchen counter, washstand: worktop 44 to 50 high; stove: 60 to 70 high before any chimney;
+  - cupboard, wardrobe, tall cabinet: 90 to 110 high, 56 to 64 wide;
+  - floor lamp: 85 to 100 high; a lamp on a bedside table: table top about 40;
+  - bed: at least 96 wide inside the rim (88 now, which the widest pets overhang);
+  - toy chest: about 60 by 40; floor plant: 50 to 70 high; towel stand: 60 to 70 high;
+  - garden tree: 110 to 150 high and 90 or more across; well, telescope and the like: 80 to 90 high; a boat: 100 or more long;
+  - rug: 120 or more wide; bath mat: 80 or more;
+  - windows, pictures, shelves and the small things on shelves are not used by the pet and are fine as they are.
+- **Done to this standard (v0.26.10, `src/art/props-sized-1.js`):** Sweetheart's `heartChair` (55x64), `teaTable` (68x48) and `gardenSwing` (78x63). **Everything else on the floor is too small**, mostly 60 to 70 per cent of its target: every other seat (24 to 28 wide, or 42 to 52 for the garden ones) and table (about 40x32), every counter (30 high), stove (50 to 82 high), cabinet (42 to 70 high), lamp (51 to 65 high), tree (36 to 62 high), garden feature, toy corner, floor plant, towel stand, rug and mat, and the beds are 88. Run the measuring script in the tip below to see every piece by slot.
+- A bigger piece needs its place checked: the front corners (`things` at y 309) come forward over the pet's walking line, and the kitchen's stove and counter stand either side of where the pet eats.
+- To list sizes: a few lines of Node that import `PROPS`, `./src/art/props-decor.js` and `DECOR_ART` and print `w x h` of each entry's `prop` and `things`, grouped by slot.
 
 ## The sky round the room
 
