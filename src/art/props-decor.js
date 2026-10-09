@@ -8,6 +8,7 @@ import './props-home.js';
 import './props-beds.js';
 import './props-seaside.js';
 import './props-modern.js';
+import './surfaces.js';
 
 /** A copy of a prop with some rows drawn afresh: { rowIndex: 'new row' }. */
 function variant(name, of, rows) {

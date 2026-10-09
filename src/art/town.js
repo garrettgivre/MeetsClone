@@ -209,6 +209,26 @@ function paneProp(k, name, x, y, ramps) {
   p.rows.forEach((row, j) => { for (let i = 0; i < p.w; i++) if ('xyzZ'.includes(row[i])) k.set(x - p.at[0] + i, y - p.at[1] + j, 'night'); });
 }
 
+// Walls, floors and rugs are crafted tiles and props (src/art/surfaces.js); an
+// item drawn the old way, as a pattern in code, still works until it is redrawn.
+function wallOf(k, wall) {
+  if (!wall.paper) return k.wall(wall.base, wall.pattern, wall.kind, { wainscot: wall.wainscot });
+  k.tile(wall.paper, 0, 0, RW, HZ, wall.ramps, wall.swap);
+  if (wall.dado) k.tile(wall.dado, 0, HZ - 47, RW, 38, wall.dadoRamps || wall.ramps, wall.dadoSwap);
+  k.tile('skirting', 0, HZ - 9, RW, 9);
+}
+function floorOf(k, floor, boards = false) {
+  if (floor.tile) k.tile(floor.tile, 0, HZ, RW, RH - HZ, floor.ramps, floor.swap);
+  else if (boards) k.planks(HZ, floor.c);
+  else k.tiles(HZ, floor.c, floor.c2);
+  k.floorShadow(floor.shadow);
+}
+function rugOf(k, rug, rx, ry) {
+  if (rug.prop) return k.prop(rug.prop, 124, HOME_FEET + 4 + (PROPS[rug.prop].h >> 1), rug.ramps);
+  k.rug(124, HOME_FEET + 4, rx, ry, rug.c1, rug.c2);
+  if (rug.star) k.star5(124, HOME_FEET + 4, 8, rug.star);
+}
+
 /** The two front corners of a room: things that stand in front of the pet. */
 function frontCorners(k, pieces, shadow) {
   k.layer('front');
@@ -223,11 +243,11 @@ function frontCorners(k, pieces, shadow) {
 function kitchenScene(k, sky, layout) {
   const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-kitchen-${slot}`];
   const wall = art('wall'), floor = art('floor'), win = art('window'), stove = art('stove'), counter = art('counter'), shelf = art('shelf');
-  k.wall(wall.base, wall.pattern, wall.kind, { wainscot: wall.wainscot });
+  wallOf(k, wall);
   paneProp(k, win.prop, 142, 98, win.ramps);
   k.prop(shelf.prop || 'wallShelf', 214, 104, shelf.ramps);
   for (const [name, dx, opts] of shelf.things) k.prop(name, 214 + dx, 104 - (shelf.top || 12), opts);
-  k.tiles(HZ, floor.c, floor.c2); k.floorShadow(floor.shadow);
+  floorOf(k, floor);
   if (sky === 'night') k.lightPool(128, 230, 70, 12, 'gold.3');
   k.shadow(60, 198, 46, floor.shadow, 4); k.prop(stove.prop, 60, 198, stove.ramps);
   k.shadow(208, 198, 40, floor.shadow, 4); k.prop(counter.prop, 208, 198, counter.ramps);
@@ -239,17 +259,17 @@ function kitchenScene(k, sky, layout) {
 function bathroomScene(k, sky, layout) {
   const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-bathroom-${slot}`];
   const wall = art('wall'), floor = art('floor'), win = art('window'), mirror = art('mirror'), cabinet = art('cabinet'), mat = art('mat');
-  k.wall(wall.base, wall.pattern, wall.kind, { wainscot: wall.wainscot });
+  wallOf(k, wall);
   paneProp(k, win.prop, 204, 72, win.ramps);
   k.prop(mirror.prop, 84, 142, mirror.ramps);
-  k.tiles(HZ, floor.c, floor.c2); k.floorShadow(floor.shadow);
+  floorOf(k, floor);
   if (sky === 'night') k.lightPool(84, 196, 44, 9, 'gold.3');
   k.shadow(204, 198, 30, floor.shadow, 4); k.prop(cabinet.prop, 204, 198, cabinet.ramps);
-  k.rug(124, HOME_FEET + 4, 64, 12, mat.c1, mat.c2);
+  rugOf(k, mat, 64, 12);
   frontCorners(k, [art('plant'), art('towels')], floor.shadow);
 }
 
-const SEA = { day: ['blue.3', 'sky.2', 'sky.3'], dawn: ['sky.2', 'sky.3', 'cream.3'], dusk: ['violet.2', 'violet.3', 'pink.3'] };
+const SEA = { day: 'sky', dawn: 'sky', dusk: 'violet' };
 
 /** The garden: open sky over a hedge and a fence, a tree, a centrepiece on the lawn, flowers and a seat in front. */
 function gardenScene(k, sky, layout) {
@@ -259,16 +279,16 @@ function gardenScene(k, sky, layout) {
   k.rect(0, 0, RW, top, 'night'); // the sky: cut out, so the real one shows
   if (fence.sea) {
     // the sea instead of a hedge: a deeper band far out, ripples, and foam along the shore
-    // (it takes the colour of the sky over it: blue by day, rose at dusk, pale at dawn; night darkens the day's)
-    const [far, near, glint] = SEA[sky] || SEA.day;
-    k.rect(0, 114, RW, 10, far); k.rect(0, 124, RW, 26, near);
-    for (let y = 117; y < 146; y += 5) for (let x = (y * 7) % 23; x < RW; x += 23) k.rect(x, y, y < 124 ? 4 : 7, 1, y < 124 ? near : glint);
-    for (let x = 0; x < RW; x++) { const y = 147 + Math.round(Math.sin(x / 9) * 1.4); k.rect(x, y, 1, 150 - y, 'white'); k.set(x, y - 1, 'sky.3'); }
+    k.tile('seaStrip', 0, 114, RW, 36, { glass: SEA[sky] || SEA.day }); // (it takes the colour of the sky over it; night darkens the day's)
   } else k.canopy(-24, 118, 304, 34, fence.hedge, { seed: 91, r: 9 });
-  const shade = tone(ground.c, -2); // shadows on this ground
-  k.field(top, ground.c, { seed: 12, light: ground.light, sides: false, ...(ground.flowers ? { flowers: ground.flowers } : {}) }); // (no darker sides: the ground runs on past the screen's edge)
-  if (ground.tufts) k.tufts(164, 300, ground.tufts, ground.sparse ? 14 : 36, 9);
-  if (fence.kind === 'rope') {
+  const shade = ground.bar ? tone(ground.bar, -1) : tone(ground.c, -2); // shadows on this ground
+  if (ground.tile) k.tile(ground.tile, 0, top, RW, RH - top, ground.ramps, ground.swap); // (`bar` is the tile's main colour, which the bars under the room carry on)
+  else {
+    k.field(top, ground.c, { seed: 12, light: ground.light, sides: false, ...(ground.flowers ? { flowers: ground.flowers } : {}) }); // (no darker sides: the ground runs on past the screen's edge)
+    if (ground.tufts) k.tufts(164, 300, ground.tufts, ground.sparse ? 14 : 36, 9);
+  }
+  if (fence.prop) k.tile(fence.prop, 0, 154 - PROPS[fence.prop].h, RW, PROPS[fence.prop].h, fence.ramps); // one span of fence, repeated
+  else if (fence.kind === 'rope') {
     // posts joined by a sagging rope
     for (let x = 0; x < RW; x++) { const y = 140 + Math.round(Math.sin(((x + 8) % 44) / 44 * Math.PI) * 6); k.set(x, y, fence.c); k.set(x, y + 1, fence.shade); }
     for (let x = 12; x < RW; x += 44) { k.rect(x - 2, 132, 5, 22, fence.shade); k.rect(x - 2, 132, 2, 22, fence.c); k.rect(x - 3, 130, 7, 3, fence.c); }
@@ -295,7 +315,7 @@ function homeScene(k, sky, layout) {
   const night = sky === 'night', warm = sky === 'dawn' || sky === 'dusk';
   const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-${slot}`];
   const wall = art('wall'), floor = art('floor'), win = art('window');
-  k.wall(wall.base, wall.pattern, wall.kind, { wainscot: wall.wainscot });
+  wallOf(k, wall);
   // the window: sky shows through the panes
   const { x: wx, y: wy, w: ww, h: wh } = HOME_WINDOW;
   if (win.prop) k.prop(win.prop, wx + 32, wy + 67, win.ramps); // a window of its own shape: its glass is drawn as holes (`_`), inside the same rectangle
@@ -307,7 +327,7 @@ function homeScene(k, sky, layout) {
   k.prop(pic.prop, 138, 74, pic.ramps);
   k.prop(shelf.prop || 'wallShelf', 206, 78, shelf.ramps);
   for (const [name, x, opts] of shelf.things) k.prop(name, x, 78 - (shelf.top || 12), opts); // (`top`: how far the board is above the shelf's lowest row)
-  k.planks(HZ, floor.c); k.floorShadow(floor.shadow);
+  floorOf(k, floor, true);
   // light: sun through the window by day, the lamp at night
   if (!night) k.beam(wx + 8, HZ, 46, 226, warm ? 'gold.3' : 'cream.3', 0.4);
   else { k.lightPool(146, 150, 34, 22, 'gold.3'); k.lightPool(146, 196, 40, 9, 'gold.3'); }
@@ -318,8 +338,7 @@ function homeScene(k, sky, layout) {
   if (lamp.table) { k.prop('bedsideTable', 146, 198, lamp.table); k.prop(lamp.prop, 146, 168, lamp.ramps); }
   else k.prop(lamp.prop, 146, 198, lamp.ramps);
   // a rug to stand on
-  k.rug(124, HOME_FEET + 4, 80, 14, rug.c1, rug.c2);
-  if (rug.star) k.star5(124, HOME_FEET + 4, 8, rug.star);
+  rugOf(k, rug, 80, 14);
   frontCorners(k, [art('corner'), art('plant')], floor.shadow);
 }
 
@@ -568,6 +587,19 @@ function kit(hour = null) {
       rect(0, HZ - 47, RW, 3, 'white'); rect(0, HZ - 44, RW, 1, dk(wainscot));
     }
     rect(0, HZ - 9, RW, 9, 'white'); rect(0, HZ - 9, RW, 1, 'mist'); rect(0, HZ - 1, RW, 1, 'silver');
+  };
+  /**
+   * A hand-drawn tile (a prop from src/art/surfaces.js) repeated over a
+   * rectangle. Empty cells leave what is underneath. `swap` repaints named
+   * colours ({ 'slate.3': 'white' }) where a ramp has no shade pale enough.
+   */
+  const tile = (name, x0, y0, w, h, ramps = {}, swap = null) => {
+    const bm = propBitmap(name, ramps);
+    const map = swap && Object.fromEntries(Object.entries(swap).map(([from, to]) => [C(from), C(to)]));
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      const c = bm.px[(j % bm.h) * bm.w + (i % bm.w)];
+      if (c) set(x0 + i, y0 + j, map && map[c] !== undefined ? map[c] : c);
+    }
   };
   /** Dithered shadow where the wall meets the floor. */
   const floorShadow = (c = 'shade') => dither(0, HZ, RW, 3, c);
@@ -859,7 +891,7 @@ function kit(hour = null) {
   return {
     bm, front, layer, usedFront: () => frontUsed, set, sign, face, bulbs, starString, heart, sun, signpost, field, horizonClouds, frame, prop, blob,
     mist, trunk, trail, flowerPatch, rocks, tufts, lightPool, beam, vignette, plant, hangingPlant, mobile, puff, canopy, pcloud, bands, mountain,
-    mottle, star5, sparkle, mushroom, rock, get, rect, box, line, dither, block, flat, ellipse, disc, shadow, skyline, tiles, planks, cobbles, wall,
+    mottle, star5, sparkle, mushroom, rock, get, rect, box, line, dither, block, flat, ellipse, disc, shadow, skyline, tiles, tile, planks, cobbles, wall,
     floorShadow, tree, bush, flower, flowers, lamp, awning, shopFront, counter, shelf, rug, clock, star, curtain, bunting,
     stringLights, pictureFrame,
   };

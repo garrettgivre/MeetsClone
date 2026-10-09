@@ -616,7 +616,7 @@ export class HomeScene {
     const lawn = DECOR_ART[layoutOf(game, 'garden').ground] || DECOR_ART['sweet-garden-ground'];
     // An outdoor place shows the sky of the hour like home does, over its own ground (sand, cobbles, grass);
     // one that keeps its own sky (`ownSky`) gives the bars above their colour too.
-    const ground = edge ? { c: edge.bottom, stroke: edge.stroke, bare: true, cobbles: edge.cobbles } : { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) };
+    const ground = edge ? { c: edge.bottom, stroke: edge.stroke, bare: true, cobbles: edge.cobbles } : lawn.bar ? { c: lawn.bar, stroke: tone(lawn.bar, -1) } : { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) };
     const sky = drawSkyBars(scr, game.simTime, t, edge ? false : pet && !pet.lights, ground, edge?.ownSky ? edge : null);
     const fg = sky.dark ? COL.white : COL.ink, low = sky.bottomDark ? COL.white : COL.ink;
     const shown = `${sky.top}|${sky.bottom}|${sky.lightsOff}`;
