@@ -82,10 +82,6 @@ drawn('firTree', [
 stretch('firTree', { rows: [[63, 1, 26]], x: 43 });
 
 // ---------------------------------------------------------------- lamps: 85 to 91 high
-stretch('moonFloorLamp', { rows: [[20, 1, 32]] });
-stretch('toadstoolLamp', { rows: [[20, 1, 36]] });
-stretch('arcLamp', { rows: [[30, 1, 26]] });
-stretch('lighthouseLamp', { rows: [[10, 1, 2], [18, 1, 3], [23, 1, 3], [33, 1, 3], [38, 1, 3], [43, 1, 3], [47, 1, 3], [52, 1, 5]] });
 
 // ---------------------------------------------------------------- towel stands: 55 to 70 high
 stretch('towelStand', { rows: [[20, 1, 8], [45, 1, 6]] });
