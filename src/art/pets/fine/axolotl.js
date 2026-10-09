@@ -5,7 +5,8 @@
 // one-pixel ink outline. Nothing imports this folder yet: the art is being got
 // ready first. tools/fine-axolotl.html shows these parts put together.
 //
-// This file: the axolotl founder's parts (the four-legged form).
+// This file: the axolotl founder's parts (the four-legged form). Each founder's file exports the same names:
+// LOOK, HEAD, EARS, BODY, TAIL, FEET, EYE, MOUTH, MARK, CHEEK, FACE, and TOPPER if it has one.
 //
 // The format follows src/art/pets/part.js so the parts can go straight into
 // the engine later:
@@ -19,7 +20,9 @@
 // longest row before handing them to part().
 // `pivot` is the point of a part that lands on its socket.
 
-// Head: 56 x 44, a little wider than tall and fullest below the middle. The face sits low.
+export const LOOK = { color: 'pink', accent: 'red' };
+
+// Head, "axolotl": 56 x 44, a little wider than tall and fullest below the middle. The face sits low.
 export const HEAD = { rows: [
   '.....................oooooooooooooo',
   '.................oooo4444444^444444oooo',
@@ -70,7 +73,7 @@ export const HEAD = { rows: [
 // Ears, "gills": three petals in the body's deeper shade. The tall one stands up like an ear,
 // one goes out to the side, one hangs low. The right-hand part lies behind the head.
 // This is the left one; the right is the same piece turned round.
-export const GILLS = { pivot: [16, 30], rows: [
+export const EARS = { pivot: [16, 30], rows: [
   '.......oooo',
   '.....oo3333oo',
   '....o33333333o',
