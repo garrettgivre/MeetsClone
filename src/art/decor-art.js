@@ -32,12 +32,12 @@ export const DECOR_ART = {
   // the kitchen
   'sweet-kitchen-wall': { paper: 'paperCandy', ramps: { wall: 'pink', accent: 'red' }, dado: 'dadoBoards' },
   'sweet-kitchen-floor': { tile: 'floorChecker', ramps: { accent: 'pink' }, shadow: 'pink.2' },
-  'sweet-kitchen-window': { prop: 'window', ramps: { accent: 'pink' } },
-  'sweet-kitchen-stove': { prop: 'oven', ramps: {} },
-  'sweet-kitchen-counter': { prop: 'counter', ramps: {}, things: [['espresso', -20, {}], ['breadBasket', 14, {}]] },
-  'sweet-kitchen-shelf': { ramps: {}, things: [['layerCake', -18, {}], ['bottle', 4, {}], ['bottle', 12, { accent: 'sky' }], ['loaf', 26, {}]] },
-  'sweet-kitchen-table': { things: [['cafeTable', 30, 309, {}, 16]] },
-  'sweet-kitchen-seat': { things: [['stool', 234, 309, {}, 12]] },
+  'sweet-kitchen-window': { prop: 'cafeWindow', ramps: { accent: 'pink', roof: 'gold' } },
+  'sweet-kitchen-stove': { prop: 'rangeCooker', ramps: {} },
+  'sweet-kitchen-counter': { prop: 'sweetCounter', ramps: {}, things: [['standMixer', -20, {}], ['kitchenTap', 16, {}]] },
+  'sweet-kitchen-shelf': { prop: 'sweetShelf', top: 7, ramps: {}, things: [['cookieJar', -22, {}], ['teapot', 0, {}], ['teacups', 22, {}]] },
+  'sweet-kitchen-table': { things: [['teaTable', 32, 309, {}, 16]] },
+  'sweet-kitchen-seat': { things: [['heartChair', 234, 309, {}, 12]] },
   // the bathroom
   'sweet-bathroom-wall': { paper: 'paperFlowerTiles', ramps: { wall: 'sky', accent: 'pink' } },
   'sweet-bathroom-floor': { tile: 'floorSmallTiles', ramps: { accent: 'mint' }, shadow: 'mint.2' },
