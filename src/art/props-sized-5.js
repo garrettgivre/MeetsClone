@@ -71,15 +71,52 @@ drawn('firTree', [
   '....oLLMMMMMMMoMMMMMMMMMMMoMMMMMMMMMMMoMMMMMMMMMMoMMMMMMMMMMoMMMMMMoSSSSSSSSSo',
   '...oLMMMMMMMoo.oMMMMMMMMSo.oMMMMMMMMSo.oMMMMMMMSo.oMMMMMMMSo.oMMMSo.ooSSSSSSSSo',
   '....ooooooo.....oooooooo....oooooooo....ooooooo....ooooooo....oooo....ooooooooo',
+  '.................oLLMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMSSo',
+  '...............ooLLMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMSSSoo',
+  '.............ooLLMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMSSSSoo',
+  '...........ooLLMMMMMMMMMMMMMMMpMMMMMMMMMMMMMMMMMMMMMMMMMMpMMMMMMMMMMMSSSSSoo',
+  '.........ooLLMMMMMMMMMMMMMMMMMpMMMMMMMMMMMMMMMMMMMMMMMMMMpMMMMMMMMMMMMSSSSSSoo',
+  '.......ooLLMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMSSSSSSSoo',
+  '.....ooLLMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMSSSSSSSSoo',
+  '...ooLLMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMSSSSSSSSSoo',
+  '..oLLMMMMMMMoMMMMMMMMMMMoMMMMMMMMMMMoMMMMMMMMMMoMMMMMMMMMMoMMMMMMMMoMMMMoSSSSSSSSSSSo',
+  '.oLMMMMMMMoo.oMMMMMMMMMSo.oMMMMMMMMMSo.oMMMMMMMMSo.oMMMMMMMMSo.oMMMMMMSo.oMMSo.ooSSSSo',
+  '..ooooooooo....ooooooooo....ooooooooo....oooooooo....oooooooo....oooooo....oo..oooooo',
   '.......................................pPPqqqQQp',
   '.......................................pPPqqqQQp',
   '.......................................pPPqQqQQp',
   '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqQQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqQqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPqqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqQQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqQqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPqqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqQQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqQqQQp',
+  '.......................................pPPqqqQQp',
+  '.......................................pPPqqqQQp',
   '......................................pPPPqqqQQQp',
   '.....................................pPPPqqqqqQQQp',
   '...................................ppPPqqppqqppQQQpp',
-], { at: [43, 68], ramps: { leaf: 'green', wood: 'brown' } });
-stretch('firTree', { rows: [[63, 1, 26]], x: 43 });
+], { at: [43, 106], ramps: { leaf: 'green', wood: 'brown' } });
 
 // ---------------------------------------------------------------- lamps: 85 to 91 high
 
@@ -110,16 +147,10 @@ stretch('beachBall', { cols: [[3, 2, 1], [7, 2, 1], [12, 2, 1], [17, 2, 1], [21,
 stretch('beanbag', { cols: [[20, 10, 2]], rows: [[15, 1, 10]] });
 
 // ---------------------------------------------------------------- garden trees: 76 to 96 high
-stretch('cloudTree', { rows: [[25, 1, 18]], x: 36 }); // (a tree in a bowl: taller than this and it is a bare pole with a tuft on top)
 
 // ---------------------------------------------------------------- garden centrepieces
-stretch('ringSculpture', { rows: [[38, 1, 28]] });
-stretch('rowboat', { cols: [[20, 5, 6]], rows: [[12, 1, 2], [15, 1, 2], [18, 1, 2]] });
 
 // ---------------------------------------------------------------- garden seats: 66 to 72 wide, seat about 25 to 30 high
-stretch('crescentBench', { cols: [[16, 4, 3], [29, 4, 3]], rows: [[16, 1, 14]] });
-stretch('logBench', { cols: [[18, 8, 2]], rows: [[8, 1, 12]] });
-stretch('deckChair', { cols: [[20, 8, 2]], rows: [[16, 1, 8]] });
 
 // ---------------------------------------------------------------- beds: 100 wide (the front rim keeps its rows)
 stretch('heartBasket', { cols: [[20, 12, 1]] });

@@ -36,6 +36,7 @@ import './props-sized-5.js';
 import './props-hand-1.js';
 import './props-hand-2.js';
 import './props-hand-3.js';
+import './props-hand-4.js';
 import { stretch } from './draw.js';
 
 
@@ -164,25 +165,7 @@ defineProp('range', [
   '........ee........................................ee........',
 ], { ramps: { stone: 'slate', glass: 'orange' } });
 
-// A slatted garden bench.
-defineProp('bench', [
-  '.5555555555555555555555555555555555555555.',
-  '588888888888888888888888888888888888888875',
-  '577777777777777777777777777777777777777765',
-  '.5555555555555555555555555555555555555555.',
-  '..56..................................56..',
-  '..56..................................56..',
-  '.5555555555555555555555555555555555555555.',
-  '588888888888888888888888888888888888888875',
-  '577777777777777777777777777777777777777765',
-  '566666666666666666666666666666666666666665',
-  '.5555555555555555555555555555555555555555.',
-  '..576................................576..',
-  '..576................................576..',
-  '..576................................576..',
-  '..576................................576..',
-  '..555................................555..',
-], { ramps: { wood: 'slate' } });
+// (Modern's garden bench is in props-hand-4.js.)
 
 // A cactus in a small pot.
 defineProp('cactus', [
@@ -204,6 +187,5 @@ defineProp('cactus', [
   '...eeeeee...',
 ], { ramps: { stone: 'cream' } });
 
-// These two are drawn in this file, so they are brought to size here (see props-sized-5.js for the rest).
+// The toy rocket is drawn in this file, so it is brought to size here (see props-sized-5.js for the rest).
 stretch('toyRocket', { cols: [[6, 2, 3], [14, 2, 3]], rows: [[8, 1, 6], [16, 1, 4], [20, 1, 8]] });
-stretch('bench', { cols: [[10, 8, 3]], rows: [[12, 1, 14]] });

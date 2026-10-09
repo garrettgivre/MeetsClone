@@ -185,7 +185,7 @@ export const DECOR_ART = {
   'modern-bathroom-plant': { things: [['snakePlant', 22, 309, {}, 9]] },
   'modern-garden-ground': { bits: 'terrace', ramps: { stone: 'cream', leaf: 'green' }, bar: 'slate.3' },
   'modern-garden-fence': { prop: 'fenceSlat', ramps: { stone: 'slate' }, hedge: 'green.2' },
-  'modern-garden-tree': { prop: 'cloudTree', ramps: { leaf: 'green', wood: 'brown', stone: 'slate' } },
+  'modern-garden-tree': { prop: 'cloudTree', ramps: { leaf: 'green', wood: 'brown', stone: 'slate' }, x: 52 },
   'modern-garden-feature': { prop: 'ringSculpture', ramps: { wall: 'cream', stone: 'slate' }, shadow: 22 },
   'modern-garden-flowers': { things: [['planterBox', 34, 308, {}, 20]] },
   'modern-garden-seat': { things: [['bench', 216, 308, { wood: 'cream' }, 26], ['cactus', 174, 306, { stone: 'cream' }, 5]] },
