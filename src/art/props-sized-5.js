@@ -110,14 +110,10 @@ stretch('beachBall', { cols: [[3, 2, 1], [7, 2, 1], [12, 2, 1], [17, 2, 1], [21,
 stretch('beanbag', { cols: [[20, 10, 2]], rows: [[15, 1, 10]] });
 
 // ---------------------------------------------------------------- garden trees: 76 to 96 high
-stretch('blossomTree', { rows: [[35, 1, 34]], x: 39, up: 2 });
-stretch('lanternTree', { rows: [[32, 1, 36]], x: 42 });
-stretch('parasol', { rows: [[25, 1, 3], [28, 1, 3], [31, 1, 3], [34, 1, 3], [37, 1, 3], [40, 1, 3], [43, 1, 3], [46, 1, 3], [49, 1, 3]], x: 26 });
 stretch('cloudTree', { rows: [[25, 1, 18]], x: 36 }); // (a tree in a bowl: taller than this and it is a bare pole with a tuft on top)
 
 // ---------------------------------------------------------------- garden centrepieces
 stretch('ringSculpture', { rows: [[38, 1, 28]] });
-stretch('bigTelescope', { rows: [[21, 1, 34]], x: 36 });
 stretch('rowboat', { cols: [[20, 5, 6]], rows: [[12, 1, 2], [15, 1, 2], [18, 1, 2]] });
 
 // ---------------------------------------------------------------- garden seats: 66 to 72 wide, seat about 25 to 30 high
