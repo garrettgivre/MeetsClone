@@ -64,7 +64,7 @@ export const DECOR_ART = {
   'starry-lamp': { prop: 'moonFloorLamp', ramps: { roof: 'gold', stone: 'indigo' } },
   'starry-bed': { prop: 'moonCradle', ramps: { roof: 'gold', accent: 'indigo' }, rim: 17 },
   'starry-rug': { prop: 'cometRug', ramps: { accent: 'indigo', roof: 'gold' } },
-  'starry-corner': { things: [['toyRocket', 26, 309, { accent: 'red', glass: 'sky', stone: 'gold' }, 14], ['starCushion', 60, 309, {}, 10]] },
+  'starry-corner': { things: [['toyRocket', 26, 309, { accent: 'red', glass: 'sky', stone: 'gold' }, 14], ['starCushion', 66, 309, {}, 10]] },
   'starry-plant': { things: [['moonFlower', 236, 309, {}, 9]] },
   'starry-kitchen-wall': { paper: 'paperMoons', ramps: { wall: 'violet', accent: 'gold' }, dado: 'dadoTiles', dadoRamps: { wall: 'indigo' } },
   'starry-kitchen-floor': { tile: 'floorStarTiles', ramps: { stone: 'indigo', accent: 'gold' }, swap: { 'indigo.2': 'indigo.3', 'indigo.1': 'indigo.2' }, shadow: 'indigo.1' },
@@ -87,7 +87,7 @@ export const DECOR_ART = {
   'starry-garden-tree': { prop: 'lanternTree', ramps: { leaf: 'green', wood: 'brown', roof: 'gold' } },
   'starry-garden-feature': { prop: 'bigTelescope', ramps: { roof: 'gold', stone: 'indigo' }, shadow: 26 },
   'starry-garden-flowers': { things: [['moonFlower', 30, 308, {}, 9]] },
-  'starry-garden-seat': { things: [['crescentBench', 222, 308, {}, 18]] },
+  'starry-garden-seat': { things: [['crescentBench', 212, 308, {}, 28]] },
   // ---------- Forest Cabin ----------
   'forest-wall': { paper: 'paperSprigs', ramps: { wall: 'cream', accent: 'green' }, dado: 'dadoLogs', dadoRamps: { wood: 'brown' } },
   'forest-floor': { tile: 'floorPlanks', ramps: { wood: 'brown' }, shadow: 'brown.1' },
@@ -97,7 +97,7 @@ export const DECOR_ART = {
   'forest-lamp': { prop: 'toadstoolLamp', ramps: { accent: 'red', stone: 'cream' } },
   'forest-bed': { prop: 'leafNest', ramps: { leaf: 'green', wood: 'brown' }, rim: 15 },
   'forest-rug': { prop: 'rugLeaf', ramps: { leaf: 'green' } },
-  'forest-corner': { things: [['logPile', 28, 309, {}, 20]] },
+  'forest-corner': { things: [['logPile', 38, 309, {}, 30]] },
   'forest-plant': { things: [['fernBucket', 236, 309, {}, 12]] },
   'forest-kitchen-wall': { paper: 'paperGingham', ramps: { wall: 'lime' }, swap: { 'lime.3': 'white', 'lime.2': 'lime.3', 'lime.1': 'lime.2' }, dado: 'dadoBoards', dadoRamps: { wall: 'cream' } },
   'forest-kitchen-floor': { tile: 'floorPebbles', ramps: { stone: 'brown' }, shadow: 'brown.1' },
@@ -120,7 +120,7 @@ export const DECOR_ART = {
   'forest-garden-tree': { prop: 'firTree', ramps: { leaf: 'green', wood: 'brown' } },
   'forest-garden-feature': { prop: 'campfire', ramps: { roof: 'orange', stone: 'slate' }, shadow: 22 },
   'forest-garden-flowers': { things: [['toadstools', 34, 308, {}, 0]] },
-  'forest-garden-seat': { things: [['logBench', 222, 308, {}, 18]] },
+  'forest-garden-seat': { things: [['logBench', 216, 308, {}, 26]] },
 
   // ---------- Seaside: every room, all its own furniture (src/art/props-seaside.js) ----------
   'seaside-wall': { paper: 'paperWaves', ramps: { wall: 'sky', accent: 'orange' }, dado: 'dadoBoards', dadoRamps: { wall: 'cream' } },
@@ -131,7 +131,7 @@ export const DECOR_ART = {
   'seaside-lamp': { prop: 'lighthouseLamp', ramps: { accent: 'red', roof: 'gold', stone: 'slate' } },
   'seaside-bed': { prop: 'clamBed', ramps: { accent: 'pink', wall: 'pink', glass: 'sky' }, rim: 17 },
   'seaside-rug': { prop: 'fishRug', ramps: { accent: 'sky' } },
-  'seaside-corner': { things: [['beachBall', 24, 309, {}, 12], ['sandPail', 52, 309, { accent: 'sky' }, 8]] },
+  'seaside-corner': { things: [['beachBall', 24, 309, {}, 16], ['sandPail', 62, 309, { accent: 'sky' }, 12]] },
   'seaside-plant': { things: [['dunePot', 238, 309, { leaf: 'lime', accent: 'sky' }, 11], ['starfish', 214, 309, { accent: 'orange' }, 0]] },
   'seaside-kitchen-wall': { paper: 'paperDeckchair', ramps: { wall: 'sky', accent: 'red' }, swap: { 'sky.3': 'white', 'sky.2': 'sky.3' }, dado: 'dadoBoards', dadoRamps: { wall: 'sky' } },
   'seaside-kitchen-floor': { tile: 'floorChecker', ramps: { accent: 'sky' }, shadow: 'sky.2' },
@@ -154,7 +154,7 @@ export const DECOR_ART = {
   'seaside-garden-tree': { prop: 'parasol', ramps: { accent: 'red' } },
   'seaside-garden-feature': { prop: 'rowboat', ramps: { accent: 'blue' }, shadow: 40 },
   'seaside-garden-flowers': { things: [['driftwood', 36, 306, {}, 0], ['starfish', 64, 302, { accent: 'orange' }, 0], ['shell', 14, 296, { accent: 'pink' }, 0]] },
-  'seaside-garden-seat': { things: [['deckChair', 226, 308, { accent: 'red' }, 20], ['sandPail', 190, 306, { accent: 'sky' }, 0]] },
+  'seaside-garden-seat': { things: [['deckChair', 216, 308, { accent: 'red' }, 28], ['sandPail', 166, 306, { accent: 'sky' }, 0]] },
 
   // ---------- Modern: every room, all its own furniture (src/art/props-modern.js; the bed is in props-beds.js) ----------
   'modern-wall': { paper: 'paperLinen', ramps: { wall: 'slate' }, swap: { 'slate.3': 'white', 'slate.2': 'mist' }, dado: 'dadoPanel', dadoRamps: { wall: 'slate' }, dadoSwap: { 'slate.3': 'white', 'slate.2': 'slate.3', 'slate.1': 'slate.2' } },
@@ -165,7 +165,7 @@ export const DECOR_ART = {
   'modern-lamp': { prop: 'arcLamp', ramps: { roof: 'mint', stone: 'slate', glass: 'gold' } },
   'modern-bed': { prop: 'podBed', ramps: { stone: 'slate', accent: 'mint', wood: 'brown' }, rim: 15 },
   'modern-rug': { prop: 'hideRug', ramps: { accent: 'cream' } },
-  'modern-corner': { things: [['beanbag', 30, 309, { accent: 'mint' }, 20]] },
+  'modern-corner': { things: [['beanbag', 36, 309, { accent: 'mint' }, 28]] },
   'modern-plant': { things: [['legPot', 232, 309, { stone: 'slate', leaf: 'green' }, 9]] },
   'modern-kitchen-wall': { paper: 'paperLattice', ramps: { wall: 'mint', accent: 'mint' }, swap: { 'mint.3': 'white', 'mint.2': 'mint.3' }, dado: 'dadoTiles', dadoRamps: { wall: 'mint' } },
   'modern-kitchen-floor': { tile: 'floorSlabs', ramps: { stone: 'slate' }, swap: { 'slate.3': 'white', 'slate.2': 'mist', 'slate.1': 'silver' }, shadow: 'slate.2' },
@@ -188,5 +188,5 @@ export const DECOR_ART = {
   'modern-garden-tree': { prop: 'cloudTree', ramps: { leaf: 'green', wood: 'brown', stone: 'slate' } },
   'modern-garden-feature': { prop: 'ringSculpture', ramps: { wall: 'cream', stone: 'slate' }, shadow: 22 },
   'modern-garden-flowers': { things: [['planterBox', 34, 308, {}, 20]] },
-  'modern-garden-seat': { things: [['bench', 222, 308, { wood: 'cream' }, 18], ['cactus', 194, 306, { stone: 'cream' }, 5]] },
+  'modern-garden-seat': { things: [['bench', 216, 308, { wood: 'cream' }, 26], ['cactus', 174, 306, { stone: 'cream' }, 5]] },
 };

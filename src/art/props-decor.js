@@ -32,6 +32,8 @@ import './props-sized-1.js';
 import './props-sized-2.js';
 import './props-sized-3.js';
 import './props-sized-4.js';
+import './props-sized-5.js';
+import { stretch } from './draw.js';
 
 
 // ---------- the starry set's toy ----------
@@ -198,3 +200,7 @@ defineProp('cactus', [
   '...ehggfe...',
   '...eeeeee...',
 ], { ramps: { stone: 'cream' } });
+
+// These two are drawn in this file, so they are brought to size here (see props-sized-5.js for the rest).
+stretch('toyRocket', { cols: [[6, 2, 3], [14, 2, 3]], rows: [[8, 1, 6], [16, 1, 4], [20, 1, 8]] });
+stretch('bench', { cols: [[10, 8, 3]], rows: [[12, 1, 14]] });
