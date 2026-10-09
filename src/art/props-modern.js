@@ -258,41 +258,6 @@ defineProp('slotWindow', [
   'wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwmm',
 ], { ramps: { stone: 'slate' } });
 
-// A kitchen island: a white worktop over three flat doors with slim handles.
-defineProp('islandCounter', [
-  'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
-  'wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwmm',
-  'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
-  '..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggvvvvvvvgggggggfehgggggggvvvvvvgggggggfehgggggggvvvvvvvgggggggfe..',
-  '..ehgggggggvvvvvvvgggggggfehgggggggvvvvvvgggggggfehgggggggvvvvvvvgggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehgggggggggggggggggggggfehggggggggggggggggggggfehgggggggggggggggggggggfe..',
-  '..ehffffffffffffffffffffffehfffffffffffffffffffffehffffffffffffffffffffffe..',
-  '..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee..',
-  '....eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee....',
-  '....effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe....',
-], { ramps: { stone: 'slate' } });
-
 // A kettle, and a bowl of fruit.
 defineProp('kettle', [
   '.....eeeeee.....',

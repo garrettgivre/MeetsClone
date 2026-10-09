@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.26.12, 9 October 2026)
+## Where things stand (v0.26.13, 9 October 2026)
 
 Everything is committed, pushed and live. `npm test` passes (95 tests).
 
@@ -157,10 +157,11 @@ The owner (9 October): "Make sure all furniture is sized correctly, eventually I
   - garden tree: 110 to 150 high and 90 or more across; well, telescope and the like: 80 to 90 high; a boat: 100 or more long;
   - rug: 120 or more wide; bath mat: 80 or more;
   - windows, pictures, shelves and the small things on shelves are not used by the pet and are fine as they are.
-- **Done to this standard** (`src/art/props-sized-1.js` to `-3.js`; the owner said "Continue with the redraw" after seeing the first three):
+- **Done to this standard** (`src/art/props-sized-1.js` to `-4.js`; the owner said "Continue with the redraw" after seeing the first three):
   - Sweetheart, all of it but the bed, tree, rug and mat: `heartChair` 55x64, `teaTable` 68x48, `gardenSwing` 78x63, `rangeCooker` 65x70, `sweetCounter` 76x46, `washstand` 60x52, `sweetLamp` 38x80 (now a floor lamp), `sweetChest` 61x39, `sweetPlant` 43x42, `wishingWell` 70x61, `sweetTowels` 38x53.
   - The kitchen seat and table of every other set: `moonChair` 55x62, `starTable` 68x49, `mushroomStool` 61x34, `stumpTable` 68x41, `kegStool` 52x30, `barrelTable` 63x45, `barStool` 52x33, `tulipTable` 67x43.
-- **Still too small, in Starry Night, Forest Cabin, Seaside and Modern:** every counter (30 high, wants 46), stove (as drawn they are 62 to 82 high with chimneys; the cooking part is low), bathroom cabinet (44 to 70, wants 90 to 110), lamp (51 to 65, wants 85 to 100), garden tree (36 to 57, wants 110 or more; Sweetheart's is 62), garden seat (42 to 52 wide, wants 64), garden feature, toy corner, floor plant and towel stand. In every set: the bed (88 wide, wants 96 inside the rim) and the rug and mat. Run the measuring script in the tip below to see every piece by slot.
+  - The kitchen counter of every other set, worktop about 45 high: `starDresser`, `logCounter`, `crateCounter`, `islandCounter` (all 76 wide).
+- **Still too small, in Starry Night, Forest Cabin, Seaside and Modern:** every stove (as drawn they are 62 to 82 high with chimneys; the cooking part is low), bathroom cabinet (44 to 70, wants 90 to 110), lamp (51 to 65, wants 85 to 100), garden tree (36 to 57, wants 110 or more; Sweetheart's is 62), garden seat (42 to 52 wide, wants 64), garden feature, toy corner, floor plant and towel stand. In every set: the bed (88 wide, wants 96 inside the rim) and the rug and mat. Run the measuring script in the tip below to see every piece by slot.
 - A bigger piece needs its place checked: the front corners (`things` at y 309) come forward over the pet's walking line, and the kitchen's stove and counter stand either side of where the pet eats.
 - To list sizes: a few lines of Node that import `PROPS`, `./src/art/props-decor.js` and `DECOR_ART` and print `w x h` of each entry's `prop` and `things`, grouped by slot.
 

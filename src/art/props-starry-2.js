@@ -37,41 +37,6 @@ drawn('cometRug', [
   '..........................aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
 ], { at: [50, 12], ramps: { accent: 'indigo', roof: 'gold' } });
 
-// A kitchen dresser in midnight blue: a pale worktop, two drawers with star
-// pulls, two doors with a moon and a star cut through them, a cloth on a hook.
-drawn('starDresser', [
-  'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
-  'wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwmm',
-  'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
-  '..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  '..ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe',
-  '..ehgeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeggeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeegggfe',
-  '..ehgehhhhhhhhhhhhhhhhhhhhhhhhhhhhheggehhhhhhhhhhhhhhhhhhhhhhhhhhhhhegggfe',
-  '..ehgeggggggggggggtgtgggggggggggggeggegggggggggggggtgtggggggggggggggegggfe',
-  '..ehgegggggggggggggtggggggggggggggeggeggggggggggggggtgggggggggggggggegggfe',
-  '..ehgeffffffffffffffffffffffffffffeggeffffffffffffffffffffffffffffffegggfe',
-  '..ehgeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeggeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeegggfe',
-  '..ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe',
-  '..ehgeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeggeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeegggfe',
-  '..ehgehhhhhhhhhhhhhhhhhhhhhhhhhhhhheggehhhhhhhhhhhhhhhhhhhhhhhhhhhhhegggfe',
-  '..ehgegggggggggggeeegggggggggggggggeggegggggggggggggggegggggggggggggegggfe',
-  '..ehgeggggggggggeekkegggggggggggggeggeggggggggggggggekeggggggggggggegggfe',
-  '..ehgegggggggggeekkeggggggggggggggeggegggggggggeeeeekkkeeeeegggggggegggfe',
-  '..ehgegggggggggekkeggggggggggggggeggeggggggggggekkkkkkkkkegggggggggegggfe',
-  '..ehgegggggggggekkegggggggggggggggeggeggggggggggeekkkkkeeggggggggggegggfe',
-  '..ehgegggggggggeekkeeggggggggggggeggegggggggggggekkekkeggggggggggggegggfe',
-  '..ehgeggggggggggeekkkegggggggggggeggeggggggggggekeegeekegggggggggggegggfe',
-  '..ehgegggggggggggeeeeeggggggggttgeggegttggggggggeegggeegggggggggggggegggfe',
-  '..ehgeggggggggggggggggggggggggttgeggegttgggggggggggggggggggggggggggegggfe',
-  '..ehgeffffffffffffffffffffffffffffeggeffffffffffffffffffffffffffffffegggfe',
-  '..ehgeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeggeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeegggfe',
-  '..effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
-  '..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-  '....rt..................................................................rt',
-  '....rt..................................................................rt',
-  '....rr..................................................................rr',
-], { at: [38, 29], ramps: { stone: 'indigo', roof: 'gold' } });
-
 // A mirror in a frame of stars, a bigger one at each corner; under it a shelf
 // with a candle, a little bottle and a folded flannel.
 drawn('starMirror', [
