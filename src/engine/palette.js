@@ -118,37 +118,6 @@ export function mutedLut(paper = 'cream.3', drain = 1, lift = 0.3) {
   return lut;
 }
 
-const ghosts = new Map();
-/**
- * A table that makes a sprite look greyed out and a little see-through over a
- * flat background: each colour loses its colour (`drain`), is mixed part of the
- * way (`alpha`) toward how light or dark the background is, and lands on the
- * nearest grey. (Only greys: mixing toward the background's own colour gave
- * icons a green cast on the lawn.) `bg` is the background's palette index.
- * Used for menu icons that aren't selected.
- */
-export function ghostLut(bg, alpha = 0.35, drain = 1) {
-  const key = `${bg}|${alpha}|${drain}`;
-  if (!ghosts.has(key)) {
-    const greys = ['ink', 'shade', 'gray', 'silver', 'mist', 'white', 'slate.0', 'slate.1', 'slate.2', 'slate.3'].map(C);
-    const light = (c) => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11, behind = light(COLORS[bg]);
-    const lut = new Uint8Array(COLORS.length);
-    for (let i = 1; i < COLORS.length; i++) {
-      const [r, g, b] = COLORS[i];
-      const grey = light(COLORS[i]);
-      const want = [r, g, b].map(v => (v + (grey - v) * drain) * (1 - alpha) + behind * alpha);
-      let best = i, bestD = Infinity;
-      for (const j of greys) {
-        const d = (COLORS[j][0] - want[0]) ** 2 + (COLORS[j][1] - want[1]) ** 2 + (COLORS[j][2] - want[2]) ** 2;
-        if (d < bestD) { bestD = d; best = j; }
-      }
-      lut[i] = best;
-    }
-    ghosts.set(key, lut);
-  }
-  return ghosts.get(key);
-}
-
 /** A darkened copy of the palette for lights-off / night tinting. */
 export function tinted(mulR, mulG, mulB) {
   return new Uint32Array(COLORS.map(([r, g, b, a]) =>

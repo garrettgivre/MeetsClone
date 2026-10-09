@@ -41,6 +41,9 @@ export class Screen {
     this.buf = new Uint8Array(BW * BH);
     this.palette = PACKED;
     this.clip = null; // [x0, y0, x1, y1] in hi-res pixels
+    // See-through pixels: [where in the frame, palette colour, opacity 0-255], three numbers each.
+    // They are not palette colours once mixed, so they are blended in present(), over the finished frame.
+    this.veil = [];
     this.filter = false;
     this.raw = null;   // the plain frame, kept off-screen while the filter is on
     this.glass = null; // the filter's static layer: the cell grid
@@ -65,8 +68,15 @@ export class Screen {
   }
 
   present() {
-    const { buf, out, palette } = this;
+    const { buf, out, palette, veil } = this;
     for (let i = 0; i < buf.length; i++) out[i] = palette[buf[i]];
+    // see-through pixels, mixed with whatever ended up behind them (pixels are packed ABGR)
+    for (let n = 0; n < veil.length; n += 3) {
+      const under = out[veil[n]], over = palette[veil[n + 1]], a = veil[n + 2], b = 255 - a;
+      const mix = (shift) => ((((over >>> shift) & 255) * a + ((under >>> shift) & 255) * b) / 255) | 0;
+      out[veil[n]] = (0xff000000 | (mix(16) << 16) | (mix(8) << 8) | mix(0)) >>> 0;
+    }
+    veil.length = 0;
     if (!this.filter) { this.ctx.putImageData(this.img, 0, 0); return; }
     this.rawCtx.putImageData(this.img, 0, 0);
     const ctx = this.ctx, w = BW * LCD, h = BH * LCD;
@@ -140,7 +150,8 @@ export class Screen {
 
   /**
    * Draw a sprite. opts: { frame, flip, ctx (colour context), solid (draw every pixel in one colour),
-   * remap (a palette-to-palette table, e.g. mutedLut(), applied to every pixel) }
+   * remap (a palette-to-palette table, e.g. mutedLut(), applied to every pixel),
+   * alpha (0-1: see-through, showing whatever is behind it when the frame is finished) }
    */
   draw(spr, x, y, opts = {}) {
     if (!opts.chunky) return this.drawHD(spr, x, y, opts);
@@ -180,10 +191,13 @@ export class Screen {
     const t = lut(hd, opts.ctx);
     const solid = opts.solid, remap = opts.remap;
     const X = Math.round(x * HD), Y = Math.round(y * HD);
+    const a = opts.alpha === undefined || opts.alpha >= 1 ? 0 : Math.round(opts.alpha * 255);
     for (let j = 0; j < hd.h; j++) for (let i = 0; i < hd.w; i++) {
       const c = t[frame[j * hd.w + i]];
       if (!c) continue;
-      this.hpset(opts.flip ? X + hd.w - 1 - i : X + i, Y + j, solid || (remap ? remap[c] : c));
+      const px = opts.flip ? X + hd.w - 1 - i : X + i, py = Y + j, col = solid || (remap ? remap[c] : c);
+      if (!a) this.hpset(px, py, col);
+      else if (px >= 0 && py >= 0 && px < BW && py < BH) this.veil.push(py * BW + px, col, a);
     }
   }
 

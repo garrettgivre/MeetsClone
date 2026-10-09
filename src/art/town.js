@@ -100,12 +100,14 @@ function dim(bm) {
 
 // Out of doors the light changes through the day: the whole picture (and the
 // ground in the bars under every room) moves along its own colour ramps, so a
-// green stays a green and only gets deeper. At dusk the brightest shade of
-// each ramp drops a step; at night every shade does (the ramps' dark ends lean
-// blue already). Tinting by red, green and blue instead turned pale grass tan.
+// colour never lands somewhere unrelated. At night every shade drops a step
+// (the ramps' dark ends lean blue already). At dusk the greens warm up a ramp,
+// toward the orange sky: green to a deeper lime, mint to green, and the palest
+// lime to gold. (Tinting by red, green and blue turned pale grass tan and left the rest green.)
 const OUTDOORS = new Set(['garden']);
-const DUSK = { 3: 2 }, NIGHT = { 3: 2, 2: 1, 1: 0, 0: 0 };
-const TINTS = { dusk: DUSK, night: NIGHT };
+const NIGHT = { 3: 2, 2: 1, 1: 0, 0: 0 };
+const TINTS = { dusk: {}, night: NIGHT };
+const WARMER = { green: 'lime', mint: 'green' };
 const DIMMER = { white: 'mist', mist: 'silver', silver: 'gray', gray: 'shade', shade: 'ink' }; // neutrals, at night
 const tintLuts = {};
 /** The palette-to-palette table for a time of day, or null when the light is plain daylight. */
@@ -114,7 +116,9 @@ export function timeLut(sky) {
   if (!tintLuts[sky]) {
     const lut = new Uint8Array(COLORS.length);
     for (let i = 1; i < COLORS.length; i++) lut[i] = i;
-    for (const r of RAMP_NAMES) for (let s = 0; s < 4; s++) lut[C(`${r}.${s}`)] = C(`${r}.${TINTS[sky][s] ?? s}`);
+    for (const r of RAMP_NAMES) for (let s = 0; s < 4; s++) lut[C(`${r}.${s}`)] = C(`${(sky === 'dusk' && WARMER[r]) || r}.${TINTS[sky][s] ?? s}`);
+    // (the greens also drop a shade as they warm, so the evening lawn is golden, not washed out)
+    if (sky === 'dusk') { for (let s = 0; s < 4; s++) lut[C(`green.${s}`)] = C(`lime.${Math.max(0, s - 1)}`); lut[C('lime.3')] = C('gold.3'); }
     if (sky === 'night') for (const [from, to] of Object.entries(DIMMER)) lut[C(from)] = C(to);
     tintLuts[sky] = lut;
   }
