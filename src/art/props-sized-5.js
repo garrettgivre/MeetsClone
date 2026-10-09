@@ -136,11 +136,6 @@ drawn('firTree', [
 // ---------------------------------------------------------------- garden seats: 66 to 72 wide, seat about 25 to 30 high
 
 // ---------------------------------------------------------------- beds: 100 wide (the front rim keeps its rows)
-stretch('heartBasket', { cols: [[20, 12, 1]] });
-stretch('moonCradle', { cols: [[47, 6, 2]] });
-stretch('leafNest', { cols: [[26, 4, 1], [40, 8, 1]] });
-stretch('clamBed', { cols: [[38, 12, 1]] });
-stretch('podBed', { cols: [[40, 12, 1]] });
 
 // ---------------------------------------------------------------- rugs: 98 to 120 wide; bath mats: 78 to 83
 stretch('sweetRug', { cols: [[20, 12, 1], [60, 12, 1]] });
