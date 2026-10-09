@@ -70,7 +70,10 @@ export const SETS = {
   forest: {
     name: 'Forest Cabin',
     pieces: {
-      bedroom: { wall: 'Sprig Paper', floor: 'Oak Boards', window: 'Moss Curtains', picture: 'Leaf Picture', shelf: 'Forager Shelf', lamp: 'Toadstool Lamp', bed: 'Leaf Nest', rug: 'Clover Rug', corner: 'Mossy Stump', plant: 'Fern Corner' },
+      bedroom: { wall: 'Sprig Paper', floor: 'Oak Boards', window: 'Cabin Window', picture: 'Cuckoo Clock', shelf: 'Log Shelf', lamp: 'Toadstool Lamp', bed: 'Leaf Nest', rug: 'Leaf Rug', corner: 'Firewood', plant: 'Fern Bucket' },
+      kitchen: { wall: 'Gingham Paper', floor: 'Pebble Floor', window: 'Cottage Window', stove: 'Stone Hearth', counter: 'Butcher Block', shelf: 'Pantry Log Shelf', table: 'Stump Table', seat: 'Mushroom Stool' },
+      bathroom: { wall: 'Fern Paper', floor: 'Flagstones', window: 'Bath Cottage Window', mirror: 'Branch Mirror', cabinet: 'Tree Trunk Cabinet', mat: 'Moss Mat', towels: 'Branch Rack', plant: 'Bath Fern' },
+      garden: { ground: 'Woodland Floor', fence: 'Log Fence', tree: 'Pine Tree', feature: 'Campfire', flowers: 'Toadstool Ring', seat: 'Log Bench' },
     },
   },
   seaside: {

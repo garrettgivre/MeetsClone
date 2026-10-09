@@ -856,3 +856,5 @@ function oval(name, of, letters, swaps, opts) {
 }
 oval('rugMoon', 'rugHearts', { d: 'b', b: 'c' }, { 8: ['wdw', 'dud'], 9: ['wwwww', 'uuuuu'], 10: ['www', 'uuu'], 11: ['dwd', 'udu'] }, { ramps: { accent: 'indigo', roof: 'gold' } });
 oval('matMoon', 'matSweet', { w: 'u', m: 't', d: 'b', c: 'b' }, {}, { ramps: { accent: 'indigo', roof: 'gold' } });
+// Forest Cabin: the same small oval as a mat of moss.
+oval('matMoss', 'matSweet', { w: '2', m: '2', d: '4', c: '3', a: '1', b: '2' }, {}, { ramps: { leaf: 'green' } });

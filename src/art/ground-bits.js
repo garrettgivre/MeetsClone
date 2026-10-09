@@ -170,6 +170,13 @@ export const GROUNDS = {
     ['slabL', 50, 310], ['slabM', 116, 310], ['slabS', 168, 308], ['slabL', 226, 310],
     ['tuftDeep', 68, 172], ['tuftDeep', 188, 198], ['tuftDeep', 92, 250], ['tuftDeep', 172, 278], ['tuftDeep', 8, 300],
   ],
+  woodland: [
+    ['leafFall', 18, 168], ['mossPatch', 50, 172], ['tinyShroom', 84, 170], ['leafFall', 120, 166], ['tuftDeep', 150, 172], ['acornBit', 184, 168], ['leafFall', 214, 172], ['mossPatch', 244, 168],
+    ['acornBit', 10, 196], ['leafFall', 40, 200], ['tuftDeep', 76, 192], ['mossPatch', 112, 202], ['leafFall', 158, 194], ['tinyShroom', 196, 200], ['leafFall', 236, 196],
+    ['mossPatch', 24, 228], ['leafFall', 64, 222], ['acornBit', 104, 230], ['tuftDeep', 170, 226], ['leafFall', 208, 232], ['mossPatch', 246, 224],
+    ['leafFall', 14, 258], ['tinyShroom', 52, 264], ['leafFall', 110, 256], ['mossPatch', 160, 262], ['acornBit', 200, 258], ['leafFall', 240, 266],
+    ['tuftDeep', 30, 290], ['leafFall', 74, 296], ['mossPatch', 124, 288], ['leafFall', 166, 298], ['tinyShroom', 214, 290], ['leafFall', 248, 300], ['acornBit', 96, 310], ['leafFall', 190, 310],
+  ],
   meadow: [
     ['starBloom', 20, 168], ['tuftDeep', 54, 172], ['lavender', 88, 170], ['starBloom', 126, 166], ['tuftDeep', 160, 172], ['lavender', 196, 168], ['starBloom', 234, 172],
     ['lavender', 12, 198], ['tuftDeep', 44, 194], ['starBloom', 80, 202], ['tuftDeep', 118, 192], ['starBloom', 170, 200], ['lavender', 214, 196], ['tuftDeep', 246, 204],

@@ -340,8 +340,7 @@ function homeScene(k, sky, layout) {
   const bed = art('bed'), lamp = art('lamp'), rug = art('rug');
   k.shadow(206, 198, 42, floor.shadow, 4); k.prop(bed.prop, 206, 198, bed.ramps);
   k.shadow(146, 198, 16, floor.shadow, 3);
-  if (lamp.table) { k.prop('bedsideTable', 146, 198, lamp.table); k.prop(lamp.prop, 146, 168, lamp.ramps); }
-  else k.prop(lamp.prop, 146, 198, lamp.ramps);
+  k.prop(lamp.prop, 146, 198, lamp.ramps);
   // a rug to stand on
   rugOf(k, rug, 80, 14);
   frontCorners(k, [art('corner'), art('plant')], floor.shadow);
