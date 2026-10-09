@@ -177,6 +177,15 @@ export const GROUNDS = {
     ['leafFall', 14, 258], ['tinyShroom', 52, 264], ['leafFall', 110, 256], ['mossPatch', 160, 262], ['acornBit', 200, 258], ['leafFall', 240, 266],
     ['tuftDeep', 30, 290], ['leafFall', 74, 296], ['mossPatch', 124, 288], ['leafFall', 166, 298], ['tinyShroom', 214, 290], ['leafFall', 248, 300], ['acornBit', 96, 310], ['leafFall', 190, 310],
   ],
+  // Squiggle Club: flakes, wedges, spots and squiggles scattered over a flat ground (the bits are in props-squiggle-3.js)
+  confetti: [
+    ['chipFlake', 16, 168], ['chipSquig', 46, 172], ['chipSpot', 82, 168], ['chipWedge', 112, 172], ['chipDash', 146, 166], ['chipFlake', 176, 172], ['chipSquig', 210, 168], ['chipSpot', 244, 172],
+    ['chipWedge', 24, 196], ['chipDash', 60, 192], ['chipFlake', 98, 200], ['chipSpot', 132, 192], ['chipSquig', 166, 200], ['chipWedge', 204, 194], ['chipFlake', 238, 202],
+    ['chipSpot', 12, 226], ['chipSquig', 50, 232], ['chipFlake', 104, 224], ['chipWedge', 150, 230], ['chipDash', 196, 222], ['chipSpot', 232, 232],
+    ['chipFlake', 30, 260], ['chipWedge', 74, 264], ['chipSquig', 122, 256], ['chipSpot', 170, 264], ['chipFlake', 208, 256], ['chipDash', 246, 266],
+    ['chipSquig', 18, 290], ['chipSpot', 60, 296], ['chipWedge', 108, 288], ['chipFlake', 146, 298], ['chipSquig', 190, 290], ['chipWedge', 230, 300],
+    ['chipDash', 40, 310], ['chipFlake', 92, 310], ['chipSpot', 172, 310], ['chipSquig', 222, 310],
+  ],
   meadow: [
     ['starBloom', 20, 168], ['tuftDeep', 54, 172], ['lavender', 88, 170], ['starBloom', 126, 166], ['tuftDeep', 160, 172], ['lavender', 196, 168], ['starBloom', 234, 172],
     ['lavender', 12, 198], ['tuftDeep', 44, 194], ['starBloom', 80, 202], ['tuftDeep', 118, 192], ['starBloom', 170, 200], ['lavender', 214, 196], ['tuftDeep', 246, 204],
