@@ -39,8 +39,12 @@ function skyPicture(sky) {
     const px = new Uint8Array(BW * BH), tones = SKY[sky].map(C);
     for (let y = 0; y < BH; y++) {
       const band = SEAMS.filter(s => y >= s).length, next = SEAMS[band];
-      const fade = next !== undefined && next - y <= 12;
-      for (let x = 0; x < BW; x++) px[y * BW + x] = fade && (x + y) % 2 === 0 ? tones[band + 1] : tones[band];
+      // each band melts into the next over 36 rows: a quarter, then half, then three quarters of the next colour
+      const left = next === undefined ? 99 : next - y;
+      for (let x = 0; x < BW; x++) {
+        const mix = left > 36 ? false : left > 24 ? (x % 2 === 0 && y % 2 === 0) : left > 12 ? (x + y) % 2 === 0 : !(x % 2 === 1 && y % 2 === 1);
+        px[y * BW + x] = mix ? tones[band + 1] : tones[band];
+      }
     }
     skies.set(sky, px);
   }
@@ -72,6 +76,20 @@ function drawSky(scr, sky, appTime, box) {
       scr.hpset(sx, sy, C('white'));
       if ((Math.floor(appTime / 500) + n) % 4 === 1) { scr.hpset(sx + 1, sy, C('gold.3')); scr.hpset(sx - 1, sy, C('gold.3')); }
     });
+  } else if (ww > 100) {
+    // an open sky: a big sun, and hand-pixelled clouds drifting across at their own speeds
+    const sx = ox + 30, sy = oy + 30;
+    for (let y = -17; y <= 17; y++) for (let x = -17; x <= 17; x++) {
+      const d = x * x + y * y, ray = Math.abs(x) < 2 || Math.abs(y) < 2 || Math.abs(Math.abs(x) - Math.abs(y)) < 2;
+      if (d <= 81) scr.hpset(sx + x, sy + y, C(d < 36 ? 'gold.3' : d < 64 ? 'gold.2' : 'orange.2'));
+      else if (d > 121 && d <= 280 && ray) scr.hpset(sx + x, sy + y, C('gold.2'));
+    }
+    scr.hpset(sx - 4, sy - 4, C('white')); scr.hpset(sx - 3, sy - 4, C('white')); scr.hpset(sx - 4, sy - 3, C('white'));
+    const tint = sky === 'day' ? 'violet' : 'pink';
+    [['cloudA', 22, 0.011, 150], ['cloudB', 62, 0.007, 30], ['cloudD', 96, 0.004, 260]].forEach(([name, y, speed, start]) => {
+      const cloud = propBitmap(name, { accent: tint }), span = ww + cloud.w * 2;
+      scr.bitmap(cloud, (ox + ((start + appTime * speed) % span) - cloud.w) / HD, (oy + y) / HD);
+    });
   } else {
     // sun and a drifting cloud
     const sx = ox + 10, sy = oy + 10;
@@ -95,13 +113,29 @@ const BAR_STARS = [[14, 8], [52, 30], [88, 12], [118, 50], [150, 22], [182, 6], 
   [22, 392], [60, 430], [98, 404], [134, 438], [168, 396], [200, 426], [232, 400], [246, 440]];
 const BAR_CLOUDS = [[26, 0.006, 40], [50, 0.004, 190], [404, 0.005, 120], [428, 0.007, 260]];
 
+// grass strokes and tiny flowers on the ground under an outdoor room: [x, y] in the bottom bars
+const GROUND_STROKES = [[10, 390], [34, 402], [58, 386], [80, 420], [104, 396], [126, 432], [150, 388], [172, 410], [196, 394], [218, 426], [240, 400],
+  [22, 436], [66, 440], [112, 414], [160, 438], [206, 444], [246, 430], [44, 422], [138, 404], [186, 384]];
+const GROUND_FLOWERS = [[26, 414, 'white'], [92, 438, 'pink.3'], [146, 420, 'gold.3'], [212, 408, 'white'], [236, 440, 'pink.3'], [60, 396, 'gold.3']];
+
 /**
  * The sky in the bars above and below the room, in place of a flat colour.
- * Returns what the bars' text should allow for: { sky, dark, top, bottom }.
+ * Out of doors (`ground`: the lawn's own colours, { c, stroke }) the bars under
+ * the room are that ground carrying on, so the room has no frame at all.
+ * Returns what the bars' text should allow for: { sky, dark, top, bottom, open },
+ * where `dark` is about the bars above the room and `bottomDark` those below.
  */
-export function drawSkyBars(scr, simTime, appTime, lightsOff) {
+export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null) {
   const sky = stateOf(simTime, lightsOff);
+  const open = !!ground && !lightsOff;
   for (const [y0, y1] of BARS) {
+    if (open && y0 > 0) {
+      scr.noClip();
+      scr.hrect(0, y0, BW, y1 - y0, C(ground.c));
+      for (const [x, y] of GROUND_STROKES) { scr.hpset(x, y, C(ground.stroke)); scr.hpset(x - 1, y - 1, C(ground.stroke)); scr.hpset(x + 1, y - 1, C(ground.stroke)); }
+      for (const [x, y, c] of GROUND_FLOWERS) { scr.hpset(x, y - 1, C(c)); scr.hpset(x - 1, y, C(c)); scr.hpset(x + 1, y, C(c)); scr.hpset(x, y + 1, C(c)); scr.hpset(x, y, C('gold.3')); }
+      continue;
+    }
     paintSky(scr, sky, 0, y0, BW, y1 - y0);
     scr.clip = [0, y0, BW, y1];
     if (sky === 'night') {
@@ -121,7 +155,7 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff) {
   }
   scr.noClip();
   const [top, , , bottom] = SKY[sky];
-  return { sky, dark: sky === 'night', top, bottom };
+  return { sky, dark: sky === 'night', top, bottom: open ? ground.c : bottom, bottomDark: open ? false : sky === 'night', open: !!ground };
 }
 
 /**

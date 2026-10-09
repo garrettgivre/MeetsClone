@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.20.0, 8 October 2026)
+## Where things stand (v0.20.1, 8 October 2026)
 
 Everything is committed, pushed and live. `npm test` passes (93 tests).
 
@@ -124,6 +124,7 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 The owner asked for the dark blue areas outside the room to show the sky the window looks out on (v0.17.5).
 - `src/scenes/room.js` holds one sky picture the size of the whole screen per state (`SKY`: four bands, dithered seams at `SEAMS`). `drawRoom` copies the part behind the window panes; `drawSkyBars` copies the parts above and below the room (status bar, icon rows, info bar) and adds twinkling stars at night or small drifting clouds by day. Lights off counts as night.
 - `drawSkyBars` returns `{ sky, dark, top, bottom }`. `drawBars` in `home.js` writes in ink on a bright sky and in white at night, and passes the top and bottom colours to `app.pageSky` (`main.js`), which colours the notch area and the button strip (a shade deeper when the LCD filter is on, to match the filtered screen). The navy in `style.css` only shows until the first frame.
+- **Out of doors the frame goes** (the owner: "The frame should basically disappear I think when outside"). For a room marked `outdoor`, `drawBars` passes the lawn's colours to `drawSkyBars`, which paints the bars under the room as that ground carrying on (and returns it as `bottom`, so the page strip with the buttons is lawn too); the rules above and below the room are not drawn. `bottomDark` says whether the lower bars need white text.
 - Text or sprites added to the bars must read on both a pale sky and a dark one; check day, dawn, dusk and night by setting `app.game.simTime`.
 
 ## Town art

@@ -145,7 +145,7 @@ function gardenScene(k, sky, layout) {
   const top = 150; // where the lawn begins
   k.rect(0, 0, RW, top, 'night'); // the sky: cut out, so the real one shows
   k.canopy(-24, 118, 304, 34, fence.hedge, { seed: 91, r: 9 });
-  k.field(top, ground.c, { seed: 12, light: ground.light });
+  k.field(top, ground.c, { seed: 12, light: ground.light, sides: false }); // (no darker sides: the lawn runs on past the screen's edge)
   k.tufts(164, 300, ground.tufts, 36, 9);
   // a picket fence along the back of the lawn
   for (let x = 2; x < RW; x += 12) { k.rect(x, 134, 7, 20, fence.c); k.rect(x + 6, 136, 1, 18, fence.shade); for (let j = 0; j < 3; j++) k.rect(x + j, 131 + j, 7 - j * 2, 1, fence.c); }
@@ -318,7 +318,7 @@ function kit() {
    * the open middle, deeper toward the edges and the bottom, finely textured
    * with little strokes, and sprinkled with tiny flowers.
    */
-  const field = (y0, base, { seed = 1, flowers = ['white', 'pink.3', 'gold.3'], strokes = 160, light = lt(base), deep = dk(base) } = {}) => {
+  const field = (y0, base, { seed = 1, flowers = ['white', 'pink.3', 'gold.3'], strokes = 160, light = lt(base), deep = dk(base), sides = true } = {}) => {
     const rnd = rand(seed * 41 + 9), H = RH - y0;
     rect(0, y0, RW, H, base);
     // the lit middle: a big soft oval, dithered at its rim
@@ -333,7 +333,7 @@ function kit() {
       const side = Math.max(0, 1 - Math.min(x, RW - 1 - x) / 26);
       for (let y = y0; y < RH; y++) {
         if (y > e + 3 || (y > e && ((x + y) & 1) === 0)) set(x, y, deep);
-        else if (side > 0.5 && ((x + y) & 1) === 0 && y > y0 + 6) set(x, y, deep);
+        else if (sides && side > 0.5 && ((x + y) & 1) === 0 && y > y0 + 6) set(x, y, deep);
       }
     }
     // grass strokes: denser in the deeper ground, a few light ones in the middle

@@ -11,6 +11,8 @@ import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide } from './room.js';
 import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
+import { DECOR_ART } from '../art/decor-art.js';
+import { tone } from '../art/town.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -594,9 +596,12 @@ export class HomeScene {
     const game = this.game, pet = this.pet;
     const { status, top, bottom, info } = LAYOUT;
     // the bars are open sky: the same sky the window looks out on, by day and by night
-    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights);
-    const fg = sky.dark ? COL.white : COL.ink;
-    if (sky.sky !== this.skyShown) { this.skyShown = sky.sky; this.app.pageSky?.(sky.top, sky.bottom); }
+    // (out in the garden the bars below are the lawn carrying on, and nothing frames the room)
+    const lawn = ROOMS[roomOf(game)].outdoor ? DECOR_ART[layoutOf(game).ground] : null;
+    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights, lawn && { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) });
+    const fg = sky.dark ? COL.white : COL.ink, low = sky.bottomDark ? COL.white : COL.ink;
+    const shown = `${sky.top}|${sky.bottom}`;
+    if (shown !== this.skyShown) { this.skyShown = shown; this.app.pageSky?.(sky.top, sky.bottom); }
     // status bar
     const d = new Date(game.simTime);
     const hh = d.getHours(), mm = String(d.getMinutes()).padStart(2, '0');
@@ -608,19 +613,20 @@ export class HomeScene {
     if (pet?.paused) text(scr, 'II', 86, 4, sky.dark ? C('gold.3') : COL.shade);
     // icon rows
     for (const [row, ids] of [[top, TOP], [bottom, BOTTOM]]) {
-      scr.rule(0, row.y + (row === top ? row.h - 1 : 0), W, sky.dark ? COL.shade : COL.ink, row === top);
+      const dark = row === top ? sky.dark : sky.bottomDark;
+      if (!sky.open) scr.rule(0, row.y + (row === top ? row.h - 1 : 0), W, dark ? COL.shade : COL.ink, row === top);
       ids.forEach((id, i) => {
         const idx = ALL.indexOf(id);
         const cx = Math.round(i * CELL + CELL / 2);
         if (this.cursor === idx) scr.panel(Math.round(i * CELL) + 1, row.y + 1, Math.round(CELL) - 1, row.h - 2, COL.hi, COL.ink);
         const ic = ICONS[id];
-        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), { remap: this.cursor === idx ? null : sky.dark ? MUTED : MUTED_DAY });
+        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), { remap: this.cursor === idx ? null : dark ? MUTED : MUTED_DAY });
       });
     }
     // info bar
     // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
     // ...or, with no menu picked, which room of the house this is
-    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, fg, { align: 'center' });
-    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 4, sky.dark ? COL.silver : COL.shade, { align: 'center' });
+    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, low, { align: 'center' });
+    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 4, sky.bottomDark ? COL.silver : sky.open ? COL.ink : COL.shade, { align: 'center' });
   }
 }
