@@ -92,6 +92,16 @@ test('buying pieces and sets, placing them, and the theme bonus', () => {
   assert.equal(buyDecor(g, 'forest-bed').ok, false, 'no points, no bed');
 });
 
+test('the furniture cheat owns every piece without rearranging the house', async () => {
+  const cheat = await import('../src/game/cheats.js');
+  const g = game(), before = JSON.stringify(g.decor.rooms), points = g.points;
+  cheat.unlockDecor(g);
+  assert.deepEqual([...g.decor.owned].sort(), Object.keys(DECOR).sort());
+  assert.equal(JSON.stringify(g.decor.rooms), before);
+  assert.equal(g.points, points);
+  assert.ok(optionsFor(g, 'bedroom', 'rug').length >= 3);
+});
+
 test('old saves gain the starter room, and broken layouts are repaired', () => {
   const g = game();
   delete g.decor; delete g.room;

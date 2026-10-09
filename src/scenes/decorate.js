@@ -51,7 +51,7 @@ export class DecorateScene {
   change() {
     const app = this.app, g = app.game;
     const r = cycle(g, this.room, this.slot);
-    if (!r.ok) { app.sfx('nope'); app.toast('Only one of these so far. The Department Store sells more.', 2600); return; }
+    if (!r.ok) { app.sfx('nope'); app.toast('Only one of these so far. The Department Store in Uptown sells more.', 2600); return; }
     app.sfx('select');
     if (r.bonus) { app.sfx('happy'); app.toast(`A perfect ${SETS[r.theme].name} room! +${r.bonus} points`, 3200); }
     app.save();

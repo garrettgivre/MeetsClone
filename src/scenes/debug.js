@@ -145,6 +145,7 @@ function townMenu(app) {
     { label: 'Befriend everyone', action: say(() => cheat.befriendAll(g), 'Seven hearts all round.') },
     { label: 'New day in town', action: say(() => cheat.resetDaily(g), 'Daily limits reset.') },
     { label: 'Every toy and outfit', action: say(() => cheat.unlockItems(g), 'Toy box, wardrobe and fridge filled.') },
+    { label: 'All furniture', action: say(() => cheat.unlockDecor(g), 'Every room set is yours. Put it out in Items > Decorate.') },
     { label: 'Fill the Gene Book', action: say(() => cheat.fillBook(g), 'Every part found.') },
   ], { footer: () => `POINTS: ${g.points}` }));
 }

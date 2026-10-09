@@ -11,6 +11,7 @@ import {
 } from './pet.js';
 import { discover, BOOK_GENES, entries } from './book.js';
 import { DISTRICTS, LOCATIONS, MAP_PIECES, townState, DAY } from './town.js';
+import { DECOR, fixDecor } from './decor.js';
 
 const STAGES = ['egg', 'baby', 'child', 'teen', 'adult'];
 
@@ -165,6 +166,13 @@ export function unlockItems(game) {
   for (const id of Object.keys(TOYS)) if (!game.toys.includes(id)) game.toys.push(id);
   for (const id of Object.keys(CLOTHES)) if (!game.wardrobe.includes(id)) game.wardrobe.push(id);
   for (const id of Object.keys(FOODS)) if (!FOODS[id].free) game.inventory[id] = Math.max(game.inventory[id] || 0, 5);
+}
+
+/** Own every piece of every room set (nothing is put out: that is done in Items > Decorate). */
+export function unlockDecor(game) {
+  fixDecor(game);
+  for (const id of Object.keys(DECOR)) if (!game.decor.owned.includes(id)) game.decor.owned.push(id);
+  return Object.keys(DECOR).length;
 }
 
 /** Fill the Gene Book (quietly: no points and no announcements). */

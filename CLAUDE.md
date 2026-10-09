@@ -4,9 +4,9 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.20.8, 8 October 2026)
+## Where things stand (v0.20.9, 8 October 2026)
 
-Everything is committed, pushed and live. `npm test` passes (93 tests).
+Everything is committed, pushed and live. `npm test` passes (94 tests).
 
 **One pixel scale: done.** The owner asked for the whole game to render at a single pixel size ("Yes make it consistent and look nice", then "continue the one pixel scale pass for the rest"). It shipped in four releases:
 - v0.16.7: the font and the home-screen symbols.
@@ -45,7 +45,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 93 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 94 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -162,7 +162,7 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 - **Jobs** (`JOBS` in `town.js`, `pet.job = { id, shifts }`): `applyJob` checks the skill level; a shift pays `jobPay` and promotes every `SHIFTS_PER_RANK` shifts.
 - **The player's pet has no old age.** It stays an adult until it marries, or dies or runs away from neglect.
 - **Alerts:** `alertFor(events, pet)` in `alerts.js` picks and words the most urgent event; `notify.js` shows it through `sw.js` with `assets/badge.png` as the status-bar shape. While the page is hidden a slow timer in `main.js` advances the clock and sends alerts. There is no push server, so nothing arrives once the browser has closed or suspended the page. The browser pane blocks notifications, so test with a stand-in and ask the owner to check on the phone.
-- **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. It can grow or change the pet, set needs, illness, dirt and training, skip time, open and age the town, fill the toy box, send a test alert.
+- **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. It can grow or change the pet, set needs, illness, dirt and training, skip time, open and age the town, fill the toy box, own all furniture (`unlockDecor`), send a test alert.
 
 ## The town's generations
 
