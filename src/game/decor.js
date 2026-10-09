@@ -103,6 +103,15 @@ export const SETS = {
       garden: { ground: 'Confetti Lawn', fence: 'Odd Post Fence', tree: 'Hoop Palm', feature: 'Shape Totem', flowers: 'Shape Flowers', seat: 'Shape Bench' },
     },
   },
+  aqua: {
+    name: 'Aqua Breeze',
+    pieces: {
+      bedroom: { wall: 'Bubble Sky Paper', floor: 'Gloss Tiles', window: 'Soft Corner Window', picture: 'Green Hill Print', shelf: 'Glass Shelf', lamp: 'Orb Lamp', bed: 'Bubble Bed', rug: 'Ripple Rug', corner: 'Fish Tank', plant: 'Lucky Bamboo' },
+      kitchen: { wall: 'Wave Paper', floor: 'Mint Gloss Tiles', window: 'Long Round Window', stove: 'Gloss Cooker', counter: 'Glass Door Counter', shelf: 'Kitchen Glass Shelf', table: 'Glass Table', seat: 'Jelly Stool' },
+      bathroom: { wall: 'Sky Wave Paper', floor: 'Sky Tiles', window: 'Bath Round Window', mirror: 'Drop Mirror', cabinet: 'Gloss Tower', mat: 'Droplet Mat', towels: 'Chrome Towel Hoop', plant: 'Bath Bamboo' },
+      garden: { ground: 'Dewy Lawn', fence: 'Glass Fence', tree: 'Gloss Tree', feature: 'Orb Fountain', flowers: 'Glass Tulips', seat: 'Swoosh Bench' },
+    },
+  },
 };
 
 /** An item's id. (Bedroom pieces came first and keep their short ids, so saves made then still work.) */

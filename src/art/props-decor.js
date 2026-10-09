@@ -47,6 +47,10 @@ import './floors-3.js';
 import './props-squiggle-1.js';
 import './props-squiggle-2.js';
 import './props-squiggle-3.js';
+import './floors-4.js';
+import './props-aqua-1.js';
+import './props-aqua-2.js';
+import './props-aqua-3.js';
 
 
 // ---------- the starry set's toy ----------

@@ -186,6 +186,15 @@ export const GROUNDS = {
     ['chipSquig', 18, 290], ['chipSpot', 60, 296], ['chipWedge', 108, 288], ['chipFlake', 146, 298], ['chipSquig', 190, 290], ['chipWedge', 230, 300],
     ['chipDash', 40, 310], ['chipFlake', 92, 310], ['chipSpot', 172, 310], ['chipSquig', 222, 310],
   ],
+  // Aqua Breeze: a bright lawn with tufts, clover, daisies and glints of dew (the dew is in props-aqua-3.js)
+  dew: [
+    ['tuftA', 14, 170], ['dewDrop', 40, 166], ['daisy', 70, 172], ['tuftB', 104, 168], ['dewDrop', 138, 172], ['clover', 170, 166], ['tuftA', 204, 172], ['dewDrop', 240, 168],
+    ['dewDrop', 22, 196], ['tuftB', 56, 192], ['clover', 92, 200], ['dewDrop', 126, 190], ['tuftA', 160, 200], ['daisy', 212, 194], ['dewDrop', 246, 202],
+    ['tuftA', 12, 226], ['daisy', 48, 232], ['dewDrop', 98, 222], ['tuftB', 150, 230], ['dewDrop', 194, 224], ['clover', 232, 232],
+    ['dewDrop', 28, 258], ['tuftA', 72, 264], ['clover', 120, 254], ['dewDrop', 166, 262], ['tuftB', 206, 256], ['daisy', 246, 266],
+    ['tuftB', 14, 290], ['dewDrop', 58, 296], ['tuftA', 102, 286], ['daisy', 142, 298], ['dewDrop', 186, 288], ['tuftA', 228, 300],
+    ['clover', 40, 310], ['dewDrop', 90, 308], ['tuftB', 164, 310], ['dewDrop', 216, 310],
+  ],
   meadow: [
     ['starBloom', 20, 168], ['tuftDeep', 54, 172], ['lavender', 88, 170], ['starBloom', 126, 166], ['tuftDeep', 160, 172], ['lavender', 196, 168], ['starBloom', 234, 172],
     ['lavender', 12, 198], ['tuftDeep', 44, 194], ['starBloom', 80, 202], ['tuftDeep', 118, 192], ['starBloom', 170, 200], ['lavender', 214, 196], ['tuftDeep', 246, 204],
