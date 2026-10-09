@@ -13,6 +13,8 @@ import { TownScene } from './town.js';
 import { foundTotal, BOOK_SIZE } from '../game/book.js';
 import { MatchmakerScene, AlbumScene } from './family.js';
 import { WardrobeScene, clothesIcon } from './wardrobe.js';
+import { DecorateScene } from './decorate.js';
+import { DECOR, SETS, owns, setOffer, buySet, buyDecor } from '../game/decor.js';
 import { VERSION } from '../version.js';
 import { debugMenu } from './debug.js';
 import * as notify from '../notify.js';
@@ -64,7 +66,40 @@ function items(app, home) {
   app.push(new ListMenu(app, 'ITEMS', [
     { label: 'Toys', icon: TOY_ART.ball, right: g.toys.length, action: toys },
     { label: 'Wardrobe', icon: ICONS.items, right: g.wardrobe.length, action: () => app.push(new WardrobeScene(app)) },
+    { label: 'Decorate', icon: ICONS.lights, right: '▶', action: () => { app.home(); app.push(new DecorateScene(app)); } },
   ]));
+}
+
+/** The room sets on sale: a list of sets, each opening onto its pieces. */
+function decorShop(app) {
+  const g = app.game;
+  const footer = () => `POINTS: ${g.points}`;
+  const count = (set) => Object.values(DECOR).filter(it => it.set === set && owns(g, it.id)).length;
+  const size = (set) => Object.keys(SETS[set].pieces).length;
+  const tally = (set) => (count(set) === size(set) ? 'OWNED' : `${count(set)}/${size(set)}`);
+  const openSet = (set, row) => {
+    const pieces = Object.values(DECOR).filter(it => it.set === set);
+    const rows = [{
+      label: 'Whole set', get right() { const o = setOffer(g, set); return o.left.length ? o.price : 'OWNED'; },
+      action: () => {
+        const r = buySet(g, set);
+        if (r.ok) { app.sfx('coin'); app.toast(`The ${SETS[set].name} set is yours! Put it out in Items > Decorate.`, 2800); app.save(); }
+        else { app.sfx('nope'); app.toast(r.msg); }
+      },
+    }, ...pieces.map(it => ({
+      label: it.name, get right() { return owns(g, it.id) ? 'OWNED' : it.price; },
+      action: () => {
+        const r = buyDecor(g, it.id);
+        if (r.ok) { app.sfx('coin'); app.toast(`Bought the ${it.name}! Put it out in Items > Decorate.`, 2400); app.save(); }
+        else { app.sfx('nope'); app.toast(r.msg); }
+      },
+    }))];
+    const menu = new ListMenu(app, SETS[set].name.toUpperCase(), rows, { footer, onBack: () => { row.right = tally(set); app.pop(); } });
+    app.push(menu);
+  };
+  return new ListMenu(app, 'FOR THE ROOM', Object.keys(SETS).filter(s => !SETS[s].starter).map(set => ({
+    label: SETS[set].name, right: tally(set), action: (_, row) => openSet(set, row),
+  })), { footer });
 }
 
 /**
@@ -74,6 +109,7 @@ function items(app, home) {
 export function shopList(app, kind, title = null) {
   const g = app.game;
   const footer = () => `POINTS: ${g.points}`;
+  if (kind === 'decor') return decorShop(app);
   if (kind === 'food' || kind === 'snacks') {
     const ids = Object.keys(FOODS).filter(id => !FOODS[id].free && (kind === 'food' || FOODS[id].kind === 'snack'));
     return new ListMenu(app, title || (kind === 'snacks' ? 'TREATS' : 'FOOD'), ids.map(id => ({

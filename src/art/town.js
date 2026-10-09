@@ -12,6 +12,8 @@ import { LAYOUT } from '../ui.js';
 import { PROPS, stampProp } from './props.js';
 import './props-home.js';
 import './props-travel.js';
+import './props-decor.js';
+import { DECOR_ART } from './decor-art.js';
 import { glyphRows } from '../engine/font.js';
 
 export const RW = W * HD;               // 256
@@ -55,12 +57,21 @@ export function propBitmap(name, opts = {}) {
 export const HOME_WINDOW = { x: 30, y: 27, w: 64, h: 60 };  // the glass, in hi-res room pixels
 export const HOME_FEET = 256;
 
-/** The room for a sky state ('day' | 'dawn' | 'dusk' | 'night'), lit or with the lights off: { back, front }. */
-export function homeRoom(sky = 'day', dark = false) {
-  const key = `home:${sky}:${dark}`;
+/**
+ * The room for a sky state ('day' | 'dawn' | 'dusk' | 'night'), lit or with the
+ * lights off: { back, front }. `layout` says what is in each of the room's
+ * slots ({ slot: decor id }, see src/game/decor.js); without one it is the
+ * starter room. Only the last few pictures are kept, since every change of
+ * decoration makes a new one.
+ */
+const homeKeys = [];
+export function homeRoom(sky = 'day', dark = false, layout = null) {
+  const key = `home:${sky}:${dark}:${layout ? Object.values(layout).join(',') : ''}`;
   if (!cache.has(key)) {
+    homeKeys.push(key);
+    while (homeKeys.length > 8) cache.delete(homeKeys.shift());
     const k = kit();
-    homeScene(k, sky);
+    homeScene(k, sky, layout || {});
     // the panes: holes in the picture
     const { x, y, w, h } = HOME_WINDOW;
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
@@ -88,33 +99,45 @@ function dim(bm) {
   }
 }
 
-function homeScene(k, sky) {
+/**
+ * The bedroom, slot by slot: each slot's item says which props and colours to
+ * use (src/art/decor-art.js); a slot with nothing in it gets the starter set's.
+ */
+function homeScene(k, sky, layout) {
   const night = sky === 'night', warm = sky === 'dawn' || sky === 'dusk';
-  k.wall('sky.3', 'sky.2', 'dots', { wainscot: 'sky.2' });
+  const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-${slot}`];
+  const wall = art('wall'), floor = art('floor'), win = art('window');
+  k.wall(wall.base, wall.pattern, wall.kind, { wainscot: wall.wainscot });
   // the window: sky shows through the panes
   const { x: wx, y: wy, w: ww, h: wh } = HOME_WINDOW;
   k.rect(wx, wy, ww, wh, 'night');
-  k.prop('homeWindow', wx + 32, wy + 77, { accent: 'pink', roof: 'gold', stone: 'orange', wood: 'brown' });
-  // the garland of hearts hangs in front of the curtain rod
-  k.starString(5, { sag: 9, hearts: true, colors: ['gold.3', 'pink.3', 'white', 'mint.3'] });
-  // a framed heart, and a shelf of keepsakes over the bed
-  k.prop('heartFrame', 138, 74, { roof: 'gold', accent: 'pink' });
-  k.prop('wallShelf', 206, 78);
-  k.prop('sproutPot', 184, 66, { stone: 'orange' });
-  k.prop('books', 204, 66, { accent: 'violet' }); k.prop('teddy', 222, 66); k.prop('toyBlock', 235, 66, { accent: 'mint' });
-  k.planks(HZ, 'cream.2'); k.floorShadow('cream.1');
+  k.prop('homeWindow', wx + 32, wy + 77, win.ramps);
+  // the garland hangs in front of the curtain rod
+  k.starString(5, { sag: 9, ...win.garland });
+  // a picture, and a shelf of keepsakes over the bed
+  const pic = art('picture'), shelf = art('shelf');
+  k.prop(pic.prop, 138, 74, pic.ramps);
+  k.prop('wallShelf', 206, 78, shelf.ramps);
+  for (const [name, x, opts] of shelf.things) k.prop(name, x, 66, opts);
+  k.planks(HZ, floor.c); k.floorShadow(floor.shadow);
   // light: sun through the window by day, the lamp at night
   if (!night) k.beam(wx + 8, HZ, 46, 226, warm ? 'gold.3' : 'cream.3', 0.4);
   else { k.lightPool(146, 150, 34, 22, 'gold.3'); k.lightPool(146, 196, 40, 9, 'gold.3'); }
   // the bed and the bedside lamp, against the wall
-  k.shadow(206, 198, 42, 'cream.1', 4); k.prop('petBed', 206, 198, { accent: 'pink', wall: 'cream' });
-  k.shadow(146, 198, 16, 'cream.1', 3); k.prop('nightLamp', 146, 198, { roof: 'gold', stone: 'slate' });
+  const bed = art('bed'), lamp = art('lamp'), rug = art('rug');
+  k.shadow(206, 198, 42, floor.shadow, 4); k.prop(bed.prop, 206, 198, bed.ramps);
+  k.shadow(146, 198, 16, floor.shadow, 3);
+  if (lamp.table) { k.prop('bedsideTable', 146, 198, lamp.table); k.prop(lamp.prop, 146, 168, lamp.ramps); }
+  else k.prop(lamp.prop, 146, 198, lamp.ramps);
   // a rug to stand on
-  k.rug(124, HOME_FEET + 4, 80, 14, 'pink.2', 'pink.3');
+  k.rug(124, HOME_FEET + 4, 80, 14, rug.c1, rug.c2);
+  if (rug.star) k.star5(124, HOME_FEET + 4, 8, rug.star);
+  // the two front corners stand in front of the pet
   k.layer('front');
-  k.shadow(30, 309, 25, 'cream.1', 3); k.prop('toyChest', 30, 309, { accent: 'red', glass: 'sky', roof: 'gold', stone: 'gold' });
-  k.prop('toyBall', 62, 309, { accent: 'mint' });
-  k.plant(238, 309, 1, 'green.2', 'pink.2', 3);
+  for (const slot of ['corner', 'plant']) for (const [name, x, y, opts, r] of art(slot).things) {
+    if (r) k.shadow(x, y, r, floor.shadow, 3);
+    k.prop(name, x, y, opts);
+  }
   k.layer('back');
 }
 
@@ -349,6 +372,8 @@ function kit() {
     if (kind === 'stripes') for (let x = 0; x < RW; x += 16) rect(x, 0, 6, HZ, pattern);
     if (kind === 'dots') for (let yy = 10, r = 0; yy < HZ - 20; yy += 14, r++) for (let x = r % 2 ? 7 : 14; x < RW; x += 14) { set(x, yy, pattern); set(x - 1, yy, pattern); set(x + 1, yy, pattern); set(x, yy - 1, pattern); set(x, yy + 1, pattern); }
     if (kind === 'bricks') for (let yy = 0, r = 0; yy < HZ; yy += 9, r++) { rect(0, yy, RW, 1, pattern); for (let x = r % 2 ? 0 : 13; x < RW; x += 26) rect(x, yy, 1, 9, pattern); }
+    if (kind === 'stars') for (let yy = 12, r = 0; yy < HZ - 16; yy += 20, r++) for (let x = r % 2 ? 12 : 30; x < RW; x += 36) star(x + ((r * 7) % 5), yy, pattern, (r + x) % 3 === 0);
+    if (kind === 'sprigs') for (let yy = 12, r = 0; yy < HZ - 16; yy += 16, r++) for (let x = r % 2 ? 9 : 21; x < RW; x += 24) { set(x, yy, pattern); set(x, yy + 1, pattern); set(x - 1, yy - 1, pattern); set(x - 2, yy - 2, pattern); set(x + 1, yy - 1, pattern); set(x + 2, yy - 2, pattern); set(x, yy + 2, dk(pattern)); }
     if (kind === 'diamonds') for (let yy = 0; yy < HZ; yy += 12) for (let x = 0; x < RW; x += 12) { set(x + 6, yy, pattern); set(x + 5, yy + 1, pattern); set(x + 7, yy + 1, pattern); set(x + 6, yy + 2, pattern); }
     if (wainscot) {
       rect(0, HZ - 44, RW, 34, wainscot);

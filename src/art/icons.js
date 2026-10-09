@@ -446,6 +446,19 @@ export const POTTY = hdSprite([
   '.......ommmmmmmmmmGGGGGGGGo.....',
   '........oooooooooooooooooo......',
 ]);
+// the pointer over the slot being changed while decorating
+export const POINTER = hdSprite([
+  '.oooooooooooooo.',
+  'oPPPPPPPffffffpo',
+  'oPPPPPPffffffppo',
+  '.oPPPPffffffppo.',
+  '..oPPPfffffppo..',
+  '...oPPffffppo...',
+  '....oPfffppo....',
+  '.....offppo.....',
+  '......oppo......',
+  '.......oo.......',
+]);
 // a rock to dodge in Snack Catch
 export const ROCK = hdSprite([
   '.....ooooo....',

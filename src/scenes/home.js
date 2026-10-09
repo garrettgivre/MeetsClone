@@ -10,6 +10,7 @@ import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights,
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars } from './room.js';
+import { layoutOf } from '../game/decor.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -307,7 +308,7 @@ export class HomeScene {
     // pet / egg / ghost
     if (pet) this.drawPet(scr, t, lightsOff);
     // the toy chest and plant in the front corners stand in front of the pet
-    drawRoomFront(scr, game.simTime, lightsOff);
+    drawRoomFront(scr, game.simTime, lightsOff, layoutOf(game));
 
     // effects
     for (const f of this.fx) scr.draw(f.spr, f.x, f.y, {});
@@ -517,7 +518,7 @@ export class HomeScene {
   }
 
   drawRoom(scr) {
-    drawRoomHD(scr, this.game.simTime, this.app.time, this.pet && !this.pet.lights);
+    drawRoomHD(scr, this.game.simTime, this.app.time, this.pet && !this.pet.lights, layoutOf(this.game));
   }
 
   drawBars(scr, t) {

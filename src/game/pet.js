@@ -10,6 +10,7 @@ import {
 } from './genetics.js';
 import { FOODS, TOYS, CLOTHES, SLOTS, COLOR_FOOD_MEALS } from './items.js';
 import { discover } from './book.js';
+import { newDecor } from './decor.js';
 
 export const MIN = 60 * 1000;
 export const HOUR = 60 * MIN;
@@ -100,6 +101,8 @@ export function newGame(now = Date.now(), rng = defaultRng) {
     inventory: { cookie: 3, omelette: 2, juice: 2 },
     toys: ['ball'],
     wardrobe: ['bow', 'scarf'],
+    decor: newDecor(),   // room decorations: what is owned, and each room's layout (decor.js)
+    room: 'bedroom',     // the room on show
     settings: { sound: true, speed: 1, alerts: false, cheats: false, lcd: true },
     generation: 1,
     album: [],

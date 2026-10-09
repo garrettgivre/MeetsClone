@@ -7,6 +7,7 @@ import { startOver } from '../game/pet.js';
 import { backdrop } from '../art/town.js';
 import { SPARKLE, LETTER } from '../art/icons.js';
 import { drawRoom, drawRoomFront } from './room.js';
+import { layoutOf } from '../game/decor.js';
 
 export class EndingScene {
   constructor(app, kind) {
@@ -52,9 +53,10 @@ export class EndingScene {
     } else {
       // its own room, empty, and the note it left on the rug
       const now = this.app.game.simTime;
-      drawRoom(scr, now, this.app.time, false);
+      const layout = layoutOf(this.app.game);
+      drawRoom(scr, now, this.app.time, false, layout);
       scr.draw(LETTER, W / 2 - 8, ry + 122, {});
-      drawRoomFront(scr, now, false);
+      drawRoomFront(scr, now, false, layout);
       const h = (msg.length + tip.length) * LINE_H + 13;
       scr.panel(6, ry + 6, W - 12, h, C('white'), COL.ink);
       let y = ry + 11;

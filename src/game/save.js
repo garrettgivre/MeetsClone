@@ -2,6 +2,7 @@
 import { newGame, BASE_WEIGHT } from './pet.js';
 import { GENES } from './genetics.js';
 import { discover } from './book.js';
+import { fixDecor } from './decor.js';
 
 const KEY = 'meetsclone.save.v2';
 export const SAVE_VERSION = 2;
@@ -36,6 +37,7 @@ export function migrate(g) {
   for (const k of Object.keys(fresh)) if (g[k] === undefined) g[k] = fresh[k];
   g.settings = { ...fresh.settings, ...g.settings };
   if (!Array.isArray(g.wardrobe)) g.wardrobe = [];
+  fixDecor(g); // rooms, slots and sets added since this save was made
   if (g.pet) {
     const pet = g.pet;
     pet.wear = pet.wear || {};

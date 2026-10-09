@@ -121,14 +121,14 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff) {
   return { sky, dark: sky === 'night', top, bottom };
 }
 
-/** Draw the room: the sky through the window, then the room over it. */
-export function drawRoom(scr, simTime, appTime, lightsOff) {
+/** Draw the room: the sky through the window, then the room over it. `layout` is what is in each slot (src/game/decor.js). */
+export function drawRoom(scr, simTime, appTime, lightsOff, layout = null) {
   drawSky(scr, stateOf(simTime, lightsOff), appTime);
-  scr.bitmap(homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff).back, 0, LAYOUT.room.y);
+  scr.bitmap(homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff, layout).back, 0, LAYOUT.room.y);
 }
 
 /** The things in the room's front corners, drawn over the pet. */
-export function drawRoomFront(scr, simTime, lightsOff) {
-  const front = homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff).front;
+export function drawRoomFront(scr, simTime, lightsOff, layout = null) {
+  const front = homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff, layout).front;
   if (front) scr.bitmap(front, 0, LAYOUT.room.y);
 }

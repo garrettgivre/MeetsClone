@@ -558,6 +558,7 @@ export const ACTIONS = {
     { id: 'food', label: 'Food', ui: 'shop:food' },
     { id: 'toys', label: 'Toys', ui: 'shop:toys' },
     { id: 'clothes', label: 'Clothes', ui: 'shop:clothes' },
+    { id: 'decor', label: 'For the room', ui: 'shop:decor' },
     { id: 'sale', label: 'Daily sale', ui: 'sale' },
   ],
   salon: [{ id: 'dye', label: 'Hair dye', price: 80, ui: 'dye' }],

@@ -4,9 +4,9 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.18.0, 8 October 2026)
+## Where things stand (v0.19.0, 8 October 2026)
 
-Everything is committed, pushed and live. `npm test` passes (88 tests).
+Everything is committed, pushed and live. `npm test` passes (92 tests).
 
 **One pixel scale: done.** The owner asked for the whole game to render at a single pixel size ("Yes make it consistent and look nice", then "continue the one pixel scale pass for the rest"). It shipped in four releases:
 - v0.16.7: the font and the home-screen symbols.
@@ -20,13 +20,14 @@ What is left of it, all small:
 - I viewed every new sprite and scene at zoom in the browser pane, not on a phone.
 
 **Other open items**
+- **Room decorations: the first release is out (v0.19.0); more sets and rooms are wanted.** The owner asked for decorating that is simple ("pre defined slots for items kind of vibe, but with some customization"), in themed sets "sort of like we've done for Room for Two" (another of their apps; I have not seen it), with "tamagotchi vibes", and planned so that "multiple rooms and outside rooms" can be added later. What exists: one room (the bedroom) with ten slots, three sets (Sweetheart, the starter; Starry Night; Forest Cabin), a shop page at the Department Store, and Items > Decorate. See "Decorating" below. Not done: more sets, a second room and a way to move between rooms, outdoor rooms, colour choices within an item. The two new beds are the starter bed with a different carving and colours, not new shapes.
 - **Clothes on the pet: hats and face items are done (v0.18.0); the rest is not.** The owner said "Sure start on the clothing" after I proposed three passes. Done: the six hats and five face items, in `src/art/pets/clothes.js`, drawn by `drawHat` and `drawFaceWear` in `src/game/pet-art.js` (see "Clothes" under Pet art). Still to draw, in the order I proposed:
   1. neckwear on the neck socket: `bowtie`, `tie`, `scarf`, `sash`;
   2. body clothes, the cape and shoes: `sweater`, `overalls`, `dress`, `collar`, `apron`, `cape`, `shoes`. These have to follow each form's body, so expect a drawing per form.
   Items that are not drawn can still be bought and "worn"; nothing tells the player they won't show. Glasses, shades and the monocle have no list icon in the wardrobe.
 - **Pets are still drawn in double-size pixels.** A pet is composed on a 64×64 grid and `sprite-pet.js` paints each of its pixels as a 2×2 fine block, so the pet is the one thing on screen at the old pixel size. I told the owner when I found it (8 October); they said to leave the pet as it is for now, then asked for two examples at the smaller scale. Those are a mock-up only: Kitsu and Gloop, each hand-drawn in one piece in `tools/fine-pets.js`, shown beside today's pets by `tools/fine-pets.html`. Nothing in the game uses them. A real redraw would mean every part in every form.
 - **Not yet seen on a real phone by me:** the LCD filter's cell grid (it could shimmer at some screen densities) and the care-alert status-bar badge. The owner has confirmed that installing and alerts work.
-- **Ideas the owner has heard and not picked up:** a daycare or sitter, room decorations (wallpaper, bedding, furniture; the room is now built to allow it), seasons and holidays, Meet Codes, twins, mail and visitors, gardening, daily goals, a taller screen so short phone viewports have no side strips, a pick-list at the cottages, job-specific minigames.
+- **Ideas the owner has heard and not picked up:** a daycare or sitter, seasons and holidays, Meet Codes, twins, mail and visitors, gardening, daily goals, a taller screen so short phone viewports have no side strips, a pick-list at the cottages, job-specific minigames.
 
 ## What the owner wants (read this before doing anything)
 
@@ -43,7 +44,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 88 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 92 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -84,6 +85,7 @@ src/art/wardrobe-icons.js  the clothes' list icons
 src/art/props.js           town props (text grids with colour roles)
 src/art/props-home.js      the home room's props, hand-pixelled; registers them with defineProp
 src/art/props-travel.js    the bus, train engine and carriage, balloon and jump-rope post
+src/art/props-decor.js     furniture for the room sets;  src/art/decor-art.js  how each decor item is drawn
 src/art/town.js            the drawing kit, the 23 town backdrops (SCENES) and the home room (homeRoom)
 tests/                     art, book, care, discipline, font, genetics, pet, save, town
 tools/                     review pages (parts, founders, gallery, compare, lab, town, props, icons, wardrobe), dump.mjs, the sprite editor, old art scripts
@@ -105,7 +107,15 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 
 ## The home room
 
-`homeRoom(sky, dark)` in `src/art/town.js` builds it like a town place from the props in `src/art/props-home.js` (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`), one cached picture per time of day plus a lights-off version (`dim` keeps the shapes as moonlit half-tones). The window panes are holes: `src/scenes/room.js` draws the sky, sun and cloud, or moon and stars, and then the room over them. The garland is drawn after the window so it hangs in front. The toy chest and plant are on the front layer (`drawRoomFront`). Room decorations would slot in by swapping props or colours in `homeScene`.
+`homeRoom(sky, dark)` in `src/art/town.js` builds it like a town place from the props in `src/art/props-home.js` (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`), one cached picture per time of day plus a lights-off version (`dim` keeps the shapes as moonlit half-tones). The window panes are holes: `src/scenes/room.js` draws the sky, sun and cloud, or moon and stars, and then the room over them. The garland is drawn after the window so it hangs in front. The toy chest and plant are on the front layer (`drawRoomFront`). What is in the room comes from the player's decorations (see "Decorating").
+
+## Decorating
+
+- **Rules** (`src/game/decor.js`, no drawing): `ROOMS` lists each room's slots; `SLOTS` gives a slot's label and price; `SETS` names one piece per slot. Items are generated as `DECOR['set-slot']`. The save holds `game.decor = { owned, rooms: { room: { slot: id } }, themes }` and `game.room`. `buyDecor`, `buySet` (what is left of a set at 20% off), `place`, `cycle`, `useSet`. A room dressed entirely in one bought set pays `THEME_BONUS` once per room and set. `fixDecor` (called by `migrate`) adds rooms and slots a save lacks and resets anything not owned or no longer in the catalogue.
+- **Looks** (`src/art/decor-art.js`): one entry per item saying which props and colours to use; `homeScene` in `src/art/town.js` builds the room slot by slot from it. `homeRoom(sky, dark, layout)` caches the last eight pictures. New furniture goes in `src/art/props-decor.js`; `variant(name, of, rows)` there copies a prop with some rows retyped by hand.
+- **Screens:** `src/scenes/decorate.js` is three-button decorating over the live room (A next slot, B next owned item, C done; tap a spot to pick its slot, tap the bar to change it). `SPOT` holds where each slot is; the bar moves to the top for slots on the floor. The shop page is `decorShop` in `menus.js`, reached from the Department Store.
+- **To add a set:** an entry in `SETS` with a name for every slot of its room, an entry per item in `DECOR_ART`, and any new props. `tests/decor.test.js` fails if a slot is missed or a prop doesn't exist.
+- **To add a room:** an entry in `ROOMS` (with `outdoor: true` for a garden or the like), a starter set for it in `SETS`, its slots' spots in `SPOT`, and a scene builder like `homeScene`; `homeRoom` and `drawRoom` in `room.js` currently assume the bedroom and need a room argument. Nothing yet lets the player change `game.room`.
 
 ## The sky round the room
 
