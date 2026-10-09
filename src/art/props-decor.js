@@ -5,6 +5,8 @@
 // Light comes from the upper left.
 import { defineProp, PROPS } from './props.js';
 import './props-home.js';
+import './props-beds.js';
+import './props-seaside.js';
 
 /** A copy of a prop with some rows drawn afresh: { rowIndex: 'new row' }. */
 function variant(name, of, rows) {
@@ -15,20 +17,6 @@ function variant(name, of, rows) {
   }
   defineProp(name, base);
 }
-
-// ---------- beds ----------
-// The pet's bed with a star carved in the headboard instead of a heart...
-variant('starBed', 'petBed', {
-  8: '58777577665...........................................................................',
-  9: '58755555665...........................................................................',
-  10: '58775757665...........................................................................',
-});
-// ...and with a leaf.
-variant('leafBed', 'petBed', {
-  8: '58777755665...........................................................................',
-  9: '58775557665...........................................................................',
-  10: '58755777665...........................................................................',
-});
 
 // ---------- bedside table and lamps ----------
 // The table on its own (a lamp from below stands on it).
@@ -187,3 +175,177 @@ defineProp('toyRocket', [
   'aaaaa...effffe...aaaaa',
   '.........eeee.........',
 ], { ramps: { accent: 'red', glass: 'sky', stone: 'gold' } });
+
+// A little scallop shell, and a starfish.
+defineProp('shell', [
+  '...aaaa...',
+  '.aadcdcaa.',
+  'adcdcdcdca',
+  'adcdcdcdba',
+  '.adcdcdba.',
+  '..abdcba..',
+  '...abba...',
+  '....aa....',
+], { ramps: { accent: 'pink' } });
+defineProp('starfish', [
+  '.....a.....',
+  '....aca....',
+  '....aca....',
+  'aaaaaccaaaa',
+  'adccccccdca',
+  '.aaccdccaa.',
+  '..acccccca.',
+  '.accaaacca.',
+  '.acaa..aca.',
+  '.aa.....aa.',
+], { ramps: { accent: 'orange' } });
+
+// A glowing globe lamp on a slim stand (stands on the bedside table).
+defineProp('globeLamp', [
+  '.......rrrrrr.......',
+  '.....rruuuuttrr.....',
+  '....ruuwuutttttr....',
+  '...ruuwuuttttttsr...',
+  '...ruuuutttttttsr...',
+  '...ruutttttttttsr...',
+  '...ruttttttttttsr...',
+  '...rutttttttttssr...',
+  '....rttttttttssr....',
+  '.....rrttttssrr.....',
+  '.......rrrrrr.......',
+  '.........gf.........',
+  '.........gf.........',
+  '.........gf.........',
+  '.......eeeeee.......',
+  '......ehhggffe......',
+  '......eeeeeeee......',
+], { ramps: { roof: 'gold', stone: 'slate' } });
+
+// A framed arrangement of blocks, a bar and a dot.
+variant('blocksFrame', 'heartFrame', {
+  11: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
+  12: '.rutsmwbbbbbbbwwwwwwwwwutsr.',
+  13: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
+  14: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
+  15: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
+  16: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
+  17: '.rutsmwbbbbbbbwwwwwwwwwutsr.',
+  18: '.rutsmwbbbbbbbwwwwwwwwwutsr.',
+  19: '.rutsmwwwwwwwwwwwwkkkwwutsr.',
+  20: '.rutsmwwwwwwwwwwwkkkkkwutsr.',
+  21: '.rutsmwkkkkkkkkkwkkkkkwutsr.',
+  22: '.rutsmwwwwwwwwwwwkkkkkwutsr.',
+  23: '.rutsmwwwddddddwwwkkkwwutsr.',
+  24: '.rutsmwwwddddddwwwwwwwwutsr.',
+  25: '.rutsmwwwddddddwwwwwwwwutsr.',
+  26: '.rutsmwwwddddddwwwwwwwwutsr.',
+  27: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
+  28: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
+  29: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
+});
+
+// A cooker under an extractor hood: a dark glass hob, four knobs, an oven with a window.
+defineProp('range', [
+  '....................ehhgggggggggggggfffe....................',
+  '....................ehhgggggggggggggfffe....................',
+  '....................ehhgggggggggggggfffe....................',
+  '....................ehhgggggggggggggfffe....................',
+  '....................ehhgggggggggggggfffe....................',
+  '....................ehhgggggggggggggfffe....................',
+  '....eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee....',
+  '....ehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhe....',
+  '....ehhhggggggggggggggggggggggggggggggggggggggggggggfffe....',
+  '....ehhhggggggggggggggggggggggggggggggggggggggggggggfffe....',
+  '...ehgggggggggggggggggggggggggggggggggggggggggggggggggffe...',
+  '..ehgggggggggggggggggggggggggggggggggggggggggggggggggggffe..',
+  '..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee..',
+  '..effffffffffffffffffffffffffffffffffffffffffffffffffffffe..',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '............................................................',
+  '......eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee......',
+  '......ennnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnne......',
+  '......ennkkkkkknnnnnnkkkkkknnnnnnkkkkkknnnnnnkkkkkknne......',
+  '......eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee......',
+  '......ehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhe......',
+  '......ehhhkkhhhhkkhhhhkkhhhhkkhhhhhhhhhhhhhhhhhhhhhhhe......',
+  '......ehhhkkhhhhkkhhhhkkhhhhkkhhhhhhhhhhhhhhhhhhhhhhhe......',
+  '......egggggggggggggggggggggggggggggggggggggggggggggge......',
+  '......eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee......',
+  '......egeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeefe......',
+  '......egehhvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvhhefe......',
+  '......egehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhefe......',
+  '......egehhkyyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkhhefe......',
+  '......egehhkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkhhefe......',
+  '......egehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhefe......',
+  '......egeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeefe......',
+  '......eggggggggggggggggggggggggggggggggggggggggggggffe......',
+  '......eggggggggggggggggggggggggggggggggggggggggggggffe......',
+  '......eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee......',
+  '........ee........................................ee........',
+  '........ee........................................ee........',
+], { ramps: { stone: 'slate', glass: 'orange' } });
+
+// A slatted garden bench.
+defineProp('bench', [
+  '.5555555555555555555555555555555555555555.',
+  '588888888888888888888888888888888888888875',
+  '577777777777777777777777777777777777777765',
+  '.5555555555555555555555555555555555555555.',
+  '..56..................................56..',
+  '..56..................................56..',
+  '.5555555555555555555555555555555555555555.',
+  '588888888888888888888888888888888888888875',
+  '577777777777777777777777777777777777777765',
+  '566666666666666666666666666666666666666665',
+  '.5555555555555555555555555555555555555555.',
+  '..576................................576..',
+  '..576................................576..',
+  '..576................................576..',
+  '..576................................576..',
+  '..555................................555..',
+], { ramps: { wood: 'slate' } });
+
+// A cactus in a small pot.
+defineProp('cactus', [
+  '....1111....',
+  '...134431...',
+  '...133321...',
+  '11.133321...',
+  '131133321.11',
+  '131133321131',
+  '133333321131',
+  '.11133333331',
+  '...13332111.',
+  '...133321...',
+  '..eeeeeeee..',
+  '..ehhggffe..',
+  '..eeeeeeee..',
+  '...ehggfe...',
+  '...ehggfe...',
+  '...eeeeee...',
+], { ramps: { stone: 'cream' } });

@@ -12,7 +12,7 @@ import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide, skyState } from './room.js';
 import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
 import { DECOR_ART } from '../art/decor-art.js';
-import { tone, edgeColours } from '../art/town.js';
+import { tone, edgeColours, bedRim, BED, HOME_FEET } from '../art/town.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -34,11 +34,14 @@ const GRIME = ['CLEAN', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
 // a splat of mud, in hi-res pixels ('1' mud, '0' its darker underside)
 const MUD = ['.1111..', '1111111', '1111110', '.00000.'];
 
+const BED_LIFT = (HOME_FEET - (BED.y - BED.sink)) / 2; // how far a pet in bed is above the floor it walks on, in screen pixels
+
 export class HomeScene {
   constructor(app) {
     this.app = app;
     this.cursor = -1;
     this.petX = 52;
+    this.bedLift = 0;
     this.targetX = 52;
     this.facing = 1;
     this.moveIn = 1500;
@@ -378,10 +381,10 @@ export class HomeScene {
     this.drawAnimOverlay(scr, t);
 
     if (lightsOff) {
-      scr.hdither(Math.round(this.petX) - 32, ROOM_FLOOR - 64, 64, 66, COL.night);
+      scr.hdither(Math.round(this.petX) - 32, ROOM_FLOOR - 64 - this.bedLift, 64, 66, COL.night);
 
       if (pet?.asleep) {
-        const zy = ROOM_FLOOR - 44 - Math.floor((t / 120) % 8);
+        const zy = ROOM_FLOOR - 44 - this.bedLift - Math.floor((t / 120) % 8);
         scr.draw(ZZZ, this.petX + 10, zy, { solid: COL.white });
       }
     }
@@ -399,6 +402,7 @@ export class HomeScene {
 
   drawPet(scr, t, lightsOff) {
     const pet = this.pet, a = this.anim;
+    this.bedLift = 0;
     const baseY = ROOM_FLOOR - GROUND;
     if (pet.gone) {
       const gf = Math.floor(t / 600) % 2;
@@ -418,6 +422,10 @@ export class HomeScene {
     }
 
     let expr = 'idle', dy = 0, dx = 0, flip = this.facing > 0, solid = 0, arms = 'down';
+    // asleep in the bedroom: tucked into the bed, behind its front rim
+    const inBed = pet.asleep && roomOf(this.game) === 'bedroom';
+    this.bedLift = inBed ? BED_LIFT : 0;
+    if (inBed) this.petX = this.targetX = BED.x / 2;
     const moving = Math.abs(this.targetX - this.petX) > 1 && !pet.asleep;
     const bob = Math.floor(t / (moving ? 220 : 480)) % 2;
     const step = moving ? (Math.floor(t / 200) % 2 ? 1 : 2) : 0;
@@ -489,8 +497,10 @@ export class HomeScene {
     }
     const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear, species: pet.species });
     const x = Math.round(this.petX - CANVAS / 2) + dx;
+    dy -= this.bedLift;
     if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
     else scr.bitmap(bm, x, baseY + dy, flip, solid);
+    if (inBed) { const rim = bedRim(layoutOf(this.game), lightsOff); scr.bitmap(rim.bm, rim.x / 2, LAYOUT.room.y + (rim.y >> 1)); }
 
     if (!lightsOff && !solid && (pet.dirt || 0) >= 2) {
       this.drawDirt(scr, bm, x, baseY + dy, flip, pet);

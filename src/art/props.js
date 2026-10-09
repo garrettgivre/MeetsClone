@@ -19,7 +19,7 @@ const ROLE = { 1: ['leaf', 0], 2: ['leaf', 1], 3: ['leaf', 2], 4: ['leaf', 3], 5
   a: ['accent', 0], b: ['accent', 1], c: ['accent', 2], d: ['accent', 3], e: ['stone', 0], f: ['stone', 1], g: ['stone', 2], h: ['stone', 3],
   A: ['wall', 0], B: ['wall', 1], C: ['wall', 2], D: ['wall', 3], r: ['roof', 0], s: ['roof', 1], t: ['roof', 2], u: ['roof', 3],
   x: ['glass', 0], y: ['glass', 1], z: ['glass', 2], Z: ['glass', 3] };
-const FIXED = { w: 'white', k: 'ink', m: 'mist', v: 'silver', n: 'gray' };
+const FIXED = { w: 'white', k: 'ink', m: 'mist', v: 'silver', n: 'gray', _: 'night' }; // (`_` is a hole in the home room: whatever is painted `night` there is cut out to show the sky)
 export const DEFAULT_RAMPS = { leaf: 'green', wood: 'brown', accent: 'pink', stone: 'slate', wall: 'cream', roof: 'red', glass: 'sky' };
 
 function prop(name, rows, { at = null, ramps = {} } = {}) {

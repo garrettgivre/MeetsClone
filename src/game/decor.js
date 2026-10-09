@@ -52,7 +52,7 @@ export const SETS = {
   sweet: {
     name: 'Sweetheart', starter: true,
     pieces: {
-      bedroom: { wall: 'Dotted Paper', floor: 'Pine Boards', window: 'Pink Curtains', picture: 'Heart Picture', shelf: 'Keepsake Shelf', lamp: 'Pleated Lamp', bed: 'Heart Bed', rug: 'Pink Rug', corner: 'Toy Chest', plant: 'Potted Plant' },
+      bedroom: { wall: 'Dotted Paper', floor: 'Pine Boards', window: 'Pink Curtains', picture: 'Heart Picture', shelf: 'Keepsake Shelf', lamp: 'Pleated Lamp', bed: 'Heart Basket', rug: 'Pink Rug', corner: 'Toy Chest', plant: 'Potted Plant' },
       kitchen: { wall: 'Candy Stripes', floor: 'Checked Tiles', window: 'Kitchen Window', stove: 'Brick Oven', counter: 'Baking Counter', shelf: 'Pantry Shelf', table: 'Tea Table', seat: 'Pink Stool' },
       bathroom: { wall: 'Sky Tiles', floor: 'Mint Tiles', window: 'Porthole', mirror: 'Bulb Mirror', cabinet: 'Glass Cabinet', mat: 'Pink Mat', towels: 'Folded Towels', plant: 'Bathroom Fern' },
       garden: { ground: 'Clover Lawn', fence: 'White Pickets', tree: 'Shade Tree', feature: 'Fountain', flowers: 'Pink Flower Bed', seat: 'Log Seat' },
@@ -61,13 +61,22 @@ export const SETS = {
   starry: {
     name: 'Starry Night',
     pieces: {
-      bedroom: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Night Curtains', picture: 'Moon Picture', shelf: 'Stargazer Shelf', lamp: 'Moon Lamp', bed: 'Star Bed', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Star Lantern' },
+      bedroom: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Night Curtains', picture: 'Moon Picture', shelf: 'Stargazer Shelf', lamp: 'Moon Lamp', bed: 'Moon Cradle', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Star Lantern' },
     },
   },
   forest: {
     name: 'Forest Cabin',
     pieces: {
-      bedroom: { wall: 'Sprig Paper', floor: 'Oak Boards', window: 'Moss Curtains', picture: 'Leaf Picture', shelf: 'Forager Shelf', lamp: 'Toadstool Lamp', bed: 'Leaf Bed', rug: 'Clover Rug', corner: 'Mossy Stump', plant: 'Fern Corner' },
+      bedroom: { wall: 'Sprig Paper', floor: 'Oak Boards', window: 'Moss Curtains', picture: 'Leaf Picture', shelf: 'Forager Shelf', lamp: 'Toadstool Lamp', bed: 'Leaf Nest', rug: 'Clover Rug', corner: 'Mossy Stump', plant: 'Fern Corner' },
+    },
+  },
+  seaside: {
+    name: 'Seaside',
+    pieces: {
+      bedroom: { wall: 'Wave Paper', floor: 'Driftwood Boards', window: 'Porthole Window', picture: 'Life Ring', shelf: 'Rope Shelf', lamp: 'Lighthouse Lamp', bed: 'Clam Bed', rug: 'Tide Rug', corner: 'Beach Ball', plant: 'Dune Grass' },
+      kitchen: { wall: 'Deckchair Stripes', floor: 'Sea Tiles', window: 'Shutter Window', stove: 'Potbelly Stove', counter: 'Crate Counter', shelf: 'Galley Shelf', table: 'Barrel Table', seat: 'Keg Stool' },
+      bathroom: { wall: 'Ripple Tiles', floor: 'Lagoon Tiles', window: 'Shore Shutters', mirror: 'Shell Mirror', cabinet: 'Beach Hut Cabinet', mat: 'Tide Mat', towels: 'Towel Basket', plant: 'Shell Pot' },
+      garden: { ground: 'Sandy Beach', fence: 'Rope Fence', tree: 'Beach Parasol', feature: 'Rowing Boat', flowers: 'Driftwood', seat: 'Deck Chair' },
     },
   },
 };
