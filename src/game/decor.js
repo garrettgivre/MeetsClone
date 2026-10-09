@@ -61,7 +61,10 @@ export const SETS = {
   starry: {
     name: 'Starry Night',
     pieces: {
-      bedroom: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Night Curtains', picture: 'Moon Picture', shelf: 'Stargazer Shelf', lamp: 'Moon Lamp', bed: 'Moon Cradle', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Star Lantern' },
+      bedroom: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Arched Window', picture: 'Star Chart', shelf: 'Cloud Shelf', lamp: 'Moon Floor Lamp', bed: 'Moon Cradle', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Moonflowers' },
+      kitchen: { wall: 'Moon Paper', floor: 'Star Tiles', window: 'Round Sky Window', stove: 'Rocket Oven', counter: 'Star Cupboard', shelf: 'Kitchen Cloud Shelf', table: 'Moon Table', seat: 'Star Stool' },
+      bathroom: { wall: 'Night Tiles', floor: 'Twilight Tiles', window: 'Moon Window', mirror: 'Moon Mirror', cabinet: 'Star Cabinet', mat: 'Comet Mat', towels: 'Towel Stand', plant: 'Bath Moonflower' },
+      garden: { ground: 'Night Meadow', fence: 'Star Railings', tree: 'Lantern Tree', feature: 'Telescope', flowers: 'Moonflower Pot', seat: 'Crescent Bench' },
     },
   },
   forest: {

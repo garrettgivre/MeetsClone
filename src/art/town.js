@@ -14,6 +14,7 @@ import './props-home.js';
 import './props-travel.js';
 import './props-decor.js';
 import { DECOR_ART } from './decor-art.js';
+import { GROUNDS } from './ground-bits.js';
 import { glyphRows } from '../engine/font.js';
 
 export const RW = W * HD;               // 256
@@ -282,7 +283,11 @@ function gardenScene(k, sky, layout) {
     k.tile('seaStrip', 0, 114, RW, 36, { glass: SEA[sky] || SEA.day }); // (it takes the colour of the sky over it; night darkens the day's)
   } else k.canopy(-24, 118, 304, 34, fence.hedge, { seed: 91, r: 9 });
   const shade = ground.bar ? tone(ground.bar, -1) : tone(ground.c, -2); // shadows on this ground
-  if (ground.tile) k.tile(ground.tile, 0, top, RW, RH - top, ground.ramps, ground.swap); // (`bar` is the tile's main colour, which the bars under the room carry on)
+  if (ground.bits) {
+    // one flat colour (`bar`, which the bars under the room carry on) and its details, each set down by hand
+    k.rect(0, top, RW, RH - top, ground.bar);
+    for (const [name, x, y] of GROUNDS[ground.bits]) k.prop(name, x, y, ground.ramps);
+  }
   else {
     k.field(top, ground.c, { seed: 12, light: ground.light, sides: false, ...(ground.flowers ? { flowers: ground.flowers } : {}) }); // (no darker sides: the ground runs on past the screen's edge)
     if (ground.tufts) k.tufts(164, 300, ground.tufts, ground.sparse ? 14 : 36, 9);

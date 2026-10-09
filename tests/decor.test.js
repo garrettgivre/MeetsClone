@@ -62,10 +62,10 @@ test('a new game starts in the starter room, which is not a bonus theme', () => 
 
 test('buying pieces and sets, placing them, and the theme bonus', () => {
   const g = game();
-  g.points = 2000;
+  g.points = 20000;
   assert.equal(place(g, 'bedroom', 'starry-rug').ok, false, 'must own it first');
   assert.ok(buyDecor(g, 'starry-rug').ok);
-  assert.equal(g.points, 2000 - SLOTS.rug.price);
+  assert.equal(g.points, 20000 - SLOTS.rug.price);
   assert.equal(buyDecor(g, 'starry-rug').ok, false, 'not twice');
   assert.ok(cycle(g, 'bedroom', 'rug').ok);
   assert.equal(layoutOf(g).rug, 'starry-rug');
@@ -73,7 +73,7 @@ test('buying pieces and sets, placing them, and the theme bonus', () => {
 
   // the rest of the set costs less bought together
   const before = g.points, offer = setOffer(g, 'starry');
-  assert.equal(offer.left.length, ROOMS.bedroom.slots.length - 1);
+  assert.equal(offer.left.length, Object.values(DECOR).filter(it => it.set === 'starry').length - 1); // (the set covers the whole house)
   const single = offer.left.reduce((n, id) => n + DECOR[id].price, 0);
   assert.ok(offer.price < single);
   assert.ok(buySet(g, 'starry').ok);

@@ -5,7 +5,7 @@
 // in props.js:
 //   1-4 leaf   5-8 wood   a-d accent   e-h stone   A-D wall   x y z Z glass
 //   w white   m mist   v silver   . empty (the colour underneath shows)
-import { defineProp } from './props.js';
+import { defineProp, PROPS } from './props.js';
 
 // ---------------------------------------------------------------- wallpapers
 // Sweetheart bedroom: small hearts and little crosses.
@@ -585,112 +585,6 @@ defineProp('floorMosaic', [
   'mcccmwwwmdddmwww',
 ]);
 
-// ---------------------------------------------------------------- garden grounds
-// A lawn: tufts, a pale blade or two, a daisy.
-defineProp('groundGrass', [
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333232333333333333333333333333',
-  '33333323333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333433333333333',
-  '33333333333333333334343333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333232333',
-  '33333333333333333333333333323333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333w33333333333333333333',
-  '3333333333wcw3333333333333333333',
-  '33333333333w33333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33232333333333333333333333333333',
-  '33323333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333334333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-  '33333333333333333333333333333333',
-], { ramps: { accent: 'gold' } });
-// Sand: wind ripples, a glint, a tiny shell.
-defineProp('groundSand', [
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'ddddddccccdddddddddddddddddddddd',
-  'ddddccddddccdddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'ddddddddddddddddddddddwddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'ddddddddddddddddddcccccddddddddd',
-  'ddddddddddddddddccdddddccddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'ddddddddzzdddddddddddddddddddddd',
-  'dddddddzZZzddddddddddddddddddddd',
-  'ddddddddzzdddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'ddddddddddddddddddddddddddcccddd',
-  'ddddddddddddddddddddddddccdddccd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddwdddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-  'dddddddddddddddddddddddddddddddd',
-], { ramps: { accent: 'gold', glass: 'pink' } });
-// Paving: big pale slabs with grass in the joints.
-defineProp('groundPaving', [
-  '2222222222222222222222222222222222222222222222222222222222222222',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg3hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg',
-  '2ggggggggggggggggggggggggggggggg2ggggggggggggggggggggggggggggggg',
-  '2222222222232222222222222222222222222222222222222223222222222222',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg3hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'hhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg2hhhhhhhhhhhhhhhh',
-  'ggggggggggggggg2ggggggggggggggggggggggggggggggg2gggggggggggggggg',
-], { ramps: { stone: 'slate', leaf: 'green' } });
 
 // ---------------------------------------------------------------- fences (one span, repeated along the back of the garden)
 // White pickets on two rails.
@@ -949,3 +843,16 @@ defineProp('matBlock', [
   '.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba.',
   '..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa..',
 ], { ramps: { accent: 'mint' } });
+
+// Starry Night: the Sweetheart ovals' outline in night colours. `letters`
+// renames colour roles; `swaps` turns each heart in a row into part of a star
+// ({ row: [from, to] }, applied before the renaming).
+function oval(name, of, letters, swaps, opts) {
+  const rows = PROPS[of].rows.map((r, i) => {
+    const [from, to] = swaps[i] || [];
+    return [...(from ? r.split(from).join(to) : r)].map(ch => letters[ch] || ch).join('');
+  });
+  defineProp(name, rows, opts);
+}
+oval('rugMoon', 'rugHearts', { d: 'b', b: 'c' }, { 8: ['wdw', 'dud'], 9: ['wwwww', 'uuuuu'], 10: ['www', 'uuu'], 11: ['dwd', 'udu'] }, { ramps: { accent: 'indigo', roof: 'gold' } });
+oval('matMoon', 'matSweet', { w: 'u', m: 't', d: 'b', c: 'b' }, {}, { ramps: { accent: 'indigo', roof: 'gold' } });

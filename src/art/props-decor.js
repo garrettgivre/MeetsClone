@@ -9,6 +9,9 @@ import './props-beds.js';
 import './props-seaside.js';
 import './props-modern.js';
 import './surfaces.js';
+import './ground-bits.js';
+import './props-starry.js';
+import './props-starry-garden.js';
 
 /** A copy of a prop with some rows drawn afresh: { rowIndex: 'new row' }. */
 function variant(name, of, rows) {
