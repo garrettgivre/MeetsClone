@@ -41,6 +41,8 @@ import './props-hand-5.js';
 import './props-hand-6.js';
 import './props-hand-7.js';
 import './props-hand-8.js';
+import './floors.js';
+import './floors-2.js';
 
 
 // ---------- the starry set's toy ----------
