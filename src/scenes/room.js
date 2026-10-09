@@ -10,7 +10,7 @@
 import { C } from '../engine/palette.js';
 import { W, H, HD } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
-import { homeRoom, HOME_WINDOW, propBitmap } from '../art/town.js';
+import { homeRoom, ROOM_SKY, propBitmap } from '../art/town.js';
 
 const RY = LAYOUT.room.y * 2; // room top, in hi-res screen pixels
 
@@ -52,8 +52,9 @@ function paintSky(scr, sky, x, y, w, h) {
   for (let j = y; j < y + h; j++) scr.buf.set(px.subarray(j * BW + x, j * BW + x + w), j * BW + x);
 }
 
-function drawSky(scr, sky, appTime) {
-  const { x: wx, y: wy, w: ww, h: wh } = HOME_WINDOW;
+/** The sky where a room shows it (`box`: a window's panes, or a garden's whole sky), with what is up there. */
+function drawSky(scr, sky, appTime, box) {
+  const { x: wx, y: wy, w: ww, h: wh } = box;
   const ox = wx, oy = RY + wy;
   paintSky(scr, sky, ox, oy, ww, wh);
   scr.clip = [ox, oy, ox + ww, oy + wh];
@@ -64,10 +65,12 @@ function drawSky(scr, sky, appTime) {
       const d1 = (x - 5.5) ** 2 + (y - 5.5) ** 2, d2 = (x - 8) ** 2 + (y - 4) ** 2;
       if (d1 < 30 && d2 > 22) scr.hpset(mx + x, my + y, C(d1 > 20 ? 'gold.2' : 'gold.3'));
     }
-    [[8, 10], [22, 30], [12, 46], [34, 22], [56, 40], [26, 52], [50, 12]].forEach(([x, y], i) => {
-      if ((Math.floor(appTime / 500) + i) % 4 === 0) return;
-      scr.hpset(ox + x, oy + y, C('white'));
-      if ((Math.floor(appTime / 500) + i) % 4 === 1) { scr.hpset(ox + x + 1, oy + y, C('gold.3')); scr.hpset(ox + x - 1, oy + y, C('gold.3')); }
+    // (the same handful of stars, repeated across a wide sky)
+    for (let tile = 0; tile * 64 < ww; tile++) [[8, 10], [22, 30], [12, 46], [34, 22], [56, 40], [26, 52], [50, 12]].forEach(([x, y], i) => {
+      const n = i + tile * 3, sx = ox + tile * 64 + x, sy = oy + y + (tile % 2) * 9;
+      if ((Math.floor(appTime / 500) + n) % 4 === 0) return;
+      scr.hpset(sx, sy, C('white'));
+      if ((Math.floor(appTime / 500) + n) % 4 === 1) { scr.hpset(sx + 1, sy, C('gold.3')); scr.hpset(sx - 1, sy, C('gold.3')); }
     });
   } else {
     // sun and a drifting cloud
@@ -121,14 +124,35 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff) {
   return { sky, dark: sky === 'night', top, bottom };
 }
 
-/** Draw the room: the sky through the window, then the room over it. `layout` is what is in each slot (src/game/decor.js). */
-export function drawRoom(scr, simTime, appTime, lightsOff, layout = null) {
-  drawSky(scr, stateOf(simTime, lightsOff), appTime);
-  scr.bitmap(homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff, layout).back, 0, LAYOUT.room.y);
+/**
+ * Draw a room of the house: the sky where it shows, then the room over it.
+ * `layout` is what is in each slot and `room` which room it is (src/game/decor.js).
+ */
+export function drawRoom(scr, simTime, appTime, lightsOff, layout = null, room = 'bedroom') {
+  if (ROOM_SKY[room]) drawSky(scr, stateOf(simTime, lightsOff), appTime, ROOM_SKY[room]);
+  scr.bitmap(homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff, layout, room).back, 0, LAYOUT.room.y);
+}
+
+/**
+ * Stepping from one room to the next: the old room slides off as the new one
+ * slides on (k runs 0 to 1; dir 1 means the new room is to the right). `from`
+ * and `to` are { room, layout }.
+ */
+export function drawSlide(scr, simTime, lightsOff, from, to, dir, k) {
+  const state = skyState(new Date(simTime).getHours()), ry = LAYOUT.room.y;
+  paintSky(scr, stateOf(simTime, lightsOff), 0, RY, BW, LAYOUT.room.h * HD);
+  const off = Math.round(Math.min(1, Math.max(0, k)) * W);
+  scr.setClip(0, ry, W, LAYOUT.room.h);
+  for (const [r, x] of [[from, -dir * off], [to, dir * (W - off)]]) {
+    const pic = homeRoom(state, !!lightsOff, r.layout, r.room);
+    scr.bitmap(pic.back, x, ry);
+    if (pic.front) scr.bitmap(pic.front, x, ry);
+  }
+  scr.noClip();
 }
 
 /** The things in the room's front corners, drawn over the pet. */
-export function drawRoomFront(scr, simTime, lightsOff, layout = null) {
-  const front = homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff, layout).front;
+export function drawRoomFront(scr, simTime, lightsOff, layout = null, room = 'bedroom') {
+  const front = homeRoom(skyState(new Date(simTime).getHours()), !!lightsOff, layout, room).front;
   if (front) scr.bitmap(front, 0, LAYOUT.room.y);
 }

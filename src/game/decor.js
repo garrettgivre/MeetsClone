@@ -7,15 +7,21 @@
 // with its own slots, an item names the room it belongs to, and the save keeps
 // one layout per room. How each item is drawn is in src/art/decor-art.js.
 
+/** The house, left to right: you step from one room to the next. */
+export const HOUSE = ['garden', 'kitchen', 'bedroom', 'bathroom'];
+
 export const ROOMS = {
+  garden: { name: 'Garden', outdoor: true, slots: ['ground', 'fence', 'tree', 'feature', 'flowers', 'seat'] },
+  kitchen: { name: 'Kitchen', outdoor: false, slots: ['wall', 'floor', 'window', 'stove', 'counter', 'shelf', 'table', 'seat'] },
   bedroom: { name: 'Bedroom', outdoor: false, slots: ['wall', 'floor', 'window', 'picture', 'shelf', 'lamp', 'bed', 'rug', 'corner', 'plant'] },
+  bathroom: { name: 'Bathroom', outdoor: false, slots: ['wall', 'floor', 'window', 'mirror', 'cabinet', 'mat', 'towels', 'plant'] },
 };
 
 /** What each kind of slot is called, and what a piece for it costs. */
 export const SLOTS = {
   wall: { label: 'Wallpaper', price: 60 },
   floor: { label: 'Floor', price: 60 },
-  window: { label: 'Curtains', price: 50 },
+  window: { label: 'Window', price: 50 },
   picture: { label: 'Picture', price: 40 },
   shelf: { label: 'Shelf', price: 50 },
   lamp: { label: 'Lamp', price: 70 },
@@ -23,39 +29,68 @@ export const SLOTS = {
   rug: { label: 'Rug', price: 50 },
   corner: { label: 'Toy corner', price: 80 },
   plant: { label: 'Greenery', price: 40 },
+  stove: { label: 'Stove', price: 120 },
+  counter: { label: 'Counter', price: 80 },
+  table: { label: 'Table', price: 70 },
+  seat: { label: 'Seat', price: 50 },
+  mirror: { label: 'Mirror', price: 80 },
+  cabinet: { label: 'Cabinet', price: 80 },
+  mat: { label: 'Bath mat', price: 40 },
+  towels: { label: 'Towels', price: 30 },
+  ground: { label: 'Lawn', price: 60 },
+  fence: { label: 'Fence', price: 50 },
+  tree: { label: 'Tree', price: 60 },
+  feature: { label: 'Centrepiece', price: 120 },
+  flowers: { label: 'Flower bed', price: 40 },
 };
 
-/** The themed sets. `pieces` names each slot's item; the first set is the room you start with. */
+/**
+ * The themed sets. `pieces` names each slot's item, room by room; a set need
+ * not cover every room. The starter set is the house every game begins with.
+ */
 export const SETS = {
   sweet: {
-    name: 'Sweetheart', room: 'bedroom', starter: true,
-    pieces: { wall: 'Dotted Paper', floor: 'Pine Boards', window: 'Pink Curtains', picture: 'Heart Picture', shelf: 'Keepsake Shelf', lamp: 'Pleated Lamp', bed: 'Heart Bed', rug: 'Pink Rug', corner: 'Toy Chest', plant: 'Potted Plant' },
+    name: 'Sweetheart', starter: true,
+    pieces: {
+      bedroom: { wall: 'Dotted Paper', floor: 'Pine Boards', window: 'Pink Curtains', picture: 'Heart Picture', shelf: 'Keepsake Shelf', lamp: 'Pleated Lamp', bed: 'Heart Bed', rug: 'Pink Rug', corner: 'Toy Chest', plant: 'Potted Plant' },
+      kitchen: { wall: 'Candy Stripes', floor: 'Checked Tiles', window: 'Kitchen Window', stove: 'Brick Oven', counter: 'Baking Counter', shelf: 'Pantry Shelf', table: 'Tea Table', seat: 'Pink Stool' },
+      bathroom: { wall: 'Sky Tiles', floor: 'Mint Tiles', window: 'Porthole', mirror: 'Bulb Mirror', cabinet: 'Glass Cabinet', mat: 'Pink Mat', towels: 'Folded Towels', plant: 'Bathroom Fern' },
+      garden: { ground: 'Clover Lawn', fence: 'White Pickets', tree: 'Shade Tree', feature: 'Fountain', flowers: 'Pink Flower Bed', seat: 'Log Seat' },
+    },
   },
   starry: {
-    name: 'Starry Night', room: 'bedroom',
-    pieces: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Night Curtains', picture: 'Moon Picture', shelf: 'Stargazer Shelf', lamp: 'Moon Lamp', bed: 'Star Bed', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Star Lantern' },
+    name: 'Starry Night',
+    pieces: {
+      bedroom: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Night Curtains', picture: 'Moon Picture', shelf: 'Stargazer Shelf', lamp: 'Moon Lamp', bed: 'Star Bed', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Star Lantern' },
+    },
   },
   forest: {
-    name: 'Forest Cabin', room: 'bedroom',
-    pieces: { wall: 'Sprig Paper', floor: 'Oak Boards', window: 'Moss Curtains', picture: 'Leaf Picture', shelf: 'Forager Shelf', lamp: 'Toadstool Lamp', bed: 'Leaf Bed', rug: 'Clover Rug', corner: 'Mossy Stump', plant: 'Fern Corner' },
+    name: 'Forest Cabin',
+    pieces: {
+      bedroom: { wall: 'Sprig Paper', floor: 'Oak Boards', window: 'Moss Curtains', picture: 'Leaf Picture', shelf: 'Forager Shelf', lamp: 'Toadstool Lamp', bed: 'Leaf Bed', rug: 'Clover Rug', corner: 'Mossy Stump', plant: 'Fern Corner' },
+    },
   },
 };
 
-/** Every item: id `set-slot` -> { id, set, slot, room, name, price }. */
+/** An item's id. (Bedroom pieces came first and keep their short ids, so saves made then still work.) */
+export const decorId = (set, room, slot) => (room === 'bedroom' ? `${set}-${slot}` : `${set}-${room}-${slot}`);
+
+/** Every item: id -> { id, set, slot, room, name, price }. */
 export const DECOR = {};
 for (const [set, s] of Object.entries(SETS)) {
-  for (const [slot, name] of Object.entries(s.pieces)) {
-    DECOR[`${set}-${slot}`] = { id: `${set}-${slot}`, set, slot, room: s.room, name, price: s.starter ? 0 : SLOTS[slot].price };
+  for (const [room, pieces] of Object.entries(s.pieces)) {
+    for (const [slot, name] of Object.entries(pieces)) {
+      const id = decorId(set, room, slot);
+      DECOR[id] = { id, set, slot, room, name, price: s.starter ? 0 : SLOTS[slot].price };
+    }
   }
 }
 
 export const SET_DISCOUNT = 0.8; // buying what is left of a set at once
 export const THEME_BONUS = 50;   // points, the first time a room is dressed entirely in one set
 
-const starterLayout = (room) => {
-  const set = Object.keys(SETS).find(id => SETS[id].starter && SETS[id].room === room);
-  return Object.fromEntries(ROOMS[room].slots.map(slot => [slot, `${set}-${slot}`]));
-};
+const STARTER = Object.keys(SETS).find(id => SETS[id].starter);
+const starterLayout = (room) => Object.fromEntries(ROOMS[room].slots.map(slot => [slot, decorId(STARTER, room, slot)]));
 
 /** A new game's decor: the starter set, owned and in place. */
 export function newDecor() {
@@ -83,6 +118,8 @@ export function fixDecor(game) {
 
 /** The room on show, and what is in each of its slots. */
 export const roomOf = (game) => (ROOMS[game?.room] ? game.room : 'bedroom');
+/** The room next door, to the left (-1) or right (1), or null at the end of the house. */
+export const nextRoom = (room, dir) => HOUSE[HOUSE.indexOf(room) + dir] || null;
 export function layoutOf(game, room = roomOf(game)) {
   return game?.decor?.rooms?.[room] || starterLayout(room);
 }
@@ -156,6 +193,6 @@ export function cycle(game, room, slot, dir = 1) {
 /** Dress a whole room in one set, using every piece of it that is owned. */
 export function useSet(game, room, set) {
   let last = { ok: false };
-  for (const slot of ROOMS[room].slots) { const r = place(game, room, `${set}-${slot}`); if (r.ok) last = r; }
+  for (const slot of ROOMS[room].slots) { const r = place(game, room, decorId(set, room, slot)); if (r.ok) last = r; }
   return last;
 }

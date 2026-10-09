@@ -59,7 +59,8 @@ Tap your pet to give it a pat, and tap poop to clean it up.
 - **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu).
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
 - **Economy:** Gotchi Points, shops in town for food, toys and clothes, and favourite foods and toys.
-- **Decorating:** the room has ten slots (wallpaper, floor, curtains, picture, shelf, lamp, bed, rug and two corners). Furniture comes in themed sets from the Department Store; buy a set or single pieces, mix them freely in Items > Decorate, and a room dressed all in one set earns a bonus.
+- **A house of four rooms:** garden, kitchen, bedroom and bathroom, side by side. Tap the arrows at the edges, swipe, or press C to walk next door; the pet goes to the kitchen to eat, the bathroom to wash, the garden to play and its bedroom to sleep.
+- **Decorating:** every room has its own slots (the bedroom's ten are wallpaper, floor, window, picture, shelf, lamp, bed, rug and two corners). Furniture comes in themed sets from the Department Store; buy a set or single pieces, mix them freely in Items > Decorate, and a room dressed all in one set earns a bonus.
 - **Minigames:** Jump Rope and Snack Catch (Sports), Which Way? (guess where your pet hops; Smarts) and Copy Me (repeat your pet's left/right dance; Arts).
 - **Family:** a matchmaker (3 partners a day, each a wild pet from one of the founder lines with a twist or two), a wedding, the next-generation egg, and a family album.
 - **Town** (bottom row): 23 places to visit, each with its own backdrop and a resident who becomes a friend the more you chat (with gifts at 3 and 7 hearts).

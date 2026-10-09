@@ -14,7 +14,7 @@ import { foundTotal, BOOK_SIZE } from '../game/book.js';
 import { MatchmakerScene, AlbumScene } from './family.js';
 import { WardrobeScene, clothesIcon } from './wardrobe.js';
 import { DecorateScene } from './decorate.js';
-import { DECOR, SETS, owns, setOffer, buySet, buyDecor } from '../game/decor.js';
+import { DECOR, SETS, ROOMS, owns, setOffer, buySet, buyDecor } from '../game/decor.js';
 import { VERSION } from '../version.js';
 import { debugMenu } from './debug.js';
 import * as notify from '../notify.js';
@@ -75,7 +75,7 @@ function decorShop(app) {
   const g = app.game;
   const footer = () => `POINTS: ${g.points}`;
   const count = (set) => Object.values(DECOR).filter(it => it.set === set && owns(g, it.id)).length;
-  const size = (set) => Object.keys(SETS[set].pieces).length;
+  const size = (set) => Object.values(DECOR).filter(it => it.set === set).length;
   const tally = (set) => (count(set) === size(set) ? 'OWNED' : `${count(set)}/${size(set)}`);
   const openSet = (set, row) => {
     const pieces = Object.values(DECOR).filter(it => it.set === set);
@@ -87,7 +87,7 @@ function decorShop(app) {
         else { app.sfx('nope'); app.toast(r.msg); }
       },
     }, ...pieces.map(it => ({
-      label: it.name, get right() { return owns(g, it.id) ? 'OWNED' : it.price; },
+      label: Object.keys(SETS[set].pieces).length > 1 ? `${it.name} (${ROOMS[it.room].name})` : it.name, get right() { return owns(g, it.id) ? 'OWNED' : it.price; },
       action: () => {
         const r = buyDecor(g, it.id);
         if (r.ok) { app.sfx('coin'); app.toast(`Bought the ${it.name}! Put it out in Items > Decorate.`, 2400); app.save(); }

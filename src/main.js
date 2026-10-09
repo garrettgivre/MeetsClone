@@ -128,6 +128,7 @@ setupInput({
   buttons: document.querySelectorAll('.btn'),
   onButton: (b, dir) => app.scene.button?.(b, dir),
   onTap: (x, y) => app.scene.tap?.(x, y) ?? false,
+  onSwipe: (dir) => app.scene.swipe?.(dir),
   onFirstGesture: unlockAudio,
 });
 

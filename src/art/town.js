@@ -65,19 +65,15 @@ export const HOME_FEET = 256;
  * decoration makes a new one.
  */
 const homeKeys = [];
-export function homeRoom(sky = 'day', dark = false, layout = null) {
-  const key = `home:${sky}:${dark}:${layout ? Object.values(layout).join(',') : ''}`;
+export function homeRoom(sky = 'day', dark = false, layout = null, room = 'bedroom') {
+  const key = `home:${room}:${sky}:${dark}:${layout ? Object.values(layout).join(',') : ''}`;
   if (!cache.has(key)) {
     homeKeys.push(key);
-    while (homeKeys.length > 8) cache.delete(homeKeys.shift());
+    while (homeKeys.length > 12) cache.delete(homeKeys.shift());
     const k = kit();
-    homeScene(k, sky, layout || {});
-    // the panes: holes in the picture
-    const { x, y, w, h } = HOME_WINDOW;
-    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-      const p = (y + j) * RW + x + i;
-      if (k.bm.px[p] === HOLE) k.bm.px[p] = 0;
-    }
+    (ROOM_SCENES[room] || homeScene)(k, sky, layout || {});
+    // window panes, and a garden's whole sky: holes in the picture
+    for (let p = 0; p < k.bm.px.length; p++) if (k.bm.px[p] === HOLE) k.bm.px[p] = 0;
     if (dark) { dim(k.bm); dim(k.front); }
     cache.set(key, { back: k.bm, front: k.front });
   }
@@ -97,6 +93,66 @@ function dim(bm) {
     // light things become a half-tone, mid tones a sparse one, dark things solid night
     bm.px[i] = lum > 0.78 ? ((x + y) & 1 ? shade : night) : lum > 0.5 && (x & 1) === 0 && (y & 1) === 0 ? shade : night;
   }
+}
+
+/** Where each room shows the sky (hi-res room pixels): the bedroom's window panes, all of the garden's sky. */
+export const ROOM_SKY = { bedroom: HOME_WINDOW, garden: { x: 0, y: 0, w: 256, h: 150 } };
+
+/** The two front corners of a room: things that stand in front of the pet. */
+function frontCorners(k, pieces, shadow) {
+  k.layer('front');
+  for (const piece of pieces) for (const [name, x, y, opts, r] of piece.things) {
+    if (r) k.shadow(x, y, r, shadow, 3);
+    k.prop(name, x, y, opts);
+  }
+  k.layer('back');
+}
+
+/** The kitchen: a stove and a counter against the wall, a shelf and a window over them, a table and a seat in front. */
+function kitchenScene(k, sky, layout) {
+  const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-kitchen-${slot}`];
+  const wall = art('wall'), floor = art('floor'), win = art('window'), stove = art('stove'), counter = art('counter'), shelf = art('shelf');
+  k.wall(wall.base, wall.pattern, wall.kind, { wainscot: wall.wainscot });
+  k.prop(win.prop, 142, 98, win.ramps);
+  k.prop('wallShelf', 214, 104, shelf.ramps);
+  for (const [name, dx, opts] of shelf.things) k.prop(name, 214 + dx, 92, opts);
+  k.tiles(HZ, floor.c, floor.c2); k.floorShadow(floor.shadow);
+  if (sky === 'night') k.lightPool(128, 230, 70, 12, 'gold.3');
+  k.shadow(60, 198, 46, floor.shadow, 4); k.prop(stove.prop, 60, 198, stove.ramps);
+  k.shadow(208, 198, 40, floor.shadow, 4); k.prop(counter.prop, 208, 198, counter.ramps);
+  for (const [name, dx, opts] of counter.things || []) k.prop(name, 208 + dx, 198 - PROPS[counter.prop].h, opts);
+  frontCorners(k, [art('table'), art('seat')], floor.shadow);
+}
+
+/** The bathroom: a mirror on the tiled wall, a cabinet under a little window, a mat, towels and a plant. */
+function bathroomScene(k, sky, layout) {
+  const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-bathroom-${slot}`];
+  const wall = art('wall'), floor = art('floor'), win = art('window'), mirror = art('mirror'), cabinet = art('cabinet'), mat = art('mat');
+  k.wall(wall.base, wall.pattern, wall.kind, { wainscot: wall.wainscot });
+  k.prop(win.prop, 204, 72, win.ramps);
+  k.prop(mirror.prop, 84, 142, mirror.ramps);
+  k.tiles(HZ, floor.c, floor.c2); k.floorShadow(floor.shadow);
+  if (sky === 'night') k.lightPool(84, 196, 44, 9, 'gold.3');
+  k.shadow(204, 198, 30, floor.shadow, 4); k.prop(cabinet.prop, 204, 198, cabinet.ramps);
+  k.rug(124, HOME_FEET + 4, 64, 12, mat.c1, mat.c2);
+  frontCorners(k, [art('plant'), art('towels')], floor.shadow);
+}
+
+/** The garden: open sky over a hedge and a fence, a tree, a centrepiece on the lawn, flowers and a seat in front. */
+function gardenScene(k, sky, layout) {
+  const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-garden-${slot}`];
+  const ground = art('ground'), fence = art('fence'), tree = art('tree'), feature = art('feature');
+  const top = 150; // where the lawn begins
+  k.rect(0, 0, RW, top, 'night'); // the sky: cut out, so the real one shows
+  k.canopy(-24, 118, 304, 34, fence.hedge, { seed: 91, r: 9 });
+  k.field(top, ground.c, { seed: 12, light: ground.light });
+  k.tufts(164, 300, ground.tufts, 36, 9);
+  // a picket fence along the back of the lawn
+  for (let x = 2; x < RW; x += 12) { k.rect(x, 134, 7, 20, fence.c); k.rect(x + 6, 136, 1, 18, fence.shade); for (let j = 0; j < 3; j++) k.rect(x + j, 131 + j, 7 - j * 2, 1, fence.c); }
+  k.rect(0, 139, RW, 3, fence.c); k.rect(0, 147, RW, 3, fence.c); k.dither(0, 154, RW, 2, C('green.2'));
+  k.shadow(44, 198, 20, 'green.2', 4); k.prop(tree.prop, 40, 198, tree.ramps);
+  k.shadow(176, 206, feature.shadow, 'green.2', 5); k.prop(feature.prop, 176, 206, feature.ramps);
+  frontCorners(k, [art('flowers'), art('seat')], 'green.2');
 }
 
 /**
@@ -132,14 +188,10 @@ function homeScene(k, sky, layout) {
   // a rug to stand on
   k.rug(124, HOME_FEET + 4, 80, 14, rug.c1, rug.c2);
   if (rug.star) k.star5(124, HOME_FEET + 4, 8, rug.star);
-  // the two front corners stand in front of the pet
-  k.layer('front');
-  for (const slot of ['corner', 'plant']) for (const [name, x, y, opts, r] of art(slot).things) {
-    if (r) k.shadow(x, y, r, floor.shadow, 3);
-    k.prop(name, x, y, opts);
-  }
-  k.layer('back');
+  frontCorners(k, [art('corner'), art('plant')], floor.shadow);
 }
+
+const ROOM_SCENES = { bedroom: homeScene, kitchen: kitchenScene, bathroom: bathroomScene, garden: gardenScene };
 
 // ---------------------------------------------------------------- colour helpers
 const NEUTRAL = ['ink', 'shade', 'gray', 'silver', 'mist', 'white'];

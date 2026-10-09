@@ -2,15 +2,15 @@
 import { C, mutedLut } from '../engine/palette.js';
 import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
-import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BROOM_ICON, BATH_ICON, POTTY_ICON } from '../art/icons.js';
+import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BROOM_ICON, BATH_ICON, POTTY_ICON, ARROW } from '../art/icons.js';
 import { hash } from '../engine/rng.js';
 import { composePet, composeEgg, composeGhost, CANVAS, GROUND } from '../game/render.js';
 import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
 import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort, bathe, toilet, isDirty, isPottyTrained, POTTY_TRAINED } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
-import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars } from './room.js';
-import { layoutOf } from '../game/decor.js';
+import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide } from './room.js';
+import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -25,6 +25,7 @@ const POOP_X = [104, 116, 92, 80];
 const MUTED = mutedLut('white', 1, 0.2);      // on the night sky
 const MUTED_DAY = mutedLut('ink', 1, 0.25);   // darker greys, to show against a bright sky
 const CELL = W / 5;
+const DOOR_Y = 58; // where the arrows to the next rooms sit, from the top of the room
 // how far a small pet is lifted so it shows over the rim of the tub
 const BATH_LIFT = { baby: 17, child: 12, teen: 9, adult: 9 };
 const GRIME = ['CLEAN', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
@@ -41,6 +42,7 @@ export class HomeScene {
     this.moveIn = 1500;
     this.blink = 0;
     this.anim = null;
+    this.slide = null; // stepping between rooms: { from, to, dir, t, dur, then }
     this.fx = [];
   }
 
@@ -91,7 +93,7 @@ export class HomeScene {
 
   // ---------- input ----------
   button(b, dir = 1) {
-    if (this.anim) return;
+    if (this.anim || this.slide) return;
     const app = this.app;
     if (b === 'A') {
       this.cursor = this.cursor < 0 ? (dir > 0 ? 0 : ALL.length - 1) : (this.cursor + dir + ALL.length) % ALL.length;
@@ -101,16 +103,51 @@ export class HomeScene {
       else this.patPet();
     } else if (b === 'C') {
       if (this.cursor >= 0) { this.cursor = -1; app.sfx('back'); }
+      else this.stepRoom(1, true); // with no menu picked, C walks on to the next room
     }
   }
 
+  // ---------- the house ----------
+  /**
+   * Walk to another room; `then` runs on arrival (care actions use it: meals
+   * are in the kitchen, baths in the bathroom, toys in the garden, sleep in bed).
+   */
+  goRoom(to, then = null) {
+    const game = this.game, from = roomOf(game);
+    if (to === from) { then?.(); return true; }
+    if (this.pet?.asleep && !then) { this.app.sfx('nope'); this.app.toast('Shh! Sleeping...'); return false; }
+    const dir = HOUSE.indexOf(to) > HOUSE.indexOf(from) ? 1 : -1;
+    game.room = to;
+    this.slide = { from, to, dir, t: 0, dur: 300, then };
+    // the pet comes in by the side it left through
+    this.petX = dir > 0 ? 26 : 100;
+    this.targetX = 64;
+    this.facing = dir;
+    this.moveIn = 1200;
+    this.app.sfx('blip');
+    return true;
+  }
+  /** The room next door (dir -1 left, 1 right); `wrap` goes round from the last room to the first. */
+  stepRoom(dir, wrap = false) {
+    let to = nextRoom(roomOf(this.game), dir);
+    if (!to && wrap) to = dir > 0 ? HOUSE[0] : HOUSE[HOUSE.length - 1];
+    if (to) this.goRoom(to);
+  }
+  /** Dragging the room to the left brings on the one to its right. */
+  swipe(dir) { if (!this.anim && !this.slide && this.app.scene === this) this.stepRoom(-dir); }
+
   tap(x, y) {
-    if (this.anim) return false;
+    if (this.anim || this.slide) return false;
     const { top, bottom, room } = LAYOUT;
     if (y >= top.y && y < top.y + top.h) { this.cursor = Math.min(4, Math.floor(x / CELL)); this.open(ALL[this.cursor]); return true; }
     if (y >= bottom.y && y < bottom.y + bottom.h) { this.cursor = 5 + Math.min(4, Math.floor(x / CELL)); this.open(ALL[this.cursor]); return true; }
     if (y >= room.y && y < room.y + room.h) {
       const pet = this.pet;
+      // the arrows at the room's edges lead next door
+      if (y > room.y + DOOR_Y - 12 && y < room.y + DOOR_Y + 20 && (x < 12 || x >= W - 12)) {
+        const dir = x < 12 ? -1 : 1;
+        if (nextRoom(roomOf(this.game), dir)) { this.stepRoom(dir); return true; }
+      }
       if (pet && pet.poop > 0 && x > 72 && y > ROOM_FLOOR - 20 && pet.lights && canAct(pet)) { this.sweep(); return true; }
       if (Math.abs(x - this.petX) < 16 && y > ROOM_FLOOR - 40 && y < ROOM_FLOOR + 4) { this.patPet(); return true; }
     }
@@ -147,7 +184,8 @@ export class HomeScene {
   }
 
   /** Run a care action with its animation. Used by menus too. */
-  doFeed(foodId) {
+  doFeed(foodId) { this.goRoom('kitchen', () => this.feedNow(foodId)); }
+  feedNow(foodId) {
     const app = this.app;
     const r = feed(this.game, foodId);
     if (!r.ok) {
@@ -168,7 +206,8 @@ export class HomeScene {
     app.sfx('eat');
   }
 
-  doPlay(toyId) {
+  doPlay(toyId) { this.goRoom('garden', () => this.playNow(toyId)); }
+  playNow(toyId) {
     const app = this.app;
     const r = play(this.game, toyId);
     if (!r.ok) { app.sfx('nope'); if (r.msg) app.toast(r.msg); return; }
@@ -183,7 +222,8 @@ export class HomeScene {
     this.play({ type: 'clean', dur: 1000, done: () => clean(this.game) });
   }
 
-  doBath() {
+  doBath() { this.goRoom('bathroom', () => this.bathNow()); }
+  bathNow() {
     const app = this.app;
     const r = bathe(this.game);
     if (!r.ok) { app.sfx('nope'); if (r.refuse) this.play({ type: 'refuse', dur: 900 }); if (r.msg) app.toast(r.msg); return; }
@@ -191,7 +231,8 @@ export class HomeScene {
     this.play({ type: 'bath', dur: 2800, done: () => { app.sfx('happy'); app.toast(r.msg); this.play({ type: 'happy', dur: 900 }); app.save(); } });
   }
 
-  doToilet() {
+  doToilet() { this.goRoom('bathroom', () => this.toiletNow()); }
+  toiletNow() {
     const app = this.app;
     const r = toilet(this.game);
     if (!r.ok) { app.sfx('nope'); if (r.refuse) this.play({ type: 'refuse', dur: 900 }); if (r.msg) app.toast(r.msg); return; }
@@ -240,9 +281,13 @@ export class HomeScene {
         return;
       }
       case 'lights': {
-        const r = toggleLights(this.game);
-        app.sfx(r.lights ? 'select' : 'back');
-        if (!r.lights && !pet.asleep && canAct(pet)) app.toast("It's not bedtime yet!");
+        // lights out is for bed, so the pet goes to its bedroom first
+        const flip = () => {
+          const r = toggleLights(this.game);
+          app.sfx(r.lights ? 'select' : 'back');
+          if (!r.lights && !pet.asleep && canAct(pet)) app.toast("It's not bedtime yet!");
+        };
+        if (pet.lights) this.goRoom('bedroom', flip); else flip();
         return;
       }
       default:
@@ -255,6 +300,16 @@ export class HomeScene {
   update(dt) {
     const pet = this.pet;
     const t = this.app.time;
+    if (this.slide) {
+      this.slide.t += dt;
+      if (this.slide.t < this.slide.dur) return;
+      const s = this.slide;
+      this.slide = null;
+      s.then?.();
+      return;
+    }
+    // a pet that nods off anywhere else is carried to bed
+    if (pet?.asleep && !this.anim && roomOf(this.game) !== 'bedroom') { this.goRoom('bedroom', () => {}); return; }
     if (this.anim) {
       this.anim.t += dt;
       if (this.anim.t >= this.anim.dur) {
@@ -292,8 +347,14 @@ export class HomeScene {
   // ---------- draw ----------
   draw(scr) {
     const game = this.game, pet = this.pet, t = this.app.time;
-    this.drawRoom(scr);
     const lightsOff = pet && !pet.lights;
+    if (this.slide) {
+      const s = this.slide, side = (room) => ({ room, layout: layoutOf(game, room) });
+      drawSlide(scr, game.simTime, lightsOff, side(s.from), side(s.to), s.dir, s.t / s.dur);
+      this.drawBars(scr, t);
+      return;
+    }
+    this.drawRoom(scr);
 
     // poop
     if (pet && !lightsOff && this.anim?.type !== 'clean-done') {
@@ -308,7 +369,7 @@ export class HomeScene {
     // pet / egg / ghost
     if (pet) this.drawPet(scr, t, lightsOff);
     // the toy chest and plant in the front corners stand in front of the pet
-    drawRoomFront(scr, game.simTime, lightsOff, layoutOf(game));
+    drawRoomFront(scr, game.simTime, lightsOff, layoutOf(game), roomOf(game));
 
     // effects
     for (const f of this.fx) scr.draw(f.spr, f.x, f.y, {});
@@ -323,7 +384,15 @@ export class HomeScene {
       }
     }
 
+    this.drawDoors(scr);
     this.drawBars(scr, t);
+  }
+
+  /** A little arrow tab on each side of the room that has another room beyond it. */
+  drawDoors(scr) {
+    const room = roomOf(this.game), y = LAYOUT.room.y + DOOR_Y;
+    if (nextRoom(room, -1)) { scr.panel(-2, y - 4, 9, 13, COL.white, COL.ink); scr.draw(ARROW, 1, y, { flip: true }); }
+    if (nextRoom(room, 1)) { scr.panel(W - 7, y - 4, 9, 13, COL.white, COL.ink); scr.draw(ARROW, W - 4, y, {}); }
   }
 
   drawPet(scr, t, lightsOff) {
@@ -518,7 +587,7 @@ export class HomeScene {
   }
 
   drawRoom(scr) {
-    drawRoomHD(scr, this.game.simTime, this.app.time, this.pet && !this.pet.lights, layoutOf(this.game));
+    drawRoomHD(scr, this.game.simTime, this.app.time, this.pet && !this.pet.lights, layoutOf(this.game), roomOf(this.game));
   }
 
   drawBars(scr, t) {
@@ -550,6 +619,8 @@ export class HomeScene {
     }
     // info bar
     // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
+    // ...or, with no menu picked, which room of the house this is
     if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, fg, { align: 'center' });
+    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 4, sky.dark ? COL.silver : COL.shade, { align: 'center' });
   }
 }

@@ -53,7 +53,7 @@ export class EndingScene {
     } else {
       // its own room, empty, and the note it left on the rug
       const now = this.app.game.simTime;
-      const layout = layoutOf(this.app.game);
+      const layout = layoutOf(this.app.game, 'bedroom');
       drawRoom(scr, now, this.app.time, false, layout);
       scr.draw(LETTER, W / 2 - 8, ry + 122, {});
       drawRoomFront(scr, now, false, layout);

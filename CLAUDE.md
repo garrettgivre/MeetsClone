@@ -4,9 +4,9 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.19.0, 8 October 2026)
+## Where things stand (v0.20.0, 8 October 2026)
 
-Everything is committed, pushed and live. `npm test` passes (92 tests).
+Everything is committed, pushed and live. `npm test` passes (93 tests).
 
 **One pixel scale: done.** The owner asked for the whole game to render at a single pixel size ("Yes make it consistent and look nice", then "continue the one pixel scale pass for the rest"). It shipped in four releases:
 - v0.16.7: the font and the home-screen symbols.
@@ -20,7 +20,8 @@ What is left of it, all small:
 - I viewed every new sprite and scene at zoom in the browser pane, not on a phone.
 
 **Other open items**
-- **Room decorations: the first release is out (v0.19.0); more sets and rooms are wanted.** The owner asked for decorating that is simple ("pre defined slots for items kind of vibe, but with some customization"), in themed sets "sort of like we've done for Room for Two" (another of their apps; I have not seen it), with "tamagotchi vibes", and planned so that "multiple rooms and outside rooms" can be added later. What exists: one room (the bedroom) with ten slots, three sets (Sweetheart, the starter; Starry Night; Forest Cabin), a shop page at the Department Store, and Items > Decorate. See "Decorating" below. Not done: more sets, a second room and a way to move between rooms, outdoor rooms, colour choices within an item. The two new beds are the starter bed with a different carving and colours, not new shapes.
+- **The house and its themed sets: built, and short of sets.** The owner asked for decorating that is simple ("pre defined slots for items kind of vibe, but with some customization"), with "tamagotchi vibes", in themed sets ("a full set of items under the 'modern' theme or 'sea' theme things like that"), and then for "room features for the house", done the way earlier Tamagotchis did it ("typically there are ways to move left and right to different rooms"). What exists (v0.19.0, v0.20.0): four rooms in a row, each with its own slots; the starter set (Sweetheart) furnishing all four; Starry Night and Forest Cabin for the bedroom only; a shop page at the Department Store; Items > Decorate. See "The house and decorating" below. **Next, in the owner's words: more themed sets, Modern and Sea first**, each ideally covering every room. Also not done: colour choices within an item; the two extra beds are the starter bed with a different carving, not new shapes; the kitchen, bathroom and garden are furnished only from props that already existed.
+  - What I found about the real devices (I could not open the Tamagotchi wiki; this is from search summaries, Thaao's Pix guide and vPet Paradise): the colour-screen iD and P's had a living room, bedroom, kitchen and bathrooms, each restyled with an interior bought in a shop; the On/Meets has one living room restyled whole from the Room menu, and B walks out to the garden; the Pix starts in the living room and a swipe left or right moves to the garden or the character's own room, with one piece of furniture on each side of the living room. Ours follows that: swipe or arrows to the next room, sets bought in a shop, fixed places for things.
 - **Clothes on the pet: hats and face items are done (v0.18.0); the rest is not.** The owner said "Sure start on the clothing" after I proposed three passes. Done: the six hats and five face items, in `src/art/pets/clothes.js`, drawn by `drawHat` and `drawFaceWear` in `src/game/pet-art.js` (see "Clothes" under Pet art). Still to draw, in the order I proposed:
   1. neckwear on the neck socket: `bowtie`, `tie`, `scarf`, `sash`;
   2. body clothes, the cape and shoes: `sweater`, `overalls`, `dress`, `collar`, `apron`, `cape`, `shoes`. These have to follow each form's body, so expect a drawing per form.
@@ -44,7 +45,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 92 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 93 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -107,15 +108,16 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 
 ## The home room
 
-`homeRoom(sky, dark)` in `src/art/town.js` builds it like a town place from the props in `src/art/props-home.js` (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`), one cached picture per time of day plus a lights-off version (`dim` keeps the shapes as moonlit half-tones). The window panes are holes: `src/scenes/room.js` draws the sky, sun and cloud, or moon and stars, and then the room over them. The garland is drawn after the window so it hangs in front. The toy chest and plant are on the front layer (`drawRoomFront`). What is in the room comes from the player's decorations (see "Decorating").
+`homeRoom(sky, dark)` in `src/art/town.js` builds it like a town place from the props in `src/art/props-home.js` (`homeWindow`, `petBed`, `nightLamp`, `wallShelf`, `sproutPot`, `heartFrame`, `toyChest`), one cached picture per time of day plus a lights-off version (`dim` keeps the shapes as moonlit half-tones). The window panes are holes: `src/scenes/room.js` draws the sky, sun and cloud, or moon and stars, and then the room over them. The garland is drawn after the window so it hangs in front. The toy chest and plant are on the front layer (`drawRoomFront`). What is in the room comes from the player's decorations (see "The house and decorating").
 
-## Decorating
+## The house and decorating
 
-- **Rules** (`src/game/decor.js`, no drawing): `ROOMS` lists each room's slots; `SLOTS` gives a slot's label and price; `SETS` names one piece per slot. Items are generated as `DECOR['set-slot']`. The save holds `game.decor = { owned, rooms: { room: { slot: id } }, themes }` and `game.room`. `buyDecor`, `buySet` (what is left of a set at 20% off), `place`, `cycle`, `useSet`. A room dressed entirely in one bought set pays `THEME_BONUS` once per room and set. `fixDecor` (called by `migrate`) adds rooms and slots a save lacks and resets anything not owned or no longer in the catalogue.
-- **Looks** (`src/art/decor-art.js`): one entry per item saying which props and colours to use; `homeScene` in `src/art/town.js` builds the room slot by slot from it. `homeRoom(sky, dark, layout)` caches the last eight pictures. New furniture goes in `src/art/props-decor.js`; `variant(name, of, rows)` there copies a prop with some rows retyped by hand.
-- **Screens:** `src/scenes/decorate.js` is three-button decorating over the live room (A next slot, B next owned item, C done; tap a spot to pick its slot, tap the bar to change it). `SPOT` holds where each slot is; the bar moves to the top for slots on the floor. The shop page is `decorShop` in `menus.js`, reached from the Department Store.
-- **To add a set:** an entry in `SETS` with a name for every slot of its room, an entry per item in `DECOR_ART`, and any new props. `tests/decor.test.js` fails if a slot is missed or a prop doesn't exist.
-- **To add a room:** an entry in `ROOMS` (with `outdoor: true` for a garden or the like), a starter set for it in `SETS`, its slots' spots in `SPOT`, and a scene builder like `homeScene`; `homeRoom` and `drawRoom` in `room.js` currently assume the bedroom and need a room argument. Nothing yet lets the player change `game.room`.
+- **Rules** (`src/game/decor.js`, no drawing): `HOUSE` is the row of rooms, left to right (garden, kitchen, bedroom, bathroom); `ROOMS` lists each room's slots; `SLOTS` gives a slot's label and price; `SETS[set].pieces[room][slot]` names a set's piece. Items are generated into `DECOR`; `decorId(set, room, slot)` is `set-slot` in the bedroom (the first room made, kept so early saves work) and `set-room-slot` elsewhere. The save holds `game.decor = { owned, rooms: { room: { slot: id } }, themes }` and `game.room`, the room on show. `buyDecor`, `buySet` (what is left of a set at 20% off), `place`, `cycle`, `useSet`, `nextRoom`. A room dressed entirely in one bought set pays `THEME_BONUS` once per room and set. `fixDecor` (called by `migrate`) adds rooms and slots a save lacks and resets anything not owned or no longer in the catalogue.
+- **Looks** (`src/art/decor-art.js`): one entry per item saying which props and colours to use. `ROOM_SCENES` in `src/art/town.js` has a builder per room (`homeScene` is the bedroom) that lays the room out slot by slot. `homeRoom(sky, dark, layout, room)` caches the last twelve pictures. Anything painted in the colour `night` is cut out afterwards, so the real sky shows: the bedroom's window panes, the whole sky over the garden. `ROOM_SKY` says where a room's sun, cloud, moon and stars go. New furniture goes in `src/art/props-decor.js`; `variant(name, of, rows)` there copies a prop with some rows retyped by hand.
+- **Walking the house** (`src/scenes/home.js`): `goRoom(to, then)` starts a slide (`drawSlide` in `room.js`) and runs `then` on arrival; `stepRoom(dir, wrap)` goes next door. Arrows at the room's edges (`drawDoors`), a swipe (`input.js` reports one as `onSwipe`), or C with no menu picked. Care goes to the right room first: `doFeed` to the kitchen, `doBath` and `doToilet` to the bathroom, `doPlay` to the garden, lights out to the bedroom; a pet that falls asleep elsewhere is moved to the bedroom and cannot be walked out while it sleeps. The pet, its poop and the sweep are simply wherever you are looking. The info bar names the room when no menu is picked.
+- **Screens:** `src/scenes/decorate.js` decorates the room on show, three-button style over the live room (A next slot, B next owned item, C done; tap a spot to pick its slot, tap the bar to change it). `SPOT` holds where each room's slots are; the bar moves to the top for slots low in the room. The shop page is `decorShop` in `menus.js`, reached from the Department Store.
+- **To add a set:** an entry in `SETS` with a name for every slot of each room it covers, an entry per item in `DECOR_ART`, and any new props. `tests/decor.test.js` fails if a slot is missed or a prop doesn't exist.
+- **To add a room:** an entry in `ROOMS` and its place in `HOUSE`, pieces for it in the starter set, a builder in `ROOM_SCENES`, and its slots' spots in `SPOT`.
 
 ## The sky round the room
 

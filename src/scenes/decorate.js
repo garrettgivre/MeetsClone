@@ -15,9 +15,20 @@ const SPOT = {
     wall: [47, 58], floor: [30, 104], window: [31, 14], picture: [69, 30], shelf: [103, 26],
     lamp: [73, 66], bed: [108, 72], rug: [62, 122], corner: [16, 134], plant: [119, 134],
   },
+  kitchen: {
+    wall: [118, 22], floor: [64, 104], window: [71, 30], stove: [30, 48], counter: [104, 82], shelf: [107, 40],
+    table: [16, 132], seat: [117, 134],
+  },
+  bathroom: {
+    wall: [64, 16], floor: [64, 104], window: [102, 20], mirror: [42, 34], cabinet: [102, 70], mat: [62, 122],
+    plant: [12, 132], towels: [117, 132],
+  },
+  garden: {
+    ground: [64, 100], fence: [84, 66], tree: [20, 72], feature: [88, 76], flowers: [20, 142], seat: [114, 142],
+  },
 };
 const BAR_H = 24;
-const LOW = new Set(['rug', 'corner', 'plant', 'floor']); // slots the bar would hide at the bottom, so it moves up for them
+const LOW = new Set(['rug', 'corner', 'plant', 'floor', 'table', 'seat', 'mat', 'towels', 'ground', 'flowers']); // slots the bar would hide at the bottom, so it moves up for them
 
 export class DecorateScene {
   constructor(app) {
