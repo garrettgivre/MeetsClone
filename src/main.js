@@ -1,6 +1,6 @@
 // Boot: screen, input, the scene stack, the simulation clock and saving.
 import { Screen, W, H, lcdCell } from './engine/screen.js';
-import { C, COLORS } from './engine/palette.js';
+import { C, COLORS, NAMES } from './engine/palette.js';
 import { setupInput } from './engine/input.js';
 import { unlockAudio, play, setMuted } from './engine/audio.js';
 import { newGame, advance, needs, MIN } from './game/pet.js';
@@ -9,7 +9,7 @@ import { alertFor } from './game/alerts.js';
 import * as notify from './notify.js';
 import { checkForUpdate, justUpdated } from './update.js';
 import { VERSION } from './version.js';
-import { paintButtons } from './art/buttons.js';
+import { paintButtons, CONTRAST } from './art/buttons.js';
 import { HomeScene } from './scenes/home.js';
 import { dialog, LAYOUT } from './ui.js';
 
@@ -61,6 +61,9 @@ const app = {
    */
   pageSky(top, bottom) {
     this.sky = [top, bottom];
+    // the buttons stand out from the ground under them: a deep colour from across the wheel
+    const ground = (typeof bottom === 'number' ? NAMES[bottom] : bottom).split('.')[0], ramp = CONTRAST[ground] || 'violet';
+    if (ramp !== this.buttonRamp) { this.buttonRamp = ramp; paintButtons(undefined, ramp); }
     // (a colour's name, or its palette index)
     const css = (c) => {
       const lcd = document.body.classList.contains('lcd');

@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.23.0, 9 October 2026)
+## Where things stand (v0.23.1, 9 October 2026)
 
 Everything is committed, pushed and live. `npm test` passes (95 tests).
 
@@ -133,6 +133,7 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 The owner asked for the dark blue areas outside the room to show the sky the window looks out on (v0.17.5).
 - `src/scenes/room.js` holds one sky picture the size of the whole screen per state (`SKY`: four bands, dithered seams at `SEAMS`). `drawRoom` copies the part behind the window panes; `drawSkyBars` copies the parts above and below the room (status bar, icon rows, info bar) and adds twinkling stars at night or small drifting clouds by day. Lights off counts as night.
 - `drawSkyBars` returns `{ sky, dark, top, bottom }`. `drawBars` in `home.js` writes in ink on a bright sky and in white at night, and passes the top and bottom colours to `app.pageSky` (`main.js`), which colours the notch area and the button strip (a shade deeper when the LCD filter is on, to match the filtered screen). The navy in `style.css` only shows until the first frame.
+- **The buttons contrast with the ground.** The owner: "have the buttons be dark contrasting color to whatever the ground is... yellow sand, the buttons would turn a dark purple... green grass it's a dark magenta." `app.pageSky` looks up the ground's ramp in `CONTRAST` (`src/art/buttons.js`) and repaints the buttons from that ramp's dark shades when it changes. The grids are still the gold drawing; only the inks change.
 - **Ground below, sky above.** The bars under the room (bottom icon row, info bar, and the page strip with the buttons) are the ground the house stands on: the garden lawn's colours, whichever room is on show (the owner asked for this "to be consistent"). `drawBars` passes them to `drawSkyBars`, which returns the ground as `bottom` (a palette index) and `bottomDark` for the text.
 - **Lights out** darkens everything but the pet and the lamp (the owner's words): the ground bars take the room's two night shades, the icons fade further except the lamp icon, which keeps full colour, and `app.setDark` puts `body.dark` on the page so the gold buttons dim (`style.css`).
 - **Out of doors the frame goes** (the owner: "The frame should basically disappear I think when outside"): for a room marked `outdoor` the rules above and below the room are not drawn, so the lawn in the picture runs straight on into the bars.
