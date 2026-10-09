@@ -19,14 +19,15 @@ import { PACKED, C, ramp } from '../src/engine/palette.js';
 import { homeRoom, RW, HOME_FEET } from '../src/art/town.js';
 import * as axolotl from '../src/art/pets/fine/axolotl.js';
 import * as caterpillar from '../src/art/pets/fine/caterpillar.js';
+import * as jellyfish from '../src/art/pets/fine/jellyfish.js';
 
-const ALL = { axolotl, caterpillar };
+const ALL = { axolotl, caterpillar, jellyfish };
 const q = new URLSearchParams(location.search);
 const z = +(q.get('z') || 3);
 const out = document.getElementById('out');
 const names = (q.get('only') || Object.keys(ALL).join(',')).split(',').filter(n => ALL[n]);
 const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR' };
-const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', q: 'red.2' };
+const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', q: 'red.2', Y: 'gold.3', y: 'gold.1' };
 
 // read a part: note its sockets (painted as body colour)
 function read(p) {
@@ -35,17 +36,19 @@ function read(p) {
   const rows = p.rows.map((r, y) => [...r].map((ch, x) => {
     if (!SOCKETS[ch]) return ch;
     (sockets[SOCKETS[ch]] ||= []).push([x, y]);
-    return '4';
+    return p.under?.[ch] || '4';
   }));
   return { ...p, rows, sockets, pivot: p.pivot || [0, 0] };
 }
 
 /** Put a founder together. Returns its pixels [x, y, colour] with the body's top-left at 0, 0, and their bounds. */
 function compose(A) {
-  const P = Object.fromEntries(['HEAD', 'EARS', 'TOPPER', 'BODY', 'TAIL', 'FEET', 'EYE', 'MOUTH', 'MARK', 'CHEEK'].map(n => [n, read(A[n])]));
+  const P = Object.fromEntries(['HEAD', 'EARS', 'TOPPER', 'BODY', 'TAIL', 'WINGS', 'SPOTS', 'FEET', 'EYE', 'MOUTH', 'MARK', 'CHEEK'].map(n => [n, read(A[n])]));
   const color = q.get('color') || A.LOOK.color, accent = q.get('accent') || A.LOOK.accent;
   const col = { 4: ramp(color, 3), 3: ramp(color, 2), 2: ramp(color, 1), 8: ramp(accent, 3), 7: ramp(accent, 2), 6: ramp(accent, 1) };
   for (const [k, v] of Object.entries(FIXED)) col[k] = C(v);
+  const eye = A.LOOK.eye || 'ink';
+  col.e = ramp(eye, 2); col.E = ramp(eye, 3);
   const px = new Map();
   const stamp = (p, ax, ay, flip = false, at = p && p.pivot) => p && p.rows.forEach((r, j) => r.forEach((ch, i) => {
     if (ch !== '.') px.set((flip ? ax + at[0] - i : ax - at[0] + i) + ',' + (ay - at[1] + j), col[ch]);
@@ -57,10 +60,13 @@ function compose(A) {
   const [el] = H('earL'), [er] = H('earR'), [t] = B('tail'), [f] = H('face'), [top] = H('top');
   const ears = () => { stamp(P.EARS, el[0], el[1]); stamp(P.EARS, er[0], er[1], true); };
   if (!P.EARS.front) ears();
+  const [wl] = B('wingL'), [wr] = B('wingR');
+  if (P.WINGS && wl) { stamp(P.WINGS, wl[0], wl[1]); stamp(P.WINGS, wr[0], wr[1], true); }
   if (t) stamp(P.TAIL, t[0], t[1]);
   stamp(P.BODY, 0, 0, false, [0, 0]);
-  for (const [x, y] of B('feet')) stamp(P.FEET, x, y);
+  if (P.FEET) for (const [x, y] of B('feet')) stamp(P.FEET, x, y);
   stamp(P.HEAD, hx, hy, false, [0, 0]);
+  if (P.SPOTS) for (const [x, y] of P.SPOTS.at) stamp(P.SPOTS, hx + x, hy + y);
   if (P.EARS.front) ears();
   stamp(P.TOPPER, top[0], top[1]);
   const F = A.FACE;
@@ -90,9 +96,10 @@ const TOP = 96, RH = 190;
 sheet(RW, RH, z, (set) => {
   const room = homeRoom('day', false, undefined, q.get('room') || undefined);
   for (let y = 0; y < room.back.h; y++) for (let x = 0; x < RW; x++) set(x, y - TOP, room.back.px[y * RW + x]);
-  pets.forEach(([, k], i) => {
+  pets.forEach(([n, k], i) => {
+    const lift = ALL[n].LOOK.floats || 0;
     const cx = Math.round((RW * (i + 0.5)) / pets.length), w = k.x1 - k.x0 + 1;
-    for (const [x, y, c] of k.cells) set(cx - (w >> 1) + x - k.x0, HOME_FEET + 2 - TOP - (k.y1 - y), c);
+    for (const [x, y, c] of k.cells) set(cx - (w >> 1) + x - k.x0, HOME_FEET + 2 - TOP - lift - (k.y1 - y), c);
   });
 }, 'in a room');
 
