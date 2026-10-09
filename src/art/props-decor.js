@@ -20,6 +20,7 @@ import './props-forest-5.js';
 import './props-forest-6.js';
 import './props-redrawn.js';
 import './props-redrawn-2.js';
+import './props-redrawn-3.js';
 
 
 // ---------- the starry set's toy ----------

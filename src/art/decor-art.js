@@ -87,7 +87,7 @@ export const DECOR_ART = {
   'starry-bathroom-plant': { things: [['moonFlower', 20, 309, { stone: 'violet' }, 9]] },
   'starry-garden-ground': { bits: 'meadow', ramps: { leaf: 'green', accent: 'gold', glass: 'violet' }, bar: 'green.2' },
   'starry-garden-fence': { prop: 'fenceStars', ramps: { roof: 'gold', stone: 'indigo' }, hedge: 'green.1' },
-  'starry-garden-tree': { prop: 'lanternTree', ramps: { leaf: 'green', roof: 'gold' }, extras: [['paperLantern', -17, -30, {}], ['paperLantern', 2, -40, { roof: 'orange' }], ['paperLantern', 19, -31, {}]] },
+  'starry-garden-tree': { prop: 'lanternTree', ramps: { leaf: 'green', roof: 'gold' }, extras: [['paperLantern', -17, -22, {}], ['paperLantern', 1, -26, { roof: 'orange' }], ['paperLantern', 20, -24, {}]] },
   'starry-garden-feature': { prop: 'bigTelescope', ramps: { roof: 'gold', stone: 'indigo' }, shadow: 26 },
   'starry-garden-flowers': { things: [['moonFlower', 30, 308, {}, 9]] },
   'starry-garden-seat': { things: [['crescentBench', 222, 308, {}, 18]] },

@@ -157,31 +157,3 @@ defineProp('clamBed', [
   '....................................aaaaaaaaaaaaaaaa....................................',
 ]);
 
-// Modern: a low padded pod on four peg legs, with a flat cushion and a little tag.
-defineProp('podBed', [
-  '........eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee........',
-  '......eehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhee......',
-  '.....ehhggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggffe.....',
-  '....ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe....',
-  '...ehggeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeegffe...',
-  '...ehggeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddegffe...',
-  '...ehggedddccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccbbbegffe...',
-  '...ehggeccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccegffe...',
-  '...ehggeccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccegffe...',
-  '...ehggebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbegffe...',
-  '..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee..',
-  '.ehhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhe.',
-  'ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe',
-  'ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe',
-  'ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggccggggggggggggfe',
-  'ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggbbggggggggggggfe',
-  'ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe',
-  'ehggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe',
-  'egggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggfe',
-  'effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe',
-  '.effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe.',
-  '..eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee..',
-  '........5775................................................................5665........',
-  '........5775................................................................5665........',
-  '........5555................................................................5555........',
-]);
