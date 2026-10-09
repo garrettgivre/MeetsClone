@@ -74,6 +74,9 @@ export function homeRoom(sky = 'day', dark = false, layout = null, room = 'bedro
     (ROOM_SCENES[room] || homeScene)(k, sky, layout || {});
     // window panes, and a garden's whole sky: holes in the picture
     for (let p = 0; p < k.bm.px.length; p++) if (k.bm.px[p] === HOLE) k.bm.px[p] = 0;
+    // out of doors, the time of day colours everything
+    const lut = OUTDOORS.has(room) && timeLut(sky);
+    if (lut) for (const bm of [k.bm, k.front]) for (let p = 0; p < bm.px.length; p++) bm.px[p] = lut[bm.px[p]];
     if (dark) { dim(k.bm); dim(k.front); }
     cache.set(key, { back: k.bm, front: k.front });
   }
@@ -94,6 +97,34 @@ function dim(bm) {
     bm.px[i] = lum > 0.78 ? ((x + y) & 1 ? shade : night) : lum > 0.5 && (x & 1) === 0 && (y & 1) === 0 ? shade : night;
   }
 }
+
+// Out of doors the light changes through the day: the whole picture (and the
+// ground in the bars under every room) is shifted toward the nearest palette
+// colours of a warmer, rosier or darker, bluer version of itself.
+const OUTDOORS = new Set(['garden']);
+const TINTS = { dawn: [1, 0.93, 0.9, 10], dusk: [1, 0.84, 0.76, 0], night: [0.46, 0.54, 0.84, 0] }; // red, green and blue kept, and a lift
+const tintLuts = {};
+/** The palette-to-palette table for a time of day, or null by day. */
+export function timeLut(sky) {
+  if (!TINTS[sky]) return null;
+  if (!tintLuts[sky]) {
+    const [mr, mg, mb, lift] = TINTS[sky], lut = new Uint8Array(COLORS.length), hole = C('night');
+    for (let i = 1; i < COLORS.length; i++) {
+      const want = [COLORS[i][0] * mr + lift, COLORS[i][1] * mg + lift, COLORS[i][2] * mb + lift];
+      let best = i, bestD = Infinity;
+      for (let j = 1; j < COLORS.length; j++) {
+        if (j === hole) continue;
+        const d = (COLORS[j][0] - want[0]) ** 2 + (COLORS[j][1] - want[1]) ** 2 + (COLORS[j][2] - want[2]) ** 2;
+        if (d < bestD) { bestD = d; best = j; }
+      }
+      lut[i] = best;
+    }
+    tintLuts[sky] = lut;
+  }
+  return tintLuts[sky];
+}
+/** A ground colour as it looks at a time of day (a palette index). */
+export function groundTone(name, sky) { const lut = timeLut(sky); return lut ? lut[C(name)] : C(name); }
 
 /** Where each room shows the sky (hi-res room pixels): the bedroom's window panes, all of the garden's sky. */
 export const ROOM_SKY = { bedroom: HOME_WINDOW, garden: { x: 0, y: 0, w: 256, h: 150 } };

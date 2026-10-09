@@ -10,7 +10,7 @@
 import { C } from '../engine/palette.js';
 import { W, H, HD } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
-import { homeRoom, ROOM_SKY, propBitmap } from '../art/town.js';
+import { homeRoom, ROOM_SKY, propBitmap, groundTone } from '../art/town.js';
 
 const RY = LAYOUT.room.y * 2; // room top, in hi-res screen pixels
 
@@ -119,21 +119,23 @@ const GROUND_STROKES = [[10, 390], [34, 402], [58, 386], [80, 420], [104, 396], 
 const GROUND_FLOWERS = [[26, 414, 'white'], [92, 438, 'pink.3'], [146, 420, 'gold.3'], [212, 408, 'white'], [236, 440, 'pink.3'], [60, 396, 'gold.3']];
 
 /**
- * The sky in the bars above and below the room, in place of a flat colour.
- * Out of doors (`ground`: the lawn's own colours, { c, stroke }) the bars under
- * the room are that ground carrying on, so the room has no frame at all.
- * Returns what the bars' text should allow for: { sky, dark, top, bottom, open },
- * where `dark` is about the bars above the room and `bottomDark` those below.
+ * The bars round the room, in place of a flat colour: sky above it, and the
+ * ground below (`ground`: the garden lawn's colours, { c, stroke }, shown as
+ * they look at this time of day). The house stands on that ground, so it is
+ * under every room; out in the garden it is the lawn itself carrying on.
+ * Returns what the bars' text should allow for: { sky, dark, top, bottom },
+ * where `dark` is about the bars above the room and `bottomDark` those below,
+ * and `bottom` is a palette index.
  */
 export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null) {
   const sky = stateOf(simTime, lightsOff);
-  const open = !!ground && !lightsOff;
+  const tone = (name) => groundTone(name, sky);
   for (const [y0, y1] of BARS) {
-    if (open && y0 > 0) {
+    if (ground && y0 > 0) {
       scr.noClip();
-      scr.hrect(0, y0, BW, y1 - y0, C(ground.c));
-      for (const [x, y] of GROUND_STROKES) { scr.hpset(x, y, C(ground.stroke)); scr.hpset(x - 1, y - 1, C(ground.stroke)); scr.hpset(x + 1, y - 1, C(ground.stroke)); }
-      for (const [x, y, c] of GROUND_FLOWERS) { scr.hpset(x, y - 1, C(c)); scr.hpset(x - 1, y, C(c)); scr.hpset(x + 1, y, C(c)); scr.hpset(x, y + 1, C(c)); scr.hpset(x, y, C('gold.3')); }
+      scr.hrect(0, y0, BW, y1 - y0, tone(ground.c));
+      for (const [x, y] of GROUND_STROKES) { const c = tone(ground.stroke); scr.hpset(x, y, c); scr.hpset(x - 1, y - 1, c); scr.hpset(x + 1, y - 1, c); }
+      for (const [x, y, name] of GROUND_FLOWERS) { const c = tone(name); scr.hpset(x, y - 1, c); scr.hpset(x - 1, y, c); scr.hpset(x + 1, y, c); scr.hpset(x, y + 1, c); scr.hpset(x, y, tone('gold.3')); }
       continue;
     }
     paintSky(scr, sky, 0, y0, BW, y1 - y0);
@@ -155,7 +157,7 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null) {
   }
   scr.noClip();
   const [top, , , bottom] = SKY[sky];
-  return { sky, dark: sky === 'night', top, bottom: open ? ground.c : bottom, bottomDark: open ? false : sky === 'night', open: !!ground };
+  return { sky, dark: sky === 'night', top, bottom: ground ? tone(ground.c) : C(bottom), bottomDark: sky === 'night' };
 }
 
 /**

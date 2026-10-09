@@ -59,12 +59,16 @@ const app = {
    */
   pageSky(top, bottom) {
     this.sky = [top, bottom];
-    const css = (name) => {
+    // (a colour's name, or its palette index)
+    const css = (c) => {
       const lcd = document.body.classList.contains('lcd');
-      return `rgb(${COLORS[C(name)].slice(0, 3).map(v => (lcd ? Math.round(v * (0.8 + 0.2 * v / 255)) : v)).join(', ')})`;
+      return `rgb(${COLORS[typeof c === 'number' ? c : C(c)].slice(0, 3).map(v => (lcd ? Math.round(v * (0.8 + 0.2 * v / 255)) : v)).join(', ')})`;
     };
     document.getElementById('bezel').style.background = css(top);
-    document.body.style.background = css(bottom);
+    // The page is sky down to where the game's lower bars begin and ground from there on, so that
+    // if the screen cannot fill the full width, what shows beside it matches what is next to it.
+    const r = canvas.getBoundingClientRect(), split = Math.round(r.top + r.height * LAYOUT.bottom.y / H);
+    document.body.style.background = `linear-gradient(to bottom, ${css(top)} 0, ${css(top)} ${split}px, ${css(bottom)} ${split}px, ${css(bottom)} 100%)`;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', css(top));
   },
   game: null,
@@ -133,7 +137,7 @@ setupInput({
 });
 
 // ----- sizing: the screen fills the page from the top edge down, as wide as it can go -----
-const BUTTON_ROWS = 36 + 10 + 2;
+const BUTTON_ROWS = 36 + 10; // the least the strip under the screen needs, in game pixels: a button, and the drop of the middle one
 function resize() {
   const device = document.getElementById('device');
   const inset = parseFloat(getComputedStyle(document.getElementById('bezel')).paddingTop) || 0; // a phone's notch
@@ -144,10 +148,12 @@ function resize() {
   // middle one, and some air) plus a small fixed margin.
   // Whichever runs out first, width or height, the screen takes all of it
   // (so the scale is rarely a whole number; the canvas is double density, which keeps it crisp).
-  const s = Math.max(1, Math.min(availW / W, (availH - 12) / (H + BUTTON_ROWS)));
+  // (so on any phone tall enough for the buttons the screen runs edge to edge, with nothing beside it)
+  const s = Math.max(1, Math.min(availW / W, (availH - 2) / (H + BUTTON_ROWS)));
   canvas.style.width = Math.round(W * s) + 'px';
   canvas.style.height = Math.round(H * s) + 'px';
   document.documentElement.style.setProperty('--px', s + 'px'); // one game pixel, for the buttons
+  if (app.sky) app.pageSky(...app.sky); // the page's colours change over where the screen's do
 }
 window.addEventListener('resize', resize);
 resize();

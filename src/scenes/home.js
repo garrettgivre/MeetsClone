@@ -596,9 +596,11 @@ export class HomeScene {
     const game = this.game, pet = this.pet;
     const { status, top, bottom, info } = LAYOUT;
     // the bars are open sky: the same sky the window looks out on, by day and by night
-    // (out in the garden the bars below are the lawn carrying on, and nothing frames the room)
-    const lawn = ROOMS[roomOf(game)].outdoor ? DECOR_ART[layoutOf(game).ground] : null;
-    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights, lawn && { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) });
+    // Below the room is the ground the house stands on: the garden's own lawn, in the light of the hour.
+    // (Out in the garden it is the same lawn carrying on, and nothing frames the room.)
+    const open = !!ROOMS[roomOf(game)].outdoor;
+    const lawn = DECOR_ART[layoutOf(game, 'garden').ground] || DECOR_ART['sweet-garden-ground'];
+    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights, { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) });
     const fg = sky.dark ? COL.white : COL.ink, low = sky.bottomDark ? COL.white : COL.ink;
     const shown = `${sky.top}|${sky.bottom}`;
     if (shown !== this.skyShown) { this.skyShown = shown; this.app.pageSky?.(sky.top, sky.bottom); }
@@ -614,7 +616,7 @@ export class HomeScene {
     // icon rows
     for (const [row, ids] of [[top, TOP], [bottom, BOTTOM]]) {
       const dark = row === top ? sky.dark : sky.bottomDark;
-      if (!sky.open) scr.rule(0, row.y + (row === top ? row.h - 1 : 0), W, dark ? COL.shade : COL.ink, row === top);
+      if (!open) scr.rule(0, row.y + (row === top ? row.h - 1 : 0), W, dark ? COL.shade : COL.ink, row === top);
       ids.forEach((id, i) => {
         const idx = ALL.indexOf(id);
         const cx = Math.round(i * CELL + CELL / 2);
@@ -627,6 +629,6 @@ export class HomeScene {
     // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
     // ...or, with no menu picked, which room of the house this is
     if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, low, { align: 'center' });
-    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 4, sky.bottomDark ? COL.silver : sky.open ? COL.ink : COL.shade, { align: 'center' });
+    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 4, sky.bottomDark ? COL.mist : COL.ink, { align: 'center' });
   }
 }
