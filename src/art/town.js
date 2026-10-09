@@ -301,7 +301,7 @@ function homeScene(k, sky, layout) {
   if (win.prop) k.prop(win.prop, wx + 32, wy + 67, win.ramps); // a window of its own shape: its glass is drawn as holes (`_`), inside the same rectangle
   else { k.rect(wx, wy, ww, wh, 'night'); k.prop('homeWindow', wx + 32, wy + 77, win.ramps); }
   // the garland hangs in front of the curtain rod
-  k.starString(5, { sag: 9, ...win.garland });
+  if (win.garland !== false) k.starString(5, { sag: 9, ...win.garland });
   // a picture, and a shelf of keepsakes over the bed
   const pic = art('picture'), shelf = art('shelf');
   k.prop(pic.prop, 138, 74, pic.ramps);

@@ -7,6 +7,7 @@ import { defineProp, PROPS } from './props.js';
 import './props-home.js';
 import './props-beds.js';
 import './props-seaside.js';
+import './props-modern.js';
 
 /** A copy of a prop with some rows drawn afresh: { rowIndex: 'new row' }. */
 function variant(name, of, rows) {
@@ -199,50 +200,6 @@ defineProp('starfish', [
   '.acaa..aca.',
   '.aa.....aa.',
 ], { ramps: { accent: 'orange' } });
-
-// A glowing globe lamp on a slim stand (stands on the bedside table).
-defineProp('globeLamp', [
-  '.......rrrrrr.......',
-  '.....rruuuuttrr.....',
-  '....ruuwuutttttr....',
-  '...ruuwuuttttttsr...',
-  '...ruuuutttttttsr...',
-  '...ruutttttttttsr...',
-  '...ruttttttttttsr...',
-  '...rutttttttttssr...',
-  '....rttttttttssr....',
-  '.....rrttttssrr.....',
-  '.......rrrrrr.......',
-  '.........gf.........',
-  '.........gf.........',
-  '.........gf.........',
-  '.......eeeeee.......',
-  '......ehhggffe......',
-  '......eeeeeeee......',
-], { ramps: { roof: 'gold', stone: 'slate' } });
-
-// A framed arrangement of blocks, a bar and a dot.
-variant('blocksFrame', 'heartFrame', {
-  11: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
-  12: '.rutsmwbbbbbbbwwwwwwwwwutsr.',
-  13: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
-  14: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
-  15: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
-  16: '.rutsmwbbbbbbbwwzzzzzwwutsr.',
-  17: '.rutsmwbbbbbbbwwwwwwwwwutsr.',
-  18: '.rutsmwbbbbbbbwwwwwwwwwutsr.',
-  19: '.rutsmwwwwwwwwwwwwkkkwwutsr.',
-  20: '.rutsmwwwwwwwwwwwkkkkkwutsr.',
-  21: '.rutsmwkkkkkkkkkwkkkkkwutsr.',
-  22: '.rutsmwwwwwwwwwwwkkkkkwutsr.',
-  23: '.rutsmwwwddddddwwwkkkwwutsr.',
-  24: '.rutsmwwwddddddwwwwwwwwutsr.',
-  25: '.rutsmwwwddddddwwwwwwwwutsr.',
-  26: '.rutsmwwwddddddwwwwwwwwutsr.',
-  27: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
-  28: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
-  29: '.rutsmwwwwwwwwwwwwwwwwwutsr.',
-});
 
 // A cooker under an extractor hood: a dark glass hob, four knobs, an oven with a window.
 defineProp('range', [

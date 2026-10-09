@@ -79,6 +79,15 @@ export const SETS = {
       garden: { ground: 'Sandy Beach', fence: 'Rope Fence', tree: 'Beach Parasol', feature: 'Rowing Boat', flowers: 'Driftwood', seat: 'Deck Chair' },
     },
   },
+  modern: {
+    name: 'Modern',
+    pieces: {
+      bedroom: { wall: 'Plain White', floor: 'Slate Boards', window: 'Picture Window', picture: 'Wall Clock', shelf: 'Cube Shelf', lamp: 'Arc Lamp', bed: 'Pod Bed', rug: 'Mint Rug', corner: 'Beanbag', plant: 'Big Leaf Plant' },
+      kitchen: { wall: 'Mint Diamonds', floor: 'Grey Checks', window: 'Strip Window', stove: 'Cooker and Hood', counter: 'Kitchen Island', shelf: 'Kitchen Cube Shelf', table: 'Tulip Table', seat: 'Bar Stool' },
+      bathroom: { wall: 'Metro Tiles', floor: 'Slate Tiles', window: 'Bath Strip Window', mirror: 'Round Mirror', cabinet: 'Tall Cupboard', mat: 'Mint Mat', towels: 'Towel Ladder', plant: 'Snake Plant' },
+      garden: { ground: 'Trim Lawn', fence: 'Slat Fence', tree: 'Ball Tree', feature: 'Ring Sculpture', flowers: 'Planter Box', seat: 'Garden Bench' },
+    },
+  },
 };
 
 /** An item's id. (Bedroom pieces came first and keep their short ids, so saves made then still work.) */
