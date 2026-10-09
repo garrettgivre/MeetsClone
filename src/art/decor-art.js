@@ -26,8 +26,8 @@ export const DECOR_ART = {
   'sweet-lamp': { prop: 'sweetLamp', ramps: {} },
   'sweet-bed': { prop: 'heartBasket', ramps: { accent: 'pink', wood: 'brown' }, rim: 17 },
   'sweet-rug': { prop: 'sweetRug', ramps: { accent: 'pink' } },
-  'sweet-corner': { things: [['sweetChest', 30, 309, {}, 24]] },
-  'sweet-plant': { things: [['sweetPlant', 238, 309, {}, 11]] },
+  'sweet-corner': { things: [['sweetChest', 34, 309, {}, 30]] },
+  'sweet-plant': { things: [['sweetPlant', 234, 309, {}, 14]] },
 
   // the kitchen
   'sweet-kitchen-wall': { paper: 'paperCandy', ramps: { wall: 'pink', accent: 'red' }, dado: 'dadoBoards' },
@@ -45,13 +45,13 @@ export const DECOR_ART = {
   'sweet-bathroom-mirror': { prop: 'vanityMirror', ramps: {} },
   'sweet-bathroom-cabinet': { prop: 'washstand', ramps: {} },
   'sweet-bathroom-mat': { prop: 'bathMat', ramps: { accent: 'pink' } },
-  'sweet-bathroom-towels': { things: [['sweetTowels', 234, 309, {}, 14]] },
-  'sweet-bathroom-plant': { things: [['sweetPlant', 24, 309, { accent: 'sky' }, 11]] },
+  'sweet-bathroom-towels': { things: [['sweetTowels', 232, 309, {}, 18]] },
+  'sweet-bathroom-plant': { things: [['sweetPlant', 26, 309, { accent: 'sky' }, 14]] },
   // the garden
   'sweet-garden-ground': { bits: 'lawn', ramps: { leaf: 'green', accent: 'gold' }, bar: 'green.3' },
   'sweet-garden-fence': { prop: 'fencePicket', ramps: {}, hedge: 'mint.1' },
   'sweet-garden-tree': { prop: 'blossomTree', ramps: { accent: 'pink', wood: 'brown' } },
-  'sweet-garden-feature': { prop: 'wishingWell', ramps: {}, shadow: 24 },
+  'sweet-garden-feature': { prop: 'wishingWell', ramps: {}, shadow: 34 },
   'sweet-garden-flowers': { things: [['tulipBed', 36, 308, {}, 0]] },
   'sweet-garden-seat': { things: [['gardenSwing', 212, 308, {}, 32]] },
 
