@@ -15,58 +15,6 @@ import { defineProp } from './props.js';
 const KEY = { o: '1', S: '2', M: '3', L: '4', p: '5', Q: '6', q: '7', P: '8' };
 const drawn = (name, rows, opts) => defineProp(name, rows.map(r => [...r].map(ch => KEY[ch] || ch).join('')), opts);
 
-// Starry Night: the lantern tree. A trunk that forks into branches, three
-// uneven masses of leaves at different heights, the wood showing between them.
-drawn('lanternTree', [
-  '........................ooooo',
-  '.....................oooLLLMoo',
-  '...................ooLLLLLMMMMoo',
-  '..................oLLLLLLMMMMMMMo........oooo',
-  '.................oLLLLLMMMMMMMMMSo.....ooLLMMoo',
-  '........oooo....oLLLLMMMMMMMMMMSSSo...oLLLMMMMSo',
-  '......ooLLMMoo..oLLLMMMMMMMMMMMSSSSo.oLLLMMMMMSSo',
-  '.....oLLLMMMMSo.oLMMMMMMMMMMMMMSSSSooLLLMMMMMMSSSo',
-  '....oLLLMMMMMSSooMMMMMMMMMMMMMMSSSSSoLLMMMMMMMMSSSSo',
-  '...oLLLMMMMMMSSSoMMMMMMMMSMMMMMSSSSSoLMMMMMMMMMSSSSSo',
-  '...oLLMMMMMMMSSSSoMMMMMMSSSMMMSSSSSSoMMMMMMMMMSSSSSSo',
-  '..oLLMMMMMMMSSSSSoSMMMMMMMMMMSSSSSSooMMMMMMSMMMSSSSSo',
-  '..oLMMMMMSMMMSSSSSoSSMMMMMMMSSSSSSo.oMMMMSSSMMSSSSSo',
-  '..oLMMMMSSSMMSSSSSooSSSSMMMSSSSSSSoo.oMMMMMMMMSSSSSo',
-  '..oMMMMMMMMMMSSSSSSo.ooSSSSSSSSSSoopq.oSMMMMMSSSSSSo',
-  '...oMMMMMMMSSSSSSSo...oooooooooooppqq..oSSSSSSSSSSo',
-  '...oSSMMMMSSSSSSSopq......pq...ppqq....oooooooooo',
-  '....ooSSSSSSSSSSo.ppq.....pq..ppqq.....pq',
-  '......oooooooooo...ppqq...pq.ppqq.....pqq',
-  '..........pq........ppqq..pqppqq....ppqq',
-  '..........ppq........ppqq.pqpqq...ppqq',
-  '...........ppqq.......ppqqpqqqq.ppqq',
-  '.............ppqq......ppqqqqqqppqq',
-  '...............ppqqpp...pqqqqqqqpq',
-  '.................ppqqqppppqqqqqQ',
-  '...................ppqqqqqqqqqQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqQqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqQqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqQQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqQqqQQp',
-  '......................pPqqqqQQp',
-  '......................pPqqqqQQp',
-  '.....................pPPqqqqQQQp',
-  '....................pPPqqqqqqQQQp',
-  '..................ppPqqpppqqppQQQpp',
-  '.................ppqqpp..pqqp..ppQQpp',
-], { at: [26, 46], ramps: { leaf: 'green', wood: 'brown' } });
-
 // Modern: the pod bed, a real pet bed. A padded ring with a deep cushion in it,
 // stitched buttons, and a striped blanket thrown over the front.
 defineProp('podBed', [

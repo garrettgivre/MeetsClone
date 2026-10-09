@@ -151,7 +151,7 @@ drawn('washstand', [
 ], { at: [26, 41], ramps: { accent: 'pink', roof: 'gold', wood: 'brown' } });
 
 // Fluffy towels stacked on a little wooden stand, a basket of bath things under it.
-drawn('towelStand', [
+drawn('sweetTowels', [
   '....aaaaaaaaaaaaaaaaaaaaaa',
   '...adddddddddddddddccccbba',
   '...adwdwdwdwdwdwdwdccccbba',
