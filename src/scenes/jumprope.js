@@ -6,6 +6,7 @@ import { LAYOUT, COL, text, dialog } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { finishGame, learnedLine } from '../game/pet.js';
 import { backdrop } from '../art/town.js';
+import { drawPlaceSky, skyState } from './room.js';
 
 const GOAL = 30;
 
@@ -73,7 +74,9 @@ export class JumpRopeScene {
     const { y: ry, h: rh } = LAYOUT.room;
     const floor = ry + 130;
     // the games field, with a post either side (the rope ties on at their rings)
-    scr.bitmap(backdrop('ropefield'), 0, ry);
+    const now = this.app.game.simTime;
+    drawPlaceSky(scr, now, this.app.time);
+    scr.bitmap(backdrop('ropefield', skyState(new Date(now).getHours())), 0, ry);
     const hy = floor - 22;
 
     const ropeDepth = Math.cos(this.angle) * 24; // + = rope swung down/in front

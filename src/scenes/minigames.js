@@ -9,6 +9,7 @@ import { LAYOUT, COL, text, dialog } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { FOOD_ART, ROCK } from '../art/icons.js';
 import { backdrop } from '../art/town.js';
+import { drawPlaceSky, skyState } from './room.js';
 import { finishGame, learnedLine } from '../game/pet.js';
 
 const FLOOR_OFF = 130; // floor line, from the top of the room
@@ -57,7 +58,9 @@ class MiniGame {
     this.app.save();
   }
   drawPark(scr) {
-    scr.bitmap(backdrop('playfield'), 0, LAYOUT.room.y);
+    const now = this.app.game.simTime;
+    drawPlaceSky(scr, now, this.app.time);
+    scr.bitmap(backdrop('playfield', skyState(new Date(now).getHours())), 0, LAYOUT.room.y);
   }
   drawPet(scr, x, { expr = 'idle', arms = 'down', flip = false, dy = 0 } = {}) {
     const pet = this.pet;

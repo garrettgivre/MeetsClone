@@ -130,13 +130,14 @@ const GROUND_FLOWERS = [[26, 414, 'white'], [92, 438, 'pink.3'], [146, 420, 'gol
 export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air = null) {
   if (air) return drawAirBars(scr, appTime, air);
   const sky = stateOf(simTime, lightsOff);
-  const tone = (name) => groundTone(name, sky);
+  // (the ground comes as colour names, shown in the light of the hour, or as palette indexes already in it)
+  const tone = (c) => (typeof c === 'number' ? c : groundTone(c, sky));
   for (const [y0, y1] of BARS) {
     if (ground && y0 > 0) {
       scr.noClip();
       scr.hrect(0, y0, BW, y1 - y0, tone(ground.c));
       for (const [x, y] of GROUND_STROKES) { const c = tone(ground.stroke); scr.hpset(x, y, c); scr.hpset(x - 1, y - 1, c); scr.hpset(x + 1, y - 1, c); }
-      for (const [x, y, name] of GROUND_FLOWERS) { const c = tone(name); scr.hpset(x, y - 1, c); scr.hpset(x - 1, y, c); scr.hpset(x + 1, y, c); scr.hpset(x, y + 1, c); scr.hpset(x, y, tone('gold.3')); }
+      if (!ground.bare) for (const [x, y, name] of GROUND_FLOWERS) { const c = tone(name); scr.hpset(x, y - 1, c); scr.hpset(x - 1, y, c); scr.hpset(x + 1, y, c); scr.hpset(x, y + 1, c); scr.hpset(x, y, tone('gold.3')); }
       continue;
     }
     paintSky(scr, sky, 0, y0, BW, y1 - y0);
@@ -158,13 +159,25 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air
   }
   scr.noClip();
   const [top, , , bottom] = SKY[sky];
-  return { sky, dark: sky === 'night', top, bottom: ground ? tone(ground.c) : C(bottom), bottomDark: sky === 'night' };
+  const under = ground ? tone(ground.c) : C(bottom), [r, g, b] = COLORS[under];
+  return { sky, dark: sky === 'night', top, bottom: under, bottomDark: r * 0.3 + g * 0.59 + b * 0.11 < 110 };
 }
 
 /**
- * The bars while an outdoor place away from home is on show (a town square, the
- * road there, the games field): they carry that picture's own sky and ground
- * on, meeting it in the same colours top and bottom. `air` is its edgeColours.
+ * The real sky behind an outdoor place away from home (its picture has its own
+ * sky cut out): the sky of the hour over the whole room, with the moon and
+ * stars at night. The place's picture brings its own clouds and sun by day.
+ */
+export function drawPlaceSky(scr, simTime, appTime) {
+  const sky = skyState(new Date(simTime).getHours());
+  if (sky === 'night') drawSky(scr, sky, appTime, { x: 0, y: 0, w: BW, h: LAYOUT.room.h * HD });
+  else paintSky(scr, sky, 0, RY, BW, LAYOUT.room.h * HD);
+}
+
+/**
+ * The bars while an outdoor place that keeps its own sky is on show (Star Isle,
+ * the hidden village, the farewell hill): they carry that picture's own sky
+ * and ground on, meeting it in the same colours top and bottom. `air` is its edgeColours.
  */
 function drawAirBars(scr, appTime, air) {
   const light = (c) => { const [r, g, b] = COLORS[c]; return r * 0.3 + g * 0.59 + b * 0.11; };

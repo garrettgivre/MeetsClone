@@ -9,7 +9,7 @@ import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
 import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort, bathe, toilet, isDirty, isPottyTrained, POTTY_TRAINED } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
-import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide } from './room.js';
+import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide, skyState } from './room.js';
 import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
 import { DECOR_ART } from '../art/decor-art.js';
 import { tone, edgeColours } from '../art/town.js';
@@ -599,12 +599,15 @@ export class HomeScene {
     // Below the room is the ground the house stands on: the garden's own lawn, in the light of the hour.
     // (Out in the garden it is the same lawn carrying on, and nothing frames the room.)
     // Away from home and out of doors (a place in town, the road there, the games field), the bars
-    // carry that picture's own sky and ground on instead: it says which through `openAir`.
+    // carry that picture's ground on instead of the lawn: it says which picture through `openAir`.
     const over = this.app.scene !== this ? this.app.scene : null;
-    const air = over?.openAir ? edgeColours(over.openAir) : null;
-    const open = air ? true : !over && !!ROOMS[roomOf(game)].outdoor;
+    const edge = over?.openAir ? edgeColours(over.openAir, skyState(new Date(game.simTime).getHours())) : null;
+    const open = edge ? true : !over && !!ROOMS[roomOf(game)].outdoor;
     const lawn = DECOR_ART[layoutOf(game, 'garden').ground] || DECOR_ART['sweet-garden-ground'];
-    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights, { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) }, air);
+    // An outdoor place shows the sky of the hour like home does, over its own ground (sand, cobbles, grass);
+    // one that keeps its own sky (`ownSky`) gives the bars above their colour too.
+    const ground = edge ? { c: edge.bottom, stroke: edge.stroke, bare: true } : { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) };
+    const sky = drawSkyBars(scr, game.simTime, t, edge ? false : pet && !pet.lights, ground, edge?.ownSky ? edge : null);
     const fg = sky.dark ? COL.white : COL.ink, low = sky.bottomDark ? COL.white : COL.ink;
     const shown = `${sky.top}|${sky.bottom}`;
     if (shown !== this.skyShown) { this.skyShown = shown; this.app.pageSky?.(sky.top, sky.bottom); }

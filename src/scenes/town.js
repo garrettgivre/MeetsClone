@@ -3,7 +3,8 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, text, ListMenu } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
-import { backdrop, frontdrop, drawVehicle, propBitmap, FEET } from '../art/town.js';
+import { backdrop, frontdrop, drawVehicle, propBitmap, showsSky, FEET } from '../art/town.js';
+import { drawPlaceSky, skyState } from './room.js';
 import { HEART, CANE, ZZZ } from '../art/icons.js';
 import { wrap, LINE_H } from '../ui.js';
 import { TOYS, CLOTHES } from '../game/items.js';
@@ -137,7 +138,9 @@ class TravelScene {
     const pet = this.app.game.pet;
     const air = this.kind === 'balloon';
     // far country (or open sky) stands still; clouds, the way and what lines it slide past
-    scr.bitmap(backdrop(air ? 'tripSky' : 'trip'), 0, ry);
+    const hour = skyState(new Date(this.app.game.simTime).getHours());
+    drawPlaceSky(scr, this.app.game.simTime, t);
+    scr.bitmap(backdrop(air ? 'tripSky' : 'trip', hour), 0, ry);
     scr.setClip(0, ry, W, rh);
     (air ? [...CLOUDS, ...HIGH_CLOUDS] : CLOUDS).forEach(([name, y, speed, tint], i) => {
       const span = W + 70;
@@ -288,7 +291,10 @@ export class PlaceScene {
   draw(scr) {
     const g = this.game, pet = g.pet, a = this.anim, t = this.t;
     const { y: ry, h: rh } = LAYOUT.room;
-    scr.bitmap(backdrop(this.loc.id), 0, ry);
+    // out of doors, the sky of the hour shows behind the place, which is in the light of that hour too
+    const hour = skyState(new Date(g.simTime).getHours());
+    if (showsSky(this.loc.id)) drawPlaceSky(scr, g.simTime, t);
+    scr.bitmap(backdrop(this.loc.id, hour), 0, ry);
     titleBar(scr, `◀ ${this.loc.name.toUpperCase()}`, ry);
 
     // the resident, facing your pet
@@ -320,7 +326,7 @@ export class PlaceScene {
     const pbm = composePet(pet.phenotype, pet.stage, { expr, arms, gender: pet.gender, wear: pet.wear, species: pet.species, t });
     scr.bitmap(pbm, 38 - CANVAS / 2, FEET_Y - GROUND - dy, true);
     // bushes, trees and clouds that frame the scene sit in front of the pets
-    const fr = frontdrop(this.loc.id);
+    const fr = frontdrop(this.loc.id, hour);
     if (fr) scr.bitmap(fr, 0, ry);
 
     // the resident's name and your friendship

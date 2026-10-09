@@ -23,42 +23,64 @@ export const FEET = 228;                // where pets stand (hi-res, inside the 
 
 const cache = new Map();
 
-function draw(id) {
-  if (!cache.has(id)) {
-    const k = kit();
-    (SCENES[id] || SCENES.square)(k);
-    cache.set(id, { back: k.bm, front: k.usedFront() ? k.front : null });
-  }
-  return cache.get(id);
-}
-/** The backdrop for a place: a cached hi-res bitmap covering the room area. */
-export const backdrop = (id) => draw(id).back;
-/** Framing drawn in front of the pets (bushes, clouds at the corners), or null. */
-export const frontdrop = (id) => draw(id).front;
-
-/** Backdrops that are out of doors: the bars round the screen carry their sky and ground on (see edgeColours). */
+/**
+ * Backdrops that are out of doors. Asked for with a time of day ('day', 'dawn',
+ * 'dusk', 'night'), one of these comes with its painted sky cut out, so the
+ * real sky of that hour shows behind it, and with everything else in the
+ * light of the hour (timeLut). A few keep their own sky whatever the hour:
+ * they are places of one particular light.
+ */
 export const OPEN_AIR = new Set(['square', 'park', 'cottages', 'playground', 'beach', 'forest', 'fair', 'castle', 'starisle', 'hidden',
   'playfield', 'ropefield', 'trip', 'tripSky', 'farewell']);
+export const OWN_SKY = new Set(['starisle', 'hidden', 'farewell']);
+/** Whether a backdrop shows the real sky of the hour. */
+export const showsSky = (id) => OPEN_AIR.has(id) && !OWN_SKY.has(id);
+
+function draw(id, sky = null) {
+  const hour = sky && showsSky(id) ? sky : null;
+  const key = hour ? `${id}@${hour}` : id;
+  if (!cache.has(key)) {
+    const k = kit(hour);
+    (SCENES[id] || SCENES.square)(k);
+    if (hour) {
+      const lut = timeLut(hour);
+      for (let p = 0; p < k.bm.px.length; p++) if (k.bm.px[p] === HOLE) k.bm.px[p] = 0;
+      if (lut) for (const bm of [k.bm, k.front]) for (let p = 0; p < bm.px.length; p++) bm.px[p] = lut[bm.px[p]];
+    }
+    cache.set(key, { back: k.bm, front: k.usedFront() ? k.front : null });
+  }
+  return cache.get(key);
+}
+/**
+ * The backdrop for a place: a cached hi-res bitmap covering the room area.
+ * With `sky` (a time of day) an outdoor place comes as it looks at that hour,
+ * its sky left clear for the real one; without, as it was painted.
+ */
+export const backdrop = (id, sky = null) => draw(id, sky).back;
+/** Framing drawn in front of the pets (bushes, clouds at the corners), or null. */
+export const frontdrop = (id, sky = null) => draw(id, sky).front;
 
 const edges = new Map();
 /**
  * The colours a backdrop meets the bars with: the commonest colour along its
  * top row and along its bottom row (palette indexes), and a darker shade of
- * the bottom one for grass strokes. Null for a place that is indoors.
+ * the bottom one for grass strokes, at a time of day. Null for a place that is indoors.
  */
-export function edgeColours(id) {
+export function edgeColours(id, sky = null) {
   if (!OPEN_AIR.has(id)) return null;
-  if (!edges.has(id)) {
-    const bm = backdrop(id);
+  const key = `${id}@${showsSky(id) ? sky : ''}`;
+  if (!edges.has(key)) {
+    const bm = backdrop(id, sky);
     const commonest = (y) => {
       const n = new Map();
-      for (let x = 0; x < bm.w; x++) { const c = bm.px[y * bm.w + x]; n.set(c, (n.get(c) || 0) + 1); }
-      return [...n].sort((a, b) => b[1] - a[1])[0][0];
+      for (let x = 0; x < bm.w; x++) { const c = bm.px[y * bm.w + x]; if (c) n.set(c, (n.get(c) || 0) + 1); }
+      return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] || C('sky.2');
     };
     const top = commonest(0), bottom = commonest(bm.h - 1);
-    edges.set(id, { top, bottom, stroke: C(tone(NAMES[bottom], -1)) });
+    // (ownSky: the place keeps its painted sky, so the bars above take its colour too)
+    edges.set(key, { top, bottom, stroke: C(tone(NAMES[bottom], -1)), ownSky: !showsSky(id) });
   }
-  return edges.get(id);
+  return edges.get(key);
 }
 
 const propCache = new Map();
@@ -276,7 +298,8 @@ export function rand(seed = 1) {
   return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 
-function kit() {
+/** `hour`: a time of day, for a picture whose sky is left clear for the real one (see `draw`). */
+function kit(hour = null) {
   const bm = makeBitmap(RW, RH, true);
   const front = makeBitmap(RW, RH, true);
   let target = bm, frontUsed = false;
@@ -608,6 +631,7 @@ function kit() {
   };
   /** Soft horizontal sky bands with dithered seams. */
   const bands = (colors, y0 = 0, y1 = HZ) => {
+    if (hour) { rect(0, y0, RW, y1 - y0, 'night'); return; } // left clear: the real sky shows here
     const h = (y1 - y0) / colors.length;
     for (let y = y0; y < y1; y++) {
       const i = Math.min(colors.length - 1, Math.floor((y - y0) / h)), f = (y - y0) / h - i;
@@ -753,6 +777,7 @@ function kit() {
   };
   /** A smiling sun with soft rounded rays. */
   const sun = (x, y, r = 13) => {
+    if (hour === 'night') return; // (the real sky has its moon)
     for (let a = 0; a < 10; a++) { const t = (a / 10) * Math.PI * 2 + 0.3; puff(x + Math.cos(t) * (r + 5), y + Math.sin(t) * (r + 5), 3, 'orange.3', { line: 'orange.2' }); }
     disc(x, y, r, 'gold.3', { outline: 'orange.2' });
     for (let j = -r + 3; j < -r + 6; j++) rect(x - 4, y + j, 5, 1, 'white');
