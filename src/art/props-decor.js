@@ -38,43 +38,11 @@ import './props-hand-2.js';
 import './props-hand-3.js';
 import './props-hand-4.js';
 import './props-hand-5.js';
-import { stretch } from './draw.js';
+import './props-hand-6.js';
 
 
 // ---------- the starry set's toy ----------
-// A toy rocket standing on its fins, with a round porthole.
-defineProp('toyRocket', [
-  '..........aa..........',
-  '.........adda.........',
-  '........addcba........',
-  '.......adddcbba.......',
-  '......addddccbba......',
-  '......adddcccbba......',
-  '.....adddccccbbba.....',
-  '.....aaaaaaaaaaaa.....',
-  '.....nwwwwwwwwmmn.....',
-  '.....nwwwwwwwwmmn.....',
-  '.....nwwwxxxxwmmn.....',
-  '.....nwwxZZzyxmmn.....',
-  '.....nwwxZwzyxmmn.....',
-  '.....nwwxzzzyxmmn.....',
-  '.....nwwxyyyyxmmn.....',
-  '.....nwwwxxxxwmmn.....',
-  '.....nwwwwwwwwmmn.....',
-  '.....naaaaaaaaaan.....',
-  '.....ndddccccbban.....',
-  '.....naaaaaaaaaan.....',
-  '.....nwwwwwwwwmmn.....',
-  '....anwwwwwwwwmmna....',
-  '...adnwwwwwwwwmmnba...',
-  '..addnwwwwwwwwmmnbba..',
-  '.adddnwwwwwwwwmmnbbba.',
-  '.adccnwwwwwwwwmmncbba.',
-  'adcccnnnnnnnnnnnnccbba',
-  'adccba..eeeeee..adcbba',
-  'aaaaa...effffe...aaaaa',
-  '.........eeee.........',
-], { ramps: { accent: 'red', glass: 'sky', stone: 'gold' } });
+// (The toy rocket is in props-hand-6.js.)
 
 // A little scallop shell, and a starfish.
 defineProp('shell', [
@@ -187,6 +155,3 @@ defineProp('cactus', [
   '...ehggfe...',
   '...eeeeee...',
 ], { ramps: { stone: 'cream' } });
-
-// The toy rocket is drawn in this file, so it is brought to size here (see props-sized-5.js for the rest).
-stretch('toyRocket', { cols: [[6, 2, 3], [14, 2, 3]], rows: [[8, 1, 6], [16, 1, 4], [20, 1, 8]] });

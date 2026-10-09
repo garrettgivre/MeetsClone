@@ -112,7 +112,6 @@ retouch('pineTree', {}, [
 const vein = (c) => [[9, c, '22'], [8, c + 2, '22'], [7, c + 4, '22'], [6, c + 6, '22'], [12, c, '22'], [13, c + 2, '22'], [14, c + 4, '22'], [15, c + 6, '22']];
 retouch('rugLeaf', {}, [...vein(16), ...vein(34), ...vein(52), ...vein(70), ...vein(88), ...vein(104)]);
 // the beanbag: a shine, and a stitched seam
-retouch('beanbag', {}, [[3, 13, 'www'], [4, 11, 'ww'], [5, 10, 'w'], [14, 6, 'b.b.b.b.b.b.b.b.b.b.b.b.b']]);
 
 // Starry Night: a star cushion with a sleepy face.
 defineProp('starCushion', [

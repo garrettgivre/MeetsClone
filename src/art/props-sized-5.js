@@ -125,18 +125,9 @@ drawn('firTree', [
 // ---------------------------------------------------------------- bathroom cabinets: 88 to 98 high
 
 // ---------------------------------------------------------------- floor plants: 50 to 63 high
-stretch('moonFlower', { rows: [[5, 1, 14], [12, 1, 2], [17, 1, 3], [24, 1, 5]], x: 12 });
-stretch('fernBucket', { rows: [[5, 1, 2], [9, 1, 2], [12, 1, 2], [21, 1, 5], [27, 1, 6]] });
-stretch('dunePot', { rows: [[8, 1, 6], [12, 1, 6], [16, 1, 4], [23, 1, 2], [25, 1, 2], [29, 1, 2]] });
-stretch('legPot', { rows: [[20, 1, 3], [22, 1, 3], [28, 1, 6], [39, 1, 4]] });
-stretch('snakePlant', { rows: [[6, 1, 6], [14, 1, 6], [20, 1, 4], [31, 1, 4]] });
 
 // ---------------------------------------------------------------- toy corners
 // (the toy rocket and Modern's bench are drawn in props-decor.js itself, which stretches them there)
-stretch('logPile', { cols: [[20, 12, 2]], rows: [[8, 8, 1]] });
-stretch('sandPail', { cols: [[8, 4, 2]], rows: [[8, 1, 4], [14, 1, 4]] });
-stretch('beachBall', { cols: [[3, 2, 1], [7, 2, 1], [12, 2, 1], [17, 2, 1], [21, 2, 1]], rows: [[5, 1, 2], [9, 1, 3], [13, 1, 3], [16, 1, 2]] });
-stretch('beanbag', { cols: [[20, 10, 2]], rows: [[15, 1, 10]] });
 
 // ---------------------------------------------------------------- garden trees: 76 to 96 high
 
