@@ -5,7 +5,7 @@
 // in props.js:
 //   1-4 leaf   5-8 wood   a-d accent   e-h stone   A-D wall   x y z Z glass
 //   w white   m mist   v silver   . empty (the colour underneath shows)
-import { defineProp, PROPS } from './props.js';
+import { defineProp } from './props.js';
 
 // ---------------------------------------------------------------- wallpapers
 // Sweetheart bedroom: small hearts and little crosses.
@@ -843,18 +843,3 @@ defineProp('matBlock', [
   '.abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba.',
   '..aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa..',
 ], { ramps: { accent: 'mint' } });
-
-// Starry Night: the Sweetheart ovals' outline in night colours. `letters`
-// renames colour roles; `swaps` turns each heart in a row into part of a star
-// ({ row: [from, to] }, applied before the renaming).
-function oval(name, of, letters, swaps, opts) {
-  const rows = PROPS[of].rows.map((r, i) => {
-    const [from, to] = swaps[i] || [];
-    return [...(from ? r.split(from).join(to) : r)].map(ch => letters[ch] || ch).join('');
-  });
-  defineProp(name, rows, opts);
-}
-oval('rugMoon', 'rugHearts', { d: 'b', b: 'c' }, { 8: ['wdw', 'dud'], 9: ['wwwww', 'uuuuu'], 10: ['www', 'uuu'], 11: ['dwd', 'udu'] }, { ramps: { accent: 'indigo', roof: 'gold' } });
-oval('matMoon', 'matSweet', { w: 'u', m: 't', d: 'b', c: 'b' }, {}, { ramps: { accent: 'indigo', roof: 'gold' } });
-// Forest Cabin: the same small oval as a mat of moss.
-oval('matMoss', 'matSweet', { w: '2', m: '2', d: '4', c: '3', a: '1', b: '2' }, {}, { ramps: { leaf: 'green' } });
