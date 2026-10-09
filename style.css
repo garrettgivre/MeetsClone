@@ -53,11 +53,10 @@ body.lcd #glass {
     radial-gradient(ellipse 75% 62% at 50% 50%, rgba(20, 16, 60, 0) 55%, rgba(20, 16, 60, .24) 100%);
 }
 /* ...and the screen's faint cell grid carries on over the strip and its buttons */
-body.lcd #controls { position: relative; }
 body.lcd #controls::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: calc(var(--px, 3px) * 6) 0 0 0; /* (from the screen's bottom edge down: the screen has its own grid) */
   pointer-events: none;
   background-image: var(--cell, none);
   background-size: var(--px, 3px) var(--px, 3px);
@@ -77,15 +76,24 @@ body.lcd #controls::after {
   touch-action: none;
 }
 
+/* The strip comes up over the bottom of the screen (by BUTTON_LIFT game pixels,
+   see main.js), so the outer buttons nestle beside the room's name. --drop
+   moves them down when the page has room to spare. */
 #controls {
   align-self: stretch;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 0;
+  position: relative;
+  z-index: 1;
+  margin-top: calc(var(--px, 3px) * -6);
+  padding-top: var(--drop, 0px);
+  pointer-events: none;
 }
+#buttons { pointer-events: auto; }
 
 /* --px is the size of one game pixel on the page; main.js sets it whenever the
    screen is sized, so the buttons are drawn at the same pixel scale as the game. */

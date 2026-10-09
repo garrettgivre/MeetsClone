@@ -131,13 +131,24 @@ setupInput({
   canvas,
   buttons: document.querySelectorAll('.btn'),
   onButton: (b, dir) => app.scene.button?.(b, dir),
-  onTap: (x, y) => app.scene.tap?.(x, y) ?? false,
+  onTap: (x, y) => {
+    if (app.scene.tap?.(x, y)) return true;
+    // The menu icons above and below the room always work: tapping one from inside
+    // another menu closes that menu and opens the one tapped.
+    const home = app.scenes[0], { top, bottom } = LAYOUT;
+    const onIcons = (y >= top.y && y < top.y + top.h) || (y >= bottom.y && y < bottom.y + bottom.h);
+    if (app.scene !== home && onIcons) { app.home(); return home.tap(x, y); }
+    return false;
+  },
   onSwipe: (dir) => app.scene.swipe?.(dir),
   onFirstGesture: unlockAudio,
 });
 
 // ----- sizing: the screen fills the page from the top edge down, as wide as it can go -----
-const BUTTON_ROWS = 36 + 10; // the least the strip under the screen needs, in game pixels: a button, and the drop of the middle one
+// The buttons come up over the bottom of the screen: the outer two rise BUTTON_LIFT game pixels into the bar that
+// names the room (which only has writing in its middle), and the middle one stops just under that writing.
+const BUTTON_LIFT = 6;
+const BUTTON_ROWS = 36 + 5 - BUTTON_LIFT; // so this is the least the page needs under the screen, in game pixels
 function resize() {
   const device = document.getElementById('device');
   const inset = parseFloat(getComputedStyle(document.getElementById('bezel')).paddingTop) || 0; // a phone's notch
@@ -149,10 +160,12 @@ function resize() {
   // Whichever runs out first, width or height, the screen takes all of it
   // (so the scale is rarely a whole number; the canvas is double density, which keeps it crisp).
   // (so on any phone tall enough for the buttons the screen runs edge to edge, with nothing beside it)
-  const s = Math.max(1, Math.min(availW / W, (availH - 2) / (H + BUTTON_ROWS)));
+  const s = Math.max(1, Math.min(availW / W, (availH - 12) / (H + BUTTON_ROWS)));
   canvas.style.width = Math.round(W * s) + 'px';
   canvas.style.height = Math.round(H * s) + 'px';
   document.documentElement.style.setProperty('--px', s + 'px'); // one game pixel, for the buttons
+  // with room to spare under the screen, the buttons sit halfway down it
+  document.documentElement.style.setProperty('--drop', Math.max(0, (availH - 10 - s * (H + BUTTON_ROWS)) / 2) + 'px');
   if (app.sky) app.pageSky(...app.sky); // the page's colours change over where the screen's do
 }
 window.addEventListener('resize', resize);

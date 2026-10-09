@@ -1,5 +1,5 @@
 // The main screen: status bar, two rows of menu icons, the room with the pet.
-import { C, mutedLut } from '../engine/palette.js';
+import { C, ghostLut } from '../engine/palette.js';
 import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
 import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BROOM_ICON, BATH_ICON, POTTY_ICON, ARROW } from '../art/icons.js';
@@ -23,9 +23,8 @@ const LABEL = {
   games: 'GAMES', items: 'ITEMS', town: 'TOWN', family: 'FAMILY', settings: 'SETTINGS',
 };
 const POOP_X = [104, 116, 92, 80];
-// menu icons are drawn washed out until the cursor is on them (pale greys, to show on the navy bars)
-const MUTED = mutedLut('white', 1, 0.2);      // on the night sky
-const MUTED_DAY = mutedLut('ink', 1, 0.25);   // darker greys, to show against a bright sky
+// (menu icons are drawn grey and a little see-through until the cursor is on them: see ghostLut)
+const GHOST = 0.32; // how much of the bar behind shows through an icon that isn't picked
 const CELL = W / 5;
 const DOOR_Y = 58; // where the arrows to the next rooms sit, from the top of the room
 // how far a small pet is lifted so it shows over the rim of the tub
@@ -622,13 +621,14 @@ export class HomeScene {
         const cx = Math.round(i * CELL + CELL / 2);
         if (this.cursor === idx) scr.panel(Math.round(i * CELL) + 1, row.y + 1, Math.round(CELL) - 1, row.h - 2, COL.hi, COL.ink);
         const ic = ICONS[id];
-        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), { remap: this.cursor === idx ? null : dark ? MUTED : MUTED_DAY });
+        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), { remap: this.cursor === idx ? null : ghostLut(row === top ? C(sky.top) : sky.bottom, GHOST) });
       });
     }
     // info bar
     // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
     // ...or, with no menu picked, which room of the house this is
-    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 4, low, { align: 'center' });
-    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 4, sky.bottomDark ? COL.mist : COL.ink, { align: 'center' });
+    // (it sits low in the bar, between the two outer buttons and just over the middle one)
+    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 6, low, { align: 'center' });
+    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 6, sky.bottomDark ? COL.mist : COL.ink, { align: 'center' });
   }
 }
