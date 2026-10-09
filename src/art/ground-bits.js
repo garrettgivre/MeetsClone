@@ -195,6 +195,15 @@ export const GROUNDS = {
     ['tuftB', 14, 290], ['dewDrop', 58, 296], ['tuftA', 102, 286], ['daisy', 142, 298], ['dewDrop', 186, 288], ['tuftA', 228, 300],
     ['clover', 40, 310], ['dewDrop', 90, 308], ['tuftB', 164, 310], ['dewDrop', 216, 310],
   ],
+  // Pumpkin Hollow: rough dark grass with fallen leaves, a few bones and small pumpkins (the bits are in props-hollow-3.js)
+  graveyard: [
+    ['tuftDeep', 14, 170], ['leafOrange', 44, 166], ['tuftDeep', 76, 172], ['boneBit', 108, 168], ['leafOrange', 142, 172], ['tuftDeep', 172, 166], ['pumpkinBit', 206, 172], ['leafOrange', 240, 168],
+    ['leafOrange', 22, 196], ['tuftDeep', 58, 192], ['pumpkinBit', 94, 200], ['tuftDeep', 130, 190], ['leafOrange', 164, 200], ['boneBit', 212, 194], ['tuftDeep', 246, 202],
+    ['tuftDeep', 12, 226], ['boneBit', 50, 232], ['leafOrange', 100, 222], ['tuftDeep', 152, 230], ['leafOrange', 196, 224], ['tuftDeep', 234, 232],
+    ['leafOrange', 30, 258], ['tuftDeep', 74, 264], ['pumpkinBit', 122, 256], ['leafOrange', 168, 262], ['tuftDeep', 208, 256], ['leafOrange', 246, 266],
+    ['tuftDeep', 16, 290], ['leafOrange', 60, 296], ['tuftDeep', 104, 286], ['boneBit', 146, 298], ['leafOrange', 188, 288], ['tuftDeep', 230, 300],
+    ['leafOrange', 42, 310], ['tuftDeep', 92, 308], ['leafOrange', 170, 310], ['tuftDeep', 218, 310],
+  ],
   meadow: [
     ['starBloom', 20, 168], ['tuftDeep', 54, 172], ['lavender', 88, 170], ['starBloom', 126, 166], ['tuftDeep', 160, 172], ['lavender', 196, 168], ['starBloom', 234, 172],
     ['lavender', 12, 198], ['tuftDeep', 44, 194], ['starBloom', 80, 202], ['tuftDeep', 118, 192], ['starBloom', 170, 200], ['lavender', 214, 196], ['tuftDeep', 246, 204],

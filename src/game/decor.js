@@ -11,7 +11,7 @@
 export const HOUSE = ['garden', 'kitchen', 'bedroom', 'bathroom'];
 
 export const ROOMS = {
-  garden: { name: 'Garden', outdoor: true, slots: ['ground', 'fence', 'tree', 'feature', 'flowers', 'seat'] },
+  garden: { name: 'Garden', outdoor: true, slots: ['ground', 'horizon', 'fence', 'tree', 'feature', 'flowers', 'seat'] },
   kitchen: { name: 'Kitchen', outdoor: false, slots: ['wall', 'floor', 'window', 'stove', 'counter', 'shelf', 'table', 'seat'] },
   bedroom: { name: 'Bedroom', outdoor: false, slots: ['wall', 'floor', 'window', 'picture', 'shelf', 'lamp', 'bed', 'rug', 'corner', 'plant'] },
   bathroom: { name: 'Bathroom', outdoor: false, slots: ['wall', 'floor', 'window', 'mirror', 'cabinet', 'mat', 'towels', 'plant'] },
@@ -38,6 +38,7 @@ export const SLOTS = {
   mat: { label: 'Bath mat', price: 40 },
   towels: { label: 'Towels', price: 30 },
   ground: { label: 'Lawn', price: 60 },
+  horizon: { label: 'Horizon', price: 50 },
   fence: { label: 'Fence', price: 50 },
   tree: { label: 'Tree', price: 60 },
   feature: { label: 'Centrepiece', price: 120 },
@@ -55,7 +56,7 @@ export const SETS = {
       bedroom: { wall: 'Dotted Paper', floor: 'Pine Boards', window: 'Pink Curtains', picture: 'Heart Picture', shelf: 'Keepsake Shelf', lamp: 'Pleated Lamp', bed: 'Heart Basket', rug: 'Pink Rug', corner: 'Toy Chest', plant: 'Potted Plant' },
       kitchen: { wall: 'Candy Stripes', floor: 'Checked Tiles', window: 'Kitchen Window', stove: 'Brick Oven', counter: 'Baking Counter', shelf: 'Pantry Shelf', table: 'Tea Table', seat: 'Pink Stool' },
       bathroom: { wall: 'Sky Tiles', floor: 'Mint Tiles', window: 'Porthole', mirror: 'Bulb Mirror', cabinet: 'Glass Cabinet', mat: 'Pink Mat', towels: 'Folded Towels', plant: 'Bathroom Fern' },
-      garden: { ground: 'Clover Lawn', fence: 'White Pickets', tree: 'Shade Tree', feature: 'Fountain', flowers: 'Pink Flower Bed', seat: 'Log Seat' },
+      garden: { ground: 'Clover Lawn', horizon: 'Flowering Hedge', fence: 'White Pickets', tree: 'Shade Tree', feature: 'Fountain', flowers: 'Pink Flower Bed', seat: 'Log Seat' },
     },
   },
   starry: {
@@ -64,7 +65,7 @@ export const SETS = {
       bedroom: { wall: 'Star Paper', floor: 'Dusk Boards', window: 'Arched Window', picture: 'Star Chart', shelf: 'Cloud Shelf', lamp: 'Moon Floor Lamp', bed: 'Moon Cradle', rug: 'Comet Rug', corner: 'Toy Rocket', plant: 'Moonflowers' },
       kitchen: { wall: 'Moon Paper', floor: 'Star Tiles', window: 'Round Sky Window', stove: 'Rocket Oven', counter: 'Star Cupboard', shelf: 'Kitchen Cloud Shelf', table: 'Moon Table', seat: 'Star Stool' },
       bathroom: { wall: 'Night Tiles', floor: 'Twilight Tiles', window: 'Moon Window', mirror: 'Moon Mirror', cabinet: 'Star Cabinet', mat: 'Comet Mat', towels: 'Towel Stand', plant: 'Bath Moonflower' },
-      garden: { ground: 'Night Meadow', fence: 'Star Railings', tree: 'Lantern Tree', feature: 'Telescope', flowers: 'Moonflower Pot', seat: 'Star Bench' },
+      garden: { ground: 'Night Meadow', horizon: 'Far Cottage Lights', fence: 'Star Railings', tree: 'Lantern Tree', feature: 'Telescope', flowers: 'Moonflower Pot', seat: 'Star Bench' },
     },
   },
   forest: {
@@ -73,7 +74,7 @@ export const SETS = {
       bedroom: { wall: 'Sprig Paper', floor: 'Oak Boards', window: 'Cabin Window', picture: 'Cuckoo Clock', shelf: 'Log Shelf', lamp: 'Toadstool Lamp', bed: 'Leaf Nest', rug: 'Leaf Rug', corner: 'Firewood', plant: 'Fern Bucket' },
       kitchen: { wall: 'Gingham Paper', floor: 'Pebble Floor', window: 'Cottage Window', stove: 'Stone Hearth', counter: 'Butcher Block', shelf: 'Pantry Log Shelf', table: 'Stump Table', seat: 'Mushroom Stool' },
       bathroom: { wall: 'Fern Paper', floor: 'Flagstones', window: 'Bath Cottage Window', mirror: 'Branch Mirror', cabinet: 'Tree Trunk Cabinet', mat: 'Moss Mat', towels: 'Branch Rack', plant: 'Bath Fern' },
-      garden: { ground: 'Woodland Floor', fence: 'Log Fence', tree: 'Pine Tree', feature: 'Campfire', flowers: 'Toadstool Ring', seat: 'Log Bench' },
+      garden: { ground: 'Woodland Floor', horizon: 'Pine Tops', fence: 'Log Fence', tree: 'Pine Tree', feature: 'Campfire', flowers: 'Toadstool Ring', seat: 'Log Bench' },
     },
   },
   seaside: {
@@ -82,7 +83,7 @@ export const SETS = {
       bedroom: { wall: 'Wave Paper', floor: 'Driftwood Boards', window: 'Porthole Window', picture: 'Life Ring', shelf: 'Rope Shelf', lamp: 'Lighthouse Lamp', bed: 'Clam Bed', rug: 'Tide Rug', corner: 'Beach Ball', plant: 'Dune Grass' },
       kitchen: { wall: 'Deckchair Stripes', floor: 'Sea Tiles', window: 'Shutter Window', stove: 'Potbelly Stove', counter: 'Crate Counter', shelf: 'Galley Shelf', table: 'Barrel Table', seat: 'Keg Stool' },
       bathroom: { wall: 'Ripple Tiles', floor: 'Lagoon Tiles', window: 'Shore Shutters', mirror: 'Shell Mirror', cabinet: 'Beach Hut Cabinet', mat: 'Tide Mat', towels: 'Towel Basket', plant: 'Shell Pot' },
-      garden: { ground: 'Sandy Beach', fence: 'Rope Fence', tree: 'Beach Parasol', feature: 'Rowing Boat', flowers: 'Driftwood', seat: 'Sun Lounger' },
+      garden: { ground: 'Sandy Beach', horizon: 'Open Sea', fence: 'Rope Fence', tree: 'Beach Parasol', feature: 'Rowing Boat', flowers: 'Driftwood', seat: 'Sun Lounger' },
     },
   },
   modern: {
@@ -91,7 +92,7 @@ export const SETS = {
       bedroom: { wall: 'Plain White', floor: 'Slate Boards', window: 'Picture Window', picture: 'Wall Clock', shelf: 'Cube Shelf', lamp: 'Arc Lamp', bed: 'Pod Bed', rug: 'Mint Rug', corner: 'Beanbag', plant: 'Big Leaf Plant' },
       kitchen: { wall: 'Mint Diamonds', floor: 'Grey Checks', window: 'Strip Window', stove: 'Cooker and Hood', counter: 'Kitchen Island', shelf: 'Kitchen Cube Shelf', table: 'Tulip Table', seat: 'Bar Stool' },
       bathroom: { wall: 'Metro Tiles', floor: 'Slate Tiles', window: 'Bath Strip Window', mirror: 'Round Mirror', cabinet: 'Tall Cupboard', mat: 'Mint Mat', towels: 'Towel Ladder', plant: 'Snake Plant' },
-      garden: { ground: 'Trim Lawn', fence: 'Slat Fence', tree: 'Ball Tree', feature: 'Ring Sculpture', flowers: 'Planter Box', seat: 'Garden Bench' },
+      garden: { ground: 'Trim Lawn', horizon: 'City Skyline', fence: 'Slat Fence', tree: 'Ball Tree', feature: 'Ring Sculpture', flowers: 'Planter Box', seat: 'Garden Bench' },
     },
   },
   squiggle: {
@@ -100,7 +101,7 @@ export const SETS = {
       bedroom: { wall: 'Squiggle Paper', floor: 'Terrazzo', window: 'Stripe and Spot Window', picture: 'Shapes Print', shelf: 'Zigzag Shelf', lamp: 'Totem Lamp', bed: 'Mismatch Bed', rug: 'Squiggle Rug', corner: 'Soft Shapes', plant: 'Party Cactus' },
       kitchen: { wall: 'Grid Paper', floor: 'Chessboard Floor', window: 'Shape Window', stove: 'Party Cooker', counter: 'Three-Door Counter', shelf: 'Kitchen Zigzag Shelf', table: 'Ball and Cone Table', seat: 'Spot Chair' },
       bathroom: { wall: 'Odd Tiles', floor: 'Candy Mosaic', window: 'Bath Shape Window', mirror: 'Arch Mirror', cabinet: 'Stacked Cabinet', mat: 'Zigzag Mat', towels: 'Party Towels', plant: 'Ball Topiary' },
-      garden: { ground: 'Confetti Lawn', fence: 'Odd Post Fence', tree: 'Hoop Palm', feature: 'Shape Totem', flowers: 'Shape Flowers', seat: 'Shape Bench' },
+      garden: { ground: 'Confetti Lawn', horizon: 'Party Peaks', fence: 'Odd Post Fence', tree: 'Hoop Palm', feature: 'Shape Totem', flowers: 'Shape Flowers', seat: 'Shape Bench' },
     },
   },
   aqua: {
@@ -109,7 +110,16 @@ export const SETS = {
       bedroom: { wall: 'Bubble Sky Paper', floor: 'Gloss Tiles', window: 'Soft Corner Window', picture: 'Green Hill Print', shelf: 'Glass Shelf', lamp: 'Orb Lamp', bed: 'Bubble Bed', rug: 'Ripple Rug', corner: 'Fish Tank', plant: 'Lucky Bamboo' },
       kitchen: { wall: 'Wave Paper', floor: 'Mint Gloss Tiles', window: 'Long Round Window', stove: 'Gloss Cooker', counter: 'Glass Door Counter', shelf: 'Kitchen Glass Shelf', table: 'Glass Table', seat: 'Jelly Stool' },
       bathroom: { wall: 'Sky Wave Paper', floor: 'Sky Tiles', window: 'Bath Round Window', mirror: 'Drop Mirror', cabinet: 'Gloss Tower', mat: 'Droplet Mat', towels: 'Chrome Towel Hoop', plant: 'Bath Bamboo' },
-      garden: { ground: 'Dewy Lawn', fence: 'Glass Fence', tree: 'Gloss Tree', feature: 'Orb Fountain', flowers: 'Glass Tulips', seat: 'Swoosh Bench' },
+      garden: { ground: 'Dewy Lawn', horizon: 'Windmill Hills', fence: 'Glass Fence', tree: 'Gloss Tree', feature: 'Orb Fountain', flowers: 'Glass Tulips', seat: 'Swoosh Bench' },
+    },
+  },
+  hollow: {
+    name: 'Pumpkin Hollow',
+    pieces: {
+      bedroom: { wall: 'Bat Paper', floor: 'Old Dark Boards', window: 'Arch Window', picture: 'Ghost Portrait', shelf: 'Cobweb Shelf', lamp: 'Candle Stand', bed: 'Pumpkin Bed', rug: 'Web Rug', corner: 'Cauldron', plant: 'Bare Little Tree' },
+      kitchen: { wall: 'Faded Trellis Paper', floor: 'Pumpkin Checks', window: 'Round Stone Window', stove: 'Grinning Range', counter: 'Crypt Counter', shelf: 'Kitchen Cobweb Shelf', table: 'Runner Table', seat: 'Spider Stool' },
+      bathroom: { wall: 'Mossy Stone Wall', floor: 'Dungeon Slabs', window: 'Bath Stone Window', mirror: 'Haunted Mirror', cabinet: 'Coffin Cabinet', mat: 'Bat Mat', towels: 'Bone Rack', plant: 'Fly-trap' },
+      garden: { ground: 'Graveyard Grass', horizon: 'Graveyard Rise', fence: 'Iron Railings', tree: 'Tree with a Face', feature: 'Great Pumpkin', flowers: 'Pumpkin Patch', seat: 'Bat Bench' },
     },
   },
 };

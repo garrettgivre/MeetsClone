@@ -43,6 +43,7 @@ import './props-hand-7.js';
 import './props-hand-8.js';
 import './floors.js';
 import './floors-2.js';
+import './horizons.js';
 import './floors-3.js';
 import './props-squiggle-1.js';
 import './props-squiggle-2.js';
@@ -51,6 +52,9 @@ import './floors-4.js';
 import './props-aqua-1.js';
 import './props-aqua-2.js';
 import './props-aqua-3.js';
+import './props-hollow-1.js';
+import './props-hollow-2.js';
+import './props-hollow-3.js';
 
 
 // ---------- the starry set's toy ----------

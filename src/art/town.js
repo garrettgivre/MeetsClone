@@ -272,16 +272,16 @@ function bathroomScene(k, sky, layout) {
 
 const SEA = { day: 'sky', dawn: 'sky', dusk: 'violet' };
 
-/** The garden: open sky over a hedge and a fence, a tree, a centrepiece on the lawn, flowers and a seat in front. */
+/** The garden: open sky over a horizon and a fence, a tree, a centrepiece on the lawn, flowers and a seat in front. */
 function gardenScene(k, sky, layout) {
   const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-garden-${slot}`];
-  const ground = art('ground'), fence = art('fence'), tree = art('tree'), feature = art('feature');
+  const ground = art('ground'), horizon = art('horizon'), fence = art('fence'), tree = art('tree'), feature = art('feature');
   const top = 150; // where the lawn begins
   k.rect(0, 0, RW, top, 'night'); // the sky: cut out, so the real one shows
-  if (fence.sea) {
-    // the sea instead of a hedge: a deeper band far out, ripples, and foam along the shore
-    k.tile('seaStrip', 0, 114, RW, 36, { glass: SEA[sky] || SEA.day }); // (it takes the colour of the sky over it; night darkens the day's)
-  } else k.canopy(-24, 118, 304, 34, fence.hedge, { seed: 91, r: 9 });
+  // the horizon: what lies beyond the fence, a strip of its own (src/art/horizons.js) whose foot is where the lawn begins.
+  // (The sea takes the colour of the sky over it; night darkens the day's.)
+  const hp = PROPS[horizon.prop];
+  k.tile(horizon.prop, 0, top - hp.h, RW, hp.h, horizon.sea ? { glass: SEA[sky] || SEA.day } : horizon.ramps);
   const shade = ground.bar ? tone(ground.bar, -1) : tone(ground.c, -2); // shadows on this ground
   if (ground.bits) {
     // one flat colour (`bar`, which the bars under the room carry on) and its details, each set down by hand

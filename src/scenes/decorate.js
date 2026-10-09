@@ -24,7 +24,7 @@ const SPOT = {
     plant: [12, 132], towels: [117, 132],
   },
   garden: {
-    ground: [64, 100], fence: [84, 66], tree: [20, 72], feature: [88, 76], flowers: [20, 142], seat: [114, 142],
+    ground: [64, 100], horizon: [40, 58], fence: [84, 68], tree: [20, 72], feature: [88, 76], flowers: [20, 142], seat: [114, 142],
   },
 };
 const BAR_H = 24;
