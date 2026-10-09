@@ -20,14 +20,15 @@ import { homeRoom, RW, HOME_FEET } from '../src/art/town.js';
 import * as axolotl from '../src/art/pets/fine/axolotl.js';
 import * as caterpillar from '../src/art/pets/fine/caterpillar.js';
 import * as jellyfish from '../src/art/pets/fine/jellyfish.js';
+import * as fox from '../src/art/pets/fine/fox.js';
 
-const ALL = { axolotl, caterpillar, jellyfish };
+const ALL = { axolotl, caterpillar, jellyfish, fox };
 const q = new URLSearchParams(location.search);
 const z = +(q.get('z') || 3);
 const out = document.getElementById('out');
 const names = (q.get('only') || Object.keys(ALL).join(',')).split(',').filter(n => ALL[n]);
 const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR' };
-const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', q: 'red.2', Y: 'gold.3', y: 'gold.1' };
+const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1' };
 
 // read a part: note its sockets (painted as body colour)
 function read(p) {
@@ -43,9 +44,10 @@ function read(p) {
 
 /** Put a founder together. Returns its pixels [x, y, colour] with the body's top-left at 0, 0, and their bounds. */
 function compose(A) {
-  const P = Object.fromEntries(['HEAD', 'EARS', 'TOPPER', 'BODY', 'TAIL', 'WINGS', 'SPOTS', 'FEET', 'EYE', 'MOUTH', 'MARK', 'CHEEK'].map(n => [n, read(A[n])]));
+  const P = Object.fromEntries(['HEAD', 'EARS', 'TOPPER', 'BODY', 'TAIL', 'WINGS', 'SPOTS', 'FEET', 'EYE', 'NOSE', 'MOUTH', 'MARK', 'CHEEK'].map(n => [n, read(A[n])]));
   const color = q.get('color') || A.LOOK.color, accent = q.get('accent') || A.LOOK.accent;
-  const col = { 4: ramp(color, 3), 3: ramp(color, 2), 2: ramp(color, 1), 8: ramp(accent, 3), 7: ramp(accent, 2), 6: ramp(accent, 1) };
+  const d = A.LOOK.deeper ? 1 : 0;
+  const col = { 4: ramp(color, 3 - d), 3: ramp(color, 2 - d), 2: ramp(color, 1 - d), 8: ramp(accent, 3), 7: ramp(accent, 2), 6: ramp(accent, 1) };
   for (const [k, v] of Object.entries(FIXED)) col[k] = C(v);
   const eye = A.LOOK.eye || 'ink';
   col.e = ramp(eye, 2); col.E = ramp(eye, 3);
@@ -64,15 +66,19 @@ function compose(A) {
   if (P.WINGS && wl) { stamp(P.WINGS, wl[0], wl[1]); stamp(P.WINGS, wr[0], wr[1], true); }
   if (t) stamp(P.TAIL, t[0], t[1]);
   stamp(P.BODY, 0, 0, false, [0, 0]);
+  const over = (on, ox, oy) => { for (const o of A.OVERLAYS || []) if (o.on === on) stamp(read(o), ox + o.at[0], oy + o.at[1]); };
+  over('body', 0, 0);
   if (P.FEET) for (const [x, y] of B('feet')) stamp(P.FEET, x, y);
   stamp(P.HEAD, hx, hy, false, [0, 0]);
   if (P.SPOTS) for (const [x, y] of P.SPOTS.at) stamp(P.SPOTS, hx + x, hy + y);
+  over('head', hx, hy);
   if (P.EARS.front) ears();
   stamp(P.TOPPER, top[0], top[1]);
   const F = A.FACE;
   stamp(P.MARK, f[0] + F.mark[0], f[1] + F.mark[1]);
   stamp(P.CHEEK, f[0] - F.cheeks[0], f[1] + F.cheeks[1]); stamp(P.CHEEK, f[0] + F.cheeks[0], f[1] + F.cheeks[1]);
-  stamp(P.EYE, f[0] - F.eyes, f[1]); stamp(P.EYE, f[0] + F.eyes, f[1]);
+  stamp(P.EYE, f[0] - F.eyes, f[1]); stamp(P.EYE, f[0] + F.eyes - (P.EYE.mirror ? 1 : 0), f[1], !!P.EYE.mirror);
+  if (P.NOSE) stamp(P.NOSE, f[0], f[1] + F.nose);
   stamp(P.MOUTH, f[0], f[1] + F.mouth);
   const cells = [...px].map(([k, c]) => [...k.split(',').map(Number), c]);
   const xs = cells.map(c => c[0]), ys = cells.map(c => c[1]);
