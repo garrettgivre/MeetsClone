@@ -20,17 +20,14 @@ export const DECOR_ART = {
   // ---------- Sweetheart: the room every game starts with ----------
   'sweet-wall': { paper: 'paperHearts', ramps: { wall: 'sky', accent: 'pink' }, dado: 'dadoPanel' },
   'sweet-floor': { tile: 'floorPlanks', ramps: { wood: 'cream' }, shadow: 'cream.1' },
-  'sweet-window': {
-    ramps: { accent: 'pink', roof: 'gold', stone: 'orange', wood: 'brown' },
-    garland: { hearts: true, colors: ['gold.3', 'pink.3', 'white', 'mint.3'] },
-  },
-  'sweet-picture': { prop: 'heartFrame', ramps: { roof: 'gold', accent: 'pink' } },
-  'sweet-shelf': { ramps: {}, things: [['sproutPot', 184, { stone: 'orange' }], ['books', 204, { accent: 'violet' }], ['teddy', 222, {}], ['toyBlock', 235, { accent: 'mint' }]] },
-  'sweet-lamp': { prop: 'nightLamp', ramps: { roof: 'gold', stone: 'slate' } },
+  'sweet-window': { prop: 'sweetWindow', ramps: { accent: 'pink', roof: 'gold', stone: 'orange', leaf: 'green' }, garland: { hearts: true, colors: ['gold.3', 'pink.3', 'white', 'mint.3'] } },
+  'sweet-picture': { prop: 'heartPicture', ramps: { accent: 'pink', roof: 'gold' } },
+  'sweet-shelf': { prop: 'sweetShelf', top: 7, ramps: {}, things: [['violetPot', 184, {}], ['bookStack', 205, {}], ['teddyBear', 227, {}]] },
+  'sweet-lamp': { prop: 'sweetLamp', ramps: {} },
   'sweet-bed': { prop: 'heartBasket', ramps: { accent: 'pink', wood: 'brown' }, rim: 17 },
-  'sweet-rug': { prop: 'rugHearts', ramps: { accent: 'pink' } },
-  'sweet-corner': { things: [['toyChest', 30, 309, { accent: 'red', glass: 'sky', roof: 'gold', stone: 'gold' }, 25], ['toyBall', 62, 309, { accent: 'mint' }, 0]] },
-  'sweet-plant': { things: [['plant', 238, 309, { leaf: 'green', accent: 'pink', flip: true }, 11]] },
+  'sweet-rug': { prop: 'sweetRug', ramps: { accent: 'pink' } },
+  'sweet-corner': { things: [['sweetChest', 30, 309, {}, 24]] },
+  'sweet-plant': { things: [['sweetPlant', 238, 309, {}, 11]] },
 
   // the kitchen
   'sweet-kitchen-wall': { paper: 'paperCandy', ramps: { wall: 'pink', accent: 'red' }, dado: 'dadoBoards' },
