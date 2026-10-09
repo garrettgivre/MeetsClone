@@ -24,6 +24,7 @@ class MiniGame {
     this.reward = 0;
   }
   get pet() { return this.app.game.pet; }
+  get openAir() { return 'playfield'; } // the bars carry the field's sky and grass on
   get floor() { return LAYOUT.room.y + FLOOR_OFF; }
 
   button(b) {

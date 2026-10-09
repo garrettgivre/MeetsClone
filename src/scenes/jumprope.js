@@ -21,6 +21,7 @@ export class JumpRopeScene {
     this.reward = 0;
   }
   get pet() { return this.app.game.pet; }
+  get openAir() { return 'ropefield'; } // the bars carry the field's sky and grass on
 
   button(b) {
     if (b === 'C') { this.app.sfx('back'); this.app.pop(); return; }

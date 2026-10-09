@@ -20,6 +20,8 @@ export class EndingScene {
     app.save();
   }
   update(dt) { this.t += dt; }
+  /** A pet that died is seen off out of doors: the bars carry the night sky and the hill on. */
+  get openAir() { return this.kind === 'death' ? 'farewell' : null; }
   button(b) { if (b === 'B' && this.t > 1200) this.next(); }
   tap() { if (this.t > 1200) this.next(); return true; }
   next() {

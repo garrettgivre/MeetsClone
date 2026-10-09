@@ -7,7 +7,7 @@
 // part of it behind the panes, and the bars above and below the room (the
 // status bar, the icon rows, the info bar) show the rest, so the room sits in
 // the open sky; the page round the screen takes its top and bottom colours.
-import { C } from '../engine/palette.js';
+import { C, COLORS } from '../engine/palette.js';
 import { W, H, HD } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
 import { homeRoom, ROOM_SKY, propBitmap, groundTone } from '../art/town.js';
@@ -127,7 +127,8 @@ const GROUND_FLOWERS = [[26, 414, 'white'], [92, 438, 'pink.3'], [146, 420, 'gol
  * where `dark` is about the bars above the room and `bottomDark` those below,
  * and `bottom` is a palette index.
  */
-export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null) {
+export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air = null) {
+  if (air) return drawAirBars(scr, appTime, air);
   const sky = stateOf(simTime, lightsOff);
   const tone = (name) => groundTone(name, sky);
   for (const [y0, y1] of BARS) {
@@ -158,6 +159,32 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null) {
   scr.noClip();
   const [top, , , bottom] = SKY[sky];
   return { sky, dark: sky === 'night', top, bottom: ground ? tone(ground.c) : C(bottom), bottomDark: sky === 'night' };
+}
+
+/**
+ * The bars while an outdoor place away from home is on show (a town square, the
+ * road there, the games field): they carry that picture's own sky and ground
+ * on, meeting it in the same colours top and bottom. `air` is its edgeColours.
+ */
+function drawAirBars(scr, appTime, air) {
+  const light = (c) => { const [r, g, b] = COLORS[c]; return r * 0.3 + g * 0.59 + b * 0.11; };
+  const [[t0, t1], [b0, b1]] = BARS;
+  scr.noClip();
+  scr.hrect(0, t0, BW, t1 - t0, air.top);
+  scr.hrect(0, b0, BW, b1 - b0, air.bottom);
+  for (const [x, y] of GROUND_STROKES) { scr.hpset(x, y, air.stroke); scr.hpset(x - 1, y - 1, air.stroke); scr.hpset(x + 1, y - 1, air.stroke); }
+  if (light(air.top) > 110) {
+    // (clouds only in a daytime sky)
+    scr.clip = [0, t0, BW, t1];
+    const cloud = propBitmap('cloudC', { accent: 'violet' });
+    for (const [y, speed, start] of BAR_CLOUDS) {
+      if (y > t1) continue;
+      const span = BW + cloud.w * 2;
+      scr.bitmap(cloud, (((start + appTime * speed) % span) - cloud.w) / HD, (y - cloud.h / 2) / HD);
+    }
+    scr.noClip();
+  }
+  return { sky: 'air', dark: light(air.top) < 110, top: air.top, bottom: air.bottom, bottomDark: light(air.bottom) < 110 };
 }
 
 /**

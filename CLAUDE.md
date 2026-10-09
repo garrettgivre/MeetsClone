@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.20.5, 8 October 2026)
+## Where things stand (v0.20.6, 8 October 2026)
 
 Everything is committed, pushed and live. `npm test` passes (93 tests).
 
@@ -126,6 +126,7 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 - `drawSkyBars` returns `{ sky, dark, top, bottom }`. `drawBars` in `home.js` writes in ink on a bright sky and in white at night, and passes the top and bottom colours to `app.pageSky` (`main.js`), which colours the notch area and the button strip (a shade deeper when the LCD filter is on, to match the filtered screen). The navy in `style.css` only shows until the first frame.
 - **Ground below, sky above.** The bars under the room (bottom icon row, info bar, and the page strip with the buttons) are the ground the house stands on: the garden lawn's colours, whichever room is on show (the owner asked for this "to be consistent"). `drawBars` passes them to `drawSkyBars`, which returns the ground as `bottom` (a palette index) and `bottomDark` for the text.
 - **Out of doors the frame goes** (the owner: "The frame should basically disappear I think when outside"): for a room marked `outdoor` the rules above and below the room are not drawn, so the lawn in the picture runs straight on into the bars.
+- **Away from home, out of doors.** A scene over the home screen that is out of doors (a town place in `OPEN_AIR`, the trip, the games field, the farewell) has an `openAir` getter naming its backdrop. `drawBars` then asks `edgeColours(id)` (`src/art/town.js`) for the commonest colour along that backdrop's top row and bottom row, and `drawAirBars` paints the bars in them with no rules, so the picture's sky and ground run on to the edges of the screen whatever they are (sand at the beach, cobbles in the square). The owner: "They just need to match color at top line and bottom line... don't just make every outside look the same." Indoor places keep the home bars. A new outdoor backdrop must be added to `OPEN_AIR`.
 - **The light of the hour out of doors.** `timeLut(sky)` in `src/art/town.js` moves colours ramp by ramp: at night every shade drops a step; at dusk the greens warm up a ramp toward the orange sky (green to lime, mint to green, pale lime to gold), which the owner asked for ("slightly orange with the orange sky"); dawn is plain daylight. (A first version tinted by red, green and blue, which turned pale grass tan and left the rest green; the owner called the colours messed up.) `homeRoom` runs an outdoor room's whole picture through it, and `groundTone` does the same for the ground in the bars. Indoor rooms are not tinted.
 - Text or sprites added to the bars must read on both a pale sky and a dark one; check day, dawn, dusk and night by setting `app.game.simTime`.
 

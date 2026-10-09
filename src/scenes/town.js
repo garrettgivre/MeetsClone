@@ -118,6 +118,8 @@ function drawWay(scr, kind, ground, t) {
 
 class TravelScene {
   constructor(app, locId, kind) { this.app = app; this.locId = locId; this.kind = kind; this.t = 0; }
+  /** The backdrop whose sky and ground the bars carry on. */
+  get openAir() { return this.kind === 'balloon' ? 'tripSky' : 'trip'; }
   enter() { this.app.sfx(this.kind === 'walk' ? 'blip' : 'select'); }
   button(b) { if (b === 'B' || b === 'C') this.arrive(); }
   tap() { this.arrive(); return true; }
@@ -170,6 +172,8 @@ export class PlaceScene {
     this.t = 0;
   }
   get game() { return this.app.game; }
+  /** Out of doors, the bars carry this place's sky and ground on (indoor places are not in OPEN_AIR). */
+  get openAir() { return this.loc.id; }
   /** Whoever keeps the place today (they grow up, grow old and hand over to their child). */
   get res() { return resident(this.loc.id, this.app.game); }
   /** Talk first, then the place's own actions. */

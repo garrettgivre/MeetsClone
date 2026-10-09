@@ -12,7 +12,7 @@ import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide } from './room.js';
 import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
 import { DECOR_ART } from '../art/decor-art.js';
-import { tone } from '../art/town.js';
+import { tone, edgeColours } from '../art/town.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -598,9 +598,13 @@ export class HomeScene {
     // the bars are open sky: the same sky the window looks out on, by day and by night
     // Below the room is the ground the house stands on: the garden's own lawn, in the light of the hour.
     // (Out in the garden it is the same lawn carrying on, and nothing frames the room.)
-    const open = !!ROOMS[roomOf(game)].outdoor;
+    // Away from home and out of doors (a place in town, the road there, the games field), the bars
+    // carry that picture's own sky and ground on instead: it says which through `openAir`.
+    const over = this.app.scene !== this ? this.app.scene : null;
+    const air = over?.openAir ? edgeColours(over.openAir) : null;
+    const open = air ? true : !over && !!ROOMS[roomOf(game)].outdoor;
     const lawn = DECOR_ART[layoutOf(game, 'garden').ground] || DECOR_ART['sweet-garden-ground'];
-    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights, { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) });
+    const sky = drawSkyBars(scr, game.simTime, t, pet && !pet.lights, { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) }, air);
     const fg = sky.dark ? COL.white : COL.ink, low = sky.bottomDark ? COL.white : COL.ink;
     const shown = `${sky.top}|${sky.bottom}`;
     if (shown !== this.skyShown) { this.skyShown = shown; this.app.pageSky?.(sky.top, sky.bottom); }

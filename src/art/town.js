@@ -6,7 +6,7 @@
 // a light rim on top/left, a shadow band on the bottom/right and an outline in
 // a darker shade of their own colour (ink only for small, dark details); props
 // sit on soft dithered contact shadows.
-import { C, RAMP_NAMES, COLORS } from '../engine/palette.js';
+import { C, RAMP_NAMES, COLORS, NAMES } from '../engine/palette.js';
 import { W, HD, makeBitmap } from '../engine/screen.js';
 import { LAYOUT } from '../ui.js';
 import { PROPS, stampProp } from './props.js';
@@ -35,6 +35,31 @@ function draw(id) {
 export const backdrop = (id) => draw(id).back;
 /** Framing drawn in front of the pets (bushes, clouds at the corners), or null. */
 export const frontdrop = (id) => draw(id).front;
+
+/** Backdrops that are out of doors: the bars round the screen carry their sky and ground on (see edgeColours). */
+export const OPEN_AIR = new Set(['square', 'park', 'cottages', 'playground', 'beach', 'forest', 'fair', 'castle', 'starisle', 'hidden',
+  'playfield', 'ropefield', 'trip', 'tripSky', 'farewell']);
+
+const edges = new Map();
+/**
+ * The colours a backdrop meets the bars with: the commonest colour along its
+ * top row and along its bottom row (palette indexes), and a darker shade of
+ * the bottom one for grass strokes. Null for a place that is indoors.
+ */
+export function edgeColours(id) {
+  if (!OPEN_AIR.has(id)) return null;
+  if (!edges.has(id)) {
+    const bm = backdrop(id);
+    const commonest = (y) => {
+      const n = new Map();
+      for (let x = 0; x < bm.w; x++) { const c = bm.px[y * bm.w + x]; n.set(c, (n.get(c) || 0) + 1); }
+      return [...n].sort((a, b) => b[1] - a[1])[0][0];
+    };
+    const top = commonest(0), bottom = commonest(bm.h - 1);
+    edges.set(id, { top, bottom, stroke: C(tone(NAMES[bottom], -1)) });
+  }
+  return edges.get(id);
+}
 
 const propCache = new Map();
 /** A prop as a hi-res bitmap of its own, for things that move across a scene. `at` is its anchor. */
