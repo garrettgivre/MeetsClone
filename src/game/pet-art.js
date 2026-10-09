@@ -93,6 +93,46 @@ function joinSeams(L, ramps, joins, melt = new Set()) {
   L.px.set(out);
 }
 
+// The simpler, rounder look (the owner found the pets "not cute enough" and pointed to
+// one-piece, flat-coloured characters with heavy outlines and tiny faces). The parts are
+// the same hand-drawn grids; these settings change how they are put together and finished.
+export const STYLE = {
+  flat: true,      // one colour and one shadow per part: no light rim, no fur ticks, wool curls or feather rows
+  inkLine: true,   // the whole silhouette is outlined in ink, not in a dark shade of the pet's own colour
+  smallFace: true, // big faces use the small eyes, nose and mouth, set as wide apart as the big ones were
+  tuck: 2,         // the head sits this many pixels lower on the body, for a shorter, chubbier pet
+};
+
+/**
+ * Flatten a composed pet: every lit shade becomes the base colour; a shadow
+ * shade stays only where it lies along the lower right of the shape (the
+ * shadow band), not where it was texture; and the outline, wherever it faces
+ * empty space, becomes ink. Lines inside the shape in the pet's own dark shade
+ * soften to its shadow colour.
+ */
+function simplify(L, rampNames) {
+  const ink = C('ink');
+  const info = new Map();
+  for (const r of rampNames) for (let k = 0; k < 4; k++) if (!info.has(ramp(r, k))) info.set(ramp(r, k), [r, k]);
+  const edge = (c) => c === 0 || c === ink || info.get(c)?.[1] === 0;
+  const src = L.px.slice();
+  const was = (x, y) => (x < 0 || y < 0 || x >= TW || y >= TH ? 0 : src[y * TW + x]);
+  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
+    const i = y * TW + x, c = src[i], m = info.get(c);
+    if (!m) continue;
+    const [r, shade] = m;
+    if (shade === 3 && STYLE.flat) L.px[i] = ramp(r, 2);
+    else if (shade === 1 && STYLE.flat) {
+      // the shadow band hugs the right or bottom edge: within two pixels of it
+      const near = [[1, 0], [2, 0], [0, 1], [0, 2], [1, 1]].some(([dx, dy]) => edge(was(x + dx, y + dy)));
+      if (!near) L.px[i] = ramp(r, 2);
+    } else if (shade === 0 && STYLE.inkLine) {
+      const open = !was(x - 1, y) || !was(x + 1, y) || !was(x, y - 1) || !was(x, y + 1);
+      L.px[i] = open ? ink : ramp(r, 1);
+    }
+  }
+}
+
 /**
  * Crop the working canvas to the output size: centred, feet near the bottom.
  * The ground is the lowest pixel of the body and feet; a tail or wing that
@@ -151,10 +191,12 @@ function settleMark(L, { mark, small, y, size }, fx, fy, ctx) {
 
 /** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
 function drawFace(L, p, stage, pose, ctx, [fx, fy], size, on = {}) {
+  // (a big face can be given the small parts: they keep the big face's spacing)
+  const parts = size === 'L' && STYLE.smallFace ? 'S' : size;
   // layout: house defaults, then the form's, then the part's own (a small head can set a closer eye spread)
   const lay = { ...FACE_LAYOUT[size], ...(FORMS[p.form]?.faceLayout || {}) };
   const simple = stage === 'baby';
-  const eye = simple ? BABY_EYES : (EYES[p.eyes] || EYES.bead)[size];
+  const eye = simple ? BABY_EYES : (EYES[p.eyes] || EYES.bead)[parts];
   const spread = on.spread || (simple ? 3 : lay.spread);
   const exL = fx - spread, exR = fx + spread;
   const skinAt = (x, y) => { const c = L.px[y * TW + x]; return c && c !== C('ink') && c !== C('white') ? c : null; };
@@ -181,9 +223,10 @@ function drawFace(L, p, stage, pose, ctx, [fx, fy], size, on = {}) {
     L.set(exR + eye.pivot[0] + 1, fy - eye.pivot[1], C('ink'));
   }
   const withEyes = L.px.slice();
-  if (!simple && p.nose && p.nose !== 'none') L.stamp(NOSES[p.nose]?.[size], fx, fy + lay.nose, ctx);
-  const mouth = simple ? BABY_MOUTH : (MOUTHS[p.mouth] || MOUTHS.o)[size];
-  const my = fy + (mouth.bill ? 1 : simple ? 2 : lay.mouth);
+  const shift = parts === size ? 0 : -1; // small parts sit a row closer to the eyes
+  if (!simple && p.nose && p.nose !== 'none') L.stamp(NOSES[p.nose]?.[parts], fx, fy + lay.nose + shift, ctx);
+  const mouth = simple ? BABY_MOUTH : (MOUTHS[p.mouth] || MOUTHS.o)[parts];
+  const my = fy + (mouth.bill ? 1 : simple ? 2 : lay.mouth + shift);
   L.stamp(mouth, fx, my, ctx);
   // nose and mouth pixels that cover an eye or miss the head
   for (let i = 0; i < before.length; i++) if (L.px[i] !== withEyes[i] && (withEyes[i] !== before[i] || edge.has(before[i]))) off.push(i);
@@ -283,6 +326,7 @@ export function composePetArt(p, stage, pose = {}) {
     if (ears && !ears.front) drawEars();
     L.stamp(shape, ax, ay, ctx, false, stage === 'child' ? patternRemap(p.pattern, 'body', shape, { form: p.form, fu: 0, fv: 0 }) : null);
     if (ears && ears.front) drawEars();
+    simplify(L, [p.color, p.accent, p.hairColor || p.color]);
     face = drawFace(L, p, stage, pose, ctx, at('faceS')[0], 'S', shape);
     neckY = at('faceS')[0][1] + 4;
   } else {
@@ -292,7 +336,7 @@ export function composePetArt(p, stage, pose = {}) {
     const [bnx, bny] = body.sockets.neck[0];
     const [hnx, hny] = head.sockets.neck[0];
     // the head's neck socket lands on the body's
-    const bx0 = OX - bnx, by0 = OY - bny, hx0 = OX - hnx, hy0 = OY - hny;
+    const bx0 = OX - bnx, by0 = OY - bny, hx0 = OX - hnx, hy0 = OY - hny + (F.floats || F.merge ? 0 : STYLE.tuck);
     const B = (name) => (body.sockets[name] || []).map(([x, y]) => [bx0 + x, by0 + y]);
     const Hs = (name) => (head.sockets[name] || []).map(([x, y]) => [hx0 + x, hy0 + y]);
     const faceSock = Hs('faceL')[0] ? ['L', Hs('faceL')[0]] : ['S', Hs('faceS')[0]];
@@ -359,6 +403,7 @@ export function composePetArt(p, stage, pose = {}) {
     drawArms((k) => k === 'up'); // raised arms go in front of the head
     joinSeams(L, [p.color, p.hairColor || p.color], joinSet(F.merge ? ['1-2'] : []), F.merge ? new Set(['1-2', '2-1']) : undefined);
     if (wear.head) drawHat(L, p, wear.head, Hs('top')[0]?.[0] ?? fx, tops);
+    simplify(L, [p.color, p.accent, p.hairColor || p.color]);
     face = drawFace(L, p, stage, pose, ctx, [fx, fy], faceSock[0], head);
     if (wear.face) eyesHidden = drawFaceWear(L, p, wear.face, face);
   }
