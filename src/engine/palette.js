@@ -122,20 +122,23 @@ const ghosts = new Map();
 /**
  * A table that makes a sprite look greyed out and a little see-through over a
  * flat background: each colour loses its colour (`drain`), is mixed part of the
- * way (`alpha`) toward the background, and lands on the nearest palette colour.
- * `bg` is the background's palette index. Used for menu icons that aren't selected.
+ * way (`alpha`) toward how light or dark the background is, and lands on the
+ * nearest grey. (Only greys: mixing toward the background's own colour gave
+ * icons a green cast on the lawn.) `bg` is the background's palette index.
+ * Used for menu icons that aren't selected.
  */
 export function ghostLut(bg, alpha = 0.35, drain = 1) {
   const key = `${bg}|${alpha}|${drain}`;
   if (!ghosts.has(key)) {
-    const [br, bgG, bb] = COLORS[bg];
+    const greys = ['ink', 'shade', 'gray', 'silver', 'mist', 'white', 'slate.0', 'slate.1', 'slate.2', 'slate.3'].map(C);
+    const light = (c) => c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11, behind = light(COLORS[bg]);
     const lut = new Uint8Array(COLORS.length);
     for (let i = 1; i < COLORS.length; i++) {
       const [r, g, b] = COLORS[i];
-      const grey = r * 0.3 + g * 0.59 + b * 0.11;
-      const want = [r, g, b].map((v, k) => (v + (grey - v) * drain) * (1 - alpha) + [br, bgG, bb][k] * alpha);
+      const grey = light(COLORS[i]);
+      const want = [r, g, b].map(v => (v + (grey - v) * drain) * (1 - alpha) + behind * alpha);
       let best = i, bestD = Infinity;
-      for (let j = 1; j < COLORS.length - 1; j++) { // (not the lights-off black)
+      for (const j of greys) {
         const d = (COLORS[j][0] - want[0]) ** 2 + (COLORS[j][1] - want[1]) ** 2 + (COLORS[j][2] - want[2]) ** 2;
         if (d < bestD) { bestD = d; best = j; }
       }

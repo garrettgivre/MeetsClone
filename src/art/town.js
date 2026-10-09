@@ -99,26 +99,23 @@ function dim(bm) {
 }
 
 // Out of doors the light changes through the day: the whole picture (and the
-// ground in the bars under every room) is shifted toward the nearest palette
-// colours of a warmer, rosier or darker, bluer version of itself.
+// ground in the bars under every room) moves along its own colour ramps, so a
+// green stays a green and only gets deeper. At dusk the brightest shade of
+// each ramp drops a step; at night every shade does (the ramps' dark ends lean
+// blue already). Tinting by red, green and blue instead turned pale grass tan.
 const OUTDOORS = new Set(['garden']);
-const TINTS = { dawn: [1, 0.93, 0.9, 10], dusk: [1, 0.84, 0.76, 0], night: [0.46, 0.54, 0.84, 0] }; // red, green and blue kept, and a lift
+const DUSK = { 3: 2 }, NIGHT = { 3: 2, 2: 1, 1: 0, 0: 0 };
+const TINTS = { dusk: DUSK, night: NIGHT };
+const DIMMER = { white: 'mist', mist: 'silver', silver: 'gray', gray: 'shade', shade: 'ink' }; // neutrals, at night
 const tintLuts = {};
-/** The palette-to-palette table for a time of day, or null by day. */
+/** The palette-to-palette table for a time of day, or null when the light is plain daylight. */
 export function timeLut(sky) {
   if (!TINTS[sky]) return null;
   if (!tintLuts[sky]) {
-    const [mr, mg, mb, lift] = TINTS[sky], lut = new Uint8Array(COLORS.length), hole = C('night');
-    for (let i = 1; i < COLORS.length; i++) {
-      const want = [COLORS[i][0] * mr + lift, COLORS[i][1] * mg + lift, COLORS[i][2] * mb + lift];
-      let best = i, bestD = Infinity;
-      for (let j = 1; j < COLORS.length; j++) {
-        if (j === hole) continue;
-        const d = (COLORS[j][0] - want[0]) ** 2 + (COLORS[j][1] - want[1]) ** 2 + (COLORS[j][2] - want[2]) ** 2;
-        if (d < bestD) { bestD = d; best = j; }
-      }
-      lut[i] = best;
-    }
+    const lut = new Uint8Array(COLORS.length);
+    for (let i = 1; i < COLORS.length; i++) lut[i] = i;
+    for (const r of RAMP_NAMES) for (let s = 0; s < 4; s++) lut[C(`${r}.${s}`)] = C(`${r}.${TINTS[sky][s] ?? s}`);
+    if (sky === 'night') for (const [from, to] of Object.entries(DIMMER)) lut[C(from)] = C(to);
     tintLuts[sky] = lut;
   }
   return tintLuts[sky];

@@ -24,7 +24,7 @@ const LABEL = {
 };
 const POOP_X = [104, 116, 92, 80];
 // (menu icons are drawn grey and a little see-through until the cursor is on them: see ghostLut)
-const GHOST = 0.32; // how much of the bar behind shows through an icon that isn't picked
+const GHOST = 0.4; // how much of the bar behind shows through an icon that isn't picked
 const CELL = W / 5;
 const DOOR_Y = 58; // where the arrows to the next rooms sit, from the top of the room
 // how far a small pet is lifted so it shows over the rim of the tub
@@ -627,8 +627,8 @@ export class HomeScene {
     // info bar
     // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
     // ...or, with no menu picked, which room of the house this is
-    // (it sits low in the bar, between the two outer buttons and just over the middle one)
-    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 6, low, { align: 'center' });
-    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 6, sky.bottomDark ? COL.mist : COL.ink, { align: 'center' });
+    // (it sits between the two outer buttons, close under the icons and over the middle button)
+    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 3, low, { align: 'center' });
+    else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 3, sky.bottomDark ? COL.mist : COL.ink, { align: 'center' });
   }
 }
