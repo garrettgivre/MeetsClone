@@ -25,6 +25,7 @@ import './props-sweet-1.js';
 import './props-sweet-2.js';
 import './props-sweet-3.js';
 import './props-sweet-4.js';
+import './props-sweet-5.js';
 
 
 // ---------- the starry set's toy ----------

@@ -201,49 +201,6 @@ drawn('bathMat', [
   '....a.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.aa.a',
 ], { at: [35, 10], ramps: { accent: 'pink' } });
 
-// ---------------------------------------------------------------- garden
-// A cherry tree in blossom: a bent trunk, branches, clouds of pink flowers, a few petals falling.
-drawn('blossomTree', [
-  '.....................aaaa',
-  '..................aaaddddaa........aaaa',
-  '........aaaa....aaddddwdddda.....aaddddaa',
-  '......aaddddaa.addwddddddccca...addwdddcca',
-  '.....addwdddccaadddddddwdccccaaadddddwdccca',
-  '....addddddwdccadddwddddccccbbadddwddddccbba',
-  '....adddwddddccaddddddcccccbbbaddddddccccbba',
-  '...adddddddccccbaccccccccbbbba.acccwcccccbba',
-  '...addwddcccccbbbaacccbbbbbaa...accccccbbbba',
-  '...adddddccwccbbba.aabbbaa.pq....aacccbbbaa',
-  '....accccccccbbbba....pq..pqq......aabbaa',
-  '.....aacccbbbbbaa.....pqq.pq..........pq',
-  '.......aabbbaa.........pqqpq.........pqq',
-  '..........pq............pqqq........pqq',
-  '..........pqq............pqqq......pqq',
-  '...........pqq...........pqqq....ppqq',
-  '............pqqp..........pqqq.ppqqq',
-  '..............pqqpp.......pqqqpqqqq',
-  '................ppqqpp....pqqqqqq',
-  '...................ppqqp..pPqqqQ',
-  '.....................ppqqppPqqQQ',
-  '.......................pPqqqqQQp',
-  '.......................pPqqqqQQp',
-  '..d....................pPqqqqQQp',
-  '.......................pPqqQqQQp',
-  '.......................pPqqqqQQp',
-  '.............d.........pPqqqqQQp',
-  '.......................pPqQqqQQp',
-  '.......................pPqqqqQQp',
-  '.......................pPqqqqQQp.........d',
-  '......d................pPqqqqQQp',
-  '.......................pPqqqQQQp',
-  '.......................pPqqqqQQp',
-  '.......................pPqqqqQQp',
-  '......................pPPqqqqQQQp',
-  '.....................pPPqqqqqqQQQp',
-  '...................ppPqqpppqqppQQQpp',
-  '..................ppqqpp..pqqp..ppQQpp',
-], { at: [27, 37], ramps: { accent: 'pink', wood: 'brown' } });
-
 // A wishing well: a shingled roof on two posts, a crank and a rope, a bucket
 // hanging over a round wall of stones with a few flowers at its foot.
 drawn('wishingWell', [
