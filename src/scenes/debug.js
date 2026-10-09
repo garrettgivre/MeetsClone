@@ -124,6 +124,24 @@ function timeMenu(app) {
     jump('+8 hours', 8 * HOUR),
     jump('+1 day', 24 * HOUR),
     { label: 'To bedtime / morning', action: () => done(app, cheat.skipToSleepChange(g), 'Hatch the egg first.') },
+    { label: 'Set the time', right: '▶', action: () => setTimeMenu(app) },
+    { label: 'Back to phone time', action: () => { cheat.phoneClock(g); done(app, null, `It is ${clock(g.simTime)}.`); } },
+  ], { footer: () => clock(g.simTime) }));
+}
+
+/** Set the clock without living through the hours between (the "+" rows above do live through them). */
+function setTimeMenu(app) {
+  const g = app.game;
+  const at = (label, hour, minute = 0) => ({ label, action: () => { cheat.setClock(g, hour, minute); done(app, null, `It is ${clock(g.simTime)}.`); } });
+  app.push(new ListMenu(app, 'SET THE TIME', [
+    at('6:00 AM  dawn', 6), at('8:00 AM  morning', 8), at('12:00 PM  noon', 12), at('5:00 PM  dusk', 17), at('8:00 PM  night', 20), at('11:00 PM  late', 23),
+    { label: 'Type a time', right: '▶', action: () => {
+      const s = window.prompt('Time (24-hour, like 17:30):', '');
+      const m = /^\s*(\d{1,2})(?::(\d{2}))?\s*$/.exec(s || '');
+      if (!m || +m[1] > 23 || +(m[2] || 0) > 59) { if (s) { app.sfx('nope'); app.toast('Write it like 17:30.'); } return; }
+      cheat.setClock(g, +m[1], +(m[2] || 0));
+      done(app, null, `It is ${clock(g.simTime)}.`);
+    } },
   ], { footer: () => clock(g.simTime) }));
 }
 

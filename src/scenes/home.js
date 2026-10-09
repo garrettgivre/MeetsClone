@@ -609,8 +609,8 @@ export class HomeScene {
     const ground = edge ? { c: edge.bottom, stroke: edge.stroke, bare: true, cobbles: edge.cobbles } : { c: tone(lawn.c, -1), stroke: tone(lawn.c, -2) };
     const sky = drawSkyBars(scr, game.simTime, t, edge ? false : pet && !pet.lights, ground, edge?.ownSky ? edge : null);
     const fg = sky.dark ? COL.white : COL.ink, low = sky.bottomDark ? COL.white : COL.ink;
-    const shown = `${sky.top}|${sky.bottom}`;
-    if (shown !== this.skyShown) { this.skyShown = shown; this.app.pageSky?.(sky.top, sky.bottom); }
+    const shown = `${sky.top}|${sky.bottom}|${sky.lightsOff}`;
+    if (shown !== this.skyShown) { this.skyShown = shown; this.app.pageSky?.(sky.top, sky.bottom); this.app.setDark?.(!!sky.lightsOff); }
     // status bar
     const d = new Date(game.simTime);
     const hh = d.getHours(), mm = String(d.getMinutes()).padStart(2, '0');
@@ -629,7 +629,9 @@ export class HomeScene {
         const cx = Math.round(i * CELL + CELL / 2);
         if (this.cursor === idx) scr.panel(Math.round(i * CELL) + 1, row.y + 1, Math.round(CELL) - 1, row.h - 2, COL.hi, COL.ink);
         const ic = ICONS[id];
-        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), this.cursor === idx ? {} : { remap: MUTED, alpha: ICON_ALPHA });
+        // (with the lights out the lamp keeps its colour: it is what turns them back on)
+        const lit = this.cursor === idx || (sky.lightsOff && id === 'lights');
+        scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), lit ? {} : { remap: MUTED, alpha: sky.lightsOff ? ICON_ALPHA * 0.6 : ICON_ALPHA });
       });
     }
     // info bar

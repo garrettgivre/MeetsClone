@@ -133,6 +133,13 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air
   // (the ground comes as colour names, shown in the light of the hour, or as palette indexes already in it)
   const tone = (c) => (typeof c === 'number' ? c : groundTone(c, sky));
   for (const [y0, y1] of BARS) {
+    if (lightsOff && y0 > 0) {
+      // lights out: the ground goes as dark as the room's floor, the same two night shades
+      scr.noClip();
+      scr.hrect(0, y0, BW, y1 - y0, C('night'));
+      scr.hdither(0, y0 / HD, W, (y1 - y0) / HD, C('shade'), 1);
+      continue;
+    }
     if (ground && y0 > 0) {
       scr.noClip();
       scr.hrect(0, y0, BW, y1 - y0, tone(ground.c));
@@ -160,8 +167,8 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air
   }
   scr.noClip();
   const [top, , , bottom] = SKY[sky];
-  const under = ground ? tone(ground.c) : C(bottom), [r, g, b] = COLORS[under];
-  return { sky, dark: sky === 'night', top, bottom: under, bottomDark: r * 0.3 + g * 0.59 + b * 0.11 < 110 };
+  const under = lightsOff ? C('ink') : ground ? tone(ground.c) : C(bottom), [r, g, b] = COLORS[under];
+  return { sky, dark: sky === 'night', top, bottom: under, bottomDark: r * 0.3 + g * 0.59 + b * 0.11 < 110, lightsOff: !!lightsOff };
 }
 
 /**

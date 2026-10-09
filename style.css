@@ -119,4 +119,6 @@ body.lcd #controls::after {
   touch-action: none;
 }
 .btn[data-btn="B"] { transform: translateY(calc(var(--px, 3px) * 5)); }
+/* lights out in the pet's room: the buttons go dark with it */
+body.dark .btn { filter: brightness(0.32) saturate(0.45); }
 .btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }

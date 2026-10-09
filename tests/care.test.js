@@ -336,3 +336,22 @@ test('saves from before baths, toilets and skills load with the new fields', () 
   assert.equal(back.settings.alerts, false);
   assert.equal(back.settings.cheats, false);
 });
+
+test('setting the clock moves the time without living through it', async () => {
+  const cheat = await import('../src/game/cheats.js');
+  const { newGame } = await import('../src/game/pet.js');
+  const { townState } = await import('../src/game/town.js');
+  const g = newGame(new Date(2026, 0, 5, 9, 30).getTime(), makeRng(4));
+  const town = townState(g), age = g.simTime - town.epoch, hunger = g.pet.hunger, stageMs = g.pet.stageMs;
+  cheat.setClock(g, 17, 30);
+  const d = new Date(g.simTime);
+  assert.deepEqual([d.getDate(), d.getHours(), d.getMinutes()], [5, 17, 30]);
+  assert.equal(g.simTime - town.epoch, age, 'the town is no older');
+  assert.equal(g.pet.hunger, hunger);
+  assert.equal(g.pet.stageMs, stageMs);
+  cheat.setClock(g, 6);
+  assert.equal(new Date(g.simTime).getHours(), 6, 'backwards works too');
+  const now = new Date(2026, 5, 1, 12, 0).getTime();
+  cheat.phoneClock(g, now);
+  assert.equal(g.simTime, now);
+});

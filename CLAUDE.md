@@ -4,9 +4,9 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.21.0, 8 October 2026)
+## Where things stand (v0.21.1, 8 October 2026)
 
-Everything is committed, pushed and live. `npm test` passes (94 tests).
+Everything is committed, pushed and live. `npm test` passes (95 tests).
 
 **One pixel scale: done.** The owner asked for the whole game to render at a single pixel size ("Yes make it consistent and look nice", then "continue the one pixel scale pass for the rest"). It shipped in four releases:
 - v0.16.7: the font and the home-screen symbols.
@@ -46,7 +46,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 94 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 95 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -126,6 +126,7 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 - `src/scenes/room.js` holds one sky picture the size of the whole screen per state (`SKY`: four bands, dithered seams at `SEAMS`). `drawRoom` copies the part behind the window panes; `drawSkyBars` copies the parts above and below the room (status bar, icon rows, info bar) and adds twinkling stars at night or small drifting clouds by day. Lights off counts as night.
 - `drawSkyBars` returns `{ sky, dark, top, bottom }`. `drawBars` in `home.js` writes in ink on a bright sky and in white at night, and passes the top and bottom colours to `app.pageSky` (`main.js`), which colours the notch area and the button strip (a shade deeper when the LCD filter is on, to match the filtered screen). The navy in `style.css` only shows until the first frame.
 - **Ground below, sky above.** The bars under the room (bottom icon row, info bar, and the page strip with the buttons) are the ground the house stands on: the garden lawn's colours, whichever room is on show (the owner asked for this "to be consistent"). `drawBars` passes them to `drawSkyBars`, which returns the ground as `bottom` (a palette index) and `bottomDark` for the text.
+- **Lights out** darkens everything but the pet and the lamp (the owner's words): the ground bars take the room's two night shades, the icons fade further except the lamp icon, which keeps full colour, and `app.setDark` puts `body.dark` on the page so the gold buttons dim (`style.css`).
 - **Out of doors the frame goes** (the owner: "The frame should basically disappear I think when outside"): for a room marked `outdoor` the rules above and below the room are not drawn, so the lawn in the picture runs straight on into the bars.
 - **Away from home, out of doors: the time of day shows there too.** The owner: "I wanted the places to show time of day like the background... We just need to give them different versions." `backdrop(id, sky)` gives an outdoor place (`OPEN_AIR` in `src/art/town.js`) as it looks at an hour: `kit(hour)` leaves the sky clear wherever the scene calls `k.bands` (and draws no `k.sun` at night), and the rest goes through `timeLut`. The scene paints the real sky first with `drawPlaceSky` (`room.js`). A scene over the home screen says which backdrop it is with an `openAir` getter; `drawBars` then keeps the sky of the hour in the bars above and takes the ground below from `edgeColours(id, sky)`, the commonest colour along the picture's bottom row, so sand, cobbles or grass run on under the icons and buttons ("They just need to match color at top line and bottom line... don't just make every outside look the same"). No rules are drawn. Places in `OWN_SKY` (Star Isle, the hidden village, the farewell hill) keep their painted sky at every hour, and the bars above take its colour (`drawAirBars`). Indoor places keep the home bars. A new outdoor backdrop must be added to `OPEN_AIR` and must paint its sky with `k.bands`. A place paved with `k.cobbles` goes in `COBBLED` too, and the bars under it are paved to match (`cobbleOn` in `room.js`, which repeats the kit's course sizes). Keep paths and trails from running off the bottom of a picture, where the bars begin: the park's now leaves by the side. `backdrop(id)` with no hour is the picture as painted (tests, review pages, photos).
 - **The light of the hour out of doors.** `timeLut(sky)` in `src/art/town.js` moves colours ramp by ramp: at night every shade drops a step; at dusk the greens warm up a ramp toward the orange sky (green to lime, mint to green, pale lime to gold), which the owner asked for ("slightly orange with the orange sky"); dawn is plain daylight. (A first version tinted by red, green and blue, which turned pale grass tan and left the rest green; the owner called the colours messed up.) `homeRoom` runs an outdoor room's whole picture through it, and `groundTone` does the same for the ground in the bars. Indoor rooms are not tinted.
@@ -164,7 +165,7 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 - **Jobs** (`JOBS` in `town.js`, `pet.job = { id, shifts }`): `applyJob` checks the skill level; a shift pays `jobPay` and promotes every `SHIFTS_PER_RANK` shifts.
 - **The player's pet has no old age.** It stays an adult until it marries, or dies or runs away from neglect.
 - **Alerts:** `alertFor(events, pet)` in `alerts.js` picks and words the most urgent event; `notify.js` shows it through `sw.js` with `assets/badge.png` as the status-bar shape. While the page is hidden a slow timer in `main.js` advances the clock and sends alerts. There is no push server, so nothing arrives once the browser has closed or suspended the page. The browser pane blocks notifications, so test with a stand-in and ask the owner to check on the phone.
-- **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. It can grow or change the pet, set needs, illness, dirt and training, skip time, open and age the town, fill the toy box, own all furniture (`unlockDecor`), send a test alert.
+- **Debug menu** (`src/scenes/debug.js`, logic in `src/game/cheats.js`): cheats are on with `?dev` or the Cheats row (`settings.cheats`); `app.dev` covers both. It can grow or change the pet, set needs, illness, dirt and training, skip time, open and age the town, fill the toy box, own all furniture (`unlockDecor`), set the time or put it back to the phone's (`setClock`, `phoneClock`: they move the clock without living through the hours between, unlike `skip`), send a test alert.
 
 ## The town's generations
 

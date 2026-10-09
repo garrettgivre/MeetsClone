@@ -51,6 +51,8 @@ const app = {
     document.documentElement.style.setProperty('--cell', on ? `url(${lcdCell().toDataURL()})` : 'none');
     if (this.sky) this.pageSky(...this.sky);
   },
+  /** Lights out: the buttons under the screen go dark with the room. */
+  setDark(on) { document.body.classList.toggle('dark', !!on); },
   /**
    * The page round the screen carries on the sky in the game's bars: its top
    * colour above the screen (a phone's notch), its bottom colour in the strip

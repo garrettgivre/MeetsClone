@@ -168,6 +168,30 @@ export function unlockItems(game) {
   for (const id of Object.keys(FOODS)) if (!FOODS[id].free) game.inventory[id] = Math.max(game.inventory[id] || 0, 5);
 }
 
+/**
+ * Move the game's clock without living through the time between: nothing
+ * ages, gets hungry or happens in town. Everything that remembers a moment
+ * (the town's own clock, the last pat, the last shift...) moves with it.
+ */
+export function shiftClock(game, ms) {
+  game.simTime += ms;
+  const pet = game.pet, town = game.town;
+  if (pet) {
+    for (const k of ['refusedAt', 'pettedAt']) if (typeof pet[k] === 'number' && pet[k]) pet[k] += ms;
+    if (Array.isArray(pet.snackTimes)) pet.snackTimes = pet.snackTimes.map(t => t + ms);
+  }
+  if (town) for (const k of ['epoch', 'lastWork']) if (typeof town[k] === 'number' && town[k]) town[k] += ms;
+  return game.simTime;
+}
+/** Set the clock to an hour and minute of the game's present day. */
+export function setClock(game, hour, minute = 0) {
+  const d = new Date(game.simTime);
+  d.setHours(hour, minute, 0, 0);
+  return shiftClock(game, d.getTime() - game.simTime);
+}
+/** Put the clock back to the real time and date. */
+export function phoneClock(game, now = Date.now()) { return shiftClock(game, now - game.simTime); }
+
 /** Own every piece of every room set (nothing is put out: that is done in Items > Decorate). */
 export function unlockDecor(game) {
   fixDecor(game);
