@@ -31,7 +31,7 @@ const cache = new Map();
  * they are places of one particular light.
  */
 export const OPEN_AIR = new Set(['square', 'park', 'cottages', 'playground', 'beach', 'forest', 'fair', 'castle', 'starisle', 'hidden',
-  'playfield', 'ropefield', 'trip', 'tripSky', 'farewell']);
+  'playfield', 'ropefield', 'trip', 'tripFar', 'tripSky', 'farewell']);
 export const OWN_SKY = new Set(['starisle', 'hidden', 'farewell']);
 /** Whether a backdrop shows the real sky of the hour. */
 export const showsSky = (id) => OPEN_AIR.has(id) && !OWN_SKY.has(id);
@@ -60,6 +60,9 @@ export const backdrop = (id, sky = null) => draw(id, sky).back;
 /** Framing drawn in front of the pets (bushes, clouds at the corners), or null. */
 export const frontdrop = (id, sky = null) => draw(id, sky).front;
 
+/** Places paved with `k.cobbles` from the horizon down: the bars under them are paved the same way. */
+const COBBLED = new Set(['square']);
+
 const edges = new Map();
 /**
  * The colours a backdrop meets the bars with: the commonest colour along its
@@ -78,7 +81,7 @@ export function edgeColours(id, sky = null) {
     };
     const top = commonest(0), bottom = commonest(bm.h - 1);
     // (ownSky: the place keeps its painted sky, so the bars above take its colour too)
-    edges.set(key, { top, bottom, stroke: C(tone(NAMES[bottom], -1)), ownSky: !showsSky(id) });
+    edges.set(key, { top, bottom, stroke: C(tone(NAMES[bottom], -1)), ownSky: !showsSky(id), cobbles: COBBLED.has(id) });
   }
   return edges.get(key);
 }
@@ -869,8 +872,8 @@ const SCENES = {
     const bx = 154, by = 150;
     k.blob(bx + 6, by + 4, 44, 6, 'green.1', { seed: 7, line: null, shade: false, wob: 0.2 });
     k.prop('bandstand', bx, by + 6, { accent: 'pink', wall: 'cream' });
-    // a winding trail from you to the bandstand
-    k.trail(by + 6, RH, (y) => bx - 8 - (y - by) * 0.6 + Math.sin(y / 16) * 5, (y) => 8 + (y - by) * 0.16, 'cream.3', { seed: 4 });
+    // a winding trail from the bandstand, curving away and out by the left side (not off the bottom, where the screen's bars begin)
+    k.trail(by + 6, 268, (y) => bx - 8 - (y - by) * 0.6 - ((y - by) / 112) ** 2 * 120 + Math.sin(y / 16) * 5, (y) => 8 + (y - by) * 0.16, 'cream.3', { seed: 4 });
     // flowers in clumps
     k.prop('flowerBed', 218, 190, { accent: 'pink' }); k.flowerPatch(108, 140, 5, ['gold.2', 'white']); k.flowerPatch(30, 200, 6, ['violet.2', 'pink.2']);
     k.rocks(126, 206, 2);
@@ -1522,14 +1525,19 @@ const SCENES = {
   },
   trip(k) {
     // the open country between districts: far peaks and a tree line; the road, track or path slides by in front (y 224)
-    k.bands(['sky.2', 'sky.2', 'sky.3'], 0, 190);
+    // (the peaks and the tree line are a picture of their own, tripFar, which slides by behind the way)
+    k.bands(['sky.2', 'sky.2', 'sky.3'], 0, 194);
     k.sun(40, 62, 12);
+    k.field(194, 'green.3', { seed: 8, light: 'lime.3', sides: false });
+    k.tufts(250, 306, 'green.2', 30, 7);
+  },
+  tripFar(k) {
+    // the far country on the trip: clouds on the horizon, peaks, mist and a tree line, with nothing behind them.
+    // It is drawn again and again side by side, every other copy mirrored, so its edges always meet.
+    k.rect(0, 0, RW, RH, 'night');
     k.horizonClouds(160, 'violet.3', 4);
     k.mountain(64, 194, 200, 50, 'sky.1', { seed: 31, snow: true }); k.mountain(204, 194, 170, 36, 'mint.2', { seed: 32 });
-    k.mist(178, 14, 'sky.3');
     k.canopy(-24, 172, 304, 34, 'mint.1', { seed: 43, r: 9 });
-    k.field(194, 'green.3', { seed: 8, light: 'lime.3' });
-    k.tufts(250, 306, 'green.2', 30, 7);
   },
   tripSky(k) {
     // up among the clouds, the land small below

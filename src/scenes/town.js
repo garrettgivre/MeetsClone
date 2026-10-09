@@ -78,6 +78,7 @@ function go(app, locId) {
 
 // ---------------------------------------------------------------- the trip
 const TRIP_MS = 1800;
+const FAR_SPEED = 0.014; // how fast the far country slides by, in screen pixels a millisecond (the way goes ten times faster)
 
 // Clouds that drift back as you go: [prop, y, speed, tint]; the balloon passes more of them.
 const CLOUDS = [['cloudB', 16, 0.012, 'violet'], ['cloudC', 42, 0.02, 'pink'], ['cloudA', 60, 0.03, 'violet']];
@@ -146,6 +147,11 @@ class TravelScene {
       const span = W + 70;
       scr.bitmap(propBitmap(name, { accent: tint }), (((i * 53 - t * speed) % span) + span) % span - 50, ry + y);
     });
+    if (!air) {
+      // the far country slides by too, slowly: the same picture side by side, every other one mirrored so the edges meet
+      const far = backdrop('tripFar', hour), off = (t * FAR_SPEED) % (W * 2);
+      for (let n = 0; n < 3; n++) scr.bitmap(far, n * W - off, ry, n % 2 === 1);
+    }
     const ground = ry + 112;
     if (!air) drawWay(scr, this.kind, ground, t);
     const x = -40 + k * (W + 80);
@@ -155,7 +161,7 @@ class TravelScene {
     } else {
       drawVehicle(scr, this.kind, x, air ? ry + 104 + Math.sin(t / 300) * 3 : ground, t);
     }
-    if (!air) slide(scr, NEAR, t, 0.4, ry + rh + 3);
+    if (!air) slide(scr, NEAR, t, 0.4, ry + rh - 1); // (standing wholly inside the picture)
     scr.noClip();
     const label = `TO ${LOCATION[this.locId].name.toUpperCase()}...`, lw = label.length * 4 + 8;
     scr.panel(Math.round(W / 2 - lw / 2), ry + 3, lw, 11, C('white'), COL.ink);

@@ -136,6 +136,7 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air
     if (ground && y0 > 0) {
       scr.noClip();
       scr.hrect(0, y0, BW, y1 - y0, tone(ground.c));
+      if (ground.cobbles) { cobbleOn(scr, y0, y1, tone(ground.stroke), tone('white')); continue; }
       for (const [x, y] of GROUND_STROKES) { const c = tone(ground.stroke); scr.hpset(x, y, c); scr.hpset(x - 1, y - 1, c); scr.hpset(x + 1, y - 1, c); }
       if (!ground.bare) for (const [x, y, name] of GROUND_FLOWERS) { const c = tone(name); scr.hpset(x, y - 1, c); scr.hpset(x - 1, y, c); scr.hpset(x + 1, y, c); scr.hpset(x, y + 1, c); scr.hpset(x, y, tone('gold.3')); }
       continue;
@@ -161,6 +162,28 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air
   const [top, , , bottom] = SKY[sky];
   const under = ground ? tone(ground.c) : C(bottom), [r, g, b] = COLORS[under];
   return { sky, dark: sky === 'night', top, bottom: under, bottomDark: r * 0.3 + g * 0.59 + b * 0.11 < 110 };
+}
+
+/**
+ * Cobbles carried on under a paved place (the Town Square): the same courses
+ * as `cobbles` in src/art/town.js, picked up where the picture leaves off.
+ * Each course is a little taller and its stones a little wider than the last,
+ * and every other course is shifted half a stone.
+ */
+function cobbleOn(scr, y0, y1, line, glint) {
+  const HZ = 172, ROOM = LAYOUT.room.h * HD; // where the paving starts in the picture, and where the picture ends
+  let yy = HZ, row = 0, h = 5;
+  while (yy + h <= ROOM) { yy += h; h = Math.min(14, h + 1); row++; } // the course the picture's bottom edge cuts through
+  scr.clip = [0, y0, BW, y1];
+  for (let top = y0 - (ROOM - yy); top < y1; top += h, h = Math.min(14, h + 1), row++) {
+    const w = 8 + row * 2;
+    for (let x = (row % 2) * (w >> 1) - w; x < BW; x += w) {
+      scr.hrect(x, top, w, 1, line); scr.hrect(x, top + h - 1, w, 1, line);
+      scr.hrect(x, top, 1, h, line); scr.hrect(x + w - 1, top, 1, h, line);
+      scr.hpset(x + 1, top + 1, glint);
+    }
+  }
+  scr.noClip();
 }
 
 /**
