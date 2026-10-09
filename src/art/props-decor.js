@@ -37,6 +37,7 @@ import './props-hand-1.js';
 import './props-hand-2.js';
 import './props-hand-3.js';
 import './props-hand-4.js';
+import './props-hand-5.js';
 import { stretch } from './draw.js';
 
 

@@ -121,16 +121,8 @@ drawn('firTree', [
 // ---------------------------------------------------------------- lamps: 85 to 91 high
 
 // ---------------------------------------------------------------- towel stands: 55 to 70 high
-stretch('towelStand', { rows: [[20, 1, 8], [45, 1, 6]] });
-stretch('branchRack', { rows: [[15, 1, 6], [35, 1, 8]] });
-stretch('towelLadder', { rows: [[1, 1, 2], [10, 1, 2], [20, 1, 3], [28, 1, 2], [36, 1, 3], [44, 1, 3]] });
-stretch('towelBasket', { rows: [[10, 2, 10]] });
 
 // ---------------------------------------------------------------- bathroom cabinets: 88 to 98 high
-stretch('starWardrobe', { rows: [[30, 1, 44]] });
-stretch('trunkCabinet', { rows: [[45, 1, 34]] });
-stretch('hutCabinet', { rows: [[20, 1, 8], [30, 1, 6], [55, 1, 14]] });
-stretch('shelfUnit', { rows: [[17, 11, 2], [28, 10, 1], [41, 1, 12]] });
 
 // ---------------------------------------------------------------- floor plants: 50 to 63 high
 stretch('moonFlower', { rows: [[5, 1, 14], [12, 1, 2], [17, 1, 3], [24, 1, 5]], x: 12 });
