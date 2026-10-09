@@ -1,0 +1,211 @@
+// FINE-LINE PET ART, NOT YET USED BY THE GAME (see axolotl.js for the format).
+//
+// The owl founder, Hoolet: a moon owlet in black, white and grey and nothing
+// else. A wide round grey head with two dark-tipped tufts, a white heart of a
+// face with huge dark eyes and a small grey beak, a white crescent on the brow,
+// an egg of a body with a white speckled front, dark folded wings and dark feet.
+// Extra colours here: g dark grey.
+
+// (deeper: the body is drawn one shade down the ramp, a mid grey, so the white and the dark both show against it)
+export const LOOK = { color: 'slate', accent: 'slate', deeper: true };
+
+// Head, "owl": 54 x 42, wide and round with a broad top
+export const HEAD = { rows: [
+  '.................oooooooooooooooooooo',
+  '.............oooo4444444444^444444444oooo',
+  '..........ooo4444444444444444444444444444ooo',
+  '........oo4444444444444444444444444444444444oo',
+  '......oo4[4444444444444444444444444444444444]4oo',
+  '.....o444444444444444444444444444444444444444444o',
+  '....o44444444444444444444444444444444444444444444o',
+  '...o4444444444444444444444444444444444444444444444o',
+  '..o444444444444444444444444444444444444444444444444o',
+  '..o444444444444444444444444444444444444444444444444o',
+  '.o44444444444444444444444444444444444444444444444444o',
+  '.o44444444444444444444444444444444444444444444444444o',
+  'o4444444444444444444444444444444444444444444444444444o',
+  'o4444444444444444444444444444444444444444444444444444o',
+  'o4444444444444444444444444444444444444444444444444444o',
+  'o4444444444444444444444444444444444444444444444444444o',
+  'o4444444444444444444444444444444444444444444444444444o',
+  'o4444444444444444444444444444444444444444444444444444o',
+  'o4444444444444444444444444444444444444444444444444443o',
+  'o4444444444444444444444444444444444444444444444444443o',
+  'o4444444444444444444444444444444444444444444444444443o',
+  'o4444444444444444444444444444444444444444444444444443o',
+  'o4444444444444444444444444444444444444444444444444443o',
+  'o4444444444444444444444444444444444444444444444444443o',
+  'o44444444444444444444444444@4444444444444444444444443o',
+  'o4444444444444444444444444444444444444444444444444433o',
+  'o4444444444444444444444444444444444444444444444444433o',
+  'o4444444444444444444444444444444444444444444444444433o',
+  'o4444444444444444444444444444444444444444444444444433o',
+  'o4444444444444444444444444444444444444444444444444433o',
+  '.o44444444444444444444444444444444444444444444444333o',
+  '.o44444444444444444444444444444444444444444444444333o',
+  '..o444444444444444444444444444444444444444444443333o',
+  '..o444444444444444444444444444444444444444444443333o',
+  '...o4444444444444444444444444444444444444444433333o',
+  '....o44444444444444444444444444444444444444433333o',
+  '.....oo4444444444444444444444444444444443333333oo',
+  '.......oo444444444444444444444444444433333333oo',
+  '.........ooo444444444444444444444333333333ooo',
+  '............ooo444444444444444333333333ooo',
+  '...............oooo44444444=4443333oooo',
+  '...................oooooooooooooooo',
+] };
+
+// Ears, "tufts": a pointed feather tuft with a black tip. The left one; its base lies behind the head.
+export const EARS = { pivot: [8, 11], rows: [
+  'oo',
+  'ooo',
+  'oooo',
+  'ooooo',
+  'o4oooo',
+  'o44oooo',
+  'o444o4oo',
+  'o4444444o',
+  '.o4444444o',
+  '.o44444444o',
+  '..o44444444',
+  '..o44444444',
+  '...o4444444',
+] };
+
+// Markings, "facedisk": a white heart of a face, and a white front with a few dark flecks
+export const OVERLAYS = [
+  { on: 'head', at: [4, 13], rows: [
+    '.........wwwwwww...............wwwwwww',
+    '......wwwwwwwwwwwww.........wwwwwwwwwwwww',
+    '.....wwwwwwwwwwwwwww.......wwwwwwwwwwwwwww',
+    '....wwwwwwwwwwwwwwwww.....wwwwwwwwwwwwwwwww',
+    '...wwwwwwwwwwwwwwwwwww...wwwwwwwwwwwwwwwwwww',
+    '..wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '..wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '..wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '...wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.....wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.......wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '..........wwwwwwwwwwwwwwwwwwwwwwwwwww',
+    '.............wwwwwwwwwwwwwwwwwwwww',
+    '.................wwwwwwwwwwwww',
+    '.....................wwwww',
+  ] },
+  { on: 'body', at: [7, 5], rows: [
+    '.....wwwwwwwwww',
+    '...wwwwwwwwwwwwww',
+    '..wwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwww',
+    'wwwwgwgwwwwwwgwgwwww',
+    'wwwwwgwwwwwwwwgwwwww',
+    'wwwwwwwwwwwwwwwwwwww',
+    'wwwwwwwwwwwwwwwwwwww',
+    'wwwwwwwwwgwgwwwwwwww',
+    'wwwwwwwwwwgwwwwwwwww',
+    'wwwwwwwwwwwwwwwwwwww',
+    '.wwwwwwwwwwwwwwwwww',
+    '..wwwwwwwwwwwwwwww',
+    '...wwwwwwwwwwwwww',
+    '.....wwwwwwwwww',
+  ] },
+];
+
+// Body, "feathered": a small egg of a body
+export const BODY = { rows: [
+  '............oooooooooo',
+  '.........ooo4444444444ooo',
+  '.......oo44444444=4444444oo',
+  '.....oo44444444444444444444oo',
+  '....o444444444444444444444444o',
+  '...o44444444444444444444444444o',
+  '..o44(4444444444444444444444)43o',
+  '.o444444444444444444444444444433o',
+  'o44444444444444444444444444444333o',
+  'o44444444444444444444444444444333o',
+  'o44444444444444444444444444444333o',
+  'o44444444444444444444444444444333o',
+  'o44444444444444444444444444444333o',
+  'o44444444444444444444444444444333o',
+  'o44444444444444444444444444444333o',
+  'o44444444444444444444444444444333o',
+  '.o444444444444444444444444443333o',
+  '.o444444444444444444444444433333o',
+  '..o4444444444444444444444333333o',
+  '...o44444444444444444443333333o',
+  '....oo444444!44444444!333333oo',
+  '......ooo3333333333333333ooo',
+  '.........oooooooooooooooo',
+] };
+
+// Wings, "feathered": a dark folded wing with one feather line, lying over the body's side. The left one.
+export const WINGS = { pivot: [8, 1], front: true, rows: [
+  '....ooooo',
+  '..oogggggo',
+  '.oggggggggo',
+  '.ogggggggggo',
+  'oggggggggggo',
+  'oggggggggggo',
+  'oggggggggggo',
+  'oggggggggggo',
+  'ogggggggoggo',
+  '.oggggggoggo',
+  '.ogggggoggo.',
+  '.oggggoggggo',
+  '..oggggggo',
+  '..ogggggo',
+  '...ogggo',
+  '...oggo',
+  '....oo',
+] };
+
+// Feet, "talons": small dark three-toed feet
+export const FEET = { pivot: [3, 0], rows: [
+  '.ooooo.',
+  'ogogogo',
+  '.o.o.o.',
+] };
+
+// Eyes, "owl": huge and round, with a big shine and a small one
+export const EYE = { pivot: [5, 5], rows: [
+  '...ooooo...',
+  '..ooooooo..',
+  '.owwwooooo.',
+  'oowwwoooooo',
+  'oowwwoooooo',
+  'ooooooooooo',
+  'ooooooooooo',
+  'ooooooowwoo',
+  '.oooooowwo.',
+  '..ooooooo..',
+  '...ooooo...',
+] };
+
+// Mouth, "beak": a small grey beak
+export const MOUTH = { pivot: [2, 0], rows: [
+  '.ooo.',
+  'ogggo',
+  'ogggo',
+  '.ogo.',
+  '..o..',
+] };
+
+// Forehead mark, "moon": a white crescent
+export const MARK = { pivot: [2, 3], rows: [
+  '..www',
+  '.ww..',
+  'ww...',
+  'ww...',
+  '.ww..',
+  '..www',
+] };
+
+export const FACE = { eyes: 11, mouth: 4, mark: [0, -17] };
