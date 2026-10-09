@@ -1,5 +1,5 @@
-// Wardrobe item icons (clothes aren't drawn on pets yet; these show in the
-// shop and wardrobe). Same grid format as src/engine/sprite.js, drawn by hand
+// Wardrobe item icons, for the shop and wardrobe lists (what the pet wears is
+// drawn from src/art/pets/clothes.js). Same grid format as src/engine/sprite.js, drawn by hand
 // at the fine pixel size; `5 6 7 8` take the item's own colour ramp. Pivots are
 // in fine pixels.
 

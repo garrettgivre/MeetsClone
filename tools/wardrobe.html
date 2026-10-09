@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wardrobe Review</title>
+<style>
+  body { margin: 0; padding: 12px; font: 12px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
+  .row { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
+  .row b { width: 64px; }
+  canvas { image-rendering: pixelated; background: #e9f6fb; border-radius: 6px; }
+</style>
+</head>
+<body>
+<p>Every piece of clothing that is drawn on the pet, on each founder and a few wild pets.
+<code>?slot=head</code> or <code>?only=cap,shades</code> narrows it, <code>?s=160</code> sets the size,
+<code>?expr=happy</code> the expression, <code>?stage=teen</code> the stage, <code>?wild=8</code> the number of wild pets.</p>
+<div id="out"></div>
+<script type="module">
+import { PACKED } from '../src/engine/palette.js';
+import { makeRng } from '../src/engine/rng.js';
+import { composePet } from '../src/game/render.js';
+import { FOUNDERS, pureGenome, express, randomGenome } from '../src/game/genetics.js';
+import { CLOTHES } from '../src/game/items.js';
+
+const q = new URLSearchParams(location.search);
+const size = +(q.get('s') || 110), only = q.get('only')?.split(','), slot = q.get('slot');
+const rng = makeRng(5);
+const names = q.get('pets')?.split(','); // ?pets=Kitsu,Hoolet picks founders
+const pets = FOUNDERS.filter(f => !names || names.includes(f.name)).map(f => express(pureGenome(f.traits), rng));
+for (let i = 0; i < +(q.get('wild') || 4); i++) pets.push(express(randomGenome(rng), rng));
+const out = document.getElementById('out');
+
+function show(bm, row) {
+  // crop to the pet: the top three quarters of its canvas
+  const c = document.createElement('canvas'); c.width = bm.w; c.height = bm.h;
+  c.style.width = c.style.height = size + 'px';
+  const ctx = c.getContext('2d'), img = ctx.createImageData(bm.w, bm.h), u = new Uint32Array(img.data.buffer);
+  for (let i = 0; i < bm.px.length; i++) if (bm.px[i]) u[i] = PACKED[bm.px[i]];
+  ctx.putImageData(img, 0, 0);
+  row.append(c);
+}
+for (const id of ['', ...Object.keys(CLOTHES)]) {
+  if (id && only && !only.includes(id)) continue;
+  if (id && slot && CLOTHES[id].slot !== slot) continue;
+  const row = document.createElement('div'); row.className = 'row';
+  row.append(Object.assign(document.createElement('b'), { textContent: id || '(bare)' }));
+  for (const p of pets) show(composePet(p, q.get('stage') || 'adult', { gender: 'f', expr: q.get('expr') || 'idle', wear: id ? { [CLOTHES[id].slot]: id } : {} }), row);
+  out.append(row);
+}
+</script>
+</body>
+</html>

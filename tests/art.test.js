@@ -133,3 +133,27 @@ test('the forehead mark always shows (it moves off the forehead when hair covers
   }
   assert.deepEqual(hidden, [], 'hidden marks');
 });
+
+test('hats and face items show on every head in every form, and stay on the canvas', async () => {
+  const { HATS, FACE: FACE_WEAR } = await import('../src/art/pets/clothes.js');
+  const { CLOTHES } = await import('../src/game/items.js');
+  const drawn = { head: HATS, face: FACE_WEAR };
+  const bad = [];
+  for (const [slot, set] of Object.entries(drawn)) for (const id of Object.keys(set)) {
+    assert.equal(CLOTHES[id]?.slot, slot, `${id} is a ${slot} item in the shop`);
+    for (const form of Object.keys(FORMS)) for (const head of Object.keys(GENES.head)) for (const eyes of Object.keys(GENES.eyes)) {
+      const p = express(pureGenome({ ...STARTER, form, head, eyes }), makeRng(1));
+      for (const stage of ['teen', 'adult']) {
+        const k = composePetArt(p, stage, { wear: { [slot]: id } });
+        // at least most of the smallest item (the side ribbon has 17 pixels)
+        if ((k.seen.wear || 0) < 10) bad.push(`${id} on ${form} ${head} ${eyes} ${stage}: ${k.seen.wear || 0}px`);
+        if (k.overflow) bad.push(`${id} on ${form} ${head} ${stage} overflows`);
+      }
+    }
+  }
+  assert.deepEqual(bad, [], 'clothes that are hidden or cut off');
+  // shades cover the eyes, so they are not redrawn for expressions
+  const p = express(pureGenome(FOUNDERS[0].traits), makeRng(1));
+  assert.equal(composePetArt(p, 'adult', { wear: { face: 'shades' } }).eyesHidden, true);
+  assert.equal(composePetArt(p, 'adult', { wear: { face: 'glasses' } }).eyesHidden, false);
+});

@@ -20,7 +20,7 @@ const HC = CANVAS * S, HG = GROUND * S;
  * pose: {
  *   expr: 'idle'|'blink'|'happy'|'sad'|'eat'|'chew'|'sleep'|'sick'|'dizzy'|'wink',
  *   arms: 'down'|'up'|'out'|'wave', step: 0|1|2 (walking), bob: 0|1, gender: 'm'|'f', t: ms,
- *   wear: clothing ids (not drawn yet)
+ *   wear: { head, face, ... } clothing ids; hats and face items are drawn (src/art/pets/clothes.js)
  * }
  */
 export function composePet(phenotype, stage, pose = {}) {

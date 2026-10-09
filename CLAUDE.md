@@ -4,9 +4,9 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.17.5, 8 October 2026)
+## Where things stand (v0.18.0, 8 October 2026)
 
-Everything is committed, pushed and live. `npm test` passes (87 tests).
+Everything is committed, pushed and live. `npm test` passes (88 tests).
 
 **One pixel scale: done.** The owner asked for the whole game to render at a single pixel size ("Yes make it consistent and look nice", then "continue the one pixel scale pass for the rest"). It shipped in four releases:
 - v0.16.7: the font and the home-screen symbols.
@@ -20,7 +20,11 @@ What is left of it, all small:
 - I viewed every new sprite and scene at zoom in the browser pane, not on a phone.
 
 **Other open items**
-- **Clothes are not drawn on the pet.** Wardrobe items are bought, stored, listed and "worn", but `src/game/pet-art.js` never draws them (the comment in `src/game/render.js` says so, and there is no `wear` handling in `pet-art.js`). I told the owner; they have not asked for it yet. It was my top suggestion for what to do next.
+- **Clothes on the pet: hats and face items are done (v0.18.0); the rest is not.** The owner said "Sure start on the clothing" after I proposed three passes. Done: the six hats and five face items, in `src/art/pets/clothes.js`, drawn by `drawHat` and `drawFaceWear` in `src/game/pet-art.js` (see "Clothes" under Pet art). Still to draw, in the order I proposed:
+  1. neckwear on the neck socket: `bowtie`, `tie`, `scarf`, `sash`;
+  2. body clothes, the cape and shoes: `sweater`, `overalls`, `dress`, `collar`, `apron`, `cape`, `shoes`. These have to follow each form's body, so expect a drawing per form.
+  Items that are not drawn can still be bought and "worn"; nothing tells the player they won't show. Glasses, shades and the monocle have no list icon in the wardrobe.
+- **Pets are still drawn in double-size pixels.** A pet is composed on a 64×64 grid and `sprite-pet.js` paints each of its pixels as a 2×2 fine block, so the pet is the one thing on screen at the old pixel size. I told the owner when I found it (8 October); they have not said whether they want pets redrawn at the fine size. That would mean redrawing every part in every form.
 - **Not yet seen on a real phone by me:** the LCD filter's cell grid (it could shimmer at some screen densities) and the care-alert status-bar badge. The owner has confirmed that installing and alerts work.
 - **Ideas the owner has heard and not picked up:** a daycare or sitter, room decorations (wallpaper, bedding, furniture; the room is now built to allow it), seasons and holidays, Meet Codes, twins, mail and visitors, gardening, daily goals, a taller screen so short phone viewports have no side strips, a pick-list at the cottages, job-specific minigames.
 
@@ -39,7 +43,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 87 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 88 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -72,7 +76,7 @@ src/ui.js                  LAYOUT, colours, dialog, ListMenu
 src/engine/                palette (64 colours, ramps like 'pink.0'..'pink.3'; mutedLut), screen (framebuffer, LCD filter), sprite (sprite, hdSprite), font, input, audio
 src/game/                  pet.js (simulation), genetics, items, save/migrate, book.js (Gene Book), town.js (places, residents, jobs), pet-art.js (pet rendering), alerts.js, cheats.js
 src/scenes/                home, room, menus, status, minigames, jumprope, family, genebook, wardrobe, debug, ending, town (TownScene, TravelScene, PlaceScene, NewsScene, PhotoScene)
-src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg
+src/art/pets/              pet art: per-form part grids (forms/*.js), face parts (face.js), patterns, egg, clothes worn on the pet (clothes.js)
 src/art/menu-icons.js      the ten home-screen menu icons, hand-pixelled hi-res sprites
 src/art/buttons.js         the three gold buttons (UP and DOWN grids) and paintButtons
 src/art/icons.js           status symbols, foods, toys, bath and toilet sprites, all hand-pixelled hdSprites (`FINE` adds the colours the shared key lacks)
@@ -82,7 +86,7 @@ src/art/props-home.js      the home room's props, hand-pixelled; registers them 
 src/art/props-travel.js    the bus, train engine and carriage, balloon and jump-rope post
 src/art/town.js            the drawing kit, the 23 town backdrops (SCENES) and the home room (homeRoom)
 tests/                     art, book, care, discipline, font, genetics, pet, save, town
-tools/                     review pages (parts, founders, gallery, compare, lab, town, props, icons), dump.mjs, the sprite editor, old art scripts
+tools/                     review pages (parts, founders, gallery, compare, lab, town, props, icons, wardrobe), dump.mjs, the sprite editor, old art scripts
 docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Architecture section is out of date);  docs/RESEARCH.md  notes on the device
 ```
 
@@ -93,7 +97,7 @@ docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Arch
 - **Font** (`src/engine/font.js`): `FINE` holds each glyph as ten fine rows, hand-drawn; widths are twice the old 3×5 lettering so every layout kept its place (`tests/font.test.js` enforces that). `SMALL` is the old lettering, kept for signs painted into town backdrops (`glyphRows`). A new character needs rows in both. There is no `&`.
 - **Screen layout** (`LAYOUT` in `src/ui.js`, normal pixels): status bar 0-12, top icon row 12-34, room 34-190, bottom icon row 190-212, info bar 212-224. The bars are open sky (see "The sky round the room"); an icon is drawn in greys (`MUTED`, or `MUTED_DAY` on a bright sky, in `home.js`) until the cursor is on it. The info bar shows only the highlighted menu's name.
 - **Page sizing** (`resize()` in `main.js`): the canvas takes the full width, or the height left above the buttons, whichever runs out first. `--px` is set to the size of one normal game pixel; the buttons (32×36 art pixels), their gap and their offsets are all measured in it, so they match the game's scale. `BUTTON_ROWS` is the strip's height in game pixels. On a short viewport (a phone browser with its toolbars) thin strips show at the sides; removing them would need a taller logical screen.
-- **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `pet-art.js`), feet 3 rows above the bottom; drawn at fine density.
+- **Pets:** composed on a 64×64 sprite canvas (`PW`, `PH` in `pet-art.js`), feet 3 rows above the bottom. Each pet pixel is drawn as a 2×2 block of fine pixels, so pets (and the clothes on them) are at the old pixel size.
 - **Town backdrops and the home room:** each is a 256×312 fine bitmap (`RW`, `RH`).
   - Town: `HZ = 172` is the horizon or floor line, `FEET = 228` is where pets stand; your pet is at about x 76, the resident at about x 188, a keeper's child at about x 230; the action buttons cover roughly y ≥ 250.
   - Home: pets stand at `HOME_FEET = 256`.
@@ -126,6 +130,7 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 - **Every part is drawn for every form** (`forms/<form>.js`: biped, blob, quad, floater, serpent, avian). Face parts are shared in `face.js` in sizes S and L.
 - **The renderer** (`src/game/pet-art.js`) joins head to body at the neck sockets, hangs the other parts on theirs, recolours patterns inside the drawn shading, softens seams between same-colour parts, moves the forehead mark if hair hides it, then draws the face. It reports `seen` pixels per part, `offFace` and `overflow` for the tests.
 - **Shading rules** are in `docs/STYLE.md`. Each head allele has its own silhouette in every form and each body allele its own texture.
+- **Clothes** (`src/art/pets/clothes.js`) are parts at the pet's own pixel size; `5 6 7 8` take the item's colour from `CLOTHES`. A hat's pivot lands on the top edge of the head (`headTops`, measured before hair and toppers go on) in the column of the head's `top` socket, and goes on over hair and toppers. Glasses are a ring round each eye in three sizes; the renderer picks the smallest that clears the eye and adds the bridge. Shades set `eyesHidden`, so `sprite-pet.js` doesn't redraw the eyes for a blink. The bandage and star sticker go on the brow over one eye and only show where there is pet under them. Babies and children don't dress. Review page: `tools/wardrobe.html?slot=head&s=120` (`&pets=Kitsu,Hoolet`, `&only=cap,shades`); `tests/art.test.js` checks every item on every head, eye and form.
 - **Checks:** `node tools/dump.mjs Kitsu+wings=feathered adult` prints a composed pet as characters. Review pages: `tools/parts.html?gene=head&z=6`, `tools/founders.html?grid` (`&stage=child`, `&sil`), `tools/gallery.html?gene=wings&form=biped`, `tools/compare.html`, `tools/lab.html`. `tests/art.test.js` checks every allele in every form, sockets, canvas fit, that every part shows, and that faces never land on an outline; run it after any grid change.
 - **Candidates:** the baby and child shapes (plain blobs with a face), the egg, the lamb cheeks on the small quad and serpent heads.
 

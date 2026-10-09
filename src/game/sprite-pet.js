@@ -105,7 +105,8 @@ export function composeKitSprite(kit, pose, canvas, ground, scale) {
   const [ew, eh] = kit.eyeSize, [pxv, pyv] = kit.eyePivot;
   const src = {
     ...kit, keepMouth: kit.bill,
-    eyeBoxes: [[kit.eyes[0][0] - pxv, kit.eyes[0][1] - pyv, ew, eh, kit.eyeSkin?.[0]], [kit.eyes[1][0] - (ew - 1 - pxv), kit.eyes[1][1] - pyv, ew, eh, kit.eyeSkin?.[1]]],
+    // (eyes behind dark glasses aren't redrawn for a blink or a mood)
+    eyeBoxes: kit.eyesHidden ? [] : [[kit.eyes[0][0] - pxv, kit.eyes[0][1] - pyv, ew, eh, kit.eyeSkin?.[0]], [kit.eyes[1][0] - (ew - 1 - pxv), kit.eyes[1][1] - pyv, ew, eh, kit.eyeSkin?.[1]]],
   };
   return animateSprite(src, pose, canvas, ground, scale).out;
 }
