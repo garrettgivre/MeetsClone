@@ -30,6 +30,7 @@ import './props-starry-2.js';
 import './props-real-1.js';
 import './props-sized-1.js';
 import './props-sized-2.js';
+import './props-sized-3.js';
 
 
 // ---------- the starry set's toy ----------
