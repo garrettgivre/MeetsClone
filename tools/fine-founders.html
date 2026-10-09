@@ -22,14 +22,15 @@ import * as caterpillar from '../src/art/pets/fine/caterpillar.js';
 import * as jellyfish from '../src/art/pets/fine/jellyfish.js';
 import * as fox from '../src/art/pets/fine/fox.js';
 import * as owl from '../src/art/pets/fine/owl.js';
+import * as jelly from '../src/art/pets/fine/jelly.js';
 
-const ALL = { axolotl, caterpillar, jellyfish, fox, owl };
+const ALL = { axolotl, caterpillar, jellyfish, fox, owl, jelly };
 const q = new URLSearchParams(location.search);
 const z = +(q.get('z') || 3);
 const out = document.getElementById('out');
 const names = (q.get('only') || Object.keys(ALL).join(',')).split(',').filter(n => ALL[n]);
 const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR' };
-const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist' };
+const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', f: 'pink.2', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist' };
 
 // read a part: note its sockets (painted as body colour)
 function read(p) {
@@ -98,11 +99,13 @@ function sheet(w, h, zoom, paint, label) {
   const f = document.createElement('figure'); f.append(cv, label); out.append(f);
 }
 
-const pets = names.map(n => [n, compose(ALL[n])]);
+const all = names.map(n => [n, compose(ALL[n])]);
 
-// together in a room, standing on the floor line
+// together in a room, three to a room, standing on the floor line
 const TOP = 96, RH = 190;
-sheet(RW, RH, z, (set) => {
+for (let from = 0; from < all.length; from += 3) {
+  const pets = all.slice(from, from + 3);
+  sheet(RW, RH, z, (set) => {
   const room = homeRoom('day', false, undefined, q.get('room') || undefined);
   for (let y = 0; y < room.back.h; y++) for (let x = 0; x < RW; x++) set(x, y - TOP, room.back.px[y * RW + x]);
   pets.forEach(([n, k], i) => {
@@ -110,10 +113,11 @@ sheet(RW, RH, z, (set) => {
     const cx = Math.round((RW * (i + 0.5)) / pets.length), w = k.x1 - k.x0 + 1;
     for (const [x, y, c] of k.cells) set(cx - (w >> 1) + x - k.x0, HOME_FEET + 2 - TOP - lift - (k.y1 - y), c);
   });
-}, 'in a room');
+  }, 'in a room');
+}
 
 // each by itself, larger
-for (const [n, k] of pets) {
+for (const [n, k] of all) {
   sheet(k.x1 - k.x0 + 9, k.y1 - k.y0 + 9, z * 2, (set) => { for (const [x, y, c] of k.cells) set(x - k.x0 + 4, y - k.y0 + 4, c); },
     `${n}: ${k.x1 - k.x0 + 1} x ${k.y1 - k.y0 + 1}`);
 }
