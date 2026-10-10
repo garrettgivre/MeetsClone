@@ -39,6 +39,7 @@ export const COLOR_FOOD_MEALS = 5;
 
 // Clothing is bought and worn, never inherited. Teens and adults can dress up.
 // `color` is the item's own colour ramp (the id doubles as the art key).
+// `set` marks the two pieces made to go with a furniture set (src/game/decor.js): a hat and something for the neck.
 export const SLOTS = ['head', 'face', 'body', 'back', 'feet'];
 export const SLOT_LABEL = { head: 'HEAD', face: 'FACE', body: 'BODY', back: 'BACK', feet: 'FEET' };
 export const CLOTHES = {
@@ -63,5 +64,21 @@ export const CLOTHES = {
   apron:    { name: 'Apron',        slot: 'body', price: 60,  color: 'gold' },
   sash:     { name: 'Sash',         slot: 'body', price: 90,  color: 'violet' },
   cape:     { name: 'Cape',         slot: 'back', price: 160, color: 'red' },
+  heartclip:  { name: 'Heart Clip',     slot: 'head', price: 90,  color: 'pink',   set: 'sweet' },
+  locket:     { name: 'Heart Locket',   slot: 'body', price: 110, color: 'pink',   set: 'sweet' },
+  nightcap:   { name: 'Nightcap',       slot: 'head', price: 110, color: 'indigo', set: 'starry' },
+  starcharm:  { name: 'Star Charm',     slot: 'body', price: 110, color: 'gold',   set: 'starry' },
+  toadstool:  { name: 'Toadstool Hat',  slot: 'head', price: 120, color: 'red',    set: 'forest' },
+  kerchief:   { name: 'Leaf Kerchief',  slot: 'body', price: 80,  color: 'orange', set: 'forest' },
+  sailor:     { name: 'Sailor Cap',     slot: 'head', price: 100, color: 'blue',   set: 'seaside' },
+  shells:     { name: 'Shell Necklace', slot: 'body', price: 90,  color: 'pink',   set: 'seaside' },
+  beanie:     { name: 'Beanie',         slot: 'head', price: 90,  color: 'mint',   set: 'modern' },
+  headphones: { name: 'Headphones',     slot: 'body', price: 140, color: 'mint',   set: 'modern' },
+  partyhat:   { name: 'Party Hat',      slot: 'head', price: 90,  color: 'pink',   set: 'squiggle' },
+  ruff:       { name: 'Zigzag Ruff',    slot: 'body', price: 100, color: 'pink',   set: 'squiggle' },
+  visor:      { name: 'Sun Visor',      slot: 'head', price: 100, color: 'sky',    set: 'aqua' },
+  bubbles:    { name: 'Bubble Beads',   slot: 'body', price: 110, color: 'sky',    set: 'aqua' },
+  witchhat:   { name: 'Witch Hat',      slot: 'head', price: 130, color: 'violet', set: 'hollow' },
+  batbow:     { name: 'Bat Bow Tie',    slot: 'body', price: 90,  color: 'slate',  set: 'hollow' },
   shoes:    { name: 'Shoes',        slot: 'feet', price: 70,  color: 'red' },
 };

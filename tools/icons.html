@@ -11,7 +11,7 @@
 <div id="out"></div>
 <script type="module">
 import * as ICONS from '../src/art/icons.js';
-import { HATS, FACE, BOWTIE, TIE } from '../src/art/wardrobe-icons.js';
+import { HATS, FACE, NECK } from '../src/art/pets/wear.js';
 import { lut, colors } from '../src/engine/sprite.js';
 import { HEX, C } from '../src/engine/palette.js';
 import { CLOTHES } from '../src/game/items.js';
@@ -49,6 +49,6 @@ for (const [name, v] of Object.entries(ICONS)) {
 }
 const worn = (id, spr) => show(id, spr, colors('cream', CLOTHES[id].color, 'ink', 'brown'));
 for (const [id, h] of Object.entries(HATS)) worn(id, h.spr);
-for (const [id, f] of Object.entries(FACE)) if (f.cheek) worn(id, f.cheek.spr);
-worn('bowtie', BOWTIE.spr); worn('tie', TIE.spr);
+for (const [id, f] of Object.entries(FACE)) worn(id, (f.brow || f.lens[0]).spr);
+for (const [id, n] of Object.entries(NECK)) worn(id, n.spr);
 </script>

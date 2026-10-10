@@ -56,7 +56,7 @@ Tap your pet to give it a pat, and tap poop to clean it up.
   - Base parts every pet has: head, body, eyes, ears, mouth, markings and forehead mark. Optional parts: tail, topper, feet, nose, wings and hair. Plus body, accent, eye and hair colour.
   - Temperament genes (appetite, energy, taste) change how the pet plays.
   - The status screen shows the hidden genes a pet carries.
-- **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu).
+- **Clothing is not genetic:** buy hats, glasses, outfits, a cape and shoes in the shop, and dress teens and adults in the Wardrobe (Items menu). Hats, glasses and neckwear show on the pet; each furniture set has a hat and a neck piece to match it.
 - **Diet colours:** eating a coloured food 5 times changes body colour, and the new colour is passed on to children.
 - **Economy:** Gotchi Points, shops in town for food, toys and clothes, and favourite foods and toys.
 - **A house of four rooms:** garden, kitchen, bedroom and bathroom, side by side. Tap the arrows at the edges, swipe, or press C to walk next door; the pet goes to the kitchen to eat at its table, the bathroom to use its own bath and toilet, and its bedroom to sleep; outdoor toys are played with in the garden, where there is also something to play on, and indoor toys in the bedroom.

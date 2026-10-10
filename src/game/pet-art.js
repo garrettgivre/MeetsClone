@@ -20,7 +20,7 @@
 import { C, ramp } from '../engine/palette.js';
 import { colors, lut } from '../engine/sprite.js';
 import { EGG, CRACKS } from '../art/pets/egg.js';
-import { HATS, FACE as FACE_WEAR } from '../art/pets/clothes.js';
+import { HATS, FACE as FACE_WEAR, NECK } from '../art/pets/wear.js';
 import { CLOTHES } from './items.js';
 import * as axolotl from '../art/pets/fine/axolotl.js';
 import * as caterpillar from '../art/pets/fine/caterpillar.js';
@@ -201,7 +201,8 @@ export function build(p, stage = 'adult', pose = {}) {
   const mouthY = nose && !F.mouthFixed ? noseY + nose.rows.length : f[1] + F.mouth;
   stamp(mouth, f[0], mouthY);
 
-  // clothes: a hat on top of the head, glasses and stickers over the face (drawn at twice their grid, like the old pets)
+  // clothes (src/art/pets/wear.js, at the pet's own fine size): a hat on top of the head, glasses and
+  // stickers over the face, neckwear under the chin
   let eyesHidden = false;
   const wear = Y || stage === 'baby' ? {} : pose.wear || {};
   who = 'wear';
@@ -209,36 +210,46 @@ export function build(p, stage = 'adult', pose = {}) {
     const t2 = lut(part.spr, ctx);
     part.rows.forEach((r, j) => [...r].forEach((ch, i) => {
       const c = t2[ch.charCodeAt(0)]; if (!c) return;
-      for (let b = 0; b < 2; b++) for (let a = 0; a < 2; a++) {
-        const k = (x0 + (i - part.pivot[0]) * 2 + a) + ',' + (y0 + (j - part.pivot[1]) * 2 + b);
-        if (only && !px.has(k)) continue; // a sticker only shows where there is pet to stick to
-        px.set(k, c); own.set(k, 'wear');
-      }
+      const k = (x0 + i - part.pivot[0]) + ',' + (y0 + j - part.pivot[1]);
+      if (only && !px.has(k)) return; // a sticker only shows where there is pet to stick to
+      px.set(k, c); own.set(k, 'wear');
     }));
   };
+  if (wear.body && NECK[wear.body]) {
+    // under the chin: the lowest point of the head in the neck's column
+    // (but never so low that it would hang through the floor: on a one-piece pet the chin is nearly on the ground)
+    const neck = NECK[wear.body];
+    let chin = -Infinity, low = -Infinity;
+    for (const [k, w] of own) {
+      const [x, y] = k.split(',').map(Number);
+      if (w === 'head' && x === bnx && y > chin) chin = y;
+      if ((w === 'body' || w === 'feet') && y > low) low = y;
+    }
+    if (chin > -Infinity) dress(neck, colors(p.color, CLOTHES[wear.body].color, 'ink', 'brown'), bnx, Math.min(chin - 1, low - neck.rows.length + neck.pivot[1]));
+  }
   if (wear.head && HATS[wear.head] && tops.size) {
     const hat = HATS[wear.head];
-    let x = top[0] + (hat.offset || 0) * 2;
+    let x = top[0] + (hat.offset || 0);
     while (!tops.has(x) && x > top[0]) x--;
     if (tops.has(x)) dress(hat, colors(p.color, CLOTHES[wear.head].color, 'ink', 'brown'), x, tops.get(x));
   }
   if (wear.face && FACE_WEAR[wear.face]) {
     const item = FACE_WEAR[wear.face], ctx = colors(p.color, CLOTHES[wear.face].color, 'ink', 'brown');
     if (item.lens) {
-      const need = Math.ceil(Math.max(ew, eh) / 2);
-      const lens = item.lens.find(l => l.inner >= need) || item.lens[item.lens.length - 1];
-      const place = ([x, y]) => [x + (ew >> 1) - lens.w, y + (eh >> 1) - lens.h]; // the ring centred on the eye
-      const [l, r] = boxes.map(place), bare = { ...lens, pivot: [0, 0] };
+      const need = Math.max(ew, eh) + 1;
+      const lens = item.lens.find(l => l.inner >= need) || item.lens[item.lens.length - 1], half = lens.size >> 1;
+      const place = ([x, y]) => [x + (ew >> 1) - half, y + (eh >> 1) - half]; // the ring centred on the eye
+      const [l, r] = boxes.map(place);
       if (!item.oneSide) {
-        dress(bare, ctx, l[0], l[1]);
-        for (let x = l[0] + lens.w * 2; x < r[0]; x++) for (let b = 0; b < 2; b++) { const k = x + ',' + (l[1] + lens.h - 2 + b); px.set(k, ink); own.set(k, 'wear'); }
+        dress(lens, ctx, l[0], l[1]);
+        for (let x = l[0] + lens.size; x < r[0]; x++) { const k = x + ',' + (l[1] + half - 1); px.set(k, ink); own.set(k, 'wear'); }
       }
-      dress(bare, ctx, r[0], r[1]);
-      if (item.chain) dress(item.chain, ctx, r[0] + lens.w * 2 - 2, r[1] + lens.h * 2 - 2);
+      dress(lens, ctx, r[0], r[1]);
+      if (item.chain) dress(item.chain, ctx, r[0] + lens.size - 2, r[1] + lens.size - 2);
     }
     if (item.brow) {
       const left = item.side === 'left', b = boxes[left ? 0 : 1];
-      dress(item.brow, ctx, b[0] + (ew >> 1), b[1] - 4, true);
+      dress(item.brow, ctx, b[0] + (ew >> 1), b[1] - 2, true);
     }
     eyesHidden = !!item.hidesEyes;
   }

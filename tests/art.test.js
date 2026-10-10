@@ -124,10 +124,10 @@ test('the eyes and mouth land on the head, for every head, eye and mouth', () =>
   assert.deepEqual(misses, []);
 });
 
-test('hats and face items show on every head in every body plan, and stay on the canvas', async () => {
-  const { HATS, FACE: FACE_WEAR } = await import('../src/art/pets/clothes.js');
+test('hats, face items and neckwear show on every head in every body plan, and stay on the canvas', async () => {
+  const { HATS, FACE: FACE_WEAR, NECK } = await import('../src/art/pets/wear.js');
   const { CLOTHES } = await import('../src/game/items.js');
-  const drawn = { head: HATS, face: FACE_WEAR };
+  const drawn = { head: HATS, face: FACE_WEAR, body: NECK };
   const bad = [];
   for (const [slot, set] of Object.entries(drawn)) for (const id of Object.keys(set)) {
     assert.equal(CLOTHES[id]?.slot, slot, `${id} is a ${slot} item in the shop`);

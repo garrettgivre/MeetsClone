@@ -6,7 +6,7 @@ import { ListMenu, LAYOUT, COL, text } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { CLOTHES, SLOTS, SLOT_LABEL } from '../game/items.js';
 import { toggleWear, canDress } from '../game/pet.js';
-import { HATS, FACE, BOWTIE, TIE } from '../art/wardrobe-icons.js';
+import { HATS, FACE, NECK } from '../art/pets/wear.js';
 import { backdrop, FEET } from '../art/town.js';
 
 const PREVIEW_H = 58;
@@ -14,7 +14,7 @@ const PREVIEW_H = 58;
 /** A small icon sprite for a clothing item, when one exists. */
 export function clothesIcon(id) {
   const c = CLOTHES[id];
-  const spr = HATS[id]?.spr || FACE[id]?.cheek?.spr || (id === 'bowtie' ? BOWTIE.spr : id === 'tie' ? TIE.spr : null);
+  const spr = HATS[id]?.spr || FACE[id]?.brow?.spr || FACE[id]?.lens?.[0].spr || NECK[id]?.spr || null; // the drawing the pet wears
   return spr && spr.h <= 12 ? { icon: spr, iconCtx: colors('cream', c.color, 'ink', 'brown') } : {};
 }
 
