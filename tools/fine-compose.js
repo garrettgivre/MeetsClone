@@ -40,6 +40,7 @@ for (const [name, L] of Object.entries(LINES)) {
   const face = head.sockets.face[0], top = head.sockets.top[0], neck = body.sockets.neck[0];
   for (const [gene, slot] of Object.entries(SLOT)) if (L.GENES[gene] && L[slot]) (PARTS[gene] ||= {})[L.GENES[gene]] = read(L[slot]);
   if (L.TAIL_SIDE) PARTS.tail[L.GENES.tail].side = read(L.TAIL_SIDE); // for a pet that stands on the ground
+  if (L.WINGS_SIDE) PARTS.wings[L.GENES.wings].side = read(L.WINGS_SIDE);
   PARTS.body[L.GENES.body] = { [L.FORM]: body };
   for (const [form, b] of Object.entries(L.BODIES || {})) PARTS.body[L.GENES.body][form] = read(b);
   PARTS.face[L.GENES.head] = L.FACE;
@@ -89,10 +90,11 @@ export function compose(p) {
   const H = (n) => (head.sockets[n] || []).map(([x, y]) => [hx + x, hy + y]);
   const B = (n) => body.sockets[n] || [];
   const [el] = H('earL'), [er] = H('earR'), [f] = H('face'), [top] = H('top'), [t] = B('tail');
-  const ears = PARTS.ears[p.ears], wings = PARTS.wings?.[p.wings], [wl] = B('wingL'), [wr] = B('wingR');
+  const wing0 = PARTS.wings?.[p.wings], wings = wing0 && (p.form !== 'floater' && wing0.side || wing0), [wl] = B('wingL'), [wr] = B('wingR');
+  const ears = PARTS.ears[p.ears];
   const pattern = PARTS.pattern[p.pattern] || [], hair = PARTS.hair?.[p.hair];
   const drawEars = () => { who = 'ears'; if (ears) { stamp(ears, el[0], el[1]); stamp(ears, er[0], er[1], true); } };
-  const drawWings = () => { who = 'wings'; if (wings && wl) { stamp(wings, wl[0], wl[1]); stamp(wings, wr[0], wr[1], true); } };
+  const drawWings = () => { who = 'wings'; if (wings && wl) stamp(wings, wl[0], wl[1]); if (wings && wr) stamp(wings, wr[0], wr[1], true); };
   const lay = (list, on, from, part) => { for (const o of list) if (o.on === on) stamp(o, from[0] + o.off[0], from[1] + o.off[1], false, [0, 0], part); };
 
   if (ears && !ears.front) drawEars();
