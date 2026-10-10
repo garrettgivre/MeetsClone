@@ -2,7 +2,7 @@
 //   page 1  TODAY: special days, what the shops have on, what has happened in town, things at home
 //   page 2  the month at a glance, a small mark in each day for what falls on it;
 //           A steps through the days, B (or a tap on a day) opens what is on that day
-// A or B on the first page turns to the calendar; C goes back a step.
+// On the first page A moves down the day's news when there is more than fits, and B turns to the calendar; C goes back a step.
 import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, text, wrap, LINE_H } from '../ui.js';
@@ -20,6 +20,7 @@ export class NewsScene {
   constructor(app) {
     this.app = app;
     this.page = 0;
+    this.top = 0;       // the first of today's items on show (page one moves down a screenful at a time)
     this.detail = null; // the day whose events are open, on the calendar
     const g = app.game;
     this.sections = today(g);
@@ -33,7 +34,9 @@ export class NewsScene {
     const app = this.app;
     if (this.detail !== null) { this.detail = null; app.sfx('back'); return; }
     if (this.page === 0) {
-      if (b === 'C') { app.sfx('back'); app.pop(); } else { this.page = 1; app.sfx('blip'); }
+      if (b === 'C') { app.sfx('back'); app.pop(); }
+      else if (b === 'A' && this.more) { this.top = this.next; app.sfx('blip'); } // (round to the top again after the last)
+      else { this.page = 1; app.sfx('blip'); }
       return;
     }
     if (b === 'C') { this.page = 0; app.sfx('back'); }
@@ -45,7 +48,7 @@ export class NewsScene {
     if (y < ry || y >= ry + rh) return false;
     if (this.detail !== null) { this.detail = null; return true; }
     if (y < ry + 12) { this.button('C'); return true; }
-    if (this.page === 0) { this.button('B'); return true; }
+    if (this.page === 0) { this.button(this.more && y < ry + rh - 18 ? 'A' : 'B'); return true; } // (the list moves on; the strip under it turns the page)
     // a day on the calendar: open it
     const col = Math.floor((x - GRID_X) / CELL_W), row = Math.floor((y - this.gridY) / CELL_H);
     const i = row * 7 + col - this.month.first;
@@ -69,25 +72,27 @@ export class NewsScene {
     text(scr, dateLine(g.simTime), W / 2, y, COL.ink, { align: 'center' });
     y += 10;
     const bottom = ry + rh - 18;
-    let left = this.sections.reduce((n, s) => n + s.items.length, 0);
-    done: for (const s of this.sections) {
-      if (y + 20 > bottom) break;
-      text(scr, s.head, 6, y, COL.accent);
-      scr.rule(6 + s.head.length * 4 + 3, y + 3, W - 15 - s.head.length * 4, COL.silver);
-      y += 9;
-      for (const it of s.items) {
-        const lines = wrap(it.text, W - 24);
-        if (y + lines.length * LINE_H > bottom) break done;
-        const icon = DAY_ICONS[it.kind] || DAY_ICONS.news;
-        scr.draw(icon, 6, y, {});
-        for (const l of lines) { text(scr, l, 16, y, COL.ink); y += LINE_H; }
-        y += 3;
-        left--;
+    // every item of the day in one run, each under its section's heading; as many as fit are shown from `top` on
+    const all = this.sections.flatMap(s => s.items.map(it => ({ ...it, head: s.head })));
+    let i = this.top, head = '';
+    for (; i < all.length; i++) {
+      const it = all[i], lines = wrap(it.text, W - 24), need = (it.head !== head ? 10 : 0) + lines.length * LINE_H;
+      if (y + need > bottom && i > this.top) break;
+      if (it.head !== head) {
+        head = it.head;
+        text(scr, head, 6, y, COL.accent);
+        scr.rule(6 + head.length * 4 + 3, y + 3, W - 15 - head.length * 4, COL.silver);
+        y += 9;
       }
-      y += 1;
+      scr.draw(DAY_ICONS[it.kind] || DAY_ICONS.news, 6, y, {});
+      for (const l of lines) { text(scr, l, 16, y, COL.ink); y += LINE_H; }
+      y += 3;
     }
-    if (left > 0) text(scr, `+${left} MORE`, W - 6, bottom + 2, COL.gray, { align: 'right' });
-    text(scr, 'B: CALENDAR', 6, bottom + 2, COL.shade);
+    this.more = this.top > 0 || i < all.length;  // there is more than one screenful
+    this.next = i < all.length ? i : 0;          // where A goes: on down, or back to the top
+    if (!all.length) text(scr, 'A QUIET DAY', W / 2, y + 20, COL.gray, { align: 'center' });
+    if (this.more) text(scr, i < all.length ? `A: MORE (${all.length - i})` : 'A: TOP', 6, bottom + 2, COL.shade);
+    text(scr, 'B: CALENDAR', W - 6, bottom + 2, COL.shade, { align: 'right' });
   }
 
   drawMonth(scr) {

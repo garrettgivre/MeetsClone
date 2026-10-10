@@ -103,27 +103,27 @@ test('special days: market day is cheaper, games day pays double, and the calend
   const { eventsOn, monthOf, today } = await import('../src/game/calendar.js');
   const { buy, finishGame } = await import('../src/game/pet.js');
   const at = (y, m, d) => new Date(y, m, d, 12).getTime();
-  assert.deepEqual(specialDays(at(2026, 9, 10)), ['market']);   // a Saturday
-  assert.ok(isDay(at(2026, 9, 14), 'games'));                   // a Wednesday
-  assert.ok(isDay(at(2026, 9, 11), 'visiting'));                // a Sunday
-  assert.equal(priceToday(at(2026, 9, 10), 100), 80);
+  assert.deepEqual(specialDays(at(2026, 9, 13)), ['market']);
+  assert.ok(isDay(at(2026, 9, 17), 'games'));
+  assert.ok(isDay(at(2026, 9, 20), 'visiting'));
+  assert.equal(priceToday(at(2026, 9, 13), 100), 80);
   assert.equal(priceToday(at(2026, 9, 12), 100), 100);
   // one full moon in about every 29 or 30 days
   let moons = 0;
   for (let d = 0; d < 59; d++) if (fullMoon(at(2026, 0, 1) + d * DAY)) moons++;
   assert.equal(moons, 2);
   const g = game();
-  g.simTime = at(2026, 9, 10);
+  g.simTime = at(2026, 9, 13);
   const before = g.points;
   assert.ok(buy(g, 'food', 'cookie').ok);
   assert.equal(before - g.points, priceToday(g.simTime, FOODS.cookie.price));
-  g.simTime = at(2026, 9, 14);
+  g.simTime = at(2026, 9, 17);
   assert.equal(finishGame(g, { points: 10 }), 20);
   // the calendar: every day of the month, with the special days marked, and today in sections
   const m = monthOf(g, g.simTime);
   assert.equal(m.days.length, 31);
-  assert.ok(m.days[9].kinds.includes('market') && m.days[13].kinds.includes('games'));
-  assert.ok(eventsOn(g, at(2026, 9, 10)).some(e => e.kind === 'market'));
+  assert.ok(m.days[12].kinds.includes('market') && m.days[16].kinds.includes('games'));
+  assert.ok(eventsOn(g, at(2026, 9, 13)).some(e => e.kind === 'market'));
   const sections = today(g);
   assert.ok(sections.some(s => s.head === 'TODAY') && sections.some(s => s.head === 'IN THE SHOPS'));
 });

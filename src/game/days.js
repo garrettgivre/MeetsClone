@@ -1,9 +1,11 @@
-// Special days. Some days of the week and the night of the full moon change a
-// rule for the day. This file only reads the clock (it imports nothing), so
-// pet.js, town.js and wishes.js can all ask it what today is.
-//   market    Saturday: everything in the shops is a fifth off
-//   games     Wednesday: games pay double
-//   visiting  Sunday: a chat counts double toward friendship
+// Special days. Certain dates of each month, and the night of the full moon,
+// change a rule for the day. (They were days of the week at first; the owner
+// found a calendar of identical columns dull: "make them certain days of the
+// month".) This file only reads the clock (it imports nothing), so pet.js,
+// town.js and wishes.js can all ask it what today is.
+//   market    the 3rd, 13th and 23rd: everything in the shops is a fifth off
+//   games     the 7th, 17th and 27th: games pay double
+//   visiting  the 10th, 20th and 30th: a chat counts double toward friendship
 //   moon      the full moon: granting every wish pays double
 
 export const SPECIAL = {
@@ -13,6 +15,8 @@ export const SPECIAL = {
   moon:     { name: 'Full moon',    what: 'Granting every wish pays double.' },
 };
 export const MARKET_OFF = 0.2;
+/** The dates of the month each special day falls on. */
+export const DATES = { market: [3, 13, 23], games: [7, 17, 27], visiting: [10, 20, 30] };
 
 const DAY = 24 * 60 * 60 * 1000;
 const MOON = 29.530588 * DAY, NEW_MOON = Date.UTC(2000, 0, 6, 18, 14);
@@ -26,10 +30,8 @@ export function fullMoon(time) {
 
 /** The special days that fall on the day of this time: a list of the names above. */
 export function specialDays(time) {
-  const day = new Date(time).getDay(), out = [];
-  if (day === 6) out.push('market');
-  if (day === 3) out.push('games');
-  if (day === 0) out.push('visiting');
+  const date = new Date(time).getDate(), out = [];
+  for (const [kind, dates] of Object.entries(DATES)) if (dates.includes(date)) out.push(kind);
   if (fullMoon(time)) out.push('moon');
   return out;
 }
