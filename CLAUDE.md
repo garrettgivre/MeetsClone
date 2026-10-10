@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.34.0, 9 October 2026)
+## Where things stand (v0.34.1, 9 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (95 tests).
 
@@ -324,12 +324,18 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 
 ## The LCD screen filter
 
-- Settings > Screen filter (`settings.lcd`, on by default). The owner asked for something that hides the pixels a little and feels like a 90s handheld, "not just blurry", and then for it to cover the buttons too.
+- Settings > Screen filter (`settings.lcd`). The owner asked for something that hides the pixels a little and feels like a 90s handheld, "not just blurry", and then for it to cover the buttons too.
+- **Three styles since v0.34.1** (the owner: "Let's think about the nostalgia overlay/filter a bit. How could we make it better?"; of the ideas I listed they said the device to aim for is a "Color screen tamagotchi, and whatever you thinks best let's do"). `filterMode(setting)` in `screen.js` reads the setting: `'color'` (the default, and what `true` in an older save means), `'soft'` (the filter as it was before) or `false`. Settings steps through LCD, SOFT, OFF. The colour style adds three things to the soft one, all in `Screen.present()`:
+  - a backing: after the picture and its shadow, `LIFT` is laid on with `screen` (black comes out a dark blue-grey) and `PANEL` with `multiply` (white comes out faintly warm). `lcdTone(v, channel, mode)` gives a colour as the filter shows it; `pageSky` uses it so the page round the screen matches.
+  - a slow panel: each frame is drawn into `scr.lag` at `GHOST` (0.6) opacity over what was there, and the picture is taken from that, so what moves leaves a trail a few frames long and a still picture settles exactly.
+  - a finer grid: `lcdCell('color')` is the same 6 x 6 square holding four cells, one to each fine pixel, with a gap of shade and a glint on each.
+  - I compared the three styles side by side and looked at the whole screen at 412 x 883 in the browser pane, and measured the trail (gone within about ten frames). Not on a phone: the fine grid is the thing most likely to shimmer or band at the phone's pixel density, and whether the trail is pleasant in motion I could not judge from stills. If the grid shimmers, lower its alpha (0.11) or go back to one cell per normal pixel.
+  - Not done from the list I gave: a shadow under sprites only, an inset edge round the screen, uneven lighting, a four-green mono style. The buttons do not get the backing tone.
 - `app.setFilter(on)` in `main.js` is the one switch. It calls `scr.setFilter`, repaints the buttons with the same treatment (`paintButtons(true)`), and sets `body.lcd`.
 - `Screen.present()` (`src/engine/screen.js`) keeps the plain 256×448 frame off-screen and composes the visible canvas at three times that size: the frame enlarged with hard edges; the same frame again, offset down and right and multiplied in faintly (dark shapes cast a soft shadow, like LCD segments over their backing); then the grid of cells (`lcdCell`). The canvas's `image-rendering` becomes `auto`, so the browser smooths only the last small step.
 - Under `body.lcd`, `style.css` shows `#glass` (a sheen and a vignette over the whole device, taps pass through) and lays the cell grid over the button strip. The page's colour comes from `app.pageSky`, which deepens it the way the filter deepens the screen.
 - With the filter off the canvas is the plain frame with `image-rendering: pixelated`. Anything that reads pixels from the visible canvas must allow for both sizes (`scr.canvas.width` is 256 or 768).
-- To tune: the shadow's `globalAlpha` (0.2) and offset in `present()`, the grid's two alphas in `lcdCell()`, the gradients on `#glass`.
+- To tune: `SHADE` (the shadow's strength per style) and its offset in `present()`, `LIFT`, `PANEL` and `GHOST`, the grid's alphas in `lcdCell()`, the gradients on `#glass`.
 
 ## Updates, install, offline
 

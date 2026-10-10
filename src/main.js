@@ -1,5 +1,5 @@
 // Boot: screen, input, the scene stack, the simulation clock and saving.
-import { Screen, W, H, lcdCell } from './engine/screen.js';
+import { Screen, W, H, lcdCell, lcdTone, filterMode } from './engine/screen.js';
 import { C, COLORS } from './engine/palette.js';
 import { setupInput } from './engine/input.js';
 import { unlockAudio, play, setMuted } from './engine/audio.js';
@@ -44,11 +44,11 @@ const app = {
   get dev() { return DEV || !!this.game?.settings.cheats; },
   /** The LCD screen filter (Settings): the game screen, the buttons and the glass over both. */
   setFilter(on) {
-    on = on !== false;
+    on = filterMode(on); // false, 'soft', or 'color' (the colour-screen look)
     scr.setFilter(on);
-    paintButtons(on);
-    document.body.classList.toggle('lcd', on);
-    document.documentElement.style.setProperty('--cell', on ? `url(${lcdCell().toDataURL()})` : 'none');
+    paintButtons(!!on);
+    document.body.classList.toggle('lcd', !!on);
+    document.documentElement.style.setProperty('--cell', on ? `url(${lcdCell(on).toDataURL()})` : 'none');
     if (this.sky) this.pageSky(...this.sky);
   },
   /**
@@ -72,8 +72,7 @@ const app = {
     this.sky = [top, bottom];
     // (a colour's name, or its palette index)
     const css = (c) => {
-      const lcd = document.body.classList.contains('lcd');
-      return `rgb(${COLORS[typeof c === 'number' ? c : C(c)].slice(0, 3).map(v => (lcd ? Math.round(v * (0.8 + 0.2 * v / 255)) : v)).join(', ')})`;
+      return `rgb(${COLORS[typeof c === 'number' ? c : C(c)].slice(0, 3).map((v, i) => lcdTone(v, i, scr.filter)).join(', ')})`;
     };
     document.getElementById('bezel').style.background = css(top);
     // The page is sky down to where the game's lower bars begin and ground from there on, so that

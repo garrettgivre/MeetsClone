@@ -4,6 +4,7 @@ import { FOOD_ART, TOY_ART, ICONS } from '../art/icons.js';
 import { FOODS, TOYS, CLOTHES, SLOTS, SLOT_LABEL } from '../game/items.js';
 import { buy, canMarry, MARRY_AFTER, HOUR } from '../game/pet.js';
 import { setMuted } from '../engine/audio.js';
+import { filterMode } from '../engine/screen.js';
 import { exportCode, importCode } from '../game/save.js';
 import { StatusScene } from './status.js';
 import { JumpRopeScene } from './jumprope.js';
@@ -159,17 +160,26 @@ function family(app) {
   ]));
 }
 
+// The screen filter's styles: what Settings calls each, and what it says when picked.
+const FILTERS = {
+  color: ['LCD', 'Colour LCD: a lit panel with a pixel grid, and a trail behind what moves.'],
+  soft: ['SOFT', 'Soft: gentler pixel edges and a faint shadow.'],
+  false: ['OFF', 'Filter off: plain sharp pixels.'],
+};
+
 function settings(app) {
   const g = app.game;
   const items = [
     { label: 'Sound', right: g.settings.sound ? 'ON' : 'OFF', action: (_, it) => {
       g.settings.sound = !g.settings.sound; setMuted(!g.settings.sound); it.right = g.settings.sound ? 'ON' : 'OFF'; app.sfx('select');
     } },
-    { label: 'Screen filter', right: g.settings.lcd !== false ? 'ON' : 'OFF', action: (_, it) => {
-      g.settings.lcd = g.settings.lcd === false;
+    { label: 'Screen filter', right: FILTERS[filterMode(g.settings.lcd)][0], action: (_, it) => {
+      // the colour LCD, then the older soft look, then off
+      const now = filterMode(g.settings.lcd);
+      g.settings.lcd = now === 'color' ? 'soft' : now === 'soft' ? false : 'color';
       app.setFilter(g.settings.lcd);
-      it.right = g.settings.lcd ? 'ON' : 'OFF';
-      app.toast(g.settings.lcd ? 'LCD filter on: a softer, old-screen look.' : 'Filter off: plain sharp pixels.', 2600);
+      it.right = FILTERS[filterMode(g.settings.lcd)][0];
+      app.toast(FILTERS[filterMode(g.settings.lcd)][1], 2600);
       app.save();
     } },
     { label: 'Care alerts', right: g.settings.alerts ? 'ON' : 'OFF', action: async (_, it) => {
