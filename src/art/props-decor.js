@@ -55,6 +55,12 @@ import './props-aqua-3.js';
 import './props-hollow-1.js';
 import './props-hollow-2.js';
 import './props-hollow-3.js';
+import './props-bath-1.js';
+import './props-bath-2.js';
+import './props-bath-3.js';
+import './props-bath-4.js';
+import './props-play-1.js';
+import './props-play-2.js';
 
 
 // ---------- the starry set's toy ----------

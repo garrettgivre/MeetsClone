@@ -108,6 +108,8 @@ export function propBitmap(name, opts = {}) {
 export const HOME_WINDOW = { x: 30, y: 27, w: 64, h: 60 };  // the glass, in hi-res room pixels
 export const HOME_FEET = 256;
 export const BED = { x: 206, y: 198, sink: 14 }; // where the bed stands, and how far down inside it a sleeping pet's feet are
+export const BATH = { x: 76, y: 198 };     // where the bath stands in the bathroom (a pet sits in it behind its `rim` rows)
+export const TOILET = { x: 148, y: 198 };  // and the toilet (a pet sits `seat` above the floor, `sx` from the prop's middle)
 
 /**
  * The room for a sky state ('day' | 'dawn' | 'dusk' | 'night'), lit or with the
@@ -141,14 +143,25 @@ const HOLE = C('night'); // painted where the glass goes, then cut out (nothing 
  * of the bed's picture (an odd number, so the strip starts on a whole screen
  * pixel) and where they go, in hi-res room pixels.
  */
-export function bedRim(layout, dark = false) {
-  const a = DECOR_ART[layout?.bed] || DECOR_ART['sweet-bed'];
-  const key = `rim:${a.prop}:${JSON.stringify(a.ramps)}:${dark}`;
+export function bedRim(layout, dark = false) { return rimOf(DECOR_ART[layout?.bed] || DECOR_ART['sweet-bed'], BED, dark); }
+/** The same for the bath: its near lip and everything under it, drawn over a pet sitting in the water. */
+export function bathRim(layout, dark = false) { return rimOf(DECOR_ART[layout?.bath] || DECOR_ART['sweet-bathroom-bath'], BATH, dark); }
+/** And for the thing to play in out in the garden (null if the pet gets up on it instead): in the light of the hour, as the garden is. */
+export function playRim(layout, sky, dark = false) {
+  const a = DECOR_ART[layout?.play] || DECOR_ART['sweet-garden-play'];
+  if (!a.rim) return null;
+  const [prop, x, y, ramps] = a.things[0];
+  return rimOf({ prop, ramps, rim: a.rim }, { x, y }, dark, sky);
+}
+function rimOf(a, at, dark, sky = null) {
+  const key = `rim:${a.prop}:${JSON.stringify(a.ramps)}:${dark}:${sky}`;
   if (!cache.has(key)) {
     const src = propBitmap(a.prop, a.ramps), h = a.rim, bm = makeBitmap(src.w, h, true);
     bm.px.set(src.px.subarray((src.h - h) * src.w));
+    const lut = sky && timeLut(sky);
+    if (lut) for (let p = 0; p < bm.px.length; p++) bm.px[p] = lut[bm.px[p]];
     if (dark) dim(bm);
-    cache.set(key, { bm, x: BED.x - src.at[0], y: BED.y - h + 1 });
+    cache.set(key, { bm, x: at.x - src.at[0], y: at.y - h + 1 });
   }
   return cache.get(key);
 }
@@ -256,16 +269,18 @@ function kitchenScene(k, sky, layout) {
   frontCorners(k, [art('table'), art('seat')], floor.shadow);
 }
 
-/** The bathroom: a mirror on the tiled wall, a cabinet under a little window, a mat, towels and a plant. */
+/** The bathroom: a bath under the mirror, a toilet, a cabinet under a little window, a mat, towels and a plant. */
 function bathroomScene(k, sky, layout) {
   const art = (slot) => DECOR_ART[layout[slot]] || DECOR_ART[`sweet-bathroom-${slot}`];
-  const wall = art('wall'), floor = art('floor'), win = art('window'), mirror = art('mirror'), cabinet = art('cabinet'), mat = art('mat');
+  const wall = art('wall'), floor = art('floor'), win = art('window'), mirror = art('mirror'), cabinet = art('cabinet'), mat = art('mat'), bath = art('bath'), toilet = art('toilet');
   wallOf(k, wall);
   paneProp(k, win.prop, 204, 72, win.ramps);
   k.prop(mirror.prop, 84, 142, mirror.ramps);
   floorOf(k, floor);
   if (sky === 'night') k.lightPool(84, 196, 44, 9, 'gold.3');
-  k.shadow(204, 198, 30, floor.shadow, 4); k.prop(cabinet.prop, 204, 198, cabinet.ramps);
+  k.shadow(BATH.x, BATH.y, 44, floor.shadow, 4); k.prop(bath.prop, BATH.x, BATH.y, bath.ramps);
+  k.shadow(TOILET.x, TOILET.y, 22, floor.shadow, 4); k.prop(toilet.prop, TOILET.x, TOILET.y, toilet.ramps);
+  k.shadow(214, 198, 30, floor.shadow, 4); k.prop(cabinet.prop, 214, 198, cabinet.ramps);
   rugOf(k, mat, 64, 12);
   frontCorners(k, [art('plant'), art('towels')], floor.shadow);
 }
@@ -310,7 +325,7 @@ function gardenScene(k, sky, layout) {
   k.shadow((tree.x || 40) + 4, 198, 20, shade, 4); k.prop(tree.prop, tree.x || 40, 198, tree.ramps); // (`x`: a wide tree stands further in from the edge)
   for (const [name, dx, dy, opts] of tree.extras || []) k.prop(name, 40 + dx, 198 + dy, opts); // (things hung in the tree)
   k.shadow(176, 206, feature.shadow, shade, 5); k.prop(feature.prop, 176, 206, feature.ramps);
-  frontCorners(k, [art('flowers'), art('seat')], shade);
+  frontCorners(k, [art('flowers'), art('play'), art('seat')], shade);
 }
 
 /**

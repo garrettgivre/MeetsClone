@@ -17,18 +17,18 @@ const SPOT = {
   },
   kitchen: {
     wall: [118, 22], floor: [64, 104], window: [71, 30], stove: [30, 48], counter: [104, 82], shelf: [107, 40],
-    table: [16, 132], seat: [117, 134],
+    table: [79, 132], seat: [112, 134],
   },
   bathroom: {
-    wall: [64, 16], floor: [64, 104], window: [102, 20], mirror: [42, 34], cabinet: [102, 70], mat: [62, 122],
+    wall: [64, 16], floor: [64, 104], window: [102, 20], mirror: [42, 34], bath: [38, 78], toilet: [74, 76], cabinet: [107, 70], mat: [62, 122],
     plant: [12, 132], towels: [117, 132],
   },
   garden: {
-    ground: [64, 100], horizon: [40, 58], fence: [84, 68], tree: [20, 72], feature: [88, 76], flowers: [20, 142], seat: [114, 142],
+    ground: [64, 100], horizon: [40, 58], fence: [84, 68], tree: [20, 72], feature: [88, 76], flowers: [20, 142], play: [59, 132], seat: [114, 142],
   },
 };
 const BAR_H = 24;
-const LOW = new Set(['rug', 'corner', 'plant', 'floor', 'table', 'seat', 'mat', 'towels', 'ground', 'flowers']); // slots the bar would hide at the bottom, so it moves up for them
+const LOW = new Set(['rug', 'corner', 'plant', 'floor', 'table', 'seat', 'mat', 'towels', 'ground', 'flowers', 'play']); // slots the bar would hide at the bottom, so it moves up for them
 
 export class DecorateScene {
   constructor(app) {

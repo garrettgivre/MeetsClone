@@ -25,13 +25,14 @@ export const FOODS = {
   chilipuff:   { name: 'Chili Puff',    kind: 'snack', taste: 'spicy',  price: 20 },
 };
 
+// `where`: the room a toy is played with in. What belongs out of doors is played with in the garden, the rest in the bedroom.
 export const TOYS = {
-  ball:    { name: 'Ball',    price: 80 },
-  yoyo:    { name: 'Yo-yo',   price: 100 },
-  blocks:  { name: 'Blocks',  price: 100 },
-  kite:    { name: 'Kite',    price: 120 },
-  drum:    { name: 'Drum',    price: 120 },
-  plushie: { name: 'Plushie', price: 150 },
+  ball:    { name: 'Ball',    price: 80,  where: 'garden' },
+  yoyo:    { name: 'Yo-yo',   price: 100, where: 'bedroom' },
+  blocks:  { name: 'Blocks',  price: 100, where: 'bedroom' },
+  kite:    { name: 'Kite',    price: 120, where: 'garden' },
+  drum:    { name: 'Drum',    price: 120, where: 'bedroom' },
+  plushie: { name: 'Plushie', price: 150, where: 'bedroom' },
 };
 
 export const COLOR_FOOD_MEALS = 5;

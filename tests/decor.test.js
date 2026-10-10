@@ -118,3 +118,19 @@ test('old saves gain the starter room, and broken layouts are repaired', () => {
   assert.equal(layoutOf(fixed).rug, 'sweet-rug');
   assert.equal(layoutOf(fixed).lamp, 'sweet-lamp');
 });
+
+test('a save from before a slot existed gains it, with the piece of any set it had completed in that room', () => {
+  const g = game();
+  g.points = 20000;
+  buySet(g, 'starry');
+  useSet(g, 'bathroom', 'starry');
+  // as it was before the bathroom had a bath and a toilet
+  for (const slot of ['bath', 'toilet']) {
+    delete g.decor.rooms.bathroom[slot];
+    g.decor.owned = g.decor.owned.filter(id => DECOR[id].slot !== slot);
+  }
+  const m = migrate(JSON.parse(JSON.stringify(g)));
+  assert.equal(layoutOf(m, 'bathroom').bath, 'sweet-bathroom-bath', 'the starter piece goes in');
+  assert.ok(m.decor.owned.includes('starry-bathroom-bath') && m.decor.owned.includes('starry-bathroom-toilet'), 'and the owned set is made whole');
+  assert.ok(!m.decor.owned.includes('forest-bathroom-bath'), 'but nothing else is given away');
+});

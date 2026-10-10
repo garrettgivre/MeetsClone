@@ -2,18 +2,18 @@
 import { C, mutedLut } from '../engine/palette.js';
 import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
-import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, TUB, SUDS, BUBBLE, POTTY, BROOM_ICON, BATH_ICON, POTTY_ICON, ARROW } from '../art/icons.js';
+import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, SUDS, BUBBLE, BROOM_ICON, BATH_ICON, POTTY_ICON, ARROW } from '../art/icons.js';
 import { hash } from '../engine/rng.js';
 import { composePet, composeEgg, composeGhost, CANVAS, GROUND } from '../game/render.js';
 import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
 import { needs, canAct, STAGE_LENGTH, feed, play, clean, medicine, toggleLights, pat, scold, comfort, bathe, toilet, isDirty, isPottyTrained, POTTY_TRAINED } from '../game/pet.js';
-import { FOODS } from '../game/items.js';
+import { FOODS, TOYS } from '../game/items.js';
 import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide, skyState } from './room.js';
 import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
 import { PROPS } from '../art/props.js';
 import { DECOR_ART } from '../art/decor-art.js';
-import { tone, edgeColours, bedRim, BED, HOME_FEET } from '../art/town.js';
+import { tone, edgeColours, bedRim, bathRim, playRim, BED, BATH, TOILET, HOME_FEET } from '../art/town.js';
 import { EndingScene } from './ending.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
@@ -29,8 +29,8 @@ const MUTED = mutedLut('white', 1, 0);
 const ICON_ALPHA = 0.62; // how solid an icon that isn't picked is
 const CELL = W / 5;
 const DOOR_Y = 58; // where the arrows to the next rooms sit, from the top of the room
-// how far a small pet is lifted so it shows over the rim of the tub
-const BATH_LIFT = { baby: 17, child: 12, teen: 9, adult: 9 };
+// how far below the lip of the bath a pet's feet are, in fine pixels: the young sit high in the water, so they show over it
+const BATH_DIP = { baby: 6, child: 10, teen: 16, adult: 16 };
 const GRIME = ['CLEAN', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
 // a splat of mud, in hi-res pixels ('1' mud, '0' its darker underside)
 const MUD = ['.1111..', '1111111', '1111110', '.00000.'];
@@ -45,6 +45,14 @@ function useSpot(game, slot) {
   if (!thing) return null;
   const [name, x, y] = thing, h = Math.min(PROPS[name]?.h || 30, slot === 'table' ? 46 : 32);
   return { x: x / 2, y: LAYOUT.room.y + (y - h) / 2, floor: LAYOUT.room.y + y / 2 }; // floor: where the piece stands, in the front of the room
+}
+
+/** The thing to play on out in the garden: where a pet stands, in it or up on it, in screen pixels. */
+function playSpot(game) {
+  if (roomOf(game) !== 'garden') return null;
+  const art = DECOR_ART[layoutOf(game).play], thing = art?.things?.[0];
+  if (!thing) return null;
+  return { x: thing[1] / 2, y: LAYOUT.room.y + (thing[2] - (art.top ?? art.sink ?? 0)) / 2, on: art.top != null };
 }
 
 const BED_LIFT = (HOME_FEET - (BED.y - BED.sink)) / 2; // how far a pet in bed is above the floor it walks on, in screen pixels
@@ -112,8 +120,8 @@ export class HomeScene {
 
   /** Get down off a seat (anything the pet is asked to do starts with this). */
   standUp() {
-    if (this.seated) this.moveIn = 1500;
-    this.seated = this.goSit = null;
+    if (this.seated || this.playing) this.moveIn = 1500;
+    this.seated = this.goSit = this.playing = this.goPlay = null;
   }
 
   // ---------- input ----------
@@ -221,9 +229,9 @@ export class HomeScene {
       if (r.msg) app.toast(r.msg);
       return;
     }
-    // in the kitchen the pet eats at the table: it stands beside it and the dish is on the table top
+    // in the kitchen the pet eats at the table: it sits on the seat beside it and the dish is on the table top
     const table = roomOf(this.game) === 'kitchen' && useSpot(this.game, 'table');
-    if (table) { this.petX = this.targetX = Math.min(72, table.x + 36); this.facing = -1; }
+    const seat = table && useSpot(this.game, 'seat');
     this.play({
       type: 'eat', dur: 2000, food: foodId, table, done: () => {
         if (r.toothache) { app.sfx('sad'); app.toast(r.msg); return; }
@@ -232,10 +240,12 @@ export class HomeScene {
         if (r.liked) { app.sfx('happy'); app.toast('Yum! A favourite!'); this.play({ type: 'happy', dur: 900 }); }
       },
     });
+    if (seat) { this.seated = seat; this.seatMs = 1500; }
     app.sfx('eat');
   }
 
-  doPlay(toyId) { this.goRoom('garden', () => this.playNow(toyId)); }
+  // (a ball or a kite is for the garden; blocks, a drum and the like are played with indoors)
+  doPlay(toyId) { this.goRoom(TOYS[toyId]?.where || 'garden', () => this.playNow(toyId)); }
   playNow(toyId) {
     const app = this.app;
     const r = play(this.game, toyId);
@@ -358,6 +368,12 @@ export class HomeScene {
     if (!canAct(pet) || pet.asleep || this.anim) return;
 
     this.blink = (t % 3600) < 140 ? 1 : 0;
+    // playing in the garden for a while
+    if (this.playing) {
+      this.playMs -= dt;
+      if (this.playMs <= 0 || needs(pet) || pet.squirm) this.standUp();
+      return;
+    }
     // sitting on the seat for a while
     if (this.seated) {
       this.seatMs -= dt;
@@ -369,9 +385,12 @@ export class HomeScene {
     this.moveIn -= dt;
     if (this.moveIn <= 0) {
       const maxX = pet.poop > 0 ? 70 : 96;
-      const seat = !slow && !pet.poop && pet.stage !== 'egg' && !pet.gone && Math.random() < 0.3 && useSpot(this.game, 'seat');
+      const well = !slow && !pet.poop && pet.stage !== 'egg' && !pet.gone;
+      const seat = well && Math.random() < 0.3 && useSpot(this.game, 'seat');
+      const fun = well && !seat && Math.random() < 0.4 && playSpot(this.game); // (only the garden has something to play on)
       this.goSit = seat || null;
-      this.targetX = seat ? Math.min(100, seat.x - 10) : 30 + Math.random() * (maxX - 30);
+      this.goPlay = fun || null;
+      this.targetX = seat ? Math.min(100, seat.x - 10) : fun ? fun.x : 30 + Math.random() * (maxX - 30);
       this.moveIn = 2000 + Math.random() * 3500;
     }
     const d = this.targetX - this.petX;
@@ -381,6 +400,10 @@ export class HomeScene {
     } else if (this.goSit) {
       this.seated = this.goSit; this.goSit = null;
       this.seatMs = 6000 + Math.random() * 7000;
+      this.app.sfx?.('tick');
+    } else if (this.goPlay) {
+      this.playing = this.goPlay; this.goPlay = null;
+      this.playMs = 5000 + Math.random() * 5000;
       this.app.sfx?.('tick');
     }
     return;
@@ -410,7 +433,7 @@ export class HomeScene {
     }
 
     // pet / egg / ghost
-    const upFront = this.seated || (this.anim?.type === 'eat' && this.anim.table); // on the seat, or at the table: in the front of the room
+    const upFront = this.seated || this.playing || (this.anim?.type === 'eat' && this.anim.table); // on the seat, or at the table: in the front of the room
     if (pet && !upFront) this.drawPet(scr, t, lightsOff);
     // the toy chest and plant in the front corners stand in front of the pet
     drawRoomFront(scr, game.simTime, lightsOff, layoutOf(game), roomOf(game));
@@ -446,7 +469,8 @@ export class HomeScene {
     this.bedLift = 0;
     const sit = this.seated && pet.stage !== 'egg' && !pet.gone ? this.seated : null;
     const table = a?.type === 'eat' && a.table && pet.stage !== 'egg' ? a.table : null; // eating at the table, standing beside it
-    const baseY = sit ? Math.round(sit.y) - GROUND : table ? Math.round(table.floor) - GROUND : ROOM_FLOOR - GROUND;
+    const fun = this.playing && pet.stage !== 'egg' && !pet.gone ? this.playing : null; // in or on the garden's play spot
+    const baseY = sit ? Math.round(sit.y) - GROUND : fun ? Math.round(fun.y) - GROUND : table ? Math.round(table.floor) - GROUND : ROOM_FLOOR - GROUND;
     if (pet.gone) {
       const gf = Math.floor(t / 600) % 2;
       scr.bitmap(composeGhost(gf), this.petX - CANVAS / 2, baseY - Math.round(Math.sin(t / 500) * 2));
@@ -470,7 +494,8 @@ export class HomeScene {
     this.bedLift = inBed ? BED_LIFT : 0;
     if (inBed) this.petX = this.targetX = BED.x / 2;
     if (sit) { this.petX = this.targetX = Math.min(104, sit.x - 4); flip = false; }
-    const moving = !sit && Math.abs(this.targetX - this.petX) > 1 && !pet.asleep;
+    if (fun) this.petX = this.targetX = fun.x;
+    const moving = !sit && !fun && Math.abs(this.targetX - this.petX) > 1 && !pet.asleep;
     const bob = Math.floor(t / (moving ? 220 : 480)) % 2;
     const step = moving ? (Math.floor(t / 200) % 2 ? 1 : 2) : 0;
     // every so often, a little idle flourish
@@ -525,15 +550,25 @@ export class HomeScene {
           expr = Math.floor(a.t / 450) % 2 ? 'happy' : 'wink';
           arms = 'up';
           flip = false;
-          // (floaters already hover over the rim)
-          dy = -(pet.phenotype.form === 'floater' ? 0 : BATH_LIFT[pet.stage] || 0) - (Math.floor(a.t / 300) % 2);
+          // in the room's own bath, behind its near lip (drawn again over the pet below)
+          this.bedLift = Math.round((HOME_FEET - (BATH.y - this.bathArt().rim + 1 + (BATH_DIP[pet.stage] || 16))) / 2);
+          this.petX = this.targetX = BATH.x / 2;
+          dy = -(Math.floor(a.t / 300) % 2);
           break;
         case 'toilet':
           expr = k > 0.7 ? 'happy' : 'blink';
-          flip = true;
-          dy = pet.phenotype.form === 'floater' ? 0 : -7; // perched on the seat
+          flip = false;
+          // perched on the seat of the room's own toilet
+          this.bedLift = Math.round((HOME_FEET - (TOILET.y - this.toiletArt().seat)) / 2);
+          this.petX = this.targetX = (TOILET.x + this.toiletArt().sx) / 2;
           break;
       }
+    } else if (fun) {
+      // playing: bouncing high on a thing it stands on, hopping about in one it gets into
+      expr = 'happy';
+      arms = Math.floor(t / 300) % 2 ? 'up' : 'out';
+      dy = -Math.round(Math.abs(Math.sin(t / 260)) * (fun.on ? 9 : 3));
+      flip = Math.floor(t / 1700) % 2 === 0;
     } else if (pet.squirm && !pet.asleep) {
       // needs the toilet: a worried little wiggle
       expr = 'sad';
@@ -551,6 +586,12 @@ export class HomeScene {
     if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
     else scr.bitmap(bm, x, baseY + dy, flip, solid);
     if (inBed) { const rim = bedRim(layoutOf(this.game), lightsOff); scr.bitmap(rim.bm, rim.x / 2, LAYOUT.room.y + (rim.y >> 1)); }
+    if (fun && !fun.on) {
+      // the near side of the sandpit or pool, over the pet's feet
+      const rim = playRim(layoutOf(this.game, 'garden'), skyState(new Date(this.game.simTime).getHours()), lightsOff);
+      if (rim) scr.bitmap(rim.bm, rim.x / 2, LAYOUT.room.y + (rim.y >> 1));
+    }
+    if (a?.type === 'bath') { const rim = bathRim(layoutOf(this.game, 'bathroom'), lightsOff); scr.bitmap(rim.bm, rim.x / 2, LAYOUT.room.y + (rim.y >> 1)); }
 
     if (!lightsOff && !solid && (pet.dirt || 0) >= 2) {
       this.drawDirt(scr, bm, x, baseY + dy, flip, pet);
@@ -625,18 +666,18 @@ export class HomeScene {
         break;
       }
       case 'bath': {
-        const x = Math.round(this.petX - 19), y = fy - 13;
-        scr.draw(TUB, x, y, {});
-        scr.draw(SUDS, x + 4, y - 4, { frame: Math.floor(a.t / 350) % 2 });
+        // suds along the lip of the bath, and bubbles drifting up from it
+        const x = BATH.x / 2 - 22, y = LAYOUT.room.y + ((BATH.y - this.bathArt().rim + 1) >> 1);
+        scr.draw(SUDS, x, y - 5, { frame: Math.floor(a.t / 350) % 2 });
+        scr.draw(SUDS, x + 14, y - 5, { frame: Math.floor(a.t / 350 + 1) % 2 });
         for (let i = 0; i < 5; i++) {
           const ph = (a.t / 1100 + i * 0.27) % 1;
-          scr.draw(BUBBLE, x + 2 + i * 8 + Math.round(Math.sin(ph * 7 + i) * 2), y - 8 - Math.round(ph * 34), { frame: i % 3 });
+          scr.draw(BUBBLE, x + 2 + i * 9 + Math.round(Math.sin(ph * 7 + i) * 2), y - 9 - Math.round(ph * 34), { frame: i % 3 });
         }
         break;
       }
       case 'toilet': {
-        scr.draw(POTTY, Math.round(this.petX - 9), fy - 14, {});
-        if (k > 0.7) scr.draw(SPARKLE, this.petX + 12, fy - 30, { frame: Math.floor(t / 100) % 2 });
+        if (k > 0.7) scr.draw(SPARKLE, this.petX + 14, fy - 30 - this.bedLift, { frame: Math.floor(t / 100) % 2 });
         break;
       }
       case 'grow': case 'hatch': {
@@ -648,6 +689,10 @@ export class HomeScene {
       }
     }
   }
+
+  /** The bath and the toilet in the bathroom: how each is drawn (its `rim`, its `seat`). */
+  bathArt() { return DECOR_ART[layoutOf(this.game, 'bathroom').bath] || DECOR_ART['sweet-bathroom-bath']; }
+  toiletArt() { return DECOR_ART[layoutOf(this.game, 'bathroom').toilet] || DECOR_ART['sweet-bathroom-toilet']; }
 
   drawRoom(scr) {
     drawRoomHD(scr, this.game.simTime, this.app.time, this.pet && !this.pet.lights, layoutOf(this.game), roomOf(this.game));
