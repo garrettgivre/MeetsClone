@@ -14,7 +14,7 @@ import {
   townState, districtLocked, placeLocked, placesOf, buyPass, cantGo, resident, talk, friendship, doAction,
   dishOfDay, saleOfDay, salePrice, buySale, dyeHair, founderKin,
   JOBS, jobOf, jobPay, jobRank, jobNeed, applyJob, startShift, endShift, classesLeft, isNewFace, retirees,
-  SUBJECTS, NIGHT_CLASS, schoolOf, diplomaOf, gradWhy, graduate,
+  SUBJECTS, NIGHT_CLASS, schoolOf, diplomaOf, gradWhy, graduate, classWhy,
 } from '../game/town.js';
 import { skillLevel, SKILL_LABEL, MAX_DISCIPLINE } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
@@ -22,6 +22,7 @@ import { shopList } from './menus.js';
 import { grant } from '../game/wishes.js';
 import { JumpRopeScene } from './jumprope.js';
 import { WhichWayScene, SnackCatchScene, CopyMeScene } from './minigames.js';
+import { CLASS_GAMES } from './classes.js';
 import { MatchmakerScene } from './family.js';
 
 const FEET_Y = LAYOUT.room.y + FEET / 2; // where pets stand on screen
@@ -336,12 +337,12 @@ export class PlaceScene {
         label: sub.name,
         right: sub.skill ? `${SKILL_LABEL[sub.skill].toUpperCase()} ${skillLevel(pet, sub.skill)}` : `${pet.discipline}/${MAX_DISCIPLINE}`,
         note: sub.skill ? `TEACHES ${SKILL_LABEL[sub.skill].toUpperCase()}${fee ? `. COSTS ${fee}` : ''}` : `MANNERS HELP IT LEARN${fee ? `. COSTS ${fee}` : ''}`,
+        // a class is a round of its subject's game (classes.js); how the round goes is how much it teaches
         action: () => {
-          const r = doAction(g, 'school', sub.id);
+          const why = classWhy(g);
           app.pop();
-          app.sfx(r.ok ? 'happy' : 'nope');
-          if (r.ok) { this.play('happy'); app.save(); }
-          if (r.msg) this.say(r.msg, 3400);
+          if (why) { app.sfx('nope'); this.say(why, 2600); return; }
+          app.push(new CLASS_GAMES[sub.id](app, sub));
         },
       }));
       const menu = new GuideMenu(app, `CLASSES: ${classesLeft(g)} LEFT TODAY`, rows);

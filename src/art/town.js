@@ -32,7 +32,7 @@ const cache = new Map();
  * they are places of one particular light.
  */
 export const OPEN_AIR = new Set(['square', 'park', 'cottages', 'playground', 'beach', 'forest', 'fair', 'castle', 'starisle', 'hidden',
-  'playfield', 'ropefield', 'trip', 'tripFar', 'tripWoods', 'tripWoodsFar', 'tripSky', 'farewell']);
+  'playfield', 'ropefield', 'gymfield', 'trip', 'tripFar', 'tripWoods', 'tripWoodsFar', 'tripSky', 'farewell']);
 export const OWN_SKY = new Set(['starisle', 'hidden', 'farewell']);
 /** Whether a backdrop shows the real sky of the hour. */
 export const showsSky = (id) => OPEN_AIR.has(id) && !OWN_SKY.has(id);
@@ -1599,6 +1599,37 @@ const SCENES = {
   ropefield(k) {
     SCENES.playfield(k);
     for (const x of [23, 235]) { k.shadow(x, 260, 9, 'green.1'); k.prop('ropePost', x, 260); }
+  },
+  gymfield(k) {
+    // gym class: the games field with a two-lane running track laid across it (runners' feet at y 242 and 268)
+    // and the flag at the far end
+    SCENES.playfield(k);
+    k.rect(0, 232, RW, 42, 'orange.2');
+    k.rect(0, 232, RW, 1, 'orange.1'); k.rect(0, 273, RW, 1, 'orange.1');
+    k.rect(0, 234, RW, 1, 'white'); k.rect(0, 271, RW, 1, 'white');
+    for (let x = 4; x < RW; x += 16) k.rect(x, 252, 8, 1, 'white');
+    for (let x = 0; x < RW; x += 7) k.set(x + (x % 3), 240 + ((x * 5) % 28), 'orange.1');
+    // the start line and the finish line
+    k.rect(56, 235, 2, 36, 'white');
+    for (let y = 235; y < 271; y += 4) { k.rect(204, y, 2, 2, 'white'); k.rect(206, y + 2, 2, 2, 'white'); k.rect(206, y, 2, 2, 'ink'); k.rect(204, y + 2, 2, 2, 'ink'); }
+    k.prop('finishFlag', 218, 236);
+  },
+  classroom(k) {
+    // a classroom cleared for a lesson: the school's walls and floor, a wide empty blackboard for the game to chalk on
+    // (its green is x 42..214, y 38..116), the clock and the books at the sides; pets stand at y 260
+    k.wall('lime.3', 'cream.3', 'bricks', { wainscot: 'brown.2' });
+    k.block(36, 32, 184, 92, 'brown.2'); k.flat(42, 38, 172, 78, 'green.0', 'green.0'); k.dither(42, 38, 172, 78, C('green.1'), 1);
+    // the chalk ledge, with a duster and three sticks of chalk on it
+    k.rect(40, 118, 176, 3, 'brown.3');
+    k.rect(52, 114, 14, 4, 'slate.2'); k.rect(52, 113, 14, 1, 'brown.1');
+    k.rect(150, 116, 8, 2, 'white'); k.rect(162, 116, 7, 2, 'pink.3'); k.rect(173, 116, 8, 2, 'gold.3');
+    k.shelf(2, 150, 30, 'books', ['red.2', 'sky.2', 'gold.2', 'green.2']);
+    k.clock(238, 140, 9);
+    k.vignette('lime.1', 30);
+    k.planks(HZ, 'gold.2'); k.floorShadow();
+    k.rug(128, 262, 70, 10, 'sky.2', 'white');
+    k.shadow(18, 232, 13); k.prop('backpack', 18, 232, { accent: 'sky', wall: 'gold' });
+    k.shadow(238, 232, 12); k.prop('globe', 238, 232, { glass: 'sky', leaf: 'green', accent: 'gold' });
   },
   matchmaker(k) {
     // the matchmaker's parlour: rosy paper, a garland of hearts, two windows and a framed heart; the pets meet on the rug (y 184)

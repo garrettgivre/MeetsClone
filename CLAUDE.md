@@ -4,9 +4,22 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.39.0, 10 October 2026)
+## Where things stand (v0.40.0, 10 October 2026)
 
-Everything on `main` is committed and pushed. `npm test` passes (101 tests).
+Everything on `main` is committed and pushed. `npm test` passes (102 tests).
+
+**v0.40.0: a game for each school subject** (the owner: "Build new mini games for each school subject"). A class is now a round of its subject's game, and how the round goes is how much the class teaches. I chose the five games; the owner has not seen them.
+- **The games** (`src/scenes/classes.js`; `CLASS_GAMES` maps a subject's id to its scene; `ClassGame` extends the minigames' `MiniGame`, and `QuizGame` is the ask, answer, show loop three of them share):
+  - Manners, WAIT FOR IT (`MannersScene`): a treat on a table, five rounds; press only once Teacher rings the bell. Early is "too soon", late is "too slow"; on a long wait Teacher sometimes lifts the bell without ringing it.
+  - Reading, WORD MATCH (`ReadingScene`): six rounds against a clock; a food's picture on a flash card and two words, or a word and two pictures, turn about. The wrong answer starts with the same letter when one does.
+  - Art, COLOUR MIX (`ArtScene`): five rounds; two tins of paint on the board, pick what they make. The answers come from `blendColor` in `genetics.js`, the rule pets' colours mix by, so the class teaches the breeding rule (some of its answers are not what real paint does: red and green give gold).
+  - Gym, DASH (`GymScene`): a race against Teacher on a track; A and B in turn add speed, the same one twice trips. Teacher takes about 8.6 seconds, which needs about five presses a second to beat.
+  - Drama, MAKE A FACE (`DramaScene`): six rounds; Teacher pulls a face (calm, happy, sad, sleepy, dizzy, cheeky), A changes your pet's face, B shows it.
+- **Marks** (3 top, 2 fair, 1 poor) go to `takeClass(game, subjectId, marks)` in `src/game/town.js`, which is `lesson` with a third argument: a subject teaches `marks` skill points (3 is a level), one less for a pet that is hungry or has manners under 2, never less than 1; Manners teaches nothing on a poor round. A class of any marks uses one of the day's two, costs a grown-up the night fee, counts toward graduating and grants the class wish. `classWhy(game)` says why there is no class before a game starts. Leaving with C once a round has begun counts as a poor class; leaving at the title costs nothing. `doAction(g, 'school', id)` still works without a game (top marks), which the older tests use.
+- **Where they are played:** `SCENES.classroom` (the school's walls, an empty blackboard the games chalk on with `chalk()`, pets at y 260) and `SCENES.gymfield` (the games field with a two-lane track; it is in `OPEN_AIR`). Teacher is `resident('school', game)`.
+- **Hand-typed props** (`src/art/props-class.js`): `handBell`, `snackTable`, `paintPot` (its paint is the accent colour), `easel`, `paintSplat`, `finishFlag`. The track, the chalk and the flash card's frame are code.
+- **Seen:** every game as still frames at zoom in the browser pane, a whole round of each run by script (marks, message, the class counted, the fee taken), and the way in from the School's class list. Not on a phone, and I have not played one by hand, so the timings (the bell's window, the clocks, Teacher's pace in the dash) are untested on real thumbs.
+- **Thin spots:** the pictures in Reading are the 10-pixel food icons, small on the card, and the words are only foods; the paint tins on the board are small too; Teacher's bell hangs in the air over their head; in the dash the far runner is mostly hidden when the two are level; the class games are only at school (not on the Games menu, and shifts at work do not use them); the classroom is the same for all four indoor classes.
 
 **v0.39.0: the town opens a part at a time, and a new Town Square.** The owner laid out a new order for the town and asked for a critique; I raised that food and the job board would be locked behind Uptown, that paying to walk needed a name, and that the Suburbs would be thin. Their answers: "Bakery Downtown works, job board at town square makes sense, the pay scale needs to be steep for longer gameplay. I don't want the player to be overwhelmed with options. Might even need to be steeper. I'm fine with suburbs being pretty empty for now... [the map] quest [should] take a long time so it can start early game but end late game. Photo studio in uptown... hidden village stays hidden. I like both far away unlock ideas. Don't worry about old saves no one is really playing yet. Remake the town square art from scratch I don't really love it anyway. Give it a lot of cute architecture and design. Train to the boardwalk makes sense, keep that."
 - **The parts of town** (`DISTRICTS` in `src/game/town.js`; each has `places`, its list in order, and a place's `district` is set from that):
@@ -34,7 +47,7 @@ Everything on `main` is committed and pushed. `npm test` passes (101 tests).
 - **Into the next generation.** A child starts a level up in the skill of its parent's job (`pet.trade`, set in `marry`), on top of the third of every skill it already inherited.
 - **Round the edges:** wishes may now ask for a class (the young) or a shift (the grown), once the bus pass is bought; graduating, being hired and being promoted are filed as quiet news; the Status PROFILE page stars the diploma's skill and shows school progress, the job, a waiting promotion and the family trade.
 - **Seen:** the school's screen and class list, a class's caption, the report card, graduating, the job board, a shift opening as Copy Me with its own title, and the PROFILE page, in the browser pane. Not on a phone. I did not play a shift to the end in the pane (the test does `startShift` and `endShift`).
-- **Thin spots:** shifts reuse the four games there already were, so a swim coach and a cafe host both play Snack Catch; classes are still one press with no game; a job's place may be in a part of town not yet unlocked (the Workshop always works); skills do nothing outside jobs except through the things that train them; the diploma has no object to show for it (a cap to wear would be a drawing).
+- **Thin spots:** shifts reuse the four games there already were, so a swim coach and a cafe host both play Snack Catch; (classes were one press with no game until v0.40.0); a job's place may be in a part of town not yet unlocked (the Workshop always works); skills do nothing outside jobs except through the things that train them; the diploma has no object to show for it (a cap to wear would be a drawing).
 
 **v0.37.2: lights out, two fixes.** The owner sent a phone screenshot: "When turning the light off sometimes there's a box around the pet, and the night dithering effect goes down too low below the screen." (1) The pet was dimmed by a 64 x 66 square of dither laid over it, which also fell on the room behind and, when its checker lined up with the dark room's own, blacked out a box. `drawPet` in `home.js` now dims only the pet's own pixels. (2) With the lights out the bars under the room were dithered all the way down, and the pattern stopped part-way down the buttons where the screen ends and the plain page begins. `drawSkyBars` in `room.js` now dithers only the row of icons and fills the bar under it in plain `ink`, the page's colour. Seen at 412 x 883 in the browser pane with the lights out; not on a phone.
 
@@ -208,7 +221,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 101 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 102 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -240,7 +253,7 @@ src/notify.js              care alerts through the service worker
 src/ui.js                  LAYOUT, colours, dialog, ListMenu
 src/engine/                palette (64 colours, ramps like 'pink.0'..'pink.3'; mutedLut), screen (framebuffer, LCD filter), sprite (sprite, hdSprite), font, input, audio
 src/game/                  pet.js (simulation), genetics, items, save/migrate, book.js (Gene Book), town.js (places, residents, jobs), pet-art.js (pet rendering), alerts.js, cheats.js
-src/scenes/                home, room, menus, status, minigames, jumprope, family, genebook, wardrobe, debug, ending, town (TownScene, TravelScene, PlaceScene, NewsScene, PhotoScene)
+src/scenes/                home, room, menus, status, minigames, jumprope, classes (the five class games), family, genebook, wardrobe, debug, ending, town (TownScene, TravelScene, PlaceScene, NewsScene, PhotoScene)
 src/art/pets/              pet art: fine/ (the fine-line parts, one file per founder line, and young.js), egg.js, ghost.js, wear.js (clothes: worn on the pet and shown as icons), part.js (the old grid format, unused)
 src/art/menu-icons.js      the ten home-screen menu icons, hand-pixelled hi-res sprites
 src/art/buttons.js         the three gold buttons (UP and DOWN grids) and paintButtons

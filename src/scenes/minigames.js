@@ -16,7 +16,7 @@ import { endShift } from '../game/town.js';
 const FLOOR_OFF = 130; // floor line, from the top of the room
 
 /** Shared bits: the games field, score panels, the ready/result dialogs. */
-class MiniGame {
+export class MiniGame {
   /** `opts.job`: this round is a shift at work (a job from JOBS in town.js): it pays the wage, not game points. */
   constructor(app, title, help, opts = {}) {
     this.app = app;
@@ -92,7 +92,7 @@ class MiniGame {
 }
 
 /** Arrow buttons along the bottom of the room, lit when pressed. */
-function sideButtons(scr, lit = 0) {
+export function sideButtons(scr, lit = 0) {
   const y = LAYOUT.room.y + LAYOUT.room.h - 16;
   for (const side of [-1, 1]) {
     const x = side < 0 ? 6 : W - 34;

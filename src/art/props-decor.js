@@ -63,6 +63,7 @@ import './props-play-1.js';
 import './props-play-2.js';
 import './props-garden.js';
 import './props-square.js';
+import './props-class.js';
 
 
 // ---------- the starry set's toy ----------

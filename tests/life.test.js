@@ -175,3 +175,38 @@ test('school, skills and jobs thread together: attention, a diploma, a workplace
   assert.equal(egg.trade, 'smart');
   assert.equal(skillLevel(egg, 'smart'), 1);
 });
+
+test('a class is a round of its game: the marks decide what it teaches, and every subject has a game', async () => {
+  const T = await import('../src/game/town.js');
+  const { MAX_DISCIPLINE } = await import('../src/game/pet.js');
+  const { CLASS_GAMES } = await import('../src/scenes/classes.js');
+  for (const sub of T.SUBJECTS) assert.equal(typeof CLASS_GAMES[sub.id], 'function', `${sub.name} has a game`);
+  const g = game();
+  g.pet.stage = 'teen'; g.pet.discipline = 3; g.pet.hunger = 4;
+  // top marks are a whole level's worth, a fair round less, a poor one least
+  assert.equal(T.classWhy(g), null);
+  assert.match(T.takeClass(g, 'reading', 3).msg, /Good class/);
+  assert.equal(g.pet.skills.smart, 3);
+  assert.match(T.takeClass(g, 'reading', 2).msg, /fair/);
+  assert.equal(g.pet.skills.smart, 5);
+  assert.match(T.classWhy(g), /over for today/);
+  assert.equal(T.takeClass(g, 'reading', 3).ok, false, 'two a day, however they are taken');
+  g.simTime += DAY;
+  T.takeClass(g, 'reading', 1);
+  assert.equal(g.pet.skills.smart, 6);
+  assert.equal(g.pet.school.classes.smart, 3, 'a poor class still counts toward graduating');
+  // a fidgety pet loses a point, but a class always teaches something
+  g.pet.discipline = 0;
+  T.takeClass(g, 'art', 1);
+  assert.equal(g.pet.skills.creative, 1);
+  // manners: a poor round teaches none
+  g.simTime += DAY;
+  assert.match(T.takeClass(g, 'lesson', 1).msg, /No manners/);
+  assert.equal(g.pet.discipline, 0);
+  T.takeClass(g, 'lesson', 2);
+  assert.equal(g.pet.discipline, 1);
+  assert.ok(g.pet.discipline <= MAX_DISCIPLINE);
+  // a grown-up who can't pay is told so before the class starts
+  g.simTime += DAY; g.pet.stage = 'adult'; g.points = 0;
+  assert.match(T.classWhy(g), /night class costs/);
+});

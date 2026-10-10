@@ -761,12 +761,23 @@ export function gradWhy(pet) {
   return left > 0 ? `${left} more ${left === 1 ? 'class' : 'classes'} first.` : null;
 }
 
+/** Why there can be no class just now (none left today, or a grown-up can't pay), or null. */
+export function classWhy(game) {
+  if (used(game, 'lesson') >= CLASSES_PER_DAY) return 'Class is over for today.';
+  if (game.pet.stage === 'adult' && game.points < NIGHT_CLASS) return `A night class costs ${NIGHT_CLASS} points.`;
+  return null;
+}
+/** A class taken as its game (src/scenes/classes.js): `marks` is how the round went, 3 top, 2 fair, 1 poor. */
+export const takeClass = (game, id, marks) => lesson(game, SUBJECTS.find(s => s.id === id).skill, marks);
+
 /**
- * A class at school: two a day. Manners (skill null) teaches discipline. The others teach their skill: a
- * whole level's worth for a pet that pays attention (manners at 2 or more, and not hungry), less for one
- * that fidgets. Children and teens go free; adults pay for a night class.
+ * A class at school: two a day. Each is a round of its subject's game, and `marks` (3 top, 2 fair, 1 poor)
+ * says how it went. Manners (skill null) teaches discipline, unless the round went poorly. The others teach
+ * their skill: a whole level's worth for top marks, less for a middling round, and a point less again for a
+ * pet that can't pay attention (manners under 2, or hungry). Children and teens go free; adults pay for a
+ * night class.
  */
-function lesson(game, skill) {
+function lesson(game, skill, marks = 3) {
   const pet = game.pet;
   if (used(game, 'lesson') >= CLASSES_PER_DAY) return { ok: false, msg: 'Class is over for today.' };
   const adult = pet.stage === 'adult';
@@ -774,6 +785,7 @@ function lesson(game, skill) {
   use(game, 'lesson');
   grant(game, 'class');
   if (!skill) {
+    if (marks < 2) return { ok: true, anim: 'sad', msg: 'It could not wait its turn today. No manners learned.' };
     pet.whim = false;
     pet.discipline = Math.min(MAX_DISCIPLINE, pet.discipline + 1);
     if (!adult) gain(game, 10);
@@ -781,11 +793,11 @@ function lesson(game, skill) {
   }
   if (skill === 'fit') pet.weight = Math.max(Math.round(BASE_WEIGHT[pet.stage] * 0.8), pet.weight - 1);
   const hungry = pet.hunger < 1, fidgets = pet.discipline < 2;
-  const r = train(pet, skill, hungry || fidgets ? 2 : 3);
+  const r = train(pet, skill, Math.max(1, marks - (hungry || fidgets ? 1 : 0)));
   const rec = schoolOf(pet);
   pet.school.classes[skill] = (rec.classes[skill] || 0) + 1;
   const name = SKILL_LABEL[skill];
-  const how = hungry ? 'Too hungry to take it all in. ' : fidgets ? 'It fidgeted (manners help). ' : 'Good class! ';
+  const how = hungry ? 'Too hungry to take it all in. ' : fidgets ? 'It fidgeted (manners help). ' : marks >= 3 ? 'Good class! ' : marks === 2 ? 'A fair class. ' : 'A wobbly class. ';
   const left = GRAD_CLASSES - rec.total - 1;
   const grad = !diplomaOf(pet) && left === 0 ? ' Ready to graduate!' : '';
   return { ok: true, anim: 'happy', msg: (r.level >= SKILL_MAX ? `${name} mastered! Level ${SKILL_MAX}.` : `${how}${name} is level ${r.level}.`) + grad };
