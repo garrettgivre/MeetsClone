@@ -4,7 +4,8 @@
 // else. A wide round grey head with two dark-tipped tufts, a white heart of a
 // face with huge dark eyes and a small grey beak, a white crescent on the brow,
 // an egg of a body with a white speckled front, dark folded wings and dark feet.
-// Extra colours here: g dark grey.
+// The one colour beyond those is a small pink blush, which every founder has.
+// Extra colours here: g dark grey, P blush pink.
 
 // (deeper: the body is drawn one shade down the ramp, a mid grey, so the white and the dark both show against it)
 export const LOOK = { color: 'slate', accent: 'slate', deeper: true };
@@ -170,6 +171,7 @@ export const WINGS = { pivot: [8, 1], front: true, rows: [
 // Feet, "talons": small dark three-toed feet
 export const FEET = { pivot: [3, 0], rows: [
   '.ooooo.',
+  'ogggggo',
   'ogogogo',
   '.o.o.o.',
 ] };
@@ -208,4 +210,21 @@ export const MARK = { pivot: [2, 3], rows: [
   '..www',
 ] };
 
-export const FACE = { eyes: 11, mouth: 4, mark: [0, -17] };
+export const CHEEK = { pivot: [3, 1], rows: [
+  '.PPPPP.',
+  'PPPPPPP',
+  '.PPPPP.',
+] };
+
+// Topper, "crest" (the old plume's place): two short feathers standing up, dark with white tips
+export const TOPPER = { pivot: [3, 6], rows: [
+  '.o...o.',
+  'owo.owo',
+  'owo.owo',
+  'ogo.ogo',
+  'oggoggo',
+  '.ogggo.',
+  '..ooo..',
+] };
+
+export const FACE = { eyes: 11, mouth: 4, mark: [0, -17], cheeks: [21, 8] };

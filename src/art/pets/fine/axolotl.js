@@ -13,7 +13,7 @@
 //   o  ink (outline and eyes)        w  white
 //   4  body colour   3  its shadow   2  a deeper shade   (the body ramp: the fine look uses the
 //      light shade as the body, so a pet is paler than its double-pixel drawing)
-//   8  accent, light (cheeks)
+//   8  accent, light
 //   sockets: ^ top of the head, [ ] ears, @ face, = neck, ~ tail, ! feet, ( ) wings
 //   (a socket inside a shape is painted in the body colour, 4)
 // Rows are typed from the left and the right is left ragged; pad them to the
@@ -73,7 +73,7 @@ export const HEAD = { rows: [
 // Ears, "gills": three petals in the body's deeper shade. The tall one stands up like an ear,
 // one goes out to the side, one hangs low. The right-hand part lies behind the head.
 // This is the left one; the right is the same piece turned round.
-export const EARS = { pivot: [16, 30], rows: [
+export const EARS = { pivot: [14, 30], rows: [
   '.......oooo',
   '.....oo3333oo',
   '....o33333333o',
@@ -196,12 +196,21 @@ export const MARK = { pivot: [3, 1], rows: [
   '.wwww.',
 ] };
 
-// Markings, "rosy": a soft cheek under the outer half of each eye (pivot at its middle)
+// Markings, "freckles": three tiny freckles on each cheek, over the blush (set on the head's top-left corner)
+export const OVERLAYS = [
+  { on: 'face', at: [5, 32], rows: [
+    '....2....................................2',
+    '.2..........................................2',
+    '......2................................2',
+  ] },
+];
+
+// The blush every founder has (pivot at its middle)
 export const CHEEK = { pivot: [4, 2], rows: [
-  '.888888.',
-  '88888888',
-  '88888888',
-  '.888888.',
+  '.PPPPPP.',
+  'PPPPPPPP',
+  'PPPPPPPP',
+  '.PPPPPP.',
 ] };
 
 // Where the face parts sit, measured from the head's face socket

@@ -6,7 +6,7 @@
 // of cream, two little nub ears, a gloss streak and a few bubbles inside.
 // Extra colours here: 7 accent, m pale grey, f heart pink, P blush pink, q mouth red.
 
-export const LOOK = { color: 'gold', accent: 'mint' };
+export const LOOK = { color: 'gold', accent: 'mint', eye: 'blue' };
 
 // Head, "gumdrop": 60 x 38, a tall dome that is open at the bottom, where it meets the base
 export const HEAD = { rows: [
@@ -113,16 +113,16 @@ export const TOPPER = { pivot: [6, 8], rows: [
   '.oooooooooo',
 ] };
 
-// Eyes, "jelly": big and glossy, with two shines
+// Eyes, "jelly": a dark pupil in a ring of the eye colour, with two shines
 export const EYE = { pivot: [4, 4], rows: [
   '..oooo..',
-  '.oooooo.',
-  'owwwoooo',
-  'owwwoooo',
-  'owwooooo',
-  'oooooooo',
-  'ooooowwo',
-  '.oooooo.',
+  '.oeeeeo.',
+  'oewwooeo',
+  'oewwooeo',
+  'oeooooeo',
+  'oeooooeo',
+  'oeeooweo',
+  '.oeeeeo.',
   '..oooo..',
 ] };
 

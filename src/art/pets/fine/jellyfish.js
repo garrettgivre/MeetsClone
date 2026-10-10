@@ -60,21 +60,19 @@ export const SPOTS = { pivot: [1, 1], at: [[9, 14], [15, 7], [24, 4], [41, 6], [
   '.8.',
 ] };
 
-// Ears, "frills": a ruffled fin in the accent colour. The left one; its right-hand part lies behind the bell.
-export const EARS = { pivot: [11, 4], rows: [
-  '....ooo',
-  '..oo888oo',
-  '.o8888888o',
-  'o888888888o',
-  'o8888888888o',
-  '.o888888888o',
-  '..o88888888o',
-  '.o888888887o',
-  'o8888888877o',
-  'o888888877o',
-  '.o8888777o',
-  '..ooo77oo',
-  '.....oo',
+// Ears, "frills": a swept-back fin in the accent colour with a scalloped trailing edge. The left one; its root lies behind the bell.
+export const EARS = { pivot: [10, 3], rows: [
+  '.....oooo',
+  '...oo8888o',
+  '..o8888888o',
+  '.o888888888',
+  'o8888888888',
+  'o88o8888888',
+  '.oo.o888888',
+  '....o8o8877',
+  '.....o.o877',
+  '........o77',
+  '.........oo',
 ] };
 
 // Topper, "lure": a curved stalk with a little star lantern hanging from it
@@ -103,8 +101,6 @@ export const BODY = { under: { '=': '3', '~': '3', '(': '3', ')': '3' }, rows: [
   '..o33333333333333333333333322o',
   '.o3333333333333333333333333222o',
   '.o3(333333333333333333333333)2o',
-  'o333333333333333333333333333222o',
-  'o333333333333333333333333333222o',
   'o333333333333333333333333333222o',
   'o333333333333333333333333333222o',
   'o333333333oo33333333oo333332222o',

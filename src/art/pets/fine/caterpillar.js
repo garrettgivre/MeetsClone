@@ -116,15 +116,15 @@ export const BODY = { rows: [
   '...........oooooooooo...........oooooooo.......oooooo',
 ] };
 
-// Tail, "spike": a small upturned point
-export const TAIL = { pivot: [0, 5], rows: [
-  '.....oo',
-  '....o44o',
-  '...o444o',
-  '..o4443o',
-  '.o44433o',
-  'o444333o',
-  'o44333o',
+// Tail, "spike": a thin curved horn in the accent colour, like a hornworm's
+export const TAIL = { pivot: [0, 6], rows: [
+  '.....o',
+  '....o8o',
+  '....o8o',
+  '...o87o',
+  '..o887o',
+  '.o8877o',
+  'o88777o',
   '.ooooo',
 ] };
 
@@ -164,4 +164,4 @@ export const CHEEK = { pivot: [3, 1], rows: [
   '.PPPP.',
 ] };
 
-export const FACE = { eyes: 11, mouth: 5, mark: [0, -15], cheeks: [17, 6] };
+export const FACE = { eyes: 11, mouth: 5, mark: [0, -12], cheeks: [17, 6] };
