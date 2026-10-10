@@ -20,11 +20,20 @@ const HC = CANVAS * S, HG = GROUND * S;
  * pose: {
  *   expr: 'idle'|'blink'|'happy'|'sad'|'eat'|'chew'|'sleep'|'sick'|'dizzy'|'wink',
  *   arms: 'down'|'up'|'out'|'wave', step: 0|1|2 (walking), bob: 0|1, gender: 'm'|'f', t: ms,
+ *   wag, flap, ear: 0|1 (the tail, wings or ears lifted for this frame),
  *   wear: { head, face, ... } clothing ids; hats and face items are drawn (src/art/pets/clothes.js)
  * }
  */
+const built = new WeakMap(); // phenotype -> pictures already put together, by stage and pose
 export function composePet(phenotype, stage, pose = {}) {
-  return composeKitSprite(composePetArt(phenotype, stage, pose), pose, HC, HG, S);
+  // putting a pet together is the slow part, so each stage and pose of a pet is built once and kept
+  const key = [stage, phenotype.color, phenotype.accent, phenotype.eyeColor, pose.arms || '', pose.step || 0, pose.wag ? 1 : 0, pose.flap ? 1 : 0,
+    pose.ear ? 1 : 0, pose.expr === 'sick' ? 1 : 0, pose.wear ? JSON.stringify(pose.wear) : ''].join('|');
+  let mine = built.get(phenotype);
+  if (!mine) built.set(phenotype, mine = new Map());
+  let kit = mine.get(key);
+  if (!kit) { if (mine.size > 80) mine.clear(); mine.set(key, kit = composePetArt(phenotype, stage, pose)); }
+  return composeKitSprite(kit, pose, HC, HG, S);
 }
 
 /** Egg: colours hint at the baby inside. */

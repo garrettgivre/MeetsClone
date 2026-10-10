@@ -4,9 +4,17 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.32.1, 9 October 2026)
+## Where things stand (v0.33.0, 9 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (94 tests).
+
+**THE CURRENT JOB: animation and furniture use, first slice done (v0.33.0).** Asked what to build next I proposed this (the pets were static and the furniture, sized for the pet, was unused); the owner: "Go ahead and work on animation". What is in:
+- **Parts move** (`build` in `pet-art.js`): a part is set down a little off its socket, the drawings are untouched. `pose.wag` lifts the tail, `pose.flap` the wings, `pose.ear` the ears; `pose.arms` `up`, `wave` and `out` now move the arms; `pose.step` lifts every other foot. `home.js` wags the tail when the pet is happy, twitches the ears and flutters the wings now and then, and steps the feet while it walks.
+- **A built pet is kept** (`composePet` in `render.js`): putting a pet together is slow now, so each stage and pose of a pet is built once (keyed on the pose and its colours) and a frame only places and animates it. A new pose field that changes the picture must go into that key.
+- **Sitting on the seat:** when all is well the pet sometimes walks to the room's seat (kitchen and garden have one) and sits for 6 to 13 seconds (`seated`, `goSit`, `standUp` in `home.js`). `useSpot(game, slot)` gives the top of the seat or table from its entry in `DECOR_ART` and the prop's height, capped at the size standard (seat 32, table top 46). A seated pet is drawn after the front layer, since the seat is in the front corner. Anything the pet is asked to do stands it up.
+- **Eating at the table:** in the kitchen the pet stands beside the table in the front of the room and the dish is on the table top.
+- **Seen:** one founder sitting on one stool and eating at one table, as still frames in the browser pane. Not seen: the motion itself running, other seats and tables (their tops are taken from a rule, not measured), other body plans on a seat, a phone.
+- **Next in this job:** real poses per body plan (sitting down, lying, reaching), which is drawing work; using the bath, the bed and the garden pieces the same way; a walk to the table before eating (the pet jumps there now); seat and table tops measured per piece where the rule is wrong.
 
 **v0.31.0: the fine-line pets are in the game** (the owner: "Wire into game"). The old part art (`src/art/pets/forms/`, `face.js`, `patterns.js`, `index.js`) and the tools that read it are deleted. See "Pet art" below for how it works now. What the owner should know is in the list of rough edges there. They said "Don't worry about save migration for this particular update"; a small rename of old part names was already in `migrate` (`RENAMED` in `save.js`) and is left in, untested.
 
@@ -271,7 +279,7 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 - **Review page:** `tools/fine-founders.html` (`?show=founders|young|forms|swaps|mixes`, `?only=fox,owl`, `?form=blob`, `?seed=7`, `?z=3`), through `tools/fine-compose.js`, which wraps the game's own `build`. The older pages `tools/founders.html`, `gallery.html`, `compare.html`, `lab.html` and `wardrobe.html` call `composePet` and should still work; I did not open them after the change.
 - **Checks:** `tests/art.test.js` (art for every allele and every body in every plan, sockets, canvas fit, founders' parts showing, ears, toppers and hair on every head, tails and feet on every body, eyes and mouth on the head, clothes on every head). To check a hand-typed grid, print each row's first and last drawn column and its sockets and compare with what the shape should be.
 - **Rough edges after wiring in (v0.31.0), none seen on a phone:**
-  - arms never move: the wave, up and out poses draw the same resting arms; walking is a hop with no feet lifting; there is no eyelash for girls any more;
+  - there is no eyelash for girls any more; arms and feet move only by being shifted (v0.33.0), there are no drawn poses;
   - the hair salon still sells hair colours, but no fine hair uses the hair colour (the wisp takes body and accent, the icing takes accent);
   - `hairColor` is still a gene and still shown;
   - the Gene Book shows each part on a pet through an 80-pixel window, so a wide pet's tail or ears can be cut at the sides;

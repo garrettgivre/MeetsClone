@@ -12,6 +12,10 @@
 // by where they sit from the face, the crown or the neck and only show on the
 // part they lie on, inside its outline, so they go on any head or body. The
 // result is handed to sprite-pet.js for placing and animation.
+//
+// Parts move by being set down a little off their socket (the drawings are not changed):
+//   pose.wag    the tail lifts            pose.flap   the wings lift           pose.ear    the ears twitch up
+//   pose.arms   'up', 'wave' (one arm up) or 'out'                             pose.step   1 or 2: alternate feet lift
 
 import { C, ramp } from '../engine/palette.js';
 import { colors, lut } from '../engine/sprite.js';
@@ -124,10 +128,11 @@ export function build(p, stage = 'adult', pose = {}) {
   const pattern = Y ? [] : PARTS.pattern[p.pattern] || [], hair = Y || !has(p, 'hair') ? null : PARTS.hair?.[p.hair];
   // ears that grow from the side of a head (gills, fins) use its side sockets; the rest use the ones on top
   const [sl] = H('sideL'), [sr] = H('sideR'), eL = ears?.side && sl || el, eR = ears?.side && sr || er;
-  const drawEars = () => { who = 'ears'; if (ears && eL) { stamp(ears, eL[0], eL[1]); stamp(ears, eR[0], eR[1], true); } };
+  const earUp = pose.ear ? 1 : 0, wingUp = pose.flap ? 3 : 0, tailUp = pose.wag ? 2 : 0;
+  const drawEars = () => { who = 'ears'; if (ears && eL) { stamp(ears, eL[0], eL[1] - earUp); stamp(ears, eR[0], eR[1] - earUp, true); } };
   // (a wing part is drawn opening to the left, for the left socket, and turned round for the right one; one marked
   // `opensRight` is the other way about. On a body seen from the side, with one socket, it is used as drawn.)
-  const drawWings = () => { who = 'wings'; const r = !!wings?.opensRight && !!wr; if (wings && wl) stamp(wings, wl[0], wl[1], r); if (wings && wr) stamp(wings, wr[0], wr[1], !r); };
+  const drawWings = () => { who = 'wings'; const r = !!wings?.opensRight && !!wr; if (wings && wl) stamp(wings, wl[0], wl[1] - wingUp, r); if (wings && wr) stamp(wings, wr[0], wr[1] - wingUp, !r); };
   // (an overlay sits where it was typed, measured from the face or the neck, or from the crown if it says `anchor: 'top'`)
   const lay = (list, on, from, part) => { for (const o of list) if (o.on === on) { const a = o.anchor === 'top' ? top : from; stamp(o, a[0] + o.off[0], a[1] + o.off[1], false, [0, 0], part); } };
 
@@ -137,16 +142,20 @@ export function build(p, stage = 'adult', pose = {}) {
   const overHead = form === 'blob' && !Y; // on the one-piece mound the head covers the body, so wings go on last, at its sides
   if (wings && !wings.front && !flank && !overHead) drawWings();
   // a body seen from the side may ask for its far wing as well: the same wing again, behind everything, a little offset
-  if (wings && flank && body.farWing) { who = 'wings'; stamp(wings, wl[0] + body.farWing[0], wl[1] + body.farWing[1]); }
+  if (wings && flank && body.farWing) { who = 'wings'; stamp(wings, wl[0] + body.farWing[0], wl[1] + body.farWing[1] - wingUp); }
   const tail = !Y && has(p, 'tail') && PARTS.tail[p.tail] && (form !== 'floater' && PARTS.tail[p.tail].side || PARTS.tail[p.tail]);
-  who = 'tail'; if (t && tail) stamp(tail, t[0], t[1]);
+  who = 'tail'; if (t && tail) stamp(tail, t[0], t[1] - tailUp);
   who = 'body'; stamp(body, 0, 0, false, [0, 0]);
   lay(pattern, 'body', [bnx, bny], 'body');
   if (ears && !ears.front && onePiece) drawEars();
   if (wings && (wings.front || flank) && !overHead) drawWings();
   const arms = Y ? null : PARTS.arms[form], [al] = B('armL'), [ar] = B('armR');
-  who = 'arms'; if (arms && al) { stamp(arms, al[0], al[1]); stamp(arms, ar[0], ar[1], true); }
-  who = 'feet'; if (!Y && has(p, 'feet') && PARTS.feet[p.feet]) for (const [x, y] of B('feet')) stamp(PARTS.feet[p.feet], x, y);
+  // an arm up is the same arm set higher and a little out; 'wave' lifts one
+  const armAt = (up, out) => (pose.arms === 'out' ? [2, 2] : up ? [1, 5] : [0, 0]);
+  const [lx, ly] = armAt(pose.arms === 'up' || pose.arms === 'wave'), [rx, ry] = armAt(pose.arms === 'up');
+  who = 'arms'; if (arms && al) { stamp(arms, al[0] - lx, al[1] - ly); stamp(arms, ar[0] + rx, ar[1] - ry, true); }
+  // walking: every other foot lifts, turn about
+  who = 'feet'; if (!Y && has(p, 'feet') && PARTS.feet[p.feet]) B('feet').forEach(([x, y], i) => stamp(PARTS.feet[p.feet], x, y - (pose.step && (i + pose.step) % 2 === 0 ? 2 : 0)));
   const under = onePiece ? new Set([...own].filter(([, w]) => w === 'body').map(([k]) => k)) : null;
   who = 'head'; stamp(head, hx, hy, false, [0, 0]);
   // one piece: the head's own shadow would lie across the mound as a streak, so over the mound the head is plain

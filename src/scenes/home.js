@@ -11,6 +11,7 @@ import { FOODS } from '../game/items.js';
 import { openMenu } from './menus.js';
 import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide, skyState } from './room.js';
 import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
+import { PROPS } from '../art/props.js';
 import { DECOR_ART } from '../art/decor-art.js';
 import { tone, edgeColours, bedRim, BED, HOME_FEET } from '../art/town.js';
 import { EndingScene } from './ending.js';
@@ -33,6 +34,18 @@ const BATH_LIFT = { baby: 17, child: 12, teen: 9, adult: 9 };
 const GRIME = ['CLEAN', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
 // a splat of mud, in hi-res pixels ('1' mud, '0' its darker underside)
 const MUD = ['.1111..', '1111111', '1111110', '.00000.'];
+
+/**
+ * Where the pet uses a piece of furniture in the room on show: the top of the seat or of the table, in screen pixels.
+ * (A seat is taken to be at most 32 fine pixels high and a table top 46, the furniture size standard; a chair's back
+ * and whatever stands on a table are above that.)
+ */
+function useSpot(game, slot) {
+  const thing = DECOR_ART[layoutOf(game)?.[slot]]?.things?.[0];
+  if (!thing) return null;
+  const [name, x, y] = thing, h = Math.min(PROPS[name]?.h || 30, slot === 'table' ? 46 : 32);
+  return { x: x / 2, y: LAYOUT.room.y + (y - h) / 2, floor: LAYOUT.room.y + y / 2 }; // floor: where the piece stands, in the front of the room
+}
 
 const BED_LIFT = (HOME_FEET - (BED.y - BED.sink)) / 2; // how far a pet in bed is above the floor it walks on, in screen pixels
 
@@ -93,7 +106,14 @@ export class HomeScene {
   }
 
   play(anim) {
+    this.standUp();
     this.anim = { t: 0, ...anim };
+  }
+
+  /** Get down off a seat (anything the pet is asked to do starts with this). */
+  standUp() {
+    if (this.seated) this.moveIn = 1500;
+    this.seated = this.goSit = null;
   }
 
   // ---------- input ----------
@@ -120,6 +140,7 @@ export class HomeScene {
   goRoom(to, then = null) {
     const game = this.game, from = roomOf(game);
     if (to === from) { then?.(); return true; }
+    this.standUp();
     if (this.pet?.asleep && !then) { this.app.sfx('nope'); this.app.toast('Shh! Sleeping...'); return false; }
     const dir = HOUSE.indexOf(to) > HOUSE.indexOf(from) ? 1 : -1;
     game.room = to;
@@ -200,8 +221,11 @@ export class HomeScene {
       if (r.msg) app.toast(r.msg);
       return;
     }
+    // in the kitchen the pet eats at the table: it stands beside it and the dish is on the table top
+    const table = roomOf(this.game) === 'kitchen' && useSpot(this.game, 'table');
+    if (table) { this.petX = this.targetX = Math.min(72, table.x + 36); this.facing = -1; }
     this.play({
-      type: 'eat', dur: 2000, food: foodId, done: () => {
+      type: 'eat', dur: 2000, food: foodId, table, done: () => {
         if (r.toothache) { app.sfx('sad'); app.toast(r.msg); return; }
         if (r.colorChanged) { app.sfx('grow'); app.toast(`Whoa! ${this.pet.name} turned ${r.colorChanged}!`, 3000); this.play({ type: 'grow', dur: 1400 }); return; }
         if (r.disliked) { app.toast('Meh... plain rice again?'); this.play({ type: 'refuse', dur: 800 }); return; }
@@ -333,19 +357,33 @@ export class HomeScene {
     for (const f of this.fx) f.y += f.vy * dt;
     if (!canAct(pet) || pet.asleep || this.anim) return;
 
-    // wandering
+    this.blink = (t % 3600) < 140 ? 1 : 0;
+    // sitting on the seat for a while
+    if (this.seated) {
+      this.seatMs -= dt;
+      if (this.seatMs <= 0 || needs(pet) || pet.squirm) this.standUp();
+      return;
+    }
+    // wandering; now and then, when all is well, over to the seat (the kitchen's or the garden's) for a sit
     const slow = pet.sick || pet.hunger <= 0 || pet.happy <= 0;
     this.moveIn -= dt;
     if (this.moveIn <= 0) {
       const maxX = pet.poop > 0 ? 70 : 96;
-      this.targetX = 30 + Math.random() * (maxX - 30);
+      const seat = !slow && !pet.poop && pet.stage !== 'egg' && !pet.gone && Math.random() < 0.3 && useSpot(this.game, 'seat');
+      this.goSit = seat || null;
+      this.targetX = seat ? Math.min(100, seat.x - 10) : 30 + Math.random() * (maxX - 30);
       this.moveIn = 2000 + Math.random() * 3500;
     }
     const d = this.targetX - this.petX;
     if (Math.abs(d) > 1) {
       this.petX += Math.sign(d) * Math.min(Math.abs(d), (slow ? 0.008 : 0.016) * dt);
       this.facing = Math.sign(d);
+    } else if (this.goSit) {
+      this.seated = this.goSit; this.goSit = null;
+      this.seatMs = 6000 + Math.random() * 7000;
+      this.app.sfx?.('tick');
     }
+    return;
     this.blink = (t % 3600) < 140 ? 1 : 0;
   }
 
@@ -372,9 +410,12 @@ export class HomeScene {
     }
 
     // pet / egg / ghost
-    if (pet) this.drawPet(scr, t, lightsOff);
+    const upFront = this.seated || (this.anim?.type === 'eat' && this.anim.table); // on the seat, or at the table: in the front of the room
+    if (pet && !upFront) this.drawPet(scr, t, lightsOff);
     // the toy chest and plant in the front corners stand in front of the pet
     drawRoomFront(scr, game.simTime, lightsOff, layoutOf(game), roomOf(game));
+    // (a pet on the seat or at the table in the front corner is in front of it)
+    if (pet && upFront) this.drawPet(scr, t, lightsOff);
 
     // effects
     for (const f of this.fx) scr.draw(f.spr, f.x, f.y, {});
@@ -403,7 +444,9 @@ export class HomeScene {
   drawPet(scr, t, lightsOff) {
     const pet = this.pet, a = this.anim;
     this.bedLift = 0;
-    const baseY = ROOM_FLOOR - GROUND;
+    const sit = this.seated && pet.stage !== 'egg' && !pet.gone ? this.seated : null;
+    const table = a?.type === 'eat' && a.table && pet.stage !== 'egg' ? a.table : null; // eating at the table, standing beside it
+    const baseY = sit ? Math.round(sit.y) - GROUND : table ? Math.round(table.floor) - GROUND : ROOM_FLOOR - GROUND;
     if (pet.gone) {
       const gf = Math.floor(t / 600) % 2;
       scr.bitmap(composeGhost(gf), this.petX - CANVAS / 2, baseY - Math.round(Math.sin(t / 500) * 2));
@@ -426,7 +469,8 @@ export class HomeScene {
     const inBed = pet.asleep && roomOf(this.game) === 'bedroom';
     this.bedLift = inBed ? BED_LIFT : 0;
     if (inBed) this.petX = this.targetX = BED.x / 2;
-    const moving = Math.abs(this.targetX - this.petX) > 1 && !pet.asleep;
+    if (sit) { this.petX = this.targetX = Math.min(104, sit.x - 4); flip = false; }
+    const moving = !sit && Math.abs(this.targetX - this.petX) > 1 && !pet.asleep;
     const bob = Math.floor(t / (moving ? 220 : 480)) % 2;
     const step = moving ? (Math.floor(t / 200) % 2 ? 1 : 2) : 0;
     // every so often, a little idle flourish
@@ -495,7 +539,13 @@ export class HomeScene {
       expr = 'sad';
       dx = Math.floor(t / 90) % 2 ? 1 : -1;
     }
-    const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear, species: pet.species });
+    // small signs of life: a wagging tail when it is happy, a twitch of the ears, a flutter of the wings
+    const lively = !pet.asleep && !pet.sick && !lightsOff;
+    const glad = a ? ['happy', 'pat', 'play', 'grow'].includes(a.type) : pet.happy >= 3 && t % 6000 < 1400;
+    const wag = lively && glad ? Math.floor(t / 160) % 2 : 0;
+    const ear = lively && t % 4700 < 180 ? 1 : 0;
+    const flap = lively && (moving || t % 8000 < 700) ? Math.floor(t / 140) % 2 : 0;
+    const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, wag, ear, flap, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear, species: pet.species });
     const x = Math.round(this.petX - CANVAS / 2) + dx;
     dy -= this.bedLift;
     if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
@@ -547,7 +597,8 @@ export class HomeScene {
       case 'eat': {
         const spr = FOOD_ART[a.food] || FOOD_ART.riceball;
         const bites = Math.min(3, Math.floor(k * 4));
-        const x = Math.round(this.petX - 28), y = fy - 2 - spr.h; // every dish sits on the same line
+        // on the table if there is one, or else on the floor in front of the pet (every dish on the same line)
+        const x = a.table ? Math.round(a.table.x - spr.w / 2) : Math.round(this.petX - 28), y = a.table ? Math.round(a.table.y) - spr.h + 1 : fy - 2 - spr.h;
         if (bites < 3) {
           scr.setClip(x, y, spr.w - Math.round(spr.w * bites / 3), spr.h);
           scr.draw(spr, x, y, {});
