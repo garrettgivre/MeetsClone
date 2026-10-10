@@ -17,17 +17,21 @@ import { WardrobeScene, clothesIcon } from './wardrobe.js';
 import { DecorateScene } from './decorate.js';
 import { DECOR, SETS, ROOMS, owns, setOffer, buySet, buyDecor } from '../game/decor.js';
 import { VERSION } from '../version.js';
+import { NewsScene } from './news.js';
+import { priceToday } from '../game/days.js';
 import { CROPS, gardenOf, stageOf, wateredToday, plant, water, harvest } from '../game/garden.js';
 import { INGREDIENTS, STAPLES, RECIPES, FLOP, pantryOf, knows, canCook, buyStaple } from '../game/cooking.js';
 import { debugMenu } from './debug.js';
 import * as notify from '../notify.js';
 
 export function openMenu(app, name, home) {
-  const menus = { status, food, games, items, town, family, settings };
+  const menus = { status, food, games, items, town, family, settings, news };
   menus[name]?.(app, home);
 }
 
 function status(app) { app.push(new StatusScene(app)); }
+
+function news(app) { app.push(new NewsScene(app)); }
 
 function town(app) { app.push(new TownScene(app)); }
 
@@ -126,7 +130,7 @@ function items(app, home) {
     label: TOYS[id].name, icon: TOY_ART[id],
     action: () => { app.home(); home.doPlay(id); },
   })), { footer: 'BUY MORE IN TOWN' }));
-  app.push(new ListMenu(app, 'ITEMS', [
+  app.push(new ListMenu(app, 'BAG', [
     { label: 'Vegetable bed', icon: FOOD_ART.fruitbowl, right: '▶', action: () => { app.home(); home.goRoom('garden', () => gardenMenu(app)); } },
     { label: 'Toys', icon: TOY_ART.ball, right: g.toys.length, action: toys },
     { label: 'Wardrobe', icon: ICONS.items, right: g.wardrobe.length, action: () => app.push(new WardrobeScene(app)) },
@@ -177,7 +181,7 @@ export function shopList(app, kind, title = null) {
   if (kind === 'food' || kind === 'snacks') {
     const ids = Object.keys(FOODS).filter(id => !FOODS[id].free && !FOODS[id].cooked && (kind === 'food' || FOODS[id].kind === 'snack'));
     return new ListMenu(app, title || (kind === 'snacks' ? 'TREATS' : 'FOOD'), ids.map(id => ({
-      label: FOODS[id].name, right: FOODS[id].price, icon: FOOD_ART[id],
+      label: FOODS[id].name, right: priceToday(g.simTime, FOODS[id].price), icon: FOOD_ART[id],
       action: () => {
         const r = buy(g, 'food', id);
         if (r.ok) { app.sfx('coin'); app.toast(`Bought ${FOODS[id].name}! (x${g.inventory[id]})`, 1400); app.save(); }
@@ -185,7 +189,7 @@ export function shopList(app, kind, title = null) {
       },
     })).concat(kind !== 'food' ? [] : Object.keys(STAPLES).map(id => ({
       // for the pantry: things to cook with
-      label: `${STAPLES[id].name} (to cook)`, right: STAPLES[id].price,
+      label: `${STAPLES[id].name} (to cook)`, right: priceToday(g.simTime, STAPLES[id].price),
       action: () => {
         const r = buyStaple(g, id);
         if (r.ok) { app.sfx('coin'); app.toast(`${STAPLES[id].name} for the pantry! (x${pantryOf(g)[id]})`, 1400); app.save(); }
@@ -195,7 +199,7 @@ export function shopList(app, kind, title = null) {
   }
   if (kind === 'toys') {
     return new ListMenu(app, title || 'TOYS', Object.keys(TOYS).map(id => ({
-      label: TOYS[id].name, right: g.toys.includes(id) ? 'OWNED' : TOYS[id].price, icon: TOY_ART[id],
+      label: TOYS[id].name, right: g.toys.includes(id) ? 'OWNED' : priceToday(g.simTime, TOYS[id].price), icon: TOY_ART[id],
       action: (_, item) => {
         const r = buy(g, 'toy', id);
         if (r.ok) { app.sfx('coin'); item.right = 'OWNED'; app.toast(`Bought the ${TOYS[id].name}!`, 1400); app.save(); }
@@ -206,7 +210,7 @@ export function shopList(app, kind, title = null) {
   const ids = Object.keys(CLOTHES).sort((a, b) => SLOTS.indexOf(CLOTHES[a].slot) - SLOTS.indexOf(CLOTHES[b].slot) || CLOTHES[a].price - CLOTHES[b].price);
   return new ListMenu(app, title || 'CLOTHES', ids.map(id => ({
     label: CLOTHES[id].name, ...clothesIcon(id),
-    right: g.wardrobe.includes(id) ? 'OWNED' : CLOTHES[id].price,
+    right: g.wardrobe.includes(id) ? 'OWNED' : priceToday(g.simTime, CLOTHES[id].price),
     action: (_, item) => {
       const r = buy(g, 'clothes', id);
       if (r.ok) { app.sfx('coin'); item.right = 'OWNED'; app.toast(`Bought the ${CLOTHES[id].name}! Try it on in Items.`, 1800); app.save(); }

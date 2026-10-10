@@ -6,6 +6,7 @@
 import { CROPS } from './garden.js';
 import { FOODS } from './items.js';
 import { grant } from './wishes.js';
+import { priceToday } from './days.js';
 
 export const STAPLES = {
   flour: { name: 'Flour', price: 10 },
@@ -33,8 +34,9 @@ export const canCook = (game, dish) => !!RECIPES[dish] && RECIPES[dish].every(id
 export function buyStaple(game, id) {
   const s = STAPLES[id];
   if (!s) return { ok: false };
-  if (game.points < s.price) return { ok: false, msg: 'Not enough points!' };
-  game.points -= s.price;
+  const price = priceToday(game.simTime, s.price);
+  if (game.points < price) return { ok: false, msg: 'Not enough points!' };
+  game.points -= price;
   pantryOf(game)[id] = (pantryOf(game)[id] || 0) + 1;
   return { ok: true };
 }

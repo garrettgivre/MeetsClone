@@ -1,8 +1,12 @@
+// The ten menu icons on the home screen (two rows of five: status, food, care, bag (`items`), lights; news, games,
+// travel (`town`), connections (`family`), settings). `clean` and `medicine` are the two that Care replaced.
 // The ten menu icons on the home screen (two rows of five). Each is a hi-res
 // sprite: 28 x 28 pixels at the screen's double density, drawn pixel for pixel
 // (not upscaled). They are pixelled by hand, row by row; no script draws them.
 // Each shows what its menu holds:
 //   status    the pet's record card: its face, notes and hearts
+//   care      a heart with a white cross: washing, the toilet and medicine
+//   news      a newspaper: a headline, a picture and columns
 //   food      a bowl of rice with chopsticks, steaming
 //   clean     a bar of soap in suds, with bubbles
 //   medicine  a medicine bottle and a capsule
@@ -28,6 +32,66 @@ const KEY = {
 };
 
 export const MENU_ICONS = {
+  care: hdSprite([
+    '............................',
+    '............................',
+    '............................',
+    '............................',
+    '.....oooooo......oooooo.....',
+    '...ooIIHHHHoo..ooHHHHHHoo...',
+    '..oIIHHHHHHHHooHHHHHHHHFFo..',
+    '.oIIHHHHHHHHHHHHHHHHHHHHFFo.',
+    '.oIHHHHHHHHHHwwHHHHHHHHHFFo.',
+    '.oIHHHHHHHHHHwwHHHHHHHHHFFo.',
+    '.oHHHHHHHHHHHwwHHHHHHHHHFFo.',
+    '.oHHHHHHHwwwwwwwwwwHHHHHFFo.',
+    '.oHHHHHHHwwwwwwwwwwHHHHFFFo.',
+    '..oHHHHHHHHHHwwHHHHHHHHFFo..',
+    '..oHHHHHHHHHHwwHHHHHHHFFFo..',
+    '...oHHHHHHHHHwwHHHHHHHFFo...',
+    '....oHHHHHHHHHHHHHHHHFFo....',
+    '.....oHHHHHHHHHHHHHHFFo.....',
+    '......oHHHHHHHHHHHHFFo......',
+    '.......oHHHHHHHHHHFFo.......',
+    '........oHHHHHHHHFFo........',
+    '.........oHHHHHHFFo.........',
+    '..........oHHHHFFo..........',
+    '...........oHHFFo...........',
+    '............oFFo............',
+    '.............oo.............',
+    '............................',
+    '............................',
+  ], KEY),
+  news: hdSprite([
+    '............................',
+    '............................',
+    '............................',
+    '...oooooooooooooooooooooo...',
+    '..owwwwwwwwwwwwwwwwwwwwwwo..',
+    '..owoooowoooowoooowooowwmo..',
+    '..owoooowoooowoooowooowwmo..',
+    '..owwwwwwwwwwwwwwwwwwwwwmo..',
+    '..owGGGGGGGGGGGGGGGGGGGwmo..',
+    '..owwwwwwwwwwwwwwwwwwwwwmo..',
+    '..owoooooooooowGGGGGGGwwmo..',
+    '..owoCCCCCCCCowwwwwwwwwwmo..',
+    '..owoCCxxCCCCowGGGGGGGwwmo..',
+    '..owoCxxxxCCCowwwwwwwwwwmo..',
+    '..owoCCxxCCMMowGGGGGGGwwmo..',
+    '..owoMMMMMMMMowwwwwwwwwwmo..',
+    '..owoMMMMMMMMowGGGGGwwwwmo..',
+    '..owoooooooooowwwwwwwwwwmo..',
+    '..owwwwwwwwwwwwwwwwwwwwwmo..',
+    '..owGGGGGGGGGwwGGGGGGGGwmo..',
+    '..owwwwwwwwwwwwwwwwwwwwwmo..',
+    '..owGGGGGGGwwwwGGGGGGwwwmo..',
+    '..owmmmmmmmmmmmmmmmmmmmmmo..',
+    '...oooooooooooooooooooooo...',
+    '............................',
+    '............................',
+    '............................',
+    '............................',
+  ], KEY),
   status: hdSprite([
     '............................',
     '............................',

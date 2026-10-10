@@ -13,7 +13,7 @@ import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, HAIR_DYES,
   townState, districtLocked, buyPass, cantGo, resident, talk, friendship, doAction,
   dishOfDay, saleOfDay, salePrice, buySale, dyeHair, founderKin,
-  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft, isNewFace, townNews, retirees,
+  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft, isNewFace, retirees,
 } from '../game/town.js';
 import { skillLevel, SKILL_LABEL } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
@@ -46,9 +46,6 @@ export class TownScene extends GuideMenu {
   constructor(app) {
     super(app, 'TRAVEL', []);
     this.build();
-    // something happened in town while you were away
-    const t = townState(app.game);
-    if (t.unread) app.toast(t.news[t.news.length - 1].msg, 3600);
   }
   resume() { this.build(); }
   build() {
@@ -79,7 +76,6 @@ export class TownScene extends GuideMenu {
         action: () => app.push(new DistrictScene(app, d)),
       });
     }
-    rows.push({ label: 'Town news', right: t.unread ? `${t.unread} NEW` : '▶', note: 'WHAT HAS HAPPENED IN TOWN', action: () => app.push(new NewsScene(app)) });
     this.items = rows;
     this.sel = Math.min(this.sel, rows.length - 1);
     if (this.items[this.sel]?.disabled) this.sel = Math.max(0, rows.findIndex(r => !r.disabled));
@@ -425,48 +421,6 @@ function placeInfo(g, id) {
   if (id === 'cottages') { const n = retirees(g).length; return n ? `${n} RETIRED KEEPER${n > 1 ? 'S' : ''}` : 'NO ONE RETIRED YET'; }
   if (id === 'work' && g.pet.stage === 'adult') return `${jobOf(g.pet).name.toUpperCase()} ${'★'.repeat(jobRank(g.pet))}`.trim();
   return null;
-}
-
-// ---------------------------------------------------------------- news
-const NEWS_PER_PAGE = 4;
-
-/** What has been happening in town: babies, retirements and new faces. */
-class NewsScene {
-  constructor(app) { this.app = app; this.page = 0; this.news = townNews(app.game, true); }
-  get pages() { return Math.max(1, Math.ceil(this.news.length / NEWS_PER_PAGE)); }
-  button(b, dir = 1) {
-    if (b === 'C') { this.app.sfx('back'); this.app.pop(); return; }
-    this.page = (this.page + (b === 'A' ? dir : 1) + this.pages) % this.pages;
-    this.app.sfx('blip');
-  }
-  tap(x, y) {
-    const { y: ry, h: rh } = LAYOUT.room;
-    if (y < ry || y >= ry + rh) return false;
-    this.button(y < ry + 12 ? 'C' : 'B');
-    return true;
-  }
-  update() {}
-  draw(scr) {
-    const { y: ry, h: rh } = LAYOUT.room;
-    scr.rect(0, ry, W, rh, COL.panel);
-    titleBar(scr, `◀ TOWN NEWS${this.pages > 1 ? `  ${this.page + 1}/${this.pages}` : ''}`, ry);
-    if (!this.news.length) {
-      let y = ry + 56;
-      for (const l of wrap('All quiet. Folk here grow up, have children and retire as the days go by.', W - 20)) { text(scr, l, W / 2, y, COL.gray, { align: 'center' }); y += LINE_H; }
-      return;
-    }
-    let y = ry + 17, day = '';
-    for (const n of this.news.slice(this.page * NEWS_PER_PAGE, (this.page + 1) * NEWS_PER_PAGE)) {
-      // the date once, over everything that happened that day
-      const d = new Date(n.at), stamp = `${d.getMonth() + 1}/${d.getDate()}`;
-      if (stamp !== day) { day = stamp; text(scr, stamp, 6, y, COL.accent); scr.rule(6 + stamp.length * 4 + 3, y + 3, W - 15 - stamp.length * 4, COL.silver); y += LINE_H + 2; }
-      const lines = wrap(n.msg, W - 18);
-      scr.rect(7, y + 1, 2, 2, COL.accent);
-      for (const l of lines) { text(scr, l, 12, y, COL.ink); y += LINE_H; }
-      y += 3;
-    }
-    if (this.pages > 1) text(scr, 'B: MORE', W / 2, ry + rh - 10, COL.shade, { align: 'center' });
-  }
 }
 
 // ---------------------------------------------------------------- photos

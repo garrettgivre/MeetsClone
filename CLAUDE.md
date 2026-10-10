@@ -4,9 +4,18 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.36.4, 10 October 2026)
+## Where things stand (v0.37.0, 10 October 2026)
 
-Everything on `main` is committed and pushed. `npm test` passes (99 tests).
+Everything on `main` is committed and pushed. `npm test` passes (100 tests).
+
+**v0.37.0: the menus reordered, News with a calendar, special days.** The owner: "let's rework town news completely. I want to make it its own button... Top row above screen: Status Food Care Bag Lights. Care will contain what clean and medicine had. Bottom [row] below screen: News Games Travel Family Settings. Rework Town News into just News. It contains everything going on that day, relationship changes, daily sales, events, and anything else going on today. The second page of it will be a calendar view with icons depicting whatevers going on that day for an at a glance month view. Clicking on a day will show details of what's planned happening that day. Build upon the ideas ive laid out here to improve or revise them." Then, while I worked: "rename family to connections well eventually put friends and codes there" and "On the status menu I think the fourth page/tab could be consolidated into the other three as well."
+- **The two rows** (`TOP`, `BOTTOM`, `LABEL` in `home.js`): Status, Food, Care, Bag, Lights; News, Games, Travel, Connections, Settings. The ids underneath are unchanged where a menu already existed (`items` is the Bag, `town` is Travel, `family` is Connections), so nothing else had to move. `care` and `news` are new, each with a hand-typed icon in `menu-icons.js` (a heart with a white cross; a newspaper). The old `clean` and `medicine` icons are still in that file, unused.
+- **Care** (`careMenu` in `home.js`): Medicine, Sweep up, Bath, Toilet. Medicine was a button of its own that acted at once; it is the first row now and says WELL, SICK or NOW!.
+- **Special days** (`src/game/days.js`, which imports nothing so anything may ask it): Saturday is market day (everything in the shops a fifth off: `priceToday`, used by `buy`, `buyStaple` and the shop lists), Wednesday is games day (`finishGame` pays double), Sunday is visiting day (a chat counts double toward friendship), and the full moon doubles the bonus for granting every wish. These are my additions, to give the calendar something to show; the owner asked for "events" and left the rest to me.
+- **News** (`src/scenes/news.js`, facts from `src/game/calendar.js`). Page one is today, in sections: TODAY (special days, and anything planned), IN THE SHOPS (the cafe's dish, the Department Store's sale), IN TOWN (what was filed today: retirements, births, and "You and X grew closer", which `talk` now files quietly), AT HOME (something ripe, the bed wanting water, wishes left, old enough to marry). Page two is the month: a grid of days with up to two marks each (`src/art/day-icons.js`, twelve hand-typed 12 x 12 marks), A steps through the days, B or a tap on a day opens a box with everything on it. The town's clock is fixed, so retirements and births to come are known (`turnsOf` in `town.js`); the calendar shows them only for keepers you have made friends with, or every day would carry a walking stick. The News icon wears a red spot while there is unread town news or a special day not yet looked at (`unreadNews`, `game.newsSeen`). The Travel list no longer has a news row and no longer pops up the latest news.
+- **Status** has three pages: TODAY, CARE (now with what it likes) and PROFILE (kind, age, parents, when it can marry, then the four skills and its job).
+- **Seen:** the two rows, the Care list, News for a day, the calendar, a day's box and the PROFILE page, enlarged in the browser pane. Not on a phone. Not seen: a market day's prices in a shop list, the full-moon bonus, a month with a sixth row of weeks (the grid has room for it by my arithmetic, not by eye).
+- **Thin spots:** the calendar is this month only (no stepping to the next); News page one cuts off with "+N MORE" when a day is busy and cannot be scrolled; past days only show what is still in the last 40 news items; the special days are flat rules with no scene of their own (no market stalls, no festival); Connections is only renamed, friends and codes are still to come.
 
 **v0.36.4: Travel.** The owner: "Genes doesn't need to be a page. On the town news page you don't need to list the same date multiple times. The town button should be renamed travel I think. The town/travel section needs to be reworked as well. Make it more intuitive and nicer."
 - The Status screen has four pages (the GENES page is gone; genes are in the Gene Book and the Pairing Lab).
@@ -167,7 +176,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 99 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 100 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 

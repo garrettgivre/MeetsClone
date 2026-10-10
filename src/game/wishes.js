@@ -5,6 +5,7 @@
 // garden.js and the town call grant() when something happens.
 import { makeRng, hash } from '../engine/rng.js';
 import { FOODS, TOYS } from './items.js';
+import { isDay } from './days.js';
 
 export const WISH_POINTS = 25;  // for each wish granted
 export const WISH_BONUS = 50;   // for all of a day's wishes
@@ -75,9 +76,10 @@ export function grant(game, kind, id = null) {
   (game.bookNews ||= []).push(`A wish come true: ${wishText(w).toLowerCase()}! +${WISH_POINTS}`);
   if (!wishes.paid && wishes.list.every(x => x.done)) {
     wishes.paid = true;
-    game.points += WISH_BONUS;
-    paid += WISH_BONUS;
-    game.bookNews.push(`Every wish granted today! +${WISH_BONUS}`);
+    const bonus = WISH_BONUS * (isDay(game.simTime, 'moon') ? 2 : 1); // (double under a full moon)
+    game.points += bonus;
+    paid += bonus;
+    game.bookNews.push(`Every wish granted today! +${bonus}`);
   }
   return paid;
 }

@@ -19,14 +19,19 @@ import { gardenMenu } from './menus.js';
 import { gardenOf, stageOf } from '../game/garden.js';
 import { cook, FLOP } from '../game/cooking.js';
 import { todaysWishes } from '../game/wishes.js';
+import { townState } from '../game/town.js';
+import { specialDays } from '../game/days.js';
 
-const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
-const BOTTOM = ['games', 'items', 'town', 'family', 'settings'];
+// (ids: `items` is the Bag, `town` is Travel, `family` is Connections)
+const TOP = ['status', 'food', 'care', 'items', 'lights'];
+const BOTTOM = ['news', 'games', 'town', 'family', 'settings'];
 const ALL = [...TOP, ...BOTTOM];
+/** Is there news not yet read: something filed in town, or a special day not yet looked at? */
+const unreadNews = (game) => townState(game).unread > 0 || (game.newsSeen !== new Date(game.simTime).toDateString() && specialDays(game.simTime).length > 0);
 const BED_STOP = ALL.length; // the cursor's extra stop in the garden: the vegetable bed
 const LABEL = {
-  status: 'STATUS', food: 'FOOD', clean: 'CLEAN', medicine: 'MEDICINE', lights: 'LIGHTS',
-  games: 'GAMES', items: 'ITEMS', town: 'TRAVEL', family: 'FAMILY', settings: 'SETTINGS',
+  status: 'STATUS', food: 'FOOD', care: 'CARE', items: 'BAG', lights: 'LIGHTS',
+  news: 'NEWS', games: 'GAMES', town: 'TRAVEL', family: 'CONNECTIONS', settings: 'SETTINGS',
 };
 const POOP_X = [104, 116, 92, 80];
 // Menu icons are grey and see-through until the cursor is on them: the sky, clouds or grass behind show through.
@@ -313,39 +318,42 @@ export class HomeScene {
     });
   }
 
-  /** Clean: sweep the floor, run a bath, or send the pet to the toilet. */
-  cleanMenu() {
+  /** Give medicine (a row of the Care menu). */
+  giveMedicine() {
+    const app = this.app;
+    const r = medicine(this.game);
+    if (!r.ok) { app.sfx('nope'); if (r.refuse) this.play({ type: 'refuse', dur: 900 }); if (r.msg) app.toast(r.msg); return; }
+    app.sfx('select');
+    this.play({ type: 'medicine', dur: 1100, done: () => { app.toast(r.msg); if (r.cured) { app.sfx('happy'); this.play({ type: 'happy', dur: 900 }); } } });
+  }
+
+  /** Care: sweep the floor, run a bath, send the pet to the toilet, or give it medicine. */
+  careMenu() {
     const app = this.app, pet = this.pet;
     const go = (fn) => () => { app.home(); fn.call(this); };
-    app.push(new ListMenu(app, 'CLEAN', [
+    app.push(new ListMenu(app, 'CARE', [
+      { label: 'Medicine', icon: SYRINGE, right: pet.critical ? 'NOW!' : pet.sick ? 'SICK' : 'WELL', action: go(this.giveMedicine) },
       { label: 'Sweep up', icon: BROOM_ICON, right: pet.poop ? `x${pet.poop}` : 'TIDY', action: go(this.sweep) },
       { label: 'Bath', icon: BATH_ICON, right: GRIME[Math.min(4, Math.floor(pet.dirt || 0))], action: go(this.doBath) },
       { label: 'Toilet', icon: POTTY_ICON, right: pet.squirm ? 'NOW!' : isPottyTrained(pet) ? 'TRAINED' : `${pet.potty || 0}/${POTTY_TRAINED}`, action: go(this.doToilet) },
-    ], { footer: 'SQUIRMING? TAP YOUR PET!' }));
+    ], { footer: pet.sick ? 'MEDICINE MAKES IT BETTER' : 'SQUIRMING? TAP YOUR PET!' }));
   }
 
   open(name) {
     const app = this.app, pet = this.pet;
     const waiting = !pet || pet.stage === 'egg';
     const sleeping = pet?.asleep && !pet.lights;
-    if (waiting && ['food', 'clean', 'medicine', 'games', 'items', 'family', 'town'].includes(name)) {
+    if (waiting && ['food', 'care', 'games', 'items', 'family', 'town'].includes(name)) {
       app.sfx('nope'); app.toast(pet?.stage === 'egg' ? 'Wait for it to hatch!' : '...'); return;
     }
-    if (sleeping && ['food', 'clean', 'medicine', 'games', 'items', 'town'].includes(name)) {
+    if (sleeping && ['food', 'care', 'games', 'items', 'town'].includes(name)) {
       app.sfx('nope'); app.toast('Shh! Sleeping...'); return;
     }
     switch (name) {
-      case 'clean':
+      case 'care':
         app.sfx('select');
-        this.cleanMenu();
+        this.careMenu();
         return;
-      case 'medicine': {
-        const r = medicine(this.game);
-        if (!r.ok) { app.sfx('nope'); if (r.refuse) this.play({ type: 'refuse', dur: 900 }); if (r.msg) app.toast(r.msg); return; }
-        app.sfx('select');
-        this.play({ type: 'medicine', dur: 1100, done: () => { app.toast(r.msg); if (r.cured) { app.sfx('happy'); this.play({ type: 'happy', dur: 900 }); } } });
-        return;
-      }
       case 'lights': {
         // lights out is for bed, so the pet goes to its bedroom first
         const flip = () => {
@@ -791,6 +799,8 @@ export class HomeScene {
         // (with the lights out the lamp keeps its colour: it is what turns them back on)
         const lit = this.cursor === idx || (sky.lightsOff && id === 'lights');
         scr.draw(ic, cx - Math.floor(ic.w / 2), row.y + Math.floor((row.h - ic.h) / 2), lit ? {} : { remap: MUTED, alpha: sky.lightsOff ? ICON_ALPHA * 0.6 : ICON_ALPHA });
+        // something new to read: a red spot on the News icon
+        if (id === 'news' && !sky.lightsOff && unreadNews(game)) scr.draw(ATTN, cx + 4, row.y + 3, {});
       });
     }
     // info bar

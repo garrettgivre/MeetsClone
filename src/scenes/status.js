@@ -1,8 +1,7 @@
 // The status pages. A or a tap turns the page, C goes back.
 //   TODAY   the pet's picture, its hunger and happiness, and today's wishes
-//   CARE    how clean, how heavy, how well, and its manners and toilet training
-//   SKILLS  the four skills and its job
-//   ABOUT   who it is: age, family, favourites
+//   CARE    how well, how clean, how heavy, its training, and what it likes
+//   PROFILE its age and family, its four skills and its job
 // (Its genes are in the Gene Book and the Pairing Lab, not here.)
 import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
@@ -14,7 +13,7 @@ import { TOYS } from '../game/items.js';
 import { backdrop } from '../art/town.js';
 import { todaysWishes, wishText, WISH_POINTS, WISH_BONUS } from '../game/wishes.js';
 
-const PAGES = ['TODAY', 'CARE', 'SKILLS', 'ABOUT'];
+const PAGES = ['TODAY', 'CARE', 'PROFILE'];
 const GRIME = ['SPOTLESS', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
 
 function age(ms) {
@@ -92,22 +91,18 @@ export class StatusScene {
         head('TRAINING');
         bar('MANNERS', pet.discipline || 0, MAX_DISCIPLINE);
         bar('TOILET', pet.potty || 0, POTTY_TRAINED);
-        break;
-      case 'SKILLS':
-        for (const s of SKILLS) bar(SKILL_LABEL[s].toUpperCase(), skillLevel(pet, s), SKILL_MAX, C('sky.1'));
-        if (pet.stage === 'adult') { head('WORK'); line('JOB', `${jobOf(pet).name} ${'★'.repeat(jobRank(pet))}`); }
-        else { y += 4; text(scr, 'SCHOOL AND GAMES TEACH THESE', 8, y, COL.gray); }
-        break;
-      case 'ABOUT':
-        line('NAME', `${pet.name} ${pet.gender === 'f' ? '♀' : '♂'}`);
-        line(pet.species ? 'KIND' : 'STAGE', pet.species || pet.stage);
-        line('AGE', age(pet.ageMs));
-        line('GENERATION', pet.generation);
-        if (pet.parents) line('PARENTS', pet.parents.join(' + '));
-        if (pet.stage === 'adult') line('MARRY', canMarry(pet) ? 'READY!' : `IN ${Math.ceil((MARRY_AFTER - pet.adultMs) / HOUR)}H`, canMarry(pet) ? COL.good : COL.ink);
         head('LIKES');
         line('TASTE', p.taste);
         line('TOY', TOYS[favouriteToy(pet)].name);
+        break;
+      case 'PROFILE':
+        line(pet.species ? 'KIND' : 'STAGE', pet.species || pet.stage);
+        line('AGE', age(pet.ageMs));
+        if (pet.parents) line('PARENTS', pet.parents.join(' + '));
+        if (pet.stage === 'adult') line('MARRY', canMarry(pet) ? 'READY!' : `IN ${Math.ceil((MARRY_AFTER - pet.adultMs) / HOUR)}H`, canMarry(pet) ? COL.good : COL.ink);
+        head('SKILLS');
+        for (const s of SKILLS) bar(SKILL_LABEL[s].toUpperCase(), skillLevel(pet, s), SKILL_MAX, C('sky.1'));
+        if (pet.stage === 'adult') line('JOB', `${jobOf(pet).name} ${'★'.repeat(jobRank(pet))}`);
         break;
     }
   }

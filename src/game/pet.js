@@ -13,6 +13,7 @@ import { discover } from './book.js';
 import { newDecor } from './decor.js';
 import { grant } from './wishes.js';
 import { newGarden } from './garden.js';
+import { isDay, priceToday } from './days.js';
 
 export const MIN = 60 * 1000;
 export const HOUR = 60 * MIN;
@@ -536,6 +537,7 @@ export function comfort(game) {
  */
 export function finishGame(game, { points = 0, good = false, skill = null } = {}) {
   const pet = game.pet;
+  if (isDay(game.simTime, 'games')) points *= 2; // games day
   earn(game, points);
   grant(game, 'game');
   game.learned = null; // what the last game taught: { skill, level, up }
@@ -589,8 +591,9 @@ export function buy(game, kind, id) {
   if (!item) return { ok: false };
   const owned = kind === 'toy' ? game.toys : kind === 'clothes' ? game.wardrobe : null;
   if (owned?.includes(id)) return { ok: false, msg: 'Already owned!' };
-  if (game.points < item.price) return { ok: false, msg: 'Not enough points!' };
-  game.points -= item.price;
+  const price = priceToday(game.simTime, item.price); // (less on market day)
+  if (game.points < price) return { ok: false, msg: 'Not enough points!' };
+  game.points -= price;
   if (kind === 'food') game.inventory[id] = (game.inventory[id] || 0) + 1;
   else owned.push(id);
   return { ok: true };

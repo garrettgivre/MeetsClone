@@ -11,6 +11,7 @@ import { randomGenome, express, pureGenome, inherit, randomName, FOUNDERS } from
 import { FOODS, TOYS, CLOTHES } from './items.js';
 import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT, train, skillLevel, SKILL_LABEL, SKILL_MAX, findPartner } from './pet.js';
 import { BOOK_GENES, entries, has } from './book.js';
+import { isDay } from './days.js';
 
 export const DISTRICTS = [
   { id: 'downtown', name: 'Downtown', pass: null, travel: 'walk' },
@@ -365,10 +366,18 @@ export function isNewFace(game, locId) {
   return (t.gens[locId] || 0) > (t.met[locId] ?? 0);
 }
 
-function report(game, t, msg) {
-  t.news.push({ at: game.simTime, msg });
-  if (t.news.length > 12) t.news.shift();
-  t.unread = Math.min(12, t.unread + 1);
+/** File a piece of news. `kind` picks its mark (src/art/day-icons.js); `quiet` news is not counted as unread (it is your own doing). */
+function report(game, t, msg, kind = 'news', quiet = false) {
+  t.news.push({ at: game.simTime, msg, kind });
+  if (t.news.length > 40) t.news.shift();
+  if (!quiet) t.unread = Math.min(40, t.unread + 1);
+}
+
+/** When a place's keeper will hand over, and when their child is due (null if it is already born): times on the game's clock. */
+export function turnsOf(game, locId) {
+  const { pos } = clockOf(townState(game), game.simTime, locId);
+  if (pos === null) return { retire: null, baby: null };
+  return { retire: game.simTime + TENURE - pos, baby: pos < HEIR_AT ? game.simTime + HEIR_AT - pos : null };
 }
 
 /**
@@ -389,12 +398,12 @@ function turnTown(game, t) {
     if (gen > t.gens[id]) {
       const old = keeper(t.seed, id, gen - 1), now = keeper(t.seed, id, gen);
       if (t.friends[id]) t.friends[id] = Math.floor(t.friends[id] / 2 ** (gen - t.gens[id]));
-      report(game, t, `${loc.name}: ${old.name} has retired to the cottages. ${now.name} takes over.`);
+      report(game, t, `${loc.name}: ${old.name} has retired to the cottages. ${now.name} takes over.`, 'retire');
       t.gens[id] = gen;
     }
     if (pos >= HEIR_AT && (t.born[id] ?? -1) < gen) {
       const k = keeper(t.seed, id, gen), baby = keeper(t.seed, id, gen + 1);
-      report(game, t, `${loc.name}: ${k.name} had a baby, ${baby.name.split(' ').pop()}!`);
+      report(game, t, `${loc.name}: ${k.name} had a baby, ${baby.name.split(' ').pop()}!`, 'baby');
       t.born[id] = gen;
     }
   }
@@ -433,10 +442,12 @@ export function talk(game, locId, rng = defaultRng) {
   t.met[locId] = who.generation;
   if (used(game, 'talk:' + locId)) return { ok: true, msg: `${who.name}: "${line}"` };
   use(game, 'talk:' + locId);
-  const f = (t.friends[locId] || 0) + 1;
+  // (on visiting day a chat counts double)
+  const before = t.friends[locId] || 0, f = before + (isDay(game.simTime, 'visiting') ? 2 : 1);
   t.friends[locId] = f;
-  const gift = FRIEND_GIFTS[f];
+  const gift = Object.entries(FRIEND_GIFTS).filter(([n]) => n > before && n <= f).reduce((sum, [, v]) => sum + v, 0) || undefined;
   if (gift) gain(game, gift);
+  report(game, t, `You and ${who.name} grew closer. ♥${f}`, 'friend', true);
   train(game.pet, 'charm', 1); // a good chat is practice
   return { ok: true, friendship: f, gift, msg: `${who.name}: "${line}"${gift ? ` A gift for a good friend! +${gift}` : ''}` };
 }
