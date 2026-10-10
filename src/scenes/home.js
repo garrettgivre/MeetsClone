@@ -26,7 +26,7 @@ const ALL = [...TOP, ...BOTTOM];
 const BED_STOP = ALL.length; // the cursor's extra stop in the garden: the vegetable bed
 const LABEL = {
   status: 'STATUS', food: 'FOOD', clean: 'CLEAN', medicine: 'MEDICINE', lights: 'LIGHTS',
-  games: 'GAMES', items: 'ITEMS', town: 'TOWN', family: 'FAMILY', settings: 'SETTINGS',
+  games: 'GAMES', items: 'ITEMS', town: 'TRAVEL', family: 'FAMILY', settings: 'SETTINGS',
 };
 const POOP_X = [104, 116, 92, 80];
 // Menu icons are grey and see-through until the cursor is on them: the sky, clouds or grass behind show through.

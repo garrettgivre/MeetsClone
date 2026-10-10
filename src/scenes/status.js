@@ -3,7 +3,7 @@
 //   CARE    how clean, how heavy, how well, and its manners and toilet training
 //   SKILLS  the four skills and its job
 //   ABOUT   who it is: age, family, favourites
-//   GENES   how it looks, gene by gene, with anything it carries unseen beside it
+// (Its genes are in the Gene Book and the Pairing Lab, not here.)
 import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, heartRow, text } from '../ui.js';
@@ -11,14 +11,11 @@ import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
 import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry, isChubby, isDirty, MAX_DISCIPLINE, POTTY_TRAINED, SKILLS, SKILL_LABEL, SKILL_MAX, skillLevel } from '../game/pet.js';
 import { jobOf, jobRank } from '../game/town.js';
 import { TOYS } from '../game/items.js';
-import { carried } from '../game/genetics.js';
 import { backdrop } from '../art/town.js';
 import { todaysWishes, wishText, WISH_POINTS, WISH_BONUS } from '../game/wishes.js';
 
-const PAGES = ['TODAY', 'CARE', 'SKILLS', 'ABOUT', 'GENES'];
+const PAGES = ['TODAY', 'CARE', 'SKILLS', 'ABOUT'];
 const GRIME = ['SPOTLESS', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
-const LOOKS = [['form', 'SHAPE'], ['head', 'HEAD'], ['body', 'BODY'], ['eyes', 'EYES'], ['ears', 'EARS'], ['mouth', 'MOUTH'], ['pattern', 'MARKINGS'],
-  ['tail', 'TAIL'], ['topper', 'TOPPER'], ['wings', 'WINGS'], ['hair', 'HAIR'], ['feet', 'FEET'], ['color', 'COLOUR'], ['accent', 'TRIM']];
 
 function age(ms) {
   const h = Math.floor(ms / HOUR);
@@ -112,25 +109,6 @@ export class StatusScene {
         line('TASTE', p.taste);
         line('TOY', TOYS[favouriteToy(pet)].name);
         break;
-      case 'GENES': {
-        if (egg) { text(scr, 'HATCH FIRST!', W / 2, y + 20, COL.gray, { align: 'center' }); break; }
-        // each part it shows; in violet, what it carries unseen and could pass on
-        const hidden = Object.fromEntries(carried(pet.genome, p).map(h => [h.gene, h.allele]));
-        for (const [k, label] of LOOKS) {
-          if (p[k] === 'none' && !hidden[k]) continue;
-          if (y > pipY - 18) break;
-          text(scr, label, 8, y, COL.gray);
-          const seen = p[k] === 'none' ? '-' : String(p[k]).toUpperCase();
-          if (hidden[k]) {
-            const extra = ` +${String(hidden[k]).toUpperCase()}`;
-            text(scr, extra, W - 8, y, C('violet.1'), { align: 'right' });
-            text(scr, seen, W - 8 - extra.length * 4, y, COL.ink, { align: 'right' });
-          } else text(scr, seen, W - 8, y, COL.ink, { align: 'right' });
-          y += 9;
-        }
-        text(scr, '+ CARRIED, NOT SHOWN', W / 2, pipY - 10, C('violet.1'), { align: 'center' });
-        break;
-      }
     }
   }
 }

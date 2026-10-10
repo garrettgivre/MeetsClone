@@ -25,10 +25,26 @@ import { MatchmakerScene } from './family.js';
 
 const FEET_Y = LAYOUT.room.y + FEET / 2; // where pets stand on screen
 
-// ---------------------------------------------------------------- the map
-export class TownScene extends ListMenu {
+// ---------------------------------------------------------------- travel
+// Travel is two short lists: where to (the parts of town, each with how you get there), then the places there.
+// What each place is for, in a few words (shown under the list for the place picked).
+const WHAT = {
+  square: 'THE FOUNTAIN AND THE MAYOR', park: 'A STROLL: THINGS TURN UP', playground: 'SWINGS AND A SLIDE', cafe: 'THE DISH OF THE DAY',
+  bakery: 'TREATS, AND A FREE SAMPLE', toyshop: 'TOYS TO BUY', boutique: 'CLOTHES TO BUY', arcade: 'GAMES TO PLAY', hospital: 'THE DOCTOR',
+  cottages: 'VISIT THE OLD KEEPERS', dept: 'FOOD, TOYS, CLOTHES, FURNITURE', salon: 'HAIR DYE', school: 'CLASSES FOR SKILLS',
+  work: 'JOBS AND SHIFTS', chapel: 'THE MATCHMAKER', studio: 'PHOTOS FOR THE ALBUM', beach: 'A SWIM AND SHELLS', forest: 'WILD FRUIT',
+  fair: 'RIDES', stage: 'PERFORM ON STAGE', castle: 'TEA WITH THE QUEEN', starisle: 'MAKE A WISH FOR AN EGG', hidden: 'THE FOUNDERS\' FAMILIES',
+};
+const HOW = { walk: 'WALK', bus: 'BUS', train: 'TRAIN', balloon: 'BALLOON' };
+
+/** A list whose footer speaks for the row that is picked (its `note`), or else shows the points. */
+class GuideMenu extends ListMenu {
+  constructor(app, title, items) { super(app, title, items, { footer: () => this.items[this.sel]?.note || `POINTS: ${app.game.points}` }); }
+}
+
+export class TownScene extends GuideMenu {
   constructor(app) {
-    super(app, 'TOWN', [], { footer: () => `POINTS: ${app.game.points}` });
+    super(app, 'TRAVEL', []);
     this.build();
     // something happened in town while you were away
     const t = townState(app.game);
@@ -37,16 +53,16 @@ export class TownScene extends ListMenu {
   resume() { this.build(); }
   build() {
     const app = this.app, g = app.game, t = townState(g);
-    const rows = [{ label: 'Town news', right: t.unread ? `${t.unread} NEW` : '▶', action: () => app.push(new NewsScene(app)) }];
+    const rows = [];
     for (const d of DISTRICTS) {
-      const locked = districtLocked(g, d);
+      const locked = districtLocked(g, d), places = LOCATIONS.filter(l => l.district === d.id);
       if (d.secret && locked) {
-        if (t.mapPieces > 0) rows.push({ label: `- ??? -`, right: `MAP ${t.mapPieces}/${MAP_PIECES}`, disabled: true, why: 'Find the rest of the old map...' });
+        if (t.mapPieces > 0) rows.push({ label: '???', right: `MAP ${t.mapPieces}/${MAP_PIECES}`, disabled: true, why: 'Find the rest of the old map...', note: 'PIECES OF AN OLD MAP' });
         continue;
       }
       if (locked === 'pass') {
         rows.push({
-          label: `- ${d.name} -`, right: `${d.pass.name.split(' ')[0].toUpperCase()} ${d.pass.price}`,
+          label: d.name, right: `PASS ${d.pass.price}`, note: `BUY A ${d.pass.name.toUpperCase()} TO GO`,
           action: () => {
             const r = buyPass(g, d.pass.id);
             app.sfx(r.ok ? 'coin' : 'nope');
@@ -56,15 +72,36 @@ export class TownScene extends ListMenu {
         });
         continue;
       }
-      rows.push({ label: `- ${d.name} -`, disabled: true, why: d.travel === 'walk' ? 'A short walk away.' : `Your ${d.pass?.name || 'map'} takes you here.` });
-      for (const loc of LOCATIONS.filter(l => l.district === d.id)) {
-        const f = friendship(g, loc.id);
-        rows.push({ label: '  ' + loc.name, right: isNewFace(g, loc.id) ? 'NEW' : f ? `♥${f}` : '', action: () => go(app, loc.id) });
-      }
+      const fresh = places.filter(l => isNewFace(g, l.id)).length;
+      rows.push({
+        label: d.name, right: fresh ? `${fresh} NEW` : '▶',
+        note: `${places.length} ${places.length === 1 ? 'PLACE' : 'PLACES'}, BY ${HOW[d.travel]}`.replace('BY WALK', 'A SHORT WALK'),
+        action: () => app.push(new DistrictScene(app, d)),
+      });
     }
+    rows.push({ label: 'Town news', right: t.unread ? `${t.unread} NEW` : '▶', note: 'WHAT HAS HAPPENED IN TOWN', action: () => app.push(new NewsScene(app)) });
     this.items = rows;
     this.sel = Math.min(this.sel, rows.length - 1);
     if (this.items[this.sel]?.disabled) this.sel = Math.max(0, rows.findIndex(r => !r.disabled));
+    this.fixScroll();
+  }
+}
+
+/** The places in one part of town. */
+class DistrictScene extends GuideMenu {
+  constructor(app, district) {
+    super(app, district.name.toUpperCase(), []);
+    this.district = district;
+    this.build();
+  }
+  resume() { this.build(); }
+  build() {
+    const app = this.app, g = app.game;
+    this.items = LOCATIONS.filter(l => l.district === this.district.id).map(loc => {
+      const f = friendship(g, loc.id);
+      return { label: loc.name, right: isNewFace(g, loc.id) ? 'NEW' : f ? `♥${f}` : '', note: WHAT[loc.id] || '', action: () => go(app, loc.id) };
+    });
+    this.sel = Math.min(this.sel, this.items.length - 1);
     this.fixScroll();
   }
 }
@@ -418,13 +455,15 @@ class NewsScene {
       for (const l of wrap('All quiet. Folk here grow up, have children and retire as the days go by.', W - 20)) { text(scr, l, W / 2, y, COL.gray, { align: 'center' }); y += LINE_H; }
       return;
     }
-    let y = ry + 17;
+    let y = ry + 17, day = '';
     for (const n of this.news.slice(this.page * NEWS_PER_PAGE, (this.page + 1) * NEWS_PER_PAGE)) {
-      const d = new Date(n.at);
-      text(scr, `${d.getMonth() + 1}/${d.getDate()}`, 6, y, COL.accent);
-      y += LINE_H;
-      for (const l of wrap(n.msg, W - 12)) { text(scr, l, 6, y, COL.ink); y += LINE_H; }
-      y += 4;
+      // the date once, over everything that happened that day
+      const d = new Date(n.at), stamp = `${d.getMonth() + 1}/${d.getDate()}`;
+      if (stamp !== day) { day = stamp; text(scr, stamp, 6, y, COL.accent); scr.rule(6 + stamp.length * 4 + 3, y + 3, W - 15 - stamp.length * 4, COL.silver); y += LINE_H + 2; }
+      const lines = wrap(n.msg, W - 18);
+      scr.rect(7, y + 1, 2, 2, COL.accent);
+      for (const l of lines) { text(scr, l, 12, y, COL.ink); y += LINE_H; }
+      y += 3;
     }
     if (this.pages > 1) text(scr, 'B: MORE', W / 2, ry + rh - 10, COL.shade, { align: 'center' });
   }

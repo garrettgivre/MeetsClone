@@ -4,9 +4,15 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.36.3, 10 October 2026)
+## Where things stand (v0.36.4, 10 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (99 tests).
+
+**v0.36.4: Travel.** The owner: "Genes doesn't need to be a page. On the town news page you don't need to list the same date multiple times. The town button should be renamed travel I think. The town/travel section needs to be reworked as well. Make it more intuitive and nicer."
+- The Status screen has four pages (the GENES page is gone; genes are in the Gene Book and the Pairing Lab).
+- The menu is called TRAVEL (`LABEL` in `home.js`; the id is still `town`). It was one list of 23 places under headings that had to be scrolled; it is now two short lists (`TownScene`, then `DistrictScene`, both a `GuideMenu` in `src/scenes/town.js`): the parts of town, each showing how many faces are new or what its pass costs, with Town news last; then the places in the part picked, with friendship or NEW on the right. The footer speaks for the row picked (its `note`): how you get there and how many places, or what a place is for (`WHAT`, a few words per place that I wrote).
+- Town news prints a date once, as a heading with a rule, over everything from that day, each item with a small mark.
+- Seen in the browser pane: the Travel list, Downtown's places, a page of news. Not on a phone; not with every pass bought or the hidden village found.
 
 **v0.36.3: the status pages, tidied, with wishes on the first.** The owner: "Wishes should be under the status panel I feel like, and the status panels first window should show hearts and hunger, then wishes. That menu and it's pages should be simplified a bit actually. Go through it and clean it up." `src/scenes/status.js` has five pages where it had six, and only the first has the portrait: TODAY (the picture with name, stage, hunger and happiness beside it, then the day's wishes as three tick boxes), CARE (health, clean, weight, care misses, the colour its meals are turning it if any, then manners and toilet training), SKILLS (the four skills, and the job for an adult), ABOUT (name, kind, age, generation, parents, when it can marry, favourite taste and toy), GENES (each part it shows, with anything it carries unseen beside it in violet: the old LOOKS and HIDDEN GENES pages in one). A row of pips along the bottom says which page is up; the page count is gone from the title. Dropped: appetite and energy (they are still genes). Wishes are no longer in the Items menu, and the morning notice says "See Status". Seen: all five pages enlarged, and the first at the game's own size, in the browser pane; not on a phone, and not for an egg or a baby.
 
