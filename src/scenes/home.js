@@ -387,7 +387,7 @@ export class HomeScene {
     this.fx = this.fx.filter(f => (f.life -= dt) > 0);
     // Gene Book finds, announced one at a time once nothing else is showing
     const wishes = pet && !pet.asleep ? todaysWishes(this.game) : null;
-    if (wishes?.fresh) { wishes.fresh = false; (this.game.bookNews ||= []).push(`${pet.name} has ${wishes.list.length} wishes today! See Items.`); }
+    if (wishes?.fresh) { wishes.fresh = false; (this.game.bookNews ||= []).push(`${pet.name} has ${wishes.list.length} wishes today! See Status.`); }
     const news = this.game.bookNews;
     if (news?.length && !this.anim && this.app.scene === this && !this.app.toasts.length) {
       this.app.toast(news.shift(), 2600);

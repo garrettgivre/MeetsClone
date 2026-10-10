@@ -1,4 +1,9 @@
-// Status pages: profile, needs, personality, genes. A / tap = next page.
+// The status pages. A or a tap turns the page, C goes back.
+//   TODAY   the pet's picture, its hunger and happiness, and today's wishes
+//   CARE    how clean, how heavy, how well, and its manners and toilet training
+//   SKILLS  the four skills and its job
+//   ABOUT   who it is: age, family, favourites
+//   GENES   how it looks, gene by gene, with anything it carries unseen beside it
 import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, heartRow, text } from '../ui.js';
@@ -6,11 +11,14 @@ import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
 import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry, isChubby, isDirty, MAX_DISCIPLINE, POTTY_TRAINED, SKILLS, SKILL_LABEL, SKILL_MAX, skillLevel } from '../game/pet.js';
 import { jobOf, jobRank } from '../game/town.js';
 import { TOYS } from '../game/items.js';
-import { carried, GENE_LABELS } from '../game/genetics.js';
+import { carried } from '../game/genetics.js';
 import { backdrop } from '../art/town.js';
+import { todaysWishes, wishText, WISH_POINTS, WISH_BONUS } from '../game/wishes.js';
 
-const PAGES = ['PROFILE', 'NEEDS', 'TRAINING', 'PERSONALITY', 'LOOKS', 'HIDDEN GENES'];
+const PAGES = ['TODAY', 'CARE', 'SKILLS', 'ABOUT', 'GENES'];
 const GRIME = ['SPOTLESS', 'CLEAN', 'GRUBBY', 'DIRTY', 'FILTHY'];
+const LOOKS = [['form', 'SHAPE'], ['head', 'HEAD'], ['body', 'BODY'], ['eyes', 'EYES'], ['ears', 'EARS'], ['mouth', 'MOUTH'], ['pattern', 'MARKINGS'],
+  ['tail', 'TAIL'], ['topper', 'TOPPER'], ['wings', 'WINGS'], ['hair', 'HAIR'], ['feet', 'FEET'], ['color', 'COLOUR'], ['accent', 'TRIM']];
 
 function age(ms) {
   const h = Math.floor(ms / HOUR);
@@ -31,76 +39,96 @@ export class StatusScene {
     return true;
   }
   draw(scr) {
-    const pet = this.app.game.pet;
+    const game = this.app.game, pet = game.pet, p = pet.phenotype;
     const { y: ry, h: rh } = LAYOUT.room;
     scr.rect(0, ry, W, rh, COL.panel);
-    titleBar(scr, `◀ ${PAGES[this.page]}  ${this.page + 1}/${PAGES.length}`, ry);
-    // portrait
-    scr.panel(W / 2 - 30, ry + 15, 60, 52, C('white'), COL.ink);
-    const bm = pet.stage === 'egg' ? composeEgg(pet.generation > 1 ? pet.phenotype : null)
-      : composePet(pet.phenotype, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender, wear: pet.wear, species: pet.species });
-    scr.setClip(W / 2 - 28, ry + 17, 56, 48);
-    scr.bitmap(backdrop('photo0'), 0, ry + 64 - 86); // a portrait, on the studio's meadow backdrop
-    scr.bitmap(bm, W / 2 - CANVAS / 2, ry + 64 - GROUND);
-    scr.noClip();
+    titleBar(scr, `◀ ${PAGES[this.page]}`, ry);
+    // which page this is: a row of pips along the bottom
+    const pipY = ry + rh - 7;
+    PAGES.forEach((_, i) => scr.panel(W / 2 - PAGES.length * 4 + i * 8 + 1, pipY, 5, 5, i === this.page ? COL.accent : COL.mist, COL.ink));
 
-    let y = ry + 72;
+    let y = ry + 17;
     const line = (label, value, color = COL.ink) => {
       text(scr, label, 8, y, COL.gray);
       text(scr, String(value).toUpperCase(), W - 8, y, color, { align: 'right' });
-      y += 9;
+      y += 10;
     };
-    const p = pet.phenotype;
+    const bar = (label, value, max, fill) => { text(scr, label, 8, y + 1, COL.gray); meter(scr, W - 44, y, value, max, fill); y += 11; };
+    const head = (label) => { y += 2; text(scr, label, 8, y, COL.accent); scr.rule(8, y + 8, W - 16, COL.silver); y += 12; };
+    const egg = pet.stage === 'egg';
+
     switch (PAGES[this.page]) {
-      case 'PROFILE':
-        line('NAME', `${pet.name} ${pet.gender === 'f' ? '♀' : '♂'}`);
-        line('GENERATION', pet.generation);
-        line('STAGE', pet.stage);
-        if (pet.species) line('KIND', pet.species);
-        line('AGE', age(pet.ageMs));
-        if (pet.parents) line('PARENTS', pet.parents.join(' + '));
-        if (pet.stage === 'adult') line('MARRY', canMarry(pet) ? 'READY!' : `IN ${Math.ceil((MARRY_AFTER - pet.adultMs) / HOUR)}H`, canMarry(pet) ? COL.good : COL.ink);
+      case 'TODAY': {
+        // the pet's picture, with its name and its two needs beside it
+        scr.panel(6, ry + 15, 58, 52, C('white'), COL.ink);
+        const bm = egg ? composeEgg(pet.generation > 1 ? p : null)
+          : composePet(p, pet.stage, { expr: pet.asleep ? 'sleep' : pet.sick ? 'sick' : 'idle', gender: pet.gender, wear: pet.wear, species: pet.species });
+        scr.setClip(8, ry + 17, 54, 48);
+        scr.bitmap(backdrop('photo0'), -29, ry + 64 - 86); // a portrait, on the studio's meadow backdrop
+        scr.bitmap(bm, 35 - CANVAS / 2, ry + 64 - GROUND);
+        scr.noClip();
+        const cx = 69;
+        text(scr, `${pet.name.toUpperCase()} ${pet.gender === 'f' ? '♀' : '♂'}`, cx, ry + 17, COL.ink);
+        text(scr, `${pet.stage.toUpperCase()}  G${pet.generation}`, cx, ry + 26, COL.gray);
+        text(scr, 'HUNGER', cx, ry + 35, COL.gray); heartRow(scr, cx, ry + 42, hearts(pet.hunger), 'rice');
+        text(scr, 'HAPPY', cx, ry + 52, COL.gray); heartRow(scr, cx, ry + 59, hearts(pet.happy));
+        // today's wishes
+        y = ry + 70;
+        head('WISHES');
+        const wishes = todaysWishes(game);
+        if (!wishes) { text(scr, egg ? 'WAITING TO HATCH...' : 'TOO LITTLE TO WISH YET', 8, y, COL.gray); break; }
+        for (const w of wishes.list) {
+          scr.panel(8, y - 1, 7, 7, w.done ? COL.good : C('white'), COL.ink); // a box, filled in when the wish has come true
+          text(scr, wishText(w).toUpperCase(), 19, y, w.done ? COL.gray : COL.ink);
+          if (!w.done) text(scr, `+${WISH_POINTS}`, W - 8, y, COL.shade, { align: 'right' });
+          y += 11;
+        }
+        text(scr, wishes.paid ? 'EVERY WISH GRANTED!' : `ALL THREE: +${WISH_BONUS} MORE`, W / 2, y + 2, wishes.paid ? COL.good : COL.gray, { align: 'center' });
         break;
-      case 'NEEDS':
-        text(scr, 'HUNGER', 8, y + 1, COL.gray); heartRow(scr, W - 44, y, hearts(pet.hunger), 'rice'); y += 12;
-        text(scr, 'HAPPY', 8, y + 1, COL.gray); heartRow(scr, W - 44, y, hearts(pet.happy)); y += 12;
+      }
+      case 'CARE':
+        line('HEALTH', pet.critical ? 'CRITICAL!' : pet.sick ? pet.sick : 'GOOD', pet.sick ? COL.bad : COL.good);
         line('CLEAN', GRIME[Math.min(4, Math.floor(pet.dirt || 0))], isDirty(pet) ? COL.bad : COL.ink);
         line('WEIGHT', `${pet.weight}G${isChubby(pet) ? ' CHUBBY' : ''}`, isChubby(pet) ? COL.bad : COL.ink);
-        line('HEALTH', pet.critical ? 'CRITICAL!' : pet.sick ? pet.sick : 'GOOD', pet.sick ? COL.bad : COL.good);
         line('CARE MISSES', pet.careMistakes, pet.careMistakes > 4 ? COL.bad : COL.ink);
-        line('MEALS TO TINT', colorHint(pet));
+        if (colorHint(pet)) line('TURNING', colorHint(pet));
+        head('TRAINING');
+        bar('MANNERS', pet.discipline || 0, MAX_DISCIPLINE);
+        bar('TOILET', pet.potty || 0, POTTY_TRAINED);
         break;
-      case 'TRAINING':
-        text(scr, 'DISCIPLINE', 8, y + 1, COL.gray); meter(scr, W - 44, y, pet.discipline || 0, MAX_DISCIPLINE); y += 11;
-        text(scr, 'TOILET', 8, y + 1, COL.gray); meter(scr, W - 44, y, pet.potty || 0, POTTY_TRAINED); y += 11;
-        for (const s of SKILLS) {
-          text(scr, SKILL_LABEL[s].toUpperCase(), 8, y + 1, COL.gray); meter(scr, W - 44, y, skillLevel(pet, s), SKILL_MAX, C('sky.1')); y += 11;
+      case 'SKILLS':
+        for (const s of SKILLS) bar(SKILL_LABEL[s].toUpperCase(), skillLevel(pet, s), SKILL_MAX, C('sky.1'));
+        if (pet.stage === 'adult') { head('WORK'); line('JOB', `${jobOf(pet).name} ${'★'.repeat(jobRank(pet))}`); }
+        else { y += 4; text(scr, 'SCHOOL AND GAMES TEACH THESE', 8, y, COL.gray); }
+        break;
+      case 'ABOUT':
+        line('NAME', `${pet.name} ${pet.gender === 'f' ? '♀' : '♂'}`);
+        line(pet.species ? 'KIND' : 'STAGE', pet.species || pet.stage);
+        line('AGE', age(pet.ageMs));
+        line('GENERATION', pet.generation);
+        if (pet.parents) line('PARENTS', pet.parents.join(' + '));
+        if (pet.stage === 'adult') line('MARRY', canMarry(pet) ? 'READY!' : `IN ${Math.ceil((MARRY_AFTER - pet.adultMs) / HOUR)}H`, canMarry(pet) ? COL.good : COL.ink);
+        head('LIKES');
+        line('TASTE', p.taste);
+        line('TOY', TOYS[favouriteToy(pet)].name);
+        break;
+      case 'GENES': {
+        if (egg) { text(scr, 'HATCH FIRST!', W / 2, y + 20, COL.gray, { align: 'center' }); break; }
+        // each part it shows; in violet, what it carries unseen and could pass on
+        const hidden = Object.fromEntries(carried(pet.genome, p).map(h => [h.gene, h.allele]));
+        for (const [k, label] of LOOKS) {
+          if (p[k] === 'none' && !hidden[k]) continue;
+          if (y > pipY - 18) break;
+          text(scr, label, 8, y, COL.gray);
+          const seen = p[k] === 'none' ? '-' : String(p[k]).toUpperCase();
+          if (hidden[k]) {
+            const extra = ` +${String(hidden[k]).toUpperCase()}`;
+            text(scr, extra, W - 8, y, C('violet.1'), { align: 'right' });
+            text(scr, seen, W - 8 - extra.length * 4, y, COL.ink, { align: 'right' });
+          } else text(scr, seen, W - 8, y, COL.ink, { align: 'right' });
+          y += 9;
         }
-        if (pet.stage === 'adult') line('JOB', `${jobOf(pet).name} ${'★'.repeat(jobRank(pet))}`);
-        break;
-      case 'PERSONALITY':
-        line('APPETITE', p.appetite);
-        line('ENERGY', p.energy);
-        line('FAVE TASTE', p.taste);
-        line('FAVE TOY', TOYS[favouriteToy(pet)].name);
-        break;
-      case 'LOOKS':
-        if (pet.stage === 'egg') { line('???', 'HATCH FIRST!'); break; }
-        for (const [k, label] of [['form', 'FORM'], ['head', 'HEAD'], ['body', 'BODY'], ['eyes', 'EYES'], ['ears', 'EARS'], ['pattern', 'MARKINGS'], ['tail', 'TAIL'], ['topper', 'TOPPER'], ['wings', 'WINGS'], ['hair', 'HAIR'], ['feet', 'FEET'], ['color', 'COLOUR']]) {
-          if (p[k] === 'none') continue;
-          if (y > ry + rh - 8) break;
-          line(label, p[k]);
-        }
-        break;
-      case 'HIDDEN GENES': {
-        // recessive alleles this pet carries and could pass on
-        if (pet.stage === 'egg') { line('???', 'HATCH FIRST!'); break; }
-        const hidden = carried(pet.genome, p);
-        if (!hidden.length) { text(scr, 'NOTHING HIDDEN:', W / 2, y, COL.gray, { align: 'center' }); y += 9; text(scr, 'WHAT YOU SEE IS', W / 2, y, COL.gray, { align: 'center' }); y += 9; text(scr, 'WHAT IT PASSES ON', W / 2, y, COL.gray, { align: 'center' }); break; }
-        for (const h of hidden) {
-          if (y > ry + rh - 8) { text(scr, `+${hidden.length - hidden.indexOf(h)} MORE`, W / 2, y, COL.gray, { align: 'center' }); break; }
-          line(GENE_LABELS[h.gene].toUpperCase(), h.allele, C('violet.1'));
-        }
+        text(scr, '+ CARRIED, NOT SHOWN', W / 2, pipY - 10, C('violet.1'), { align: 'center' });
         break;
       }
     }
@@ -115,9 +143,10 @@ function meter(scr, x, y, value, max, fill = C('gold.2')) {
   }
 }
 
+/** The colour its meals are turning it, and how far along: "blue 3/5", or '' if none. */
 function colorHint(pet) {
   const entries = Object.entries(pet.colorMeals || {}).filter(([, n]) => n > 0);
-  if (!entries.length) return '-';
+  if (!entries.length) return '';
   const [c, n] = entries.sort((a, b) => b[1] - a[1])[0];
   return `${c} ${n}/5`;
 }

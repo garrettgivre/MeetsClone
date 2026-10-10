@@ -19,7 +19,6 @@ import { DECOR, SETS, ROOMS, owns, setOffer, buySet, buyDecor } from '../game/de
 import { VERSION } from '../version.js';
 import { CROPS, gardenOf, stageOf, wateredToday, plant, water, harvest } from '../game/garden.js';
 import { INGREDIENTS, STAPLES, RECIPES, FLOP, pantryOf, knows, canCook, buyStaple } from '../game/cooking.js';
-import { todaysWishes, wishText, WISH_POINTS, WISH_BONUS } from '../game/wishes.js';
 import { debugMenu } from './debug.js';
 import * as notify from '../notify.js';
 
@@ -112,16 +111,6 @@ export function gardenMenu(app) {
   app.push(new ListMenu(app, 'VEGETABLE BED', rows, { footer: 'WATER ONCE A DAY TO GROW' }));
 }
 
-/** Today's wishes. */
-function wishMenu(app) {
-  const w = todaysWishes(app.game);
-  if (!w) { app.sfx('nope'); app.toast('Too little to wish for much yet.'); return; }
-  app.push(new ListMenu(app, 'WISHES FOR TODAY', w.list.map(x => ({
-    label: wishText(x), right: x.done ? 'DONE' : `+${WISH_POINTS}`,
-    action: () => app.toast(x.done ? 'That one came true!' : 'Make it come true today.', 1600),
-  })), { footer: `ALL OF THEM: +${WISH_BONUS} MORE` }));
-}
-
 function games(app) {
   app.push(new ListMenu(app, 'GAMES', [
     { label: 'Jump Rope', right: '▶', icon: TOY_ART.yoyo, action: () => app.push(new JumpRopeScene(app)) },
@@ -137,9 +126,7 @@ function items(app, home) {
     label: TOYS[id].name, icon: TOY_ART[id],
     action: () => { app.home(); home.doPlay(id); },
   })), { footer: 'BUY MORE IN TOWN' }));
-  const wishes = todaysWishes(g);
   app.push(new ListMenu(app, 'ITEMS', [
-    ...(wishes ? [{ label: 'Wishes', icon: ICONS.status, right: `${wishes.list.filter(x => x.done).length}/${wishes.list.length}`, action: () => wishMenu(app) }] : []),
     { label: 'Vegetable bed', icon: FOOD_ART.fruitbowl, right: '▶', action: () => { app.home(); home.goRoom('garden', () => gardenMenu(app)); } },
     { label: 'Toys', icon: TOY_ART.ball, right: g.toys.length, action: toys },
     { label: 'Wardrobe', icon: ICONS.items, right: g.wardrobe.length, action: () => app.push(new WardrobeScene(app)) },
