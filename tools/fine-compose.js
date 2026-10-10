@@ -39,6 +39,7 @@ for (const [name, L] of Object.entries(LINES)) {
   const head = read(L.HEAD), body = read(L.BODY);
   const face = head.sockets.face[0], top = head.sockets.top[0], neck = body.sockets.neck[0];
   for (const [gene, slot] of Object.entries(SLOT)) if (L.GENES[gene] && L[slot]) (PARTS[gene] ||= {})[L.GENES[gene]] = read(L[slot]);
+  if (L.TAIL_SIDE) PARTS.tail[L.GENES.tail].side = read(L.TAIL_SIDE); // for a pet that stands on the ground
   PARTS.body[L.GENES.body] = { [L.FORM]: body };
   for (const [form, b] of Object.entries(L.BODIES || {})) PARTS.body[L.GENES.body][form] = read(b);
   PARTS.face[L.GENES.head] = L.FACE;
@@ -96,7 +97,8 @@ export function compose(p) {
 
   if (ears && !ears.front) drawEars();
   if (wings && !wings.front) drawWings();
-  who = 'tail'; if (t && PARTS.tail[p.tail]) stamp(PARTS.tail[p.tail], t[0], t[1]);
+  const tail = PARTS.tail[p.tail] && (p.form !== 'floater' && PARTS.tail[p.tail].side || PARTS.tail[p.tail]);
+  who = 'tail'; if (t && tail) stamp(tail, t[0], t[1]);
   who = 'body'; stamp(body, 0, 0, false, [0, 0]);
   lay(pattern, 'body', [bnx, bny], 'body');
   if (wings?.front) drawWings();
@@ -126,6 +128,12 @@ export function compose(p) {
   if (nose) stamp(nose, f[0], f[1] + (F.nose ?? F.mouth - 2));
   stamp(mouth, f[0], f[1] + (nose ? (F.nose ?? F.mouth - 2) + nose.rows.length : F.mouth));
 
+  // a pet that stands on the ground: nothing hangs through the floor (the floor is the lowest point of its body and feet)
+  if (p.form !== 'floater') {
+    let floor = -Infinity;
+    for (const [k, w] of own) if (w === 'body' || w === 'feet') floor = Math.max(floor, +k.split(',')[1]);
+    for (const k of [...px.keys()]) if (+k.split(',')[1] > floor) px.delete(k);
+  }
   const cells = [...px].map(([k, c]) => [...k.split(',').map(Number), c]);
   const xs = cells.map(c => c[0]), ys = cells.map(c => c[1]);
   return { cells, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), lift: p.form === 'floater' ? 8 : 0 };
