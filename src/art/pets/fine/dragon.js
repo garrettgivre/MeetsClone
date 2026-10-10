@@ -4,10 +4,10 @@
 // It is here to round out the gene pool, so every piece is a kind the others
 // lack: the only horns, the only snout, bat wings (a third kind of wing), a
 // tail with a spade on the end, claws, a spiny crest for hair, webbed fan
-// ears, slit eyes, an angular head with a long muzzle, and a body with spikes down
-// its back and a plated belly. It has its own body plan, "drake": sitting up
-// and seen from the side, with a small arm in front, the wing on the back and
-// the tail behind.
+// ears, slit eyes, a broad head that narrows to a snout, and a body with spikes at the
+// shoulder and a plated belly. It has its own body plan, "drake": sitting up
+// and facing you, with two big feet forward, a wing at each shoulder and the
+// tail behind.
 // Extra colours here: 6 7 8 accent (shadow, base, light), e eye colour, m pale grey, b B gem blues, P blush pink.
 
 // (deeper: the body is drawn one shade down the ramp; the lightest indigo is too close to the jellyfish's pale blue)
@@ -15,9 +15,8 @@ export const LOOK = { color: 'indigo', accent: 'lime', eye: 'green', deeper: tru
 export const FORM = 'drake';
 export const GENES = { head: 'dragon', body: 'scaled', ears: 'fins', tail: 'arrow', feet: 'claws', wings: 'bat', topper: 'horns', hair: 'spines', eyes: 'slit', nose: 'snout', mouth: 'grin', mark: 'gem', pattern: 'plates' };
 
-// Head, "dragon": 54 x 34. A broad flat-topped skull with rounded corners, and a snout that comes forward out of the
-// lower face and tilts up a little: its top edge is drawn on the face, the nostrils sit on top of it and the mouth runs
-// along its lower part, the way a muzzle looks when it points at you.
+// Head, "dragon": 54 x 34. A broad flat-topped skull with rounded corners that narrows in a smooth line to a
+// rounded snout. There is no line round the snout: the nostrils and the mouth on it are what make it one.
 export const HEAD = { rows: [
   '.................oooooooooooooooooooo',
   '............ooooo4444444444^444444444ooooo',
@@ -40,19 +39,19 @@ export const HEAD = { rows: [
   'o4444444444444444444444444444444444444444444444444433o',
   'o4444444444444444444444444444444444444444444444444433o',
   'o4444444444444444444444444444444444444444444444444333o',
-  '.o444444444444444oooooooooooooooooooo444444444444333o',
-  '..o444444444444oo44444444444444444444oo444444444333o',
-  '...oo44444444oo444444444444444444444444oo44444333oo',
-  '.....ooo44444o44444444444444444444444444o44333ooo',
-  '........ooo44o44444444444444444444444444o43ooo',
-  '...........ooo44444444444444444444444444ooo',
-  '.............o44444444444444444444444333o',
-  '.............o44444444444444444444444333o',
-  '.............o44444444444444444444444333o',
+  '.o44444444444444444444444444444444444444444444444333o',
+  '..o444444444444444444444444444444444444444444444333o',
+  '....oo444444444444444444444444444444444444444333oo',
+  '......oo44444444444444444444444444444444444333oo',
+  '........oo4444444444444444444444444444444333oo',
+  '..........oo444444444444444444444444444333oo',
+  '...........o444444444444444444444444444333o',
+  '............o4444444444444444444444444333o',
+  '............o4444444444444444444444444333o',
+  '............o4444444444444444444444444333o',
   '.............o44444444444444444444443333o',
-  '..............o444444444444444444433333o',
-  '...............ooo444444444=44433333ooo',
-  '..................oooooooooooooooooo',
+  '..............oo44444444444=4444433333oo',
+  '................oooooooooooooooooooooo',
 ] };
 
 // Ears, "fins": a webbed fan on three spines, the web in the accent colour. The left one; its base lies behind the head.
@@ -108,7 +107,7 @@ export const HAIR = { pivot: [6, 3], rows: [
 
 // Markings, "plates": a plated belly in the accent colour, ridge by ridge (it shows on whatever body it lies on)
 export const OVERLAYS = [
-  { on: 'body', at: [10, 11], rows: [
+  { on: 'body', at: [10, 10], rows: [
     '....8888888888888',
     '..88888888888888888',
     '.7777777777777777777',
@@ -125,43 +124,43 @@ export const OVERLAYS = [
   ] },
 ];
 
-// Body, "scaled", in its own plan: sitting up, seen from the side. A round belly, a small arm held out in front,
-// a big foot forward and one behind, and three spikes down the back to where the tail joins.
+// Body, "scaled", in its own plan: sitting up and facing you. A pear of a body, a small arm held out at each side,
+// two big feet forward, a spike on each shoulder, a few scale marks at the hips, and a wing socket at each shoulder
+// (the sockets are swapped left for right, because the wing part is drawn opening to the right).
 export const BODY = { rows: [
-  '..............oooooooooooo',
-  '............oo444444444444oo',
-  '...........o44444444=4444444o',
-  '...........o4444444444444444o',
-  '..........o444444444444444444o',
-  '..........o4444444444444444444ooo',
-  '.........o44444444444444444444777o',
-  '.........o44444444444444444444ooo',
-  '........o4444444444444444444443o',
-  '........o4444444444444444444444(o',
-  '.......o4444444444444444444444443ooo',
-  '......o44444444444444444444444443777o',
-  '...oooo44444444444444444444444443ooo',
-  '..o4444444444444444444444444444433o',
-  '..o443444444444444444444444444444433o',
-  '...oooo4444444444444444444444444444433ooo',
-  '......o4444444444444444444444444444433777o',
-  '......o4444444444444444444444444444433ooo',
-  '......o4444444444444444444444444444433o',
-  '......o4444444444444444444444444444433o',
-  '......o4444444444444444444444444444433o',
-  '......o4444444444444444444444444444433o',
-  '......o444444444444444444444444444433o',
-  '......o4444444444444444444444444444433o',
-  '......o44444444444444444444444444444433o',
-  '......o4444444444444444444444444444443~o',
-  '......o44444444444444444444444444444333o',
-  '......o4444444444444444444444444444333o',
-  '.....o4444444444444444444444444444333o',
-  '...oo4444444444444444444444444444333o',
-  '..o44444444444444444o44444444444333o',
-  '..o44444444444444443o4444444444333o',
-  '..o444444!4444444333o444444!444333o',
-  '...oooooooooooooooooooooooooooooo',
+  '..............oooooooooooooo',
+  '............oo44444444444444oo',
+  '...........o44444444=444444444o',
+  '..........o44444444444444444444o',
+  '.........o4444444444444444444443o',
+  '......oooo4444444444444444444443ooo',
+  '....o777444444444444444444444443777o',
+  '.....oooo44444444444444444444443ooo',
+  '.......o4444444444444444444444443o',
+  '.......o4)4444444444444444444444(3o',
+  '......o4444444444444444444444444433o',
+  '..ooooo4444444444444444444444444433ooooo',
+  '.o44444444444444444444444444444444444433o',
+  'o4444444444444444444444444444444444444333o',
+  'o4444444444444444444444444444444444444333o',
+  '.o44444444444444444444444444444444444333o',
+  '..ooooo4444444444444444444444444333ooooo',
+  '......o4444444444444444444444444333o',
+  '......o4444444444444444444444444333o',
+  '......o4343444444444444444443434333o',
+  '......o4434444444444444444444344333o',
+  '......o4444444444444444444444444333o',
+  '......o4444444444444444444444444333o',
+  '......o4444444444444444444444444333o',
+  '......o4444444444444444444444444333o',
+  '......o444444444444444444444444433~o',
+  '......o4444444444444444444444443333o',
+  '...oooo4444444444444444444444443333oooo',
+  '..o444444444444444o444o444444444444333o',
+  '.o44444444444444444o4o44444444444443333o',
+  '.o44444444444444443ooo44444444444443333o',
+  '.o4444444!444444333o.o44444444!44443333o',
+  '..ooooooooooooooooo...ooooooooooooooooo',
 ] };
 
 // Tail, "arrow": a thick tail that curls up behind and ends in a spade in the accent colour. Its left end lies behind the body.
@@ -262,4 +261,4 @@ export const CHEEK = { pivot: [4, 2], rows: [
 ] };
 
 // (mouthFixed: the mouth keeps its place low on the snout whether or not there is a nose above it)
-export const FACE = { eyes: 14, nose: 8, mouth: 12, mouthFixed: true, mark: [0, -11], cheeks: [19, 5] };
+export const FACE = { eyes: 14, nose: 9, mouth: 12, mouthFixed: true, mark: [0, -11], cheeks: [19, 5] };
