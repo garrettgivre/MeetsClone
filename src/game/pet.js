@@ -165,7 +165,10 @@ export function newPet({ generation, genome, parents = null, name, skills = null
     squirm: false,       // about to poop (send it to the toilet)
     potty: 0,            // toilet catches so far; trained at POTTY_TRAINED
     skills: { ...noSkills(), ...skills },
-    job: null,           // { id, shifts } once hired (see JOBS in town.js)
+    job: null,           // { id, shifts, skill } once hired (see JOBS in town.js)
+    school: { classes: {} }, // classes taken in each subject (town.js)
+    diploma: null,       // the subject (a skill) it graduated in
+    trade: null,         // the family trade: the skill of its parent's job
     wear: {},            // clothing: { head, face, body, back, feet } -> item id
     bornAt: now,
   };
@@ -659,7 +662,11 @@ export function marry(game, partner, rng = defaultRng) {
   // a third of what the parent learned is passed down
   const skills = {};
   for (const s of SKILLS) skills[s] = Math.floor((pet.skills?.[s] || 0) / 3);
+  // ...and the family trade: a level's head start in the skill of the parent's job
+  const trade = pet.job?.skill || null;
+  if (trade) skills[trade] = Math.min(SKILL_MAX * SKILL_STEP, skills[trade] + SKILL_STEP);
   game.pet = newPet({ generation: game.generation, genome, parents: [pet.name, partner.name], skills }, game.simTime, rng);
+  game.pet.trade = trade;
   return game.pet;
 }
 

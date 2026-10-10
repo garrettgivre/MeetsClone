@@ -13,9 +13,10 @@ import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, HAIR_DYES,
   townState, districtLocked, buyPass, cantGo, resident, talk, friendship, doAction,
   dishOfDay, saleOfDay, salePrice, buySale, dyeHair, founderKin,
-  JOBS, jobOf, jobPay, jobRank, applyJob, classesLeft, isNewFace, retirees,
+  JOBS, jobOf, jobPay, jobRank, jobNeed, applyJob, startShift, endShift, classesLeft, isNewFace, retirees,
+  SUBJECTS, NIGHT_CLASS, schoolOf, diplomaOf, gradWhy, graduate,
 } from '../game/town.js';
-import { skillLevel, SKILL_LABEL } from '../game/pet.js';
+import { skillLevel, SKILL_LABEL, MAX_DISCIPLINE } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { shopList } from './menus.js';
 import { grant } from '../game/wishes.js';
@@ -222,7 +223,10 @@ export class PlaceScene {
   get res() { return resident(this.loc.id, this.app.game); }
   /** Talk first, then the place's own actions. */
   get buttons() {
-    return [{ id: 'talk', label: 'Talk' }, ...ACTIONS[this.loc.id]];
+    const pet = this.game.pet, job = jobOf(pet);
+    // (a pet with a job can work its shift where the job is, as well as at the workshop)
+    const shift = pet.stage === 'adult' && job.at === this.loc.id && this.loc.id !== 'work' ? [{ id: 'shift', label: 'Work a shift' }] : [];
+    return [{ id: 'talk', label: 'Talk' }, ...ACTIONS[this.loc.id].filter(a => !a.hidden), ...shift];
   }
   rect(i) {
     const n = this.buttons.length, rows = Math.ceil(n / 2);
@@ -260,6 +264,7 @@ export class PlaceScene {
     }
     const blocked = a.needs?.(g);
     if (blocked) { app.sfx('nope'); this.say(blocked, 2200); return; }
+    if (a.id === 'shift') return this.shift();
     if (a.ui) return this.openUi(a.ui);
     const r = doAction(g, this.loc.id, a.id);
     if (!r.ok) { app.sfx('nope'); if (r.msg) this.say(r.msg, 2200); return; }
@@ -274,6 +279,20 @@ export class PlaceScene {
    */
   say(msg, ms = 3200, spoken = false) { this.speech = { msg, until: this.t + ms, spoken }; }
   play(type, resType = null) { this.anim = { type, resType, t: 0, dur: 1100 }; }
+  /** A shift at work: a round of the job's game (a helper has none, and just gets on with it). */
+  shift() {
+    const app = this.app, g = this.game;
+    const r = startShift(g);
+    if (!r.ok) { app.sfx('nope'); this.say(r.msg, 2200); return; }
+    const Game = { jumprope: JumpRopeScene, whichway: WhichWayScene, catch: SnackCatchScene, copyme: CopyMeScene }[r.job.game];
+    app.save();
+    if (Game) { app.push(new Game(app, { job: r.job })); return; }
+    const done = endShift(g, true);
+    app.sfx('happy');
+    this.play('happy');
+    this.say(done.msg, 3200);
+    app.save();
+  }
   openUi(ui) {
     const app = this.app, g = this.game;
     const [kind, arg] = ui.split(':');
@@ -297,13 +316,53 @@ export class PlaceScene {
         action: () => { const r = dyeHair(g, c); app.sfx(r.ok ? 'happy' : 'nope'); if (r.msg) app.toast(r.msg); if (r.ok) { app.save(); app.pop(); this.play('happy'); } },
       })), { footer: "DYE ISN'T PASSED ON" }));
     }
+    if (kind === 'classes') {
+      // the timetable: manners and the four subjects, two classes a day
+      const pet = g.pet, fee = pet.stage === 'adult' ? NIGHT_CLASS : 0;
+      const rows = SUBJECTS.map(sub => ({
+        label: sub.name,
+        right: sub.skill ? `${SKILL_LABEL[sub.skill].toUpperCase()} ${skillLevel(pet, sub.skill)}` : `${pet.discipline}/${MAX_DISCIPLINE}`,
+        note: sub.skill ? `TEACHES ${SKILL_LABEL[sub.skill].toUpperCase()}${fee ? `. COSTS ${fee}` : ''}` : `MANNERS HELP IT LEARN${fee ? `. COSTS ${fee}` : ''}`,
+        action: () => {
+          const r = doAction(g, 'school', sub.id);
+          app.pop();
+          app.sfx(r.ok ? 'happy' : 'nope');
+          if (r.ok) { this.play('happy'); app.save(); }
+          if (r.msg) this.say(r.msg, 3400);
+        },
+      }));
+      const menu = new GuideMenu(app, `CLASSES: ${classesLeft(g)} LEFT TODAY`, rows);
+      return app.push(menu);
+    }
+    if (kind === 'report') {
+      // the report card: classes taken and the level reached in each subject, and graduating
+      const pet = g.pet, rec = schoolOf(pet), dip = diplomaOf(pet), why = gradWhy(pet);
+      const rows = SUBJECTS.filter(sub => sub.skill).map(sub => ({
+        label: sub.name, right: `${rec.classes[sub.skill] || 0} CLASSES   LV ${skillLevel(pet, sub.skill)}`,
+        note: dip === sub.skill ? 'ITS DIPLOMA IS IN THIS' : `${SKILL_LABEL[sub.skill].toUpperCase()}: FOR ${JOBS.filter(j => j.skill === sub.skill).map(j => j.name.toUpperCase()).join(', ')}`,
+        action: () => {},
+      }));
+      rows.push({
+        label: 'Graduate', right: dip ? 'DONE' : why ? 'NOT YET' : 'READY!',
+        note: dip ? `DIPLOMA IN ${SKILL_LABEL[dip].toUpperCase()}` : why ? why.toUpperCase() : 'A DIPLOMA IN ITS BEST SUBJECT',
+        action: () => {
+          const r = graduate(g);
+          app.pop();
+          app.sfx(r.ok ? 'grow' : 'nope');
+          if (r.ok) { this.play('happy', 'happy'); app.save(); }
+          this.say(r.msg, 4200);
+        },
+      });
+      return app.push(new GuideMenu(app, 'REPORT CARD', rows));
+    }
     if (kind === 'jobs') {
-      // the job board: apply for anything; the interview checks the skill it needs
+      // the job board: apply for anything; the interview checks the skill it needs (a diploma takes a level off)
       const rows = () => JOBS.map(j => {
-        const short = j.skill && skillLevel(g.pet, j.skill) < j.need;
+        const need = jobNeed(g.pet, j), short = j.skill && skillLevel(g.pet, j.skill) < need;
         return {
           label: j.name,
-          right: jobOf(g.pet).id === j.id ? 'YOURS' : short ? `${SKILL_LABEL[j.skill].toUpperCase()} ${j.need}` : j.pay,
+          right: jobOf(g.pet).id === j.id ? 'YOURS' : short ? `${SKILL_LABEL[j.skill].toUpperCase()} ${need}` : j.pay,
+          note: `AT THE ${LOCATION[j.at].name.toUpperCase()}${j.skill ? `. ${SKILL_LABEL[j.skill].toUpperCase()} ${need}` : ''}`,
           action: () => {
             const r = applyJob(g, j.id);
             app.sfx(r.ok ? 'happy' : 'nope');
@@ -312,7 +371,7 @@ export class PlaceScene {
           },
         };
       });
-      const menu = new ListMenu(app, 'JOB BOARD', rows(), { footer: () => `${jobOf(g.pet).name.toUpperCase()}: ${jobPay(g.pet)} A SHIFT` });
+      const menu = new GuideMenu(app, 'JOB BOARD', rows());
       return app.push(menu);
     }
     if (kind === 'matchmaker') return app.push(new MatchmakerScene(app));

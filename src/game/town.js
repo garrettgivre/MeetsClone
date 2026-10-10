@@ -9,9 +9,10 @@
 import { rand as defaultRng, makeRng, hash } from '../engine/rng.js';
 import { randomGenome, express, pureGenome, inherit, randomName, FOUNDERS } from './genetics.js';
 import { FOODS, TOYS, CLOTHES } from './items.js';
-import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT, train, skillLevel, SKILL_LABEL, SKILL_MAX, findPartner } from './pet.js';
+import { HOUR, canAct, canMarry, isChubby, MAX_DISCIPLINE, BASE_WEIGHT, train, skillLevel, SKILLS, SKILL_LABEL, SKILL_MAX, findPartner } from './pet.js';
 import { BOOK_GENES, entries, has } from './book.js';
 import { isDay } from './days.js';
+import { grant } from './wishes.js';
 
 export const DISTRICTS = [
   { id: 'downtown', name: 'Downtown', pass: null, travel: 'walk' },
@@ -573,11 +574,15 @@ export const ACTIONS = {
     { id: 'sale', label: 'Daily sale', ui: 'sale' },
   ],
   salon: [{ id: 'dye', label: 'Hair dye', price: 80, ui: 'dye' }],
+  // (the scene shows the classes as one list, "Take a class": see `classes` below)
   school: [
-    { id: 'lesson', label: 'Manners', price: nightFee, run: (game) => lesson(game, null) },
-    { id: 'reading', label: 'Reading', price: nightFee, run: (game) => lesson(game, 'smart') },
-    { id: 'art', label: 'Art class', price: nightFee, run: (game) => lesson(game, 'creative') },
-    { id: 'gym', label: 'Gym class', price: nightFee, run: (game) => lesson(game, 'fit') },
+    { id: 'classes', label: 'Take a class', ui: 'classes' },
+    { id: 'report', label: 'Report card', ui: 'report' },
+    { id: 'lesson', label: 'Manners', price: nightFee, hidden: true, run: (game) => lesson(game, null) },
+    { id: 'reading', label: 'Reading', price: nightFee, hidden: true, run: (game) => lesson(game, 'smart') },
+    { id: 'art', label: 'Art class', price: nightFee, hidden: true, run: (game) => lesson(game, 'creative') },
+    { id: 'gym', label: 'Gym class', price: nightFee, hidden: true, run: (game) => lesson(game, 'fit') },
+    { id: 'drama', label: 'Drama class', price: nightFee, hidden: true, run: (game) => lesson(game, 'charm') },
   ],
   work: [
     { id: 'shift', label: 'Work a shift', needs: (game) => (game.pet.stage !== 'adult' ? 'Grown-ups only!' : null), run: (game) => workShift(game) },
@@ -675,17 +680,49 @@ export const ACTIONS = {
   ],
 };
 
-// ---------- school ----------
+// ---------- school, skills and jobs ----------
+// One thread: school teaches the four skills (and manners, which decide how much a class teaches); enough
+// classes earn a diploma in the subject studied most; a job asks for a level of its skill, is worked at its own
+// place in town as a round of a game, and promotes on shifts worked AND on the skill going on rising, so a
+// pet that wants the top of its trade goes back to night class; and a child starts with a little of its
+// parent's trade.
 
 export const CLASSES_PER_DAY = 2;
 export const NIGHT_CLASS = 30; // what a grown-up pays per class
+export const GRAD_CLASSES = 6; // classes in the four subjects before a pet can graduate
+export const GRAD_GIFT = 100;
+/** The subjects: the action's id at school, what it is called, and the skill it teaches (null: manners). */
+export const SUBJECTS = [
+  { id: 'lesson', name: 'Manners', skill: null },
+  { id: 'reading', name: 'Reading', skill: 'smart' },
+  { id: 'art', name: 'Art', skill: 'creative' },
+  { id: 'gym', name: 'Gym', skill: 'fit' },
+  { id: 'drama', name: 'Drama', skill: 'charm' },
+];
 function nightFee(game) { return game.pet.stage === 'adult' ? NIGHT_CLASS : 0; }
 export const classesLeft = (game) => Math.max(0, CLASSES_PER_DAY - used(game, 'lesson'));
 
+/** A pet's school record: { classes: { skill: how many }, total }. */
+export function schoolOf(pet) {
+  pet.school = pet.school && typeof pet.school === 'object' ? pet.school : { classes: {} };
+  pet.school.classes = pet.school.classes || {};
+  const total = Object.values(pet.school.classes).reduce((n, v) => n + v, 0);
+  return { ...pet.school, total };
+}
+/** The subject (skill) a pet has its diploma in, or null. */
+export const diplomaOf = (pet) => pet?.diploma || null;
+/** Why a pet can't graduate yet, or null if it can. */
+export function gradWhy(pet) {
+  if (diplomaOf(pet)) return 'Graduated already!';
+  if (pet.stage !== 'teen' && pet.stage !== 'adult') return 'Too young to graduate.';
+  const left = GRAD_CLASSES - schoolOf(pet).total;
+  return left > 0 ? `${left} more ${left === 1 ? 'class' : 'classes'} first.` : null;
+}
+
 /**
- * A class at school: two a day. Manners (skill null) teaches discipline; the
- * others are worth a whole skill level. Children and teens go free; adults pay
- * for a night class.
+ * A class at school: two a day. Manners (skill null) teaches discipline. The others teach their skill: a
+ * whole level's worth for a pet that pays attention (manners at 2 or more, and not hungry), less for one
+ * that fidgets. Children and teens go free; adults pay for a night class.
  */
 function lesson(game, skill) {
   const pet = game.pet;
@@ -693,6 +730,7 @@ function lesson(game, skill) {
   const adult = pet.stage === 'adult';
   if (adult && !spend(game, NIGHT_CLASS)) return { ok: false, msg: `A night class costs ${NIGHT_CLASS} points.` };
   use(game, 'lesson');
+  grant(game, 'class');
   if (!skill) {
     pet.whim = false;
     pet.discipline = Math.min(MAX_DISCIPLINE, pet.discipline + 1);
@@ -700,36 +738,66 @@ function lesson(game, skill) {
     return { ok: true, anim: 'happy', msg: `Learned good manners! Discipline ${pet.discipline}/${MAX_DISCIPLINE}.${adult ? '' : ' +10'}` };
   }
   if (skill === 'fit') pet.weight = Math.max(Math.round(BASE_WEIGHT[pet.stage] * 0.8), pet.weight - 1);
-  const r = train(pet, skill, 3);
+  const hungry = pet.hunger < 1, fidgets = pet.discipline < 2;
+  const r = train(pet, skill, hungry || fidgets ? 2 : 3);
+  const rec = schoolOf(pet);
+  pet.school.classes[skill] = (rec.classes[skill] || 0) + 1;
   const name = SKILL_LABEL[skill];
-  return { ok: true, anim: 'happy', msg: r.level >= SKILL_MAX ? `${name} mastered! Level ${SKILL_MAX}.` : `Good class! ${name} is now level ${r.level}.` };
+  const how = hungry ? 'Too hungry to take it all in. ' : fidgets ? 'It fidgeted (manners help). ' : 'Good class! ';
+  const left = GRAD_CLASSES - rec.total - 1;
+  const grad = !diplomaOf(pet) && left === 0 ? ' Ready to graduate!' : '';
+  return { ok: true, anim: 'happy', msg: (r.level >= SKILL_MAX ? `${name} mastered! Level ${SKILL_MAX}.` : `${how}${name} is level ${r.level}.`) + grad };
+}
+
+/** Graduate: a diploma in the subject studied most (the higher skill breaks a tie), and a gift. */
+export function graduate(game) {
+  const pet = game.pet, why = gradWhy(pet);
+  if (why) return { ok: false, msg: why };
+  const rec = schoolOf(pet);
+  const best = [...SKILLS].sort((x, y) => (rec.classes[y] || 0) - (rec.classes[x] || 0) || (pet.skills[y] || 0) - (pet.skills[x] || 0))[0];
+  pet.diploma = best;
+  gain(game, GRAD_GIFT);
+  report(game, townState(game), `${pet.name} graduated from school, with a diploma in ${SKILL_LABEL[best]}!`, 'games', true);
+  return { ok: true, anim: 'happy', diploma: best, msg: `Graduated! A diploma in ${SKILL_LABEL[best]}, and ${GRAD_GIFT} points from Teacher. It opens doors at work.` };
 }
 
 // ---------- jobs ----------
-// Anyone grown can help out at the workshop. Better jobs ask for a skill level,
-// and every third shift in the same job earns a promotion (up to MAX_RANK).
+// Anyone grown can help out at the workshop. A better job asks for a level of its skill (one less with a
+// diploma in it), and is worked at its own place in town (`at`) or at the workshop. A shift is a round of
+// the job's game (`game`: the scene plays it; a helper just works). Rank goes up every third shift, but
+// only as far as the skill has grown past what the job asked for: rank 1 needs one level more, and so on.
 
 export const JOBS = [
-  { id: 'helper',    name: 'Helper',       skill: null,       need: 0, pay: 60 },
-  { id: 'tutor',     name: 'Tutor',        skill: 'smart',    need: 2, pay: 100 },
-  { id: 'professor', name: 'Professor',    skill: 'smart',    need: 4, pay: 160 },
-  { id: 'painter',   name: 'Sign Painter', skill: 'creative', need: 2, pay: 100 },
-  { id: 'designer',  name: 'Designer',     skill: 'creative', need: 4, pay: 160 },
-  { id: 'coach',     name: 'Swim Coach',   skill: 'fit',      need: 2, pay: 100 },
-  { id: 'athlete',   name: 'Athlete',      skill: 'fit',      need: 4, pay: 160 },
-  { id: 'host',      name: 'Cafe Host',    skill: 'charm',    need: 2, pay: 100 },
-  { id: 'star',      name: 'Stage Star',   skill: 'charm',    need: 4, pay: 160 },
+  { id: 'helper',    name: 'Helper',       skill: null,       need: 0, pay: 60,  at: 'work',       game: null },
+  { id: 'tutor',     name: 'Tutor',        skill: 'smart',    need: 2, pay: 100, at: 'school',     game: 'whichway' },
+  { id: 'professor', name: 'Professor',    skill: 'smart',    need: 4, pay: 160, at: 'school',     game: 'whichway' },
+  { id: 'painter',   name: 'Sign Painter', skill: 'creative', need: 2, pay: 100, at: 'toyshop',    game: 'copyme' },
+  { id: 'designer',  name: 'Designer',     skill: 'creative', need: 4, pay: 160, at: 'boutique',   game: 'copyme' },
+  { id: 'coach',     name: 'Swim Coach',   skill: 'fit',      need: 2, pay: 100, at: 'beach',      game: 'catch' },
+  { id: 'athlete',   name: 'Athlete',      skill: 'fit',      need: 4, pay: 160, at: 'playground', game: 'jumprope' },
+  { id: 'host',      name: 'Cafe Host',    skill: 'charm',    need: 2, pay: 100, at: 'cafe',       game: 'catch' },
+  { id: 'star',      name: 'Stage Star',   skill: 'charm',    need: 4, pay: 160, at: 'stage',      game: 'copyme' },
 ];
 export const JOB = Object.fromEntries(JOBS.map(j => [j.id, j]));
 export const SHIFT_REST = 4 * HOUR;
 export const SHIFTS_PER_RANK = 3;
 export const MAX_RANK = 3;
 export const RANK_PAY = 20;
+export const POOR_SHIFT = 0.6; // the share of the wage a shift pays when the work went badly
 
 /** The pet's job (a helper until it's hired for something better). */
 export const jobOf = (pet) => JOB[pet.job?.id] || JOB.helper;
-export const jobRank = (pet) => Math.min(MAX_RANK, Math.floor((pet.job?.shifts || 0) / SHIFTS_PER_RANK));
+/** The level of its skill a job asks of this pet: one less for a diploma in that subject. */
+export const jobNeed = (pet, job) => Math.max(0, job.need - (job.skill && diplomaOf(pet) === job.skill ? 1 : 0));
+/** How far the pet's skill lets it rise in its job (every rank wants a level more than the last). */
+const rankRoom = (pet) => { const job = jobOf(pet); return job.skill ? Math.max(0, skillLevel(pet, job.skill) - jobNeed(pet, job)) : MAX_RANK; };
+export const jobRank = (pet) => Math.min(MAX_RANK, Math.floor((pet.job?.shifts || 0) / SHIFTS_PER_RANK), rankRoom(pet));
 export const jobPay = (pet) => jobOf(pet).pay + jobRank(pet) * RANK_PAY;
+/** A promotion earned in shifts but waiting on the skill: the level it wants, or null. */
+export function promotionWants(pet) {
+  const job = jobOf(pet), byShifts = Math.min(MAX_RANK, Math.floor((pet.job?.shifts || 0) / SHIFTS_PER_RANK));
+  return job.skill && byShifts > jobRank(pet) ? Math.min(SKILL_MAX, jobNeed(pet, job) + jobRank(pet) + 1) : null;
+}
 
 /** Apply for a job: an interview on the spot. Hired if the skill is there, turned down if not. */
 export function applyJob(game, jobId) {
@@ -737,25 +805,46 @@ export function applyJob(game, jobId) {
   if (!job || !canAct(pet)) return { ok: false };
   if (pet.stage !== 'adult') return { ok: false, msg: 'Grown-ups only!' };
   if (jobOf(pet).id === jobId) return { ok: false, msg: "That's your job already!" };
-  if (job.skill && skillLevel(pet, job.skill) < job.need) {
-    return { ok: false, rejected: true, msg: `Not this time. A ${job.name} needs ${SKILL_LABEL[job.skill]} level ${job.need}.` };
+  const need = jobNeed(pet, job);
+  if (job.skill && skillLevel(pet, job.skill) < need) {
+    return { ok: false, rejected: true, msg: `Not this time. A ${job.name} needs ${SKILL_LABEL[job.skill]} level ${need}.` };
   }
-  pet.job = { id: jobId, shifts: 0 };
-  return { ok: true, msg: `Hired! ${pet.name} is now a ${job.name}. ${job.pay} points a shift.` };
+  pet.job = { id: jobId, shifts: 0, skill: job.skill }; // (`skill` is kept for the family trade: see marry in pet.js)
+  report(game, townState(game), `${pet.name} was hired as a ${job.name} at the ${LOCATION[job.at].name}.`, 'games', true);
+  return { ok: true, msg: `Hired! ${pet.name} is now a ${job.name} at the ${LOCATION[job.at].name}. ${job.pay} points a shift.` };
 }
 
-function workShift(game) {
+/** Can a shift start now? { ok, job } or { ok: false, msg }. Starting one uses up the rest between shifts. */
+export function startShift(game) {
   const t = townState(game), pet = game.pet;
+  if (pet.stage !== 'adult') return { ok: false, msg: 'Grown-ups only!' };
   if (game.simTime - t.lastWork < SHIFT_REST) return { ok: false, msg: 'Rest a while before the next shift.' };
   t.lastWork = game.simTime;
-  const job = jobOf(pet), pay = jobPay(pet), before = jobRank(pet);
-  pet.job = { id: job.id, shifts: (pet.job?.shifts || 0) + 1 };
+  return { ok: true, job: jobOf(pet) };
+}
+
+/** The end of a shift: the wage (less if the work went badly), practice in the job's skill, and a promotion when one is due. */
+export function endShift(game, good = true) {
+  const pet = game.pet, job = jobOf(pet), before = jobRank(pet);
+  const pay = Math.round(jobPay(pet) * (good ? 1 : POOR_SHIFT));
+  pet.job = { id: job.id, shifts: (pet.job?.shifts || 0) + 1, skill: job.skill };
   pet.hunger = clamp4(pet.hunger - 1);
   pet.happy = clamp4(pet.happy - 1);
   gain(game, pay);
   if (job.skill) train(pet, job.skill, 1);
-  const promoted = jobRank(pet) > before;
-  return { ok: true, anim: 'happy', promoted, msg: promoted ? `Earned ${pay} points. Promoted! ${jobPay(pet)} a shift from now on.` : `Hard work! Earned ${pay} points.` };
+  grant(game, 'work');
+  const promoted = jobRank(pet) > before, wants = promotionWants(pet);
+  if (promoted) report(game, townState(game), `${pet.name} was promoted: ${job.name}, rank ${jobRank(pet)}.`, 'games', true);
+  const msg = promoted ? `Earned ${pay} points. Promoted! ${jobPay(pet)} a shift from now on.`
+    : wants ? `Earned ${pay} points. A promotion is waiting on ${SKILL_LABEL[job.skill]} level ${wants}: back to class!`
+      : good ? `Hard work! Earned ${pay} points.` : `A rough shift. Earned ${pay} points.`;
+  return { ok: true, anim: good ? 'happy' : 'sad', promoted, wants, pay, msg };
+}
+
+/** A whole shift at once (the workshop's plain shift, with no game played): it always goes well. */
+function workShift(game) {
+  const r = startShift(game);
+  return r.ok ? endShift(game, true) : r;
 }
 
 function marryWhy(pet) {

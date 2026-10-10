@@ -8,7 +8,7 @@ import { W } from '../engine/screen.js';
 import { LAYOUT, COL, titleBar, heartRow, text } from '../ui.js';
 import { composePet, composeEgg, CANVAS, GROUND } from '../game/render.js';
 import { hearts, favouriteToy, MARRY_AFTER, HOUR, canMarry, isChubby, isDirty, MAX_DISCIPLINE, POTTY_TRAINED, SKILLS, SKILL_LABEL, SKILL_MAX, skillLevel } from '../game/pet.js';
-import { jobOf, jobRank } from '../game/town.js';
+import { jobOf, jobRank, promotionWants, diplomaOf, schoolOf, GRAD_CLASSES } from '../game/town.js';
 import { TOYS } from '../game/items.js';
 import { backdrop } from '../art/town.js';
 import { todaysWishes, wishText, WISH_POINTS, WISH_BONUS } from '../game/wishes.js';
@@ -101,8 +101,14 @@ export class StatusScene {
         if (pet.parents) line('PARENTS', pet.parents.join(' + '));
         if (pet.stage === 'adult') line('MARRY', canMarry(pet) ? 'READY!' : `IN ${Math.ceil((MARRY_AFTER - pet.adultMs) / HOUR)}H`, canMarry(pet) ? COL.good : COL.ink);
         head('SKILLS');
-        for (const s of SKILLS) bar(SKILL_LABEL[s].toUpperCase(), skillLevel(pet, s), SKILL_MAX, C('sky.1'));
-        if (pet.stage === 'adult') line('JOB', `${jobOf(pet).name} ${'★'.repeat(jobRank(pet))}`);
+        for (const s of SKILLS) bar(SKILL_LABEL[s].toUpperCase() + (diplomaOf(pet) === s ? ' ★' : ''), skillLevel(pet, s), SKILL_MAX, C('sky.1'));
+        // school and work: its diploma (the starred skill) or how far it is from one, its job and rank, a promotion on hold
+        line('SCHOOL', diplomaOf(pet) ? `${SKILL_LABEL[diplomaOf(pet)]} DIPLOMA` : `${schoolOf(pet).total}/${GRAD_CLASSES} CLASSES`);
+        if (pet.stage === 'adult') {
+          line('JOB', `${jobOf(pet).name} ${'★'.repeat(jobRank(pet))}`);
+          const wants = promotionWants(pet);
+          if (wants) line('PROMOTION', `NEEDS ${SKILL_LABEL[jobOf(pet).skill]} ${wants}`, COL.accent);
+        } else if (pet.trade) line('FAMILY TRADE', SKILL_LABEL[pet.trade]);
         break;
     }
   }

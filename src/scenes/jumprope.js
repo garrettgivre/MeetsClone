@@ -4,15 +4,18 @@ import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
 import { LAYOUT, COL, text, dialog } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
-import { finishGame, learnedLine } from '../game/pet.js';
+import { finishGame, learnedLine, SKILL_LABEL } from '../game/pet.js';
+import { endShift } from '../game/town.js';
 import { backdrop } from '../art/town.js';
 import { drawPlaceSky, skyState } from './room.js';
 
 const GOAL = 30;
 
 export class JumpRopeScene {
-  constructor(app) {
+  /** `opts.job`: this round is a shift at work (see MiniGame in minigames.js). */
+  constructor(app, opts = {}) {
     this.app = app;
+    this.job = opts.job || null;
     this.state = 'ready';
     this.t = 0;
     this.angle = Math.PI;    // rope starts at the top
@@ -65,8 +68,14 @@ export class JumpRopeScene {
     this.state = 'over';
     this.t = 0;
     this.won = won;
-    this.reward = finishGame(app.game, { points: this.count * 2 + (won ? 30 : 0), good: this.count >= 5, skill: 'fit' });
-    this.learned = learnedLine(app.game);
+    if (this.job) {
+      const r = endShift(app.game, this.count >= 5);
+      this.reward = r.pay;
+      this.learned = r.promoted ? 'Promoted!' : r.wants ? `Promotion needs ${SKILL_LABEL[this.job.skill]} ${r.wants}` : '';
+    } else {
+      this.reward = finishGame(app.game, { points: this.count * 2 + (won ? 30 : 0), good: this.count >= 5, skill: 'fit' });
+      this.learned = learnedLine(app.game);
+    }
     app.sfx(won ? 'happy' : 'fail');
     app.save();
   }
@@ -102,7 +111,7 @@ export class JumpRopeScene {
     scr.panel(W - 47, ry + 3, 44, 11, C('white'), COL.ink);
     text(scr, `GOAL ${GOAL}`, W - 43, ry + 6, COL.accent);
 
-    if (this.state === 'ready') dialog(scr, 'JUMP ROPE\nPress B or tap to jump when the rope swings low!', { y: ry + 40 });
+    if (this.state === 'ready') dialog(scr, `${this.job ? `AT WORK: ${this.job.name.toUpperCase()}` : 'JUMP ROPE'}\nPress B or tap to jump when the rope swings low!`, { y: ry + 40 });
     if (this.state === 'over') {
       const msg = this.won ? `PERFECT! ${GOAL} jumps!` : this.count ? `${this.count} jumps!` : 'Oops! Tripped!';
       dialog(scr, `${msg}\n+${this.reward} points${this.learned ? '\n' + this.learned : ''}`, { y: ry + 40, title: this.won ? 'CLEAR!' : 'GAME OVER' });

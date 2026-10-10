@@ -10,15 +10,18 @@ import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { FOOD_ART, ROCK } from '../art/icons.js';
 import { backdrop } from '../art/town.js';
 import { drawPlaceSky, skyState } from './room.js';
-import { finishGame, learnedLine } from '../game/pet.js';
+import { finishGame, learnedLine, SKILL_LABEL } from '../game/pet.js';
+import { endShift } from '../game/town.js';
 
 const FLOOR_OFF = 130; // floor line, from the top of the room
 
 /** Shared bits: the games field, score panels, the ready/result dialogs. */
 class MiniGame {
-  constructor(app, title, help) {
+  /** `opts.job`: this round is a shift at work (a job from JOBS in town.js): it pays the wage, not game points. */
+  constructor(app, title, help, opts = {}) {
     this.app = app;
-    this.title = title;
+    this.job = opts.job || null;
+    this.title = this.job ? `AT WORK: ${this.job.name.toUpperCase()}` : title;
     this.help = help;
     this.state = 'ready';
     this.t = 0;
@@ -52,8 +55,15 @@ class MiniGame {
     this.t = 0;
     this.good = good;
     this.msg = msg;
-    this.reward = finishGame(this.app.game, { points, good, skill: this.skill });
-    this.learned = learnedLine(this.app.game);
+    if (this.job) {
+      // a shift: the wage for work done well, less for a poor one, and a promotion when it is due
+      const r = endShift(this.app.game, good);
+      this.reward = r.pay;
+      this.learned = r.promoted ? 'Promoted!' : r.wants ? `Promotion needs ${SKILL_LABEL[this.job.skill]} ${r.wants}` : '';
+    } else {
+      this.reward = finishGame(this.app.game, { points, good, skill: this.skill });
+      this.learned = learnedLine(this.app.game);
+    }
     this.app.sfx(good ? 'happy' : 'fail');
     this.app.save();
   }
@@ -77,7 +87,7 @@ class MiniGame {
   drawDialogs(scr) {
     const ry = LAYOUT.room.y;
     if (this.state === 'ready') dialog(scr, `${this.title}\n${this.help}`, { y: ry + 36 });
-    if (this.state === 'over') dialog(scr, `${this.msg}\n+${this.reward} points${this.learned ? '\n' + this.learned : ''}`, { y: ry + 36, title: this.good ? 'NICE!' : 'GAME OVER' });
+    if (this.state === 'over') dialog(scr, `${this.msg}\n+${this.reward} points${this.learned ? '\n' + this.learned : ''}`, { y: ry + 36, title: this.job ? (this.good ? 'A GOOD SHIFT!' : 'A ROUGH SHIFT') : this.good ? 'NICE!' : 'GAME OVER' });
   }
 }
 
@@ -95,8 +105,8 @@ function sideButtons(scr, lit = 0) {
 const WW_ROUNDS = 5;
 
 export class WhichWayScene extends MiniGame {
-  constructor(app) {
-    super(app, 'WHICH WAY?', 'Guess which way your pet will hop: A or tap left, B or tap right.');
+  constructor(app, opts = {}) {
+    super(app, 'WHICH WAY?', 'Guess which way your pet will hop: A or tap left, B or tap right.', opts);
     this.skill = 'smart';
     this.round = 0;
     this.wins = 0;
@@ -146,8 +156,8 @@ const SC_TIME = 25000;
 const SC_TREATS = ['cookie', 'candy', 'icecream', 'juice', 'fruitbowl', 'pancake', 'riceball'];
 
 export class SnackCatchScene extends MiniGame {
-  constructor(app) {
-    super(app, 'SNACK CATCH', 'Catch the treats, dodge the rocks! A/B or tap to move.');
+  constructor(app, opts = {}) {
+    super(app, 'SNACK CATCH', 'Catch the treats, dodge the rocks! A/B or tap to move.', opts);
     this.skill = 'fit';
     this.x = W / 2;
     this.target = W / 2;
@@ -212,8 +222,8 @@ export class SnackCatchScene extends MiniGame {
 const CM_START = 3, CM_MAX = 9, CM_STEP = 650;
 
 export class CopyMeScene extends MiniGame {
-  constructor(app) {
-    super(app, 'COPY ME', 'Watch the dance, then copy it: A or tap left, B or tap right.');
+  constructor(app, opts = {}) {
+    super(app, 'COPY ME', 'Watch the dance, then copy it: A or tap left, B or tap right.', opts);
     this.skill = 'creative';
     this.seq = [];
     this.best = 0;

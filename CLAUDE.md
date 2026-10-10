@@ -4,9 +4,21 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.37.2, 10 October 2026)
+## Where things stand (v0.38.0, 10 October 2026)
 
-Everything on `main` is committed and pushed. `npm test` passes (100 tests).
+Everything on `main` is committed and pushed. `npm test` passes (101 tests).
+
+**v0.38.0: school, skills and jobs as one thread.** The owner (after I had gone through two long lists of everything the real toys have done and said what fitted): "Let's develop the systems we already have. Continue building out school, skills, and jobs. They should all thread into each other". The rules are in `src/game/town.js` under "school, skills and jobs"; how they join up:
+- **Care into school.** A class teaches a whole level only to a pet that pays attention: manners at 2 or more, and not hungry. Otherwise it teaches less and says why. Manners is itself a class.
+- **School.** Four subjects now (Drama, for Charm, is new) plus Manners, taken from one list ("Take a class"; the school's place screen has that and "Report card"). `pet.school.classes` counts classes by subject. After `GRAD_CLASSES` (6) a teen or adult can graduate from the report card: a diploma (`pet.diploma`) in the subject studied most, and a gift.
+- **School into jobs.** A diploma takes a level off what jobs in its subject ask (`jobNeed`), which also leaves more room to be promoted.
+- **Jobs into the town.** Each job has its own place (`at` in `JOBS`: a tutor and a professor at the School, a sign painter at the Toy Shop, a designer at the Boutique, a swim coach at the Beach, an athlete at the Playground, a host at the Cafe, a star at the Concert Hall). "Work a shift" appears at that place as well as at the Workshop.
+- **Jobs into games.** A shift is a round of the job's game (`game` in `JOBS`; the minigames take `{ job }` and then pay the wage through `endShift` in place of game points): a good round pays the wage, a poor one `POOR_SHIFT` (60%) of it. A helper has no game. `doAction(g, 'work', 'shift')` is still a whole shift at once, done well.
+- **Jobs back into school.** Rank still rises every third shift, but only as far as the skill has grown past what the job asked (`jobRank`, `promotionWants`): rank 1 wants a level more, and so on. A promotion earned in shifts and waiting on the skill says so ("back to class!"), on the shift's result and on the Status page.
+- **Into the next generation.** A child starts a level up in the skill of its parent's job (`pet.trade`, set in `marry`), on top of the third of every skill it already inherited.
+- **Round the edges:** wishes may now ask for a class (the young) or a shift (the grown), once the bus pass is bought; graduating, being hired and being promoted are filed as quiet news; the Status PROFILE page stars the diploma's skill and shows school progress, the job, a waiting promotion and the family trade.
+- **Seen:** the school's screen and class list, a class's caption, the report card, graduating, the job board, a shift opening as Copy Me with its own title, and the PROFILE page, in the browser pane. Not on a phone. I did not play a shift to the end in the pane (the test does `startShift` and `endShift`).
+- **Thin spots:** shifts reuse the four games there already were, so a swim coach and a cafe host both play Snack Catch; classes are still one press with no game; a job's place may be in a part of town not yet unlocked (the Workshop always works); skills do nothing outside jobs except through the things that train them; the diploma has no object to show for it (a cap to wear would be a drawing).
 
 **v0.37.2: lights out, two fixes.** The owner sent a phone screenshot: "When turning the light off sometimes there's a box around the pet, and the night dithering effect goes down too low below the screen." (1) The pet was dimmed by a 64 x 66 square of dither laid over it, which also fell on the room behind and, when its checker lined up with the dark room's own, blacked out a box. `drawPet` in `home.js` now dims only the pet's own pixels. (2) With the lights out the bars under the room were dithered all the way down, and the pattern stopped part-way down the buttons where the screen ends and the plain page begins. `drawSkyBars` in `room.js` now dithers only the row of icons and fills the bar under it in plain `ink`, the page's colour. Seen at 412 x 883 in the browser pane with the lights out; not on a phone.
 
@@ -180,7 +192,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 100 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 101 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 

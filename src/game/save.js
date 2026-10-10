@@ -75,6 +75,9 @@ export function migrate(g) {
     if (typeof pet.potty !== 'number') pet.potty = 0;
     pet.skills = { smart: 0, creative: 0, fit: 0, charm: 0, ...pet.skills };
     if (pet.job === undefined) pet.job = null;
+    if (!pet.school || typeof pet.school !== 'object') pet.school = { classes: {} };
+    if (pet.diploma === undefined) pet.diploma = null;
+    if (pet.trade === undefined) pet.trade = null;
     // genes added after this save was made: absent ancillaries, a default for the rest
     for (const gene of Object.keys(GENES)) {
       const v = 'none' in GENES[gene] ? 'none' : Object.keys(GENES[gene])[0];

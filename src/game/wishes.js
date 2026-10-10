@@ -26,6 +26,8 @@ export function wishText(w) {
     case 'water': return 'Water the garden';
     case 'harvest': return 'Pick something ripe';
     case 'plant': return 'Plant a seed';
+    case 'class': return 'Go to a class';
+    case 'work': return 'Work a shift';
     default: return '...';
   }
 }
@@ -34,6 +36,8 @@ export function wishText(w) {
 function candidates(game, rng) {
   const out = [{ kind: 'game' }, { kind: 'town' }, { kind: 'cook' }];
   if ((game.pet.dirt || 0) >= 1) out.push({ kind: 'bath' });
+  // school for the young, work for the grown (both are in Uptown: only once the bus pass is bought)
+  if (game.town?.passes?.includes('bus')) out.push({ kind: game.pet.stage === 'adult' ? 'work' : 'class' });
   // a food on sale or in the cupboard (not the free rice ball, not baby milk, not a failed stew)
   const foods = Object.keys(FOODS).filter(id => !FOODS[id].free && !FOODS[id].babyOnly && id !== 'oddstew' && (!FOODS[id].cooked || (game.recipes || []).includes(id)));
   out.push({ kind: 'eat', id: rng.pick(foods) }, { kind: 'eat', id: rng.pick(foods) });

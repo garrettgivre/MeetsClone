@@ -127,3 +127,51 @@ test('special days: market day is cheaper, games day pays double, and the calend
   const sections = today(g);
   assert.ok(sections.some(s => s.head === 'TODAY') && sections.some(s => s.head === 'IN THE SHOPS'));
 });
+
+test('school, skills and jobs thread together: attention, a diploma, a workplace, skill-gated promotion, the family trade', async () => {
+  const T = await import('../src/game/town.js');
+  const { train, skillLevel, SKILL_STEP, marry, findPartner, MARRY_AFTER } = await import('../src/game/pet.js');
+  const g = game();
+  g.pet.stage = 'teen';
+  T.buyPass(g, 'bus');
+  // a class teaches a whole level to a pet that pays attention, less to one that fidgets
+  g.pet.discipline = 0; g.pet.hunger = 4;
+  assert.match(T.doAction(g, 'school', 'drama').msg, /fidgeted/);
+  assert.equal(g.pet.skills.charm, 2);
+  g.pet.discipline = 3;
+  assert.ok(T.doAction(g, 'school', 'drama').ok);
+  assert.equal(g.pet.skills.charm, 5);
+  // six classes, then a diploma in the subject studied most
+  assert.match(T.gradWhy(g.pet), /4 more classes/);
+  for (let d = 0; d < 2; d++) { g.simTime += DAY; T.doAction(g, 'school', 'art'); T.doAction(g, 'school', 'drama'); }
+  assert.equal(T.gradWhy(g.pet), null);
+  const grad = T.graduate(g);
+  assert.equal(grad.diploma, 'charm');
+  assert.equal(T.graduate(g).ok, false, 'once');
+  // the diploma takes a level off what its jobs ask
+  g.pet.stage = 'adult';
+  assert.equal(T.jobNeed(g.pet, T.JOB.star), T.JOB.star.need - 1);
+  assert.equal(T.jobNeed(g.pet, T.JOB.professor), T.JOB.professor.need);
+  // a job has its own place in town, and a game for its shifts (a helper has neither)
+  for (const j of T.JOBS) { assert.ok(T.LOCATION[j.at], j.id); assert.ok(j.id === 'helper' ? !j.game : ['whichway', 'copyme', 'catch', 'jumprope'].includes(j.game), j.id); }
+  // promotion: shifts are not enough, the skill has to have grown past what the job asked
+  const h = game(); h.pet.stage = 'adult'; T.buyPass(h, 'bus');
+  h.pet.skills.smart = 2 * SKILL_STEP;
+  assert.ok(T.applyJob(h, 'tutor').ok);
+  h.pet.job.shifts = 9;
+  assert.equal(T.jobRank(h.pet), 0);
+  assert.equal(T.promotionWants(h.pet), 3);
+  train(h.pet, 'smart', SKILL_STEP);
+  assert.equal(T.jobRank(h.pet), 1);
+  // a poor shift pays less than a good one
+  h.pet.job.shifts = 0;
+  const p0 = h.points; assert.ok(T.startShift(h).ok); const poor = T.endShift(h, false);
+  assert.equal(h.points - p0, Math.round(T.JOB.tutor.pay * T.POOR_SHIFT));
+  assert.equal(poor.anim, 'sad');
+  assert.equal(T.startShift(h).ok, false, 'a rest between shifts');
+  // the child of a tutor starts a level up in Smarts, its family trade
+  h.pet.adultMs = MARRY_AFTER; h.pet.skills = { smart: 0, creative: 0, fit: 0, charm: 0 };
+  const egg = marry(h, findPartner(h, makeRng(2)), makeRng(2));
+  assert.equal(egg.trade, 'smart');
+  assert.equal(skillLevel(egg, 'smart'), 1);
+});
