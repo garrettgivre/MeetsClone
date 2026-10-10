@@ -13,7 +13,7 @@
 </head>
 <body>
 <p>Not in the game yet. Fine-line pets put together from the parts in <code>src/art/pets/fine/</code>.
-<code>?z=3</code> zoom, <code>?room=garden</code> room, <code>?only=fox,owl</code> some founders, <code>?show=founders|forms|swaps|mixes</code> one section, <code>?seed=7</code> other mixes.</p>
+<code>?z=3</code> zoom, <code>?room=garden</code> room, <code>?only=fox,owl</code> some founders, <code>?show=founders|young|forms|swaps|mixes</code> one section, <code>?seed=7</code> other mixes, <code>?show=forms&amp;form=blob</code> one body plan.</p>
 <div id="out"></div>
 <script type="module">
 import { PACKED, C } from '../src/engine/palette.js';
@@ -42,8 +42,8 @@ function sheet(w, h, zoom, paint, label) {
   const f = document.createElement('figure'); f.append(cv, label); row.append(f);
 }
 /** One pet by itself on a plain card, standing on a line near the bottom. */
-function card(p, label, zoom = z) {
-  const k = compose(p), W = 112, H = 100, w = k.x1 - k.x0 + 1;
+function card(p, label, zoom = z, stage = 'adult') {
+  const k = compose(p, stage), W = 112, H = 100, w = k.x1 - k.x0 + 1;
   sheet(W, H, zoom, (set) => {
     for (let x = 8; x < W - 8; x++) set(x, H - 5, C('sky.2'));
     for (const [x, y, c] of k.cells) set(((W - w) >> 1) + x - k.x0, H - 6 - k.lift - (k.y1 - y), c);
@@ -68,13 +68,23 @@ if (!show || show === 'founders') {
   for (const n of names) card(founder(n), n, z * 2);
 }
 
+if (!show || show === 'young') {
+  // growing up: baby, child and adult, for each founder and then for each body plan
+  for (const n of names) {
+    section(`${n}: baby, child, adult`);
+    for (const st of ['baby', 'child', 'adult']) card(founder(n), st, z, st);
+  }
+  section('babies and children in each body plan (in pink)');
+  for (const f of FORMS) { card({ ...founder('axolotl'), form: f }, f + ' baby', z, 'baby'); card({ ...founder('axolotl'), form: f }, f + ' child', z, 'child'); }
+}
+
 if (!show || show === 'forms') {
   // each line's own parts on every body plan its body has been drawn for
   for (const n of names) {
-    const base = founder(n), forms = FORMS.filter(f => drawable({ ...base, form: f }));
-    if (forms.length < 2) continue;
-    section(`${n}: its own parts in each body plan`);
-    for (const f of forms) card({ ...base, form: f }, f + (f === base.form ? ' (its own)' : ''));
+    const base = founder(n), forms = FORMS.filter(f => drawable({ ...base, form: f }) && (!q.get('form') || q.get('form') === f));
+    if (!forms.length) continue;
+    if (!q.get('form') || n === names[0]) section(q.get('form') ? `every founder in the ${q.get('form')} body plan` : `${n}: its own parts in each body plan`);
+    for (const f of forms) card({ ...base, form: f }, (q.get('form') ? n + ' ' : '') + f + (f === base.form ? ' (its own)' : ''));
   }
 }
 

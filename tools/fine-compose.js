@@ -13,6 +13,7 @@ import * as jellyfish from '../src/art/pets/fine/jellyfish.js';
 import * as fox from '../src/art/pets/fine/fox.js';
 import * as owl from '../src/art/pets/fine/owl.js';
 import * as jelly from '../src/art/pets/fine/jelly.js';
+import * as young from '../src/art/pets/fine/young.js';
 
 export const LINES = { axolotl, caterpillar, jellyfish, fox, owl, jelly };
 export const FORMS = ['quad', 'serpent', 'floater', 'biped', 'avian', 'blob'];
@@ -41,6 +42,7 @@ for (const [name, L] of Object.entries(LINES)) {
   for (const [gene, slot] of Object.entries(SLOT)) if (L.GENES[gene] && L[slot]) (PARTS[gene] ||= {})[L.GENES[gene]] = read(L[slot]);
   if (L.TAIL_SIDE) PARTS.tail[L.GENES.tail].side = read(L.TAIL_SIDE); // for a pet that stands on the ground
   if (L.WINGS_SIDE) PARTS.wings[L.GENES.wings].side = read(L.WINGS_SIDE);
+  if (L.EARS_SMALL) PARTS.ears[L.GENES.ears].small = read(L.EARS_SMALL); // a child's
   PARTS.body[L.GENES.body] = { [L.FORM]: body };
   for (const [form, b] of Object.entries(L.BODIES || {})) PARTS.body[L.GENES.body][form] = read(b);
   PARTS.face[L.GENES.head] = L.FACE;
@@ -58,6 +60,13 @@ for (const [name, L] of Object.entries(LINES)) {
   if (L.GENES.pattern) PARTS.pattern[L.GENES.pattern] = pattern;
 }
 
+// babies and children: a head and a small body per body plan, in one piece
+const YOUNG = {
+  baby: { head: read(young.BABY_HEAD), body: Object.fromEntries(Object.entries(young.BABY_BODY).map(([f, b]) => [f, read(b)])), face: young.BABY_FACE, cheek: read(young.BABY_CHEEK) },
+  child: { head: read(young.CHILD_HEAD), body: Object.fromEntries(Object.entries(young.CHILD_BODY).map(([f, b]) => [f, read(b)])), face: young.CHILD_FACE, cheek: read(young.CHILD_CHEEK) },
+};
+const BABY_EYE = read(young.BABY_EYE), BABY_MOUTH = read(young.BABY_MOUTH);
+
 /** A founder as a pet: its own parts, colours and body plan. */
 export function founder(name) {
   const L = LINES[name];
@@ -70,7 +79,8 @@ export const drawable = (p) => !!PARTS.body[p.body]?.[p.form];
  * Put a pet together. Returns its pixels [x, y, colour] with the body's top-left at 0, 0, their bounds,
  * and `lift` (how far a floater hangs above the floor).
  */
-export function compose(p) {
+export function compose(p, stage = 'adult') {
+  const Y = YOUNG[stage]; // a baby or child is a plain head and body in one piece
   const d = p.deeper ? 1 : 0;
   const col = { 4: ramp(p.color, 3 - d), 3: ramp(p.color, 2 - d), 2: ramp(p.color, 1 - d), 8: ramp(p.accent, 3), 7: ramp(p.accent, 2), 6: ramp(p.accent, 1), e: ramp(p.eye || 'ink', 2), E: ramp(p.eye || 'ink', 3) };
   if ((p.eye || 'ink') === 'ink') col.e = col.E = C('ink');
@@ -84,45 +94,53 @@ export function compose(p) {
     if (clip && (own.get(k) !== clip || px.get(k) === ink)) return; // an overlay only shows on the part it lies on, inside its outline
     px.set(k, col[ch]); if (!clip) own.set(k, who);
   }));
-  const body = PARTS.body[p.body][p.form], head = PARTS.head[p.head];
+  const body = Y ? Y.body[p.form] : PARTS.body[p.body][p.form], head = Y ? Y.head : PARTS.head[p.head];
   const [bnx, bny] = body.sockets.neck[0], [hnx, hny] = head.sockets.neck[0];
   const hx = bnx - hnx, hy = bny - hny; // the head's top-left: its neck on the body's
   const H = (n) => (head.sockets[n] || []).map(([x, y]) => [hx + x, hy + y]);
   const B = (n) => body.sockets[n] || [];
   const [el] = H('earL'), [er] = H('earR'), [f] = H('face'), [top] = H('top'), [t] = B('tail');
-  const wing0 = PARTS.wings?.[p.wings], wings = wing0 && (p.form !== 'floater' && wing0.side || wing0), [wl] = B('wingL'), [wr] = B('wingR');
-  const ears = PARTS.ears[p.ears];
-  const pattern = PARTS.pattern[p.pattern] || [], hair = PARTS.hair?.[p.hair];
+  const wing0 = Y ? null : PARTS.wings?.[p.wings], wings = wing0 && (p.form !== 'floater' && wing0.side || wing0), [wl] = B('wingL'), [wr] = B('wingR');
+  const ears = stage === 'baby' ? null : stage === 'child' ? PARTS.ears[p.ears]?.small : PARTS.ears[p.ears];
+  const pattern = Y ? [] : PARTS.pattern[p.pattern] || [], hair = Y ? null : PARTS.hair?.[p.hair];
   const drawEars = () => { who = 'ears'; if (ears) { stamp(ears, el[0], el[1]); stamp(ears, er[0], er[1], true); } };
   const drawWings = () => { who = 'wings'; if (wings && wl) stamp(wings, wl[0], wl[1]); if (wings && wr) stamp(wings, wr[0], wr[1], true); };
   const lay = (list, on, from, part) => { for (const o of list) if (o.on === on) stamp(o, from[0] + o.off[0], from[1] + o.off[1], false, [0, 0], part); };
 
-  if (ears && !ears.front) drawEars();
+  const onePiece = p.form === 'blob' && !Y; // the base stands behind the head, so ears that lie behind the head go on after it
+  if (ears && !ears.front && !onePiece) drawEars();
   if (wings && !wings.front) drawWings();
-  const tail = PARTS.tail[p.tail] && (p.form !== 'floater' && PARTS.tail[p.tail].side || PARTS.tail[p.tail]);
+  const tail = !Y && PARTS.tail[p.tail] && (p.form !== 'floater' && PARTS.tail[p.tail].side || PARTS.tail[p.tail]);
   who = 'tail'; if (t && tail) stamp(tail, t[0], t[1]);
   who = 'body'; stamp(body, 0, 0, false, [0, 0]);
   lay(pattern, 'body', [bnx, bny], 'body');
+  if (ears && !ears.front && onePiece) drawEars();
   if (wings?.front) drawWings();
-  const arms = PARTS.arms[p.form], [al] = B('armL'), [ar] = B('armR');
+  const arms = Y ? null : PARTS.arms[p.form], [al] = B('armL'), [ar] = B('armR');
   who = 'arms'; if (arms && al) { stamp(arms, al[0], al[1]); stamp(arms, ar[0], ar[1], true); }
-  who = 'feet'; if (PARTS.feet[p.feet]) for (const [x, y] of B('feet')) stamp(PARTS.feet[p.feet], x, y);
+  who = 'feet'; if (!Y && PARTS.feet[p.feet]) for (const [x, y] of B('feet')) stamp(PARTS.feet[p.feet], x, y);
   who = 'head'; stamp(head, hx, hy, false, [0, 0]);
-  if (p.form === 'blob') {
+  if (p.form === 'blob' || Y) {
     // one piece: where the head's floor line lies on the base, with jelly above and below it, the line goes
-    for (const [k, c] of [...px]) {
+    // (wherever the head's outline lies on the body with body colour beside it, the line goes)
+    const melted = [];
+    for (const [k, c] of px) {
       if (c !== ink || own.get(k) !== 'head') continue;
-      const [x, y] = k.split(',').map(Number), up = x + ',' + (y - 1), dn = x + ',' + (y + 1);
-      if (own.get(up) === 'head' && px.get(up) !== ink && own.get(dn) === 'body' && px.get(dn) !== ink) { px.set(k, px.get(up)); }
+      const [x, y] = k.split(',').map(Number), near = [[0, -1], [0, 1], [-1, 0], [1, 0]].map(([dx, dy]) => (x + dx) + ',' + (y + dy));
+      const inside = near.find(n => own.get(n) === 'head' && px.get(n) !== ink), outside = near.find(n => own.get(n) === 'body' && px.get(n) !== ink);
+      if (inside && outside) melted.push([k, px.get(Y ? outside : inside)]);
     }
+    for (const [k, c] of melted) px.set(k, c);
   }
   lay(pattern, 'head', f, 'head');
   if (hair?.layers) for (const o of hair.layers) stamp(o, (o.anchor === 'top' ? top : f)[0] + o.off[0], (o.anchor === 'top' ? top : f)[1] + o.off[1], false, [0, 0], 'head');
   if (ears?.front) drawEars();
   who = 'hair'; if (hair?.rows) stamp(hair, top[0], top[1]);
-  who = 'topper'; if (PARTS.topper[p.topper]) stamp(PARTS.topper[p.topper], top[0], top[1]);
+  who = 'topper'; if (!Y && PARTS.topper[p.topper]) stamp(PARTS.topper[p.topper], top[0], top[1]);
   who = 'face';
-  const F = PARTS.face[p.head], cheek = PARTS.cheek[p.head], eye = PARTS.eyes[p.eyes], mouth = PARTS.mouth[p.mouth], nose = PARTS.nose?.[p.nose], mark = PARTS.mark[p.mark];
+  const F = Y ? Y.face : PARTS.face[p.head], cheek = Y ? Y.cheek : PARTS.cheek[p.head];
+  const eye = stage === 'baby' ? BABY_EYE : PARTS.eyes[p.eyes], mouth = stage === 'baby' ? BABY_MOUTH : PARTS.mouth[p.mouth];
+  const nose = Y ? null : PARTS.nose?.[p.nose], mark = Y ? null : PARTS.mark[p.mark];
   if (mark) stamp(mark, f[0] + F.mark[0], f[1] + F.mark[1]);
   if (cheek && F.cheeks) { stamp(cheek, f[0] - F.cheeks[0], f[1] + F.cheeks[1]); stamp(cheek, f[0] + F.cheeks[0], f[1] + F.cheeks[1]); }
   lay(pattern, 'face', f, null);
