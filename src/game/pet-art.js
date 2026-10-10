@@ -133,6 +133,8 @@ export function build(p, stage = 'adult', pose = {}) {
   const flank = !!wl && !wr; // seen from the side: one wing, lying on the flank in front of the body
   const overHead = form === 'blob' && !Y; // on the one-piece mound the head covers the body, so wings go on last, at its sides
   if (wings && !wings.front && !flank && !overHead) drawWings();
+  // a body seen from the side may ask for its far wing as well: the same wing again, behind everything, a little offset
+  if (wings && flank && body.farWing) { who = 'wings'; stamp(wings, wl[0] + body.farWing[0], wl[1] + body.farWing[1]); }
   const tail = !Y && has(p, 'tail') && PARTS.tail[p.tail] && (form !== 'floater' && PARTS.tail[p.tail].side || PARTS.tail[p.tail]);
   who = 'tail'; if (t && tail) stamp(tail, t[0], t[1]);
   who = 'body'; stamp(body, 0, 0, false, [0, 0]);

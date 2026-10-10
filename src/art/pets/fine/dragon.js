@@ -5,9 +5,9 @@
 // lack: the only horns, the only snout, bat wings (a third kind of wing), a
 // tail with a spade on the end, claws, a spiny crest for hair, webbed fan
 // ears, slit eyes, a broad head that narrows to a snout, and a body with spikes at the
-// shoulder and a plated belly. It has its own body plan, "drake": sitting up
-// and facing you, with two big feet forward, a wing at each shoulder and the
-// tail behind.
+// shoulder and a plated belly. It has its own body plan, "drake": standing
+// on four legs and seen from the side, the head up at the front, spikes along
+// the back, both wings showing and the tail behind.
 // Extra colours here: 6 7 8 accent (shadow, base, light), e eye colour, m pale grey, b B gem blues, P blush pink.
 
 // (deeper: the body is drawn one shade down the ramp; the lightest indigo is too close to the jellyfish's pale blue)
@@ -107,7 +107,7 @@ export const HAIR = { pivot: [6, 3], rows: [
 
 // Markings, "plates": a plated belly in the accent colour, ridge by ridge (it shows on whatever body it lies on)
 export const OVERLAYS = [
-  { on: 'body', at: [10, 10], rows: [
+  { on: 'body', at: [6, 10], rows: [
     '....8888888888888',
     '..88888888888888888',
     '.7777777777777777777',
@@ -124,43 +124,42 @@ export const OVERLAYS = [
   ] },
 ];
 
-// Body, "scaled", in its own plan: sitting up and facing you. A pear of a body, a small arm held out at each side,
-// two big feet forward, a spike on each shoulder, a few scale marks at the hips, and a wing socket at each shoulder
-// (the sockets are swapped left for right, because the wing part is drawn opening to the right).
-export const BODY = { rows: [
-  '..............oooooooooooooo',
-  '............oo44444444444444oo',
-  '...........o44444444=444444444o',
-  '..........o44444444444444444444o',
-  '.........o4444444444444444444443o',
-  '......oooo4444444444444444444443ooo',
-  '....o777444444444444444444444443777o',
-  '.....oooo44444444444444444444443ooo',
-  '.......o4444444444444444444444443o',
-  '.......o4)4444444444444444444444(3o',
-  '......o4444444444444444444444444433o',
-  '..ooooo4444444444444444444444444433ooooo',
-  '.o44444444444444444444444444444444444433o',
-  'o4444444444444444444444444444444444444333o',
-  'o4444444444444444444444444444444444444333o',
-  '.o44444444444444444444444444444444444333o',
-  '..ooooo4444444444444444444444444333ooooo',
-  '......o4444444444444444444444444333o',
-  '......o4444444444444444444444444333o',
-  '......o4343444444444444444443434333o',
-  '......o4434444444444444444444344333o',
-  '......o4444444444444444444444444333o',
-  '......o4444444444444444444444444333o',
-  '......o4444444444444444444444444333o',
-  '......o4444444444444444444444444333o',
-  '......o444444444444444444444444433~o',
-  '......o4444444444444444444444443333o',
-  '...oooo4444444444444444444444443333oooo',
-  '..o444444444444444o444o444444444444333o',
-  '.o44444444444444444o4o44444444444443333o',
-  '.o44444444444444443ooo44444444444443333o',
-  '.o4444444!444444333o.o44444444!44443333o',
-  '..ooooooooooooooooo...ooooooooooooooooo',
+// Body, "scaled", in its own plan: a little dragon standing on four legs, seen from the side. The chest is up at the
+// front under the head, three spikes and a small one run along the back, and there is a strong haunch behind. The two
+// legs on the far side are in the deeper shade. `farWing` draws the wing a second time behind the body, a little up and
+// to the left, so both wings show.
+export const BODY = { farWing: [-8, -5], rows: [
+  '..........oooooooooooooo',
+  '........oo44444444444444oo',
+  '.......o444444444444444444o',
+  '.......o44444444=4444444444o',
+  '......o444444444444444444444o..o.....o.....o',
+  '......o444444444444444444444o.o7o...o7o...o7o',
+  '.....o4444444444444444444444oo777o.o777o.o777o..o',
+  '.....o44444444444444444444444ooooooooooooooooooo7o',
+  '.....o44444444444444444444444444444444444444444ooooo',
+  '.....o4444444444444444444444444444(44444444444444444ooo',
+  '.....o4444444444444444444444444444444444444444444444444oo',
+  '.....o444444444444444444444444444444444444444444444444433o',
+  '.....o4444444444444444444444444444444444444444444444444333o',
+  '.....o444444444444444444444444444444444444444444444444433~o',
+  '.....o4444444444444444444444444444444444444444444444444333o',
+  '.....o4444444444444444444444444444444444444444444444444333o',
+  '......o444444444444444444444444444444444444444444444444333o',
+  '.......o44444444444444444444444444444444444444444444444433o',
+  '........o444444444444444444444444444444444444444444444333o',
+  '.........o4444444444444444444444444444444444444444444333o',
+  '..........o44444444444444444444444444444444444444444333o',
+  '..........o444444444oo33333oooooooo3333oo4444444444333o',
+  '..........o444444444oo33333o......o3333oo4444444444333o',
+  '..........o444444444oo33333o......o3333oo4444444444333o',
+  '..........o444444444oo33333o......o3333oo4444444444333o',
+  '..........o444444444oo33333o......o3333oo4444444444333o',
+  '..........o444444444oo33333o......o3333oo4444444444333o',
+  '..........o444444444oo33333o......o3333oo4444444444333o',
+  '..........o444444443ooooooooo......ooooooo4444444444333o',
+  '..........o444!44443o...................o44444!4444333o',
+  '...........ooooooooo.....................ooooooooooooo',
 ] };
 
 // Tail, "arrow": a thick tail that curls up behind and ends in a spade in the accent colour. Its left end lies behind the body.
