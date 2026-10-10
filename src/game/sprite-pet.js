@@ -1,5 +1,5 @@
 // Placing and animating a composed pet. A pet from pet-art.js is at the fine size already (scale 1, `fine`);
-// the egg is a 64-pixel sprite whose pixels are doubled. Animation is layered on the frame:
+// so is the egg. Animation is layered on the frame:
 //   breathing   the head (rows above `neck`) bobs down a pixel
 //   walking     a one-pixel hop
 //   expressions eyes are covered with the face colour and redrawn
@@ -106,9 +106,6 @@ export function animateSprite(src, pose, canvas, ground, scale) {
 /** Wrap what pet-art.js built for placing and animation. */
 export function composeKitSprite(kit, pose, canvas, ground, scale) {
   if (kit.fine) return animateSprite({ ...kit, keepMouth: kit.bill }, pose, canvas, ground, 1).out;
-  if (kit.egg) {
-    return animateSprite({ ...kit, eyeBoxes: [], neck: 0, mouth: [0, 0], keepMouth: true, faceColour: 0 }, {}, canvas, ground, scale).out;
-  }
   const [ew, eh] = kit.eyeSize, [pxv, pyv] = kit.eyePivot;
   const src = {
     ...kit, keepMouth: kit.bill,

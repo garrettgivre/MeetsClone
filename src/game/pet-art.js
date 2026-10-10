@@ -19,7 +19,7 @@
 
 import { C, ramp } from '../engine/palette.js';
 import { colors, lut } from '../engine/sprite.js';
-import { EGG } from '../art/pets/egg.js';
+import { EGG, CRACKS } from '../art/pets/egg.js';
 import { HATS, FACE as FACE_WEAR } from '../art/pets/clothes.js';
 import { CLOTHES } from './items.js';
 import * as axolotl from '../art/pets/fine/axolotl.js';
@@ -271,14 +271,19 @@ export function composePetArt(p, stage, pose = {}) {
   };
 }
 
-// ---------- the egg (still at the old double-size grid) ----------
-/** The egg: colours hint at the baby inside. Returns a 64 x 64 sprite for sprite-pet.js to scale. */
+// ---------- the egg ----------
+/**
+ * The egg, at the fine size like the pets: colours hint at the baby inside
+ * (shell in the accent colour, spots in the body colour). `crack` 0 to 3 is how
+ * far the cracks have run; `wobble` (-1, 0, 1) leans it a pixel or two to a side.
+ */
 export function composeEggArt(p, crack = 0, wobble = 0) {
-  const W = 64, px = new Uint8Array(W * W);
-  const t = lut(EGG.spr, colors(p?.color || 'gold', p?.accent || 'cream', 'ink', 'brown'));
-  const x0 = ((W - EGG.w) >> 1) + wobble, y0 = W - 3 - EGG.h;
-  EGG.rows.forEach((r, j) => [...r].forEach((ch, i) => { const c = t[ch.charCodeAt(0)]; if (c) px[(y0 + j) * W + x0 + i] = c; }));
-  const cracks = [[8, 3], [7, 4], [8, 5], [9, 6], [8, 7], [10, 4], [11, 5], [6, 6], [5, 7]];
-  for (let i = 0; i < Math.min(cracks.length, crack * 3); i++) px[(y0 + cracks[i][1]) * W + x0 + cracks[i][0]] = C('ink');
-  return { px, w: W, h: W, egg: true };
+  const body = p?.color || 'gold', shell = p?.accent || 'cream';
+  const ink = { o: C('ink'), w: C('white'), 3: ramp(body, 2), 4: ramp(body, 3), 6: ramp(shell, 1), 7: ramp(shell, 2), 8: ramp(shell, 3) };
+  const pad = 2, w = Math.max(...EGG.map(r => r.length)) + pad * 2, h = EGG.length, px = new Uint8Array(w * h);
+  const x0 = pad + wobble * 2;
+  EGG.forEach((r, j) => [...r].forEach((ch, i) => { if (ink[ch]) px[j * w + x0 + i] = ink[ch]; }));
+  const shown = [0, 6, 12, CRACKS.length][Math.min(3, crack)];
+  for (const [x, y] of CRACKS.slice(0, shown)) px[y * w + x0 + x] = ink.o;
+  return { px, w, h, fine: true, egg: true, eyeBoxes: [], mouth: [0, 0], neck: 0, bill: true, faceColour: 0 };
 }

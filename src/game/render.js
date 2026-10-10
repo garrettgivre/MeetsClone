@@ -4,7 +4,7 @@
 
 import { C } from '../engine/palette.js';
 import { makeBitmap } from '../engine/screen.js';
-import { scale2x, thinOutlines } from '../engine/upscale.js';
+import { GHOST, HEM } from '../art/pets/ghost.js';
 import { composeKitSprite } from './sprite-pet.js';
 import { composePetArt, composeEggArt } from './pet-art.js';
 
@@ -41,25 +41,11 @@ export function composeEgg(phenotype, crack = 0, wobble = 0) {
   return composeKitSprite(composeEggArt(phenotype, crack, wobble), {}, HC, HG, S);
 }
 
-/** Ghost for a pet that has passed away. */
+/** Ghost for a pet that has passed away: fine pixels, hovering, its hem rippling between the two frames. */
 export function composeGhost(frame = 0) {
   const out = makeBitmap(HC, HC, true);
-  const rows = thinOutlines(scale2x([
-    '....oooooo....',
-    '..oowwwwwwoo..',
-    '.owwwwwwwwwwo.',
-    '.owwwwwwwwwwo.',
-    'owwwkwwwwkwwwo',
-    'owwwkwwwwkwwwo',
-    'owwffwwwwffwwo',
-    'owwwwwkkwwwwwo',
-    'owwwwwwwwwwwmo',
-    'owwwwwwwwwwmmo',
-    'owwwwwwwwwwmmo',
-    frame ? 'owowwowwowwomo' : 'owwowwowwowwoo',
-    frame ? '.o.ooo.ooo.oo.' : 'o.ooo.ooo.oo..',
-  ]));
-  const x0 = HC / 2 - 14, y0 = HG - 56 - frame * S;
+  const rows = [...GHOST, ...HEM[frame ? 1 : 0]];
+  const x0 = HC / 2 - 15, y0 = HG - 28 - rows.length - (frame ? S : 0);
   const key = { o: C('ink'), k: C('ink'), w: C('white'), m: C('mist'), f: C('pink.2') };
   rows.forEach((row, y) => [...row].forEach((ch, x) => {
     const xx = x0 + x, yy = y0 + y;

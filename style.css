@@ -104,7 +104,7 @@ body.lcd #controls::after {
 }
 
 /* Pixel-art buttons: the pictures (up, and pressed) are painted in by
-   src/art/buttons.js, 32 x 36 pixels, each one game pixel in size. The outer
+   src/art/buttons.js: 64 x 72 fine pixels, so 32 x 36 game pixels on the page. The outer
    two sit higher than the middle one. */
 .btn {
   width: calc(var(--px, 3px) * 32);
