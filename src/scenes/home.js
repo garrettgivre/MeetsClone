@@ -2,7 +2,7 @@
 import { C, mutedLut } from '../engine/palette.js';
 import { text } from '../engine/font.js';
 import { W } from '../engine/screen.js';
-import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, SUDS, BUBBLE, BROOM_ICON, BATH_ICON, POTTY_ICON, ARROW } from '../art/icons.js';
+import { ICONS, COIN, POOP, SKULL, ZZZ, ATTN, SPARKLE, HEART, SYRINGE, BROOM_WAVE, MOON, SUN, STINK, FOOD_ART, TOY_ART, NOTE, SWEAT, SUDS, BUBBLE, POINTER, BROOM_ICON, BATH_ICON, POTTY_ICON, ARROW } from '../art/icons.js';
 import { hash } from '../engine/rng.js';
 import { composePet, composeEgg, composeGhost, CANVAS, GROUND } from '../game/render.js';
 import { LAYOUT, ROOM_FLOOR, COL, dialog, ListMenu } from '../ui.js';
@@ -23,6 +23,7 @@ import { todaysWishes } from '../game/wishes.js';
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
 const BOTTOM = ['games', 'items', 'town', 'family', 'settings'];
 const ALL = [...TOP, ...BOTTOM];
+const BED_STOP = ALL.length; // the cursor's extra stop in the garden: the vegetable bed
 const LABEL = {
   status: 'STATUS', food: 'FOOD', clean: 'CLEAN', medicine: 'MEDICINE', lights: 'LIGHTS',
   games: 'GAMES', items: 'ITEMS', town: 'TOWN', family: 'FAMILY', settings: 'SETTINGS',
@@ -133,10 +134,13 @@ export class HomeScene {
     if (this.anim || this.slide) return;
     const app = this.app;
     if (b === 'A') {
-      this.cursor = this.cursor < 0 ? (dir > 0 ? 0 : ALL.length - 1) : (this.cursor + dir + ALL.length) % ALL.length;
+      // round the menu icons and, out in the garden, on to the vegetable bed (one stop past the last icon)
+      const stops = ALL.length + (roomOf(this.game) === 'garden' ? 1 : 0);
+      this.cursor = this.cursor < 0 ? (dir > 0 ? 0 : stops - 1) : (this.cursor + dir + stops) % stops;
       app.sfx('blip');
     } else if (b === 'B') {
-      if (this.cursor >= 0) this.open(ALL[this.cursor]);
+      if (this.cursor === BED_STOP) gardenMenu(app);
+      else if (this.cursor >= 0) this.open(ALL[this.cursor]);
       else this.patPet();
     } else if (b === 'C') {
       if (this.cursor >= 0) { this.cursor = -1; app.sfx('back'); }
@@ -156,6 +160,7 @@ export class HomeScene {
     if (this.pet?.asleep && !then) { this.app.sfx('nope'); this.app.toast('Shh! Sleeping...'); return false; }
     const dir = HOUSE.indexOf(to) > HOUSE.indexOf(from) ? 1 : -1;
     game.room = to;
+    if (this.cursor === BED_STOP) this.cursor = -1; // (the bed's stop is only there in the garden)
     this.slide = { from, to, dir, t: 0, dur: 300, then };
     // the pet comes in by the side it left through
     this.petX = dir > 0 ? 26 : 100;
@@ -450,6 +455,8 @@ export class HomeScene {
     if (roomOf(game) === 'garden') {
       const bed = veggieBed(gardenOf(game).plots.map(p => p && [p.crop, stageOf(p)]), skyState(new Date(game.simTime).getHours()), lightsOff);
       scr.bitmap(bed.bm, bed.x / 2, LAYOUT.room.y + (bed.y >> 1));
+      // picked with the buttons: a pointer bobs over it
+      if (this.cursor === BED_STOP) scr.draw(POINTER, VEG_BED.x / 2 - 4, LAYOUT.room.y + (bed.y >> 1) - 9 + (Math.floor(t / 300) % 2), {});
     }
     // poop
     if (pet && !lightsOff && this.anim?.type !== 'clean-done') {
@@ -790,7 +797,8 @@ export class HomeScene {
     // (only the name of the highlighted menu; the pet's name, gender and stage are on the Status page)
     // ...or, with no menu picked, which room of the house this is
     // (it sits between the two outer buttons, close under the icons and over the middle button)
-    if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 3, low, { align: 'center' });
+    if (this.cursor === BED_STOP) text(scr, 'VEGETABLE BED', W / 2, info.y + 3, low, { align: 'center' });
+    else if (this.cursor >= 0) text(scr, LABEL[ALL[this.cursor]], W / 2, info.y + 3, low, { align: 'center' });
     else text(scr, ROOMS[roomOf(game)].name.toUpperCase(), W / 2, info.y + 3, sky.bottomDark ? COL.mist : COL.ink, { align: 'center' });
   }
 }

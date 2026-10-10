@@ -4,9 +4,11 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.36.1, 10 October 2026)
+## Where things stand (v0.36.2, 10 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (99 tests).
+
+**v0.36.2: the vegetable bed can be reached with the buttons.** The owner: "There doesn't seem to be a way to get to the plant box with the three buttons." (Items > Vegetable bed was the only way; tapping the bed needs a finger.) In the garden the cursor has one more stop after the last menu icon (`BED_STOP` in `home.js`): a pointer bobs over the bed, the info bar says VEGETABLE BED, and B opens `gardenMenu`. The stop is dropped on leaving the garden. Checked in the browser pane: A reaches it, B opens the menu, A wraps round to the first icon.
 
 **v0.36.1: notices, speech and lists.** The owner sent a phone screenshot of a notice lying across a menu's title bar and first row ("Pop ups like this are not integrated very well. Can you make this look nicer"), said that a keeper's speech stayed on screen after leaving a place, and asked for "a general dialog box and menu check to make things nicer and more intuitive."
 - **Notices** (`app.toast`, drawn by `banner` in `ui.js`): a banner slides down from the top edge over the status bar and the top icons, so it never covers the room or an open menu; a pink tab down its left edge, a line of shadow under it. It slides away again, and a tap on it puts it away at once (`onTap` in `main.js`). `scr.unveil` (new, in `screen.js`) drops the see-through icon pixels under it, which are mixed in after everything else and were showing through.
