@@ -6,9 +6,12 @@
 // of cream, two little nub ears, a gloss streak and a few bubbles inside.
 // Extra colours here: 7 accent, m pale grey, f heart pink, P blush pink, q mouth red.
 
-export const LOOK = { color: 'gold', accent: 'mint', eye: 'blue' };
+export const LOOK = { color: 'gold', accent: 'mint', eye: 'blue', merge: true };
+// The body plan this founder is drawn in, and the gene names of its parts
+export const FORM = 'blob';
+export const GENES = { head: 'gumdrop', body: 'jelly', ears: 'nubs', hair: 'drip', topper: 'cream', eyes: 'jelly', mouth: 'o', mark: 'heart', pattern: 'bubbles' };
 
-// Head, "gumdrop": 60 x 38, a tall dome that is open at the bottom, where it meets the base
+// Head, "gumdrop": 60 x 39, a tall dome with a flat floor. In the one-piece form the floor line melts into the base.
 export const HEAD = { rows: [
   '......................oooooooooooooooo',
   '..................oooo44444444^4444444oooo',
@@ -47,7 +50,8 @@ export const HEAD = { rows: [
   'o4444444444444444444444444444444444444444444444444444443333o',
   'o4444444444444444444444444444444444444444444444444444443333o',
   'o4444444444444444444444444444444444444444444444444444443333o',
-  'o44444444444444444444444444444=4444444444444444444444443333o',
+  '.o4444444444444444444444444444=444444444444444444444443333o',
+  '..oooooooooooooooooooooooooooooooooooooooooooooooooooooooo',
 ] };
 
 // Body, "jelly": the base the gumdrop sits on, rounded underneath
@@ -74,7 +78,7 @@ export const EARS = { pivot: [7, 5], rows: [
 
 // Hair, "drip": icing in the accent colour, poured over the top and running down in four drips (set on the head's top-left corner)
 export const OVERLAYS = [
-  { on: 'head', at: [0, 1], rows: [
+  { on: 'head', gene: 'hair', anchor: 'top', at: [0, 1], rows: [
     '......................7777777777777777',
     '..................777777777777777777777777',
     '...............777777777777777777777777777777',

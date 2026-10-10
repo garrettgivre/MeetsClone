@@ -2,97 +2,36 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Fine-line founders</title>
+<title>Fine-line pets</title>
 <style>
   body { margin: 0; padding: 12px; font: 13px/1.4 system-ui, sans-serif; background: #f4f1ea; color: #262459; }
+  h2 { font-size: 15px; margin: 18px 0 6px; }
   .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-  figure { margin: 0 0 12px; text-align: center; }
+  figure { margin: 0 0 8px; text-align: center; font-size: 12px; }
   canvas { image-rendering: pixelated; border-radius: 6px; display: block; }
 </style>
 </head>
 <body>
-<p>Not in the game yet. The fine-line founders in <code>src/art/pets/fine/</code>, each put together from its parts on their sockets.
-<code>?z=3</code> zoom, <code>?room=garden</code> room, <code>?only=caterpillar</code> one founder, <code>?color=mint</code> body colour.</p>
-<div class="row" id="out"></div>
+<p>Not in the game yet. Fine-line pets put together from the parts in <code>src/art/pets/fine/</code>.
+<code>?z=3</code> zoom, <code>?room=garden</code> room, <code>?only=fox,owl</code> some founders, <code>?show=founders|forms|swaps|mixes</code> one section, <code>?seed=7</code> other mixes.</p>
+<div id="out"></div>
 <script type="module">
-import { PACKED, C, ramp } from '../src/engine/palette.js';
+import { PACKED, C } from '../src/engine/palette.js';
+import { makeRng } from '../src/engine/rng.js';
 import { homeRoom, RW, HOME_FEET } from '../src/art/town.js';
-import * as axolotl from '../src/art/pets/fine/axolotl.js';
-import * as caterpillar from '../src/art/pets/fine/caterpillar.js';
-import * as jellyfish from '../src/art/pets/fine/jellyfish.js';
-import * as fox from '../src/art/pets/fine/fox.js';
-import * as owl from '../src/art/pets/fine/owl.js';
-import * as jelly from '../src/art/pets/fine/jelly.js';
+import { LINES, FORMS, PARTS, founder, compose, drawable } from './fine-compose.js';
 
-const ALL = { axolotl, caterpillar, jellyfish, fox, owl, jelly };
 const q = new URLSearchParams(location.search);
-const z = +(q.get('z') || 3);
+const z = +(q.get('z') || 2);
 const out = document.getElementById('out');
-const names = (q.get('only') || Object.keys(ALL).join(',')).split(',').filter(n => ALL[n]);
-const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR', '<': 'armL', '>': 'armR' };
-const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', f: 'pink.2', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist' };
+const names = (q.get('only') || Object.keys(LINES).join(',')).split(',').filter(n => LINES[n]);
+const show = q.get('show');
 
-// read a part: note its sockets (painted as body colour)
-function read(p) {
-  if (!p) return null;
-  const sockets = {};
-  const rows = p.rows.map((r, y) => [...r].map((ch, x) => {
-    if (!SOCKETS[ch]) return ch;
-    (sockets[SOCKETS[ch]] ||= []).push([x, y]);
-    return p.under?.[ch] || '4';
-  }));
-  return { ...p, rows, sockets, pivot: p.pivot || [0, 0] };
+let row = out;
+function section(title) {
+  const h = document.createElement('h2'); h.textContent = title; out.append(h);
+  row = document.createElement('div'); row.className = 'row'; out.append(row);
 }
-
-/** Put a founder together. Returns its pixels [x, y, colour] with the body's top-left at 0, 0, and their bounds. */
-function compose(A) {
-  const P = Object.fromEntries(['HEAD', 'EARS', 'HAIR', 'TOPPER', 'ARMS', 'BODY', 'TAIL', 'WINGS', 'SPOTS', 'FEET', 'EYE', 'NOSE', 'MOUTH', 'MARK', 'CHEEK'].map(n => [n, read(A[n])]));
-  const color = q.get('color') || A.LOOK.color, accent = q.get('accent') || A.LOOK.accent;
-  const d = A.LOOK.deeper ? 1 : 0;
-  const col = { 4: ramp(color, 3 - d), 3: ramp(color, 2 - d), 2: ramp(color, 1 - d), 8: ramp(accent, 3), 7: ramp(accent, 2), 6: ramp(accent, 1) };
-  for (const [k, v] of Object.entries(FIXED)) col[k] = C(v);
-  const eye = A.LOOK.eye || 'ink';
-  col.e = ramp(eye, 2); col.E = ramp(eye, 3);
-  const px = new Map();
-  const stamp = (p, ax, ay, flip = false, at = p && p.pivot) => p && p.rows.forEach((r, j) => r.forEach((ch, i) => {
-    if (ch !== '.') px.set((flip ? ax + at[0] - i : ax - at[0] + i) + ',' + (ay - at[1] + j), col[ch]);
-  }));
-  const [bnx, bny] = P.BODY.sockets.neck[0], [hnx, hny] = P.HEAD.sockets.neck[0];
-  const hx = bnx - hnx, hy = bny - hny; // the head's top-left: its neck on the body's
-  const H = (n) => (P.HEAD.sockets[n] || []).map(([x, y]) => [hx + x, hy + y]);
-  const B = (n) => (P.BODY.sockets[n] || []).map(([x, y]) => [x, y]);
-  const [el] = H('earL'), [er] = H('earR'), [t] = B('tail'), [f] = H('face'), [top] = H('top');
-  const ears = () => { stamp(P.EARS, el[0], el[1]); stamp(P.EARS, er[0], er[1], true); };
-  if (!P.EARS.front) ears();
-  const [wl] = B('wingL'), [wr] = B('wingR');
-  const wings = () => { if (P.WINGS && wl) { stamp(P.WINGS, wl[0], wl[1]); stamp(P.WINGS, wr[0], wr[1], true); } };
-  if (!P.WINGS?.front) wings();
-  if (t) stamp(P.TAIL, t[0], t[1]);
-  stamp(P.BODY, 0, 0, false, [0, 0]);
-  const over = (on, ox, oy) => { for (const o of A.OVERLAYS || []) if (o.on === on) stamp(read(o), ox + o.at[0], oy + o.at[1]); };
-  over('body', 0, 0);
-  if (P.WINGS?.front) wings();
-  const [al] = B('armL'), [ar] = B('armR');
-  if (P.ARMS && al) { stamp(P.ARMS, al[0], al[1]); stamp(P.ARMS, ar[0], ar[1], true); }
-  if (P.FEET) for (const [x, y] of B('feet')) stamp(P.FEET, x, y);
-  stamp(P.HEAD, hx, hy, false, [0, 0]);
-  if (P.SPOTS) for (const [x, y] of P.SPOTS.at) stamp(P.SPOTS, hx + x, hy + y);
-  over('head', hx, hy);
-  if (P.EARS.front) ears();
-  stamp(P.HAIR, top[0], top[1]);
-  stamp(P.TOPPER, top[0], top[1]);
-  const F = A.FACE;
-  stamp(P.MARK, f[0] + F.mark[0], f[1] + F.mark[1]);
-  if (P.CHEEK) { stamp(P.CHEEK, f[0] - F.cheeks[0], f[1] + F.cheeks[1]); stamp(P.CHEEK, f[0] + F.cheeks[0], f[1] + F.cheeks[1]); }
-  over('face', hx, hy);
-  stamp(P.EYE, f[0] - F.eyes, f[1]); stamp(P.EYE, f[0] + F.eyes - (P.EYE.mirror ? 1 : 0), f[1], !!P.EYE.mirror);
-  if (P.NOSE) stamp(P.NOSE, f[0], f[1] + F.nose);
-  stamp(P.MOUTH, f[0], f[1] + F.mouth);
-  const cells = [...px].map(([k, c]) => [...k.split(',').map(Number), c]);
-  const xs = cells.map(c => c[0]), ys = cells.map(c => c[1]);
-  return { cells, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
-}
-
 function sheet(w, h, zoom, paint, label) {
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
   cv.style.width = w * zoom + 'px'; cv.style.height = h * zoom + 'px';
@@ -100,30 +39,71 @@ function sheet(w, h, zoom, paint, label) {
   u.fill(PACKED[C('sky.3')]);
   paint((x, y, c) => { if (c && x >= 0 && y >= 0 && x < w && y < h) u[y * w + x] = PACKED[c]; });
   ctx.putImageData(img, 0, 0);
-  const f = document.createElement('figure'); f.append(cv, label); out.append(f);
+  const f = document.createElement('figure'); f.append(cv, label); row.append(f);
+}
+/** One pet by itself on a plain card, standing on a line near the bottom. */
+function card(p, label, zoom = z) {
+  const k = compose(p), W = 112, H = 100, w = k.x1 - k.x0 + 1;
+  sheet(W, H, zoom, (set) => {
+    for (let x = 8; x < W - 8; x++) set(x, H - 5, C('sky.2'));
+    for (const [x, y, c] of k.cells) set(((W - w) >> 1) + x - k.x0, H - 6 - k.lift - (k.y1 - y), c);
+  }, label);
 }
 
-const all = names.map(n => [n, compose(ALL[n])]);
-
-// together in a room, three to a room, standing on the floor line
-const TOP = 96, RH = 190;
-for (let from = 0; from < all.length; from += 3) {
-  const pets = all.slice(from, from + 3);
-  sheet(RW, RH, z, (set) => {
-  const room = homeRoom('day', false, undefined, q.get('room') || undefined);
-  for (let y = 0; y < room.back.h; y++) for (let x = 0; x < RW; x++) set(x, y - TOP, room.back.px[y * RW + x]);
-  pets.forEach(([n, k], i) => {
-    const lift = ALL[n].LOOK.floats || 0;
-    const cx = Math.round((RW * (i + 0.5)) / pets.length), w = k.x1 - k.x0 + 1;
-    for (const [x, y, c] of k.cells) set(cx - (w >> 1) + x - k.x0, HOME_FEET + 2 - TOP - lift - (k.y1 - y), c);
-  });
-  }, 'in a room');
+if (!show || show === 'founders') {
+  section('The six founders');
+  const all = names.map(n => [n, compose(founder(n))]);
+  const TOP = 96, RH = 190;
+  for (let from = 0; from < all.length; from += 3) {
+    const pets = all.slice(from, from + 3);
+    sheet(RW, RH, z, (set) => {
+      const room = homeRoom('day', false, undefined, q.get('room') || undefined);
+      for (let y = 0; y < room.back.h; y++) for (let x = 0; x < RW; x++) set(x, y - TOP, room.back.px[y * RW + x]);
+      pets.forEach(([, k], i) => {
+        const cx = Math.round((RW * (i + 0.5)) / pets.length), w = k.x1 - k.x0 + 1;
+        for (const [x, y, c] of k.cells) set(cx - (w >> 1) + x - k.x0, HOME_FEET + 2 - TOP - k.lift - (k.y1 - y), c);
+      });
+    }, 'in a room');
+  }
+  for (const n of names) card(founder(n), n, z * 2);
 }
 
-// each by itself, larger
-for (const [n, k] of all) {
-  sheet(k.x1 - k.x0 + 9, k.y1 - k.y0 + 9, z * 2, (set) => { for (const [x, y, c] of k.cells) set(x - k.x0 + 4, y - k.y0 + 4, c); },
-    `${n}: ${k.x1 - k.x0 + 1} x ${k.y1 - k.y0 + 1}`);
+if (!show || show === 'forms') {
+  // each line's own parts on every body plan its body has been drawn for
+  for (const n of names) {
+    const base = founder(n), forms = FORMS.filter(f => drawable({ ...base, form: f }));
+    if (forms.length < 2) continue;
+    section(`${n}: its own parts in each body plan`);
+    for (const f of forms) card({ ...base, form: f }, f + (f === base.form ? ' (its own)' : ''));
+  }
+}
+
+if (!show || show === 'swaps') {
+  // every drawn body under each other founder, in that founder's own body plan
+  for (const [body, byForm] of Object.entries(PARTS.body)) {
+    const others = names.filter(n => LINES[n].GENES.body !== body && byForm[LINES[n].FORM]);
+    if (!others.length) continue;
+    section(`the "${body}" body under the other founders`);
+    for (const n of others) card({ ...founder(n), body }, `${n} (${LINES[n].FORM})`);
+  }
+}
+
+if (!show || show === 'mixes') {
+  section('Mixed children (random parts and colours from two founders, on bodies drawn so far)');
+  const rng = makeRng(+(q.get('seed') || 1));
+  const GENES = ['head', 'body', 'ears', 'tail', 'feet', 'wings', 'topper', 'hair', 'eyes', 'mouth', 'nose', 'mark', 'pattern'];
+  let made = 0;
+  for (let tries = 0; tries < 400 && made < 12; tries++) {
+    const a = founder(rng.pick(names)), b = founder(rng.pick(names));
+    if (a.head === b.head) continue;
+    const p = { form: rng.chance(0.5) ? a.form : b.form };
+    for (const g of GENES) p[g] = rng.chance(0.5) ? a[g] : b[g];
+    const cfrom = rng.chance(0.5) ? a : b;
+    Object.assign(p, { color: cfrom.color, deeper: cfrom.deeper, accent: (rng.chance(0.5) ? a : b).accent, eye: (rng.chance(0.5) ? a : b).eye });
+    if (!drawable(p)) continue;
+    card(p, `${p.head} head, ${p.body} body, ${p.form}`);
+    made++;
+  }
 }
 </script>
 </body>

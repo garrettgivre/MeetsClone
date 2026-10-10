@@ -9,6 +9,9 @@
 
 // (deeper: the body is drawn one shade down the ramp, so the fox is a true orange and not peach)
 export const LOOK = { color: 'orange', accent: 'red', deeper: true };
+// The body plan this founder is drawn in, and the gene names of its parts
+export const FORM = 'biped';
+export const GENES = { head: 'fox', body: 'fluffy', ears: 'fox', tail: 'brush', feet: 'paws', hair: 'wisp', eyes: 'sly', nose: 'button', mouth: 'fang', mark: 'flame', pattern: 'muzzle' };
 
 // Head, "fox": 60 x 40. Round on top, widest at the cheek fluff, then a quick taper to a small chin.
 export const HEAD = { rows: [

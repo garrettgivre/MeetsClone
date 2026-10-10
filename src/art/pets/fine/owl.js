@@ -9,6 +9,9 @@
 
 // (deeper: the body is drawn one shade down the ramp, a mid grey, so the white and the dark both show against it)
 export const LOOK = { color: 'slate', accent: 'slate', deeper: true };
+// The body plan this founder is drawn in, and the gene names of its parts
+export const FORM = 'avian';
+export const GENES = { head: 'owl', body: 'feathered', ears: 'tufts', wings: 'feathered', feet: 'talons', topper: 'crest', eyes: 'owl', mouth: 'beak', mark: 'moon', pattern: 'facedisk' };
 
 // Head, "owl": 54 x 42, wide and round with a broad top
 export const HEAD = { rows: [

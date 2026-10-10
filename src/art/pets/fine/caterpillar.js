@@ -6,6 +6,9 @@
 // Extra colours here: 7 8 accent (base, light), l L leaf greens, P blush pink, q tongue red.
 
 export const LOOK = { color: 'green', accent: 'gold' };
+// The body plan this founder is drawn in, and the gene names of its parts
+export const FORM = 'serpent';
+export const GENES = { head: 'bug', body: 'segmented', ears: 'antennae', tail: 'spike', feet: 'nubs', topper: 'leaf', eyes: 'bead', mouth: 'munch', mark: 'dots' };
 
 // Head, "bug": 48 x 44, close to a ball
 export const HEAD = { rows: [

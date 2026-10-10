@@ -8,6 +8,9 @@
 // Extra colours here: 7 8 accent (base, light), e E eye colour (base, light), Y y gold, P blush pink.
 
 export const LOOK = { color: 'blue', accent: 'violet', eye: 'pink', floats: 8 };
+// The body plan this founder is drawn in, and the gene names of its parts
+export const FORM = 'floater';
+export const GENES = { head: 'bell', body: 'bell', ears: 'frills', tail: 'tendrils', wings: 'veils', topper: 'lure', eyes: 'glow', mouth: 'dot', mark: 'spark', pattern: 'glowspots' };
 
 // Head, "bell": 56 x 40, a dome with a scalloped hem in the accent colour
 export const HEAD = { under: { '=': '8' }, rows: [
