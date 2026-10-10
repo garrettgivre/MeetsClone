@@ -204,6 +204,15 @@ export const GROUNDS = {
     ['tuftDeep', 16, 290], ['leafOrange', 60, 296], ['tuftDeep', 104, 286], ['boneBit', 146, 298], ['leafOrange', 188, 288], ['tuftDeep', 230, 300],
     ['leafOrange', 42, 310], ['tuftDeep', 92, 308], ['leafOrange', 170, 310], ['tuftDeep', 218, 310],
   ],
+  // Snowdrift Lodge: untrodden snow with small drifts, glints of ice and a few paw prints (the bits are in props-snow-4.js)
+  snowfield: [
+    ['snowDrift', 18, 170], ['iceGlint', 52, 166], ['snowDrift', 92, 172], ['iceGlint', 128, 168], ['snowTrack', 150, 172], ['snowDrift', 186, 166], ['iceGlint', 226, 172],
+    ['iceGlint', 12, 196], ['snowDrift', 60, 192], ['snowTrack', 100, 200], ['iceGlint', 134, 190], ['snowDrift', 170, 200], ['iceGlint', 212, 194], ['snowDrift', 244, 204],
+    ['snowDrift', 24, 228], ['snowTrack', 62, 232], ['iceGlint', 98, 222], ['snowDrift', 150, 230], ['iceGlint', 196, 224], ['snowTrack', 232, 232],
+    ['iceGlint', 30, 258], ['snowDrift', 78, 264], ['iceGlint', 122, 256], ['snowTrack', 160, 262], ['snowDrift', 208, 256], ['iceGlint', 246, 266],
+    ['snowDrift', 20, 292], ['iceGlint', 60, 296], ['snowTrack', 104, 286], ['snowDrift', 146, 298], ['iceGlint', 188, 288], ['snowDrift', 232, 300],
+    ['iceGlint', 42, 310], ['snowDrift', 96, 310], ['iceGlint', 170, 310],
+  ],
   meadow: [
     ['starBloom', 20, 168], ['tuftDeep', 54, 172], ['lavender', 88, 170], ['starBloom', 126, 166], ['tuftDeep', 160, 172], ['lavender', 196, 168], ['starBloom', 234, 172],
     ['lavender', 12, 198], ['tuftDeep', 44, 194], ['starBloom', 80, 202], ['tuftDeep', 118, 192], ['starBloom', 170, 200], ['lavender', 214, 196], ['tuftDeep', 246, 204],

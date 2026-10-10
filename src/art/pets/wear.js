@@ -256,6 +256,29 @@ export const HATS = {
     '.oo6666666666666666666666666oo..',
     '...oooooooooooooooooooooooo.....',
   ], [16, 20]),
+  // Snowdrift Lodge: a knitted hat with a white bobble, a zigzag band and a ribbed white cuff.
+  bobblehat: P([
+    '...........oooooo...........',
+    '..........owwwwwwo..........',
+    '.........owwwwwwmmo.........',
+    '.........owwwwwwmmo.........',
+    '..........owwwmmmo..........',
+    '.........oooooooooo.........',
+    '.......oo8887777777oo.......',
+    '.....oo888777777777766o.....',
+    '....o8887777777777777666o...',
+    '...o887777777777777776666o..',
+    '..o8w7w7w7w7w7w7w7w7w76666o.',
+    '..ow7w7w7w7w7w7w7w7w7w6666o.',
+    '.o887777777777777777766666o.',
+    '.o877777777777777777766666o.',
+    '.o877777777777777777666666o.',
+    '.oooooooooooooooooooooooooo.',
+    'owowowowowowowowowowomomomoo',
+    'owowowowowowowowowowomomomoo',
+    'owowowowowowowowomomomomomoo',
+    '.oooooooooooooooooooooooooo.',
+  ], [14, 17]),
 };
 
 // ---------- glasses ----------
@@ -588,4 +611,21 @@ export const NECK = {
     '.oKoKKoKooooKoKKoKo.',
     '..o.oo.oo..oo.oo.o..',
   ], [10, 1]),
+  // Snowdrift Lodge: a striped muffler wound once round, one end hanging with a fringe.
+  muffler: P([
+    '.oooooooooooooooooooooo.',
+    'o87w87w87w87w87w76w76w6o',
+    'o87w87w87w87w87w76w76w6o',
+    'o77w77w77w77w77w66w66w6o',
+    '.oooooooooooooooooooooo.',
+    '....o877o...............',
+    '....owwwo...............',
+    '....o877o...............',
+    '....o877o...............',
+    '....owwwo...............',
+    '....o766o...............',
+    '....o766o...............',
+    '....ooooo...............',
+    '....o.o.o...............',
+  ], [12, 0]),
 };

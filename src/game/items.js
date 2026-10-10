@@ -88,5 +88,7 @@ export const CLOTHES = {
   bubbles:    { name: 'Bubble Beads',   slot: 'body', price: 110, color: 'sky',    set: 'aqua' },
   witchhat:   { name: 'Witch Hat',      slot: 'head', price: 130, color: 'violet', set: 'hollow' },
   batbow:     { name: 'Bat Bow Tie',    slot: 'body', price: 90,  color: 'slate',  set: 'hollow' },
+  bobblehat:  { name: 'Bobble Hat',     slot: 'head', price: 110, color: 'red',    set: 'snow' },
+  muffler:    { name: 'Striped Muffler', slot: 'body', price: 100, color: 'red',   set: 'snow' },
   shoes:    { name: 'Shoes',        slot: 'feet', price: 70,  color: 'red' },
 };

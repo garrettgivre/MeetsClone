@@ -125,6 +125,15 @@ export const SETS = {
       garden: { ground: 'Graveyard Grass', horizon: 'Graveyard Rise', fence: 'Iron Railings', tree: 'Tree with a Face', feature: 'Great Pumpkin', flowers: 'Pumpkin Patch', play: 'Leaf Pile', seat: 'Bat Bench' },
     },
   },
+  snow: {
+    name: 'Snowdrift Lodge',
+    pieces: {
+      bedroom: { wall: 'Snowflake Paper', floor: 'Pale Pine Boards', window: 'Frosted Window', picture: 'Mountain View', shelf: 'Chalet Shelf', lamp: 'Knitted Lamp', bed: 'Sleigh Bed', rug: 'Sheepskin Rug', corner: 'Sledge and Present', plant: 'Little Fir' },
+      kitchen: { wall: 'Knitting Paper', floor: 'Red Checks', window: 'Wreath Window', stove: 'Wood Burner', counter: 'Heart Cupboard', shelf: 'Kitchen Chalet Shelf', table: 'Knitted Cloth Table', seat: 'Sheepskin Stool' },
+      bathroom: { wall: 'Ice Tiles', floor: 'Frost Tiles', window: 'Bath Wreath Window', mirror: 'Icicle Mirror', bath: 'Knit Band Tub', toilet: 'Igloo Toilet', cabinet: 'Heart Cabinet', mat: 'Knitted Mat', towels: 'Ski Towel Rack', plant: 'Holly Pot' },
+      garden: { ground: 'Snowfield', horizon: 'White Peaks', fence: 'Snowy Rail Fence', tree: 'Snowy Fir', feature: 'Snowman', flowers: 'Snowdrops', play: 'Snow Fort', seat: 'Sledge Bench' },
+    },
+  },
 };
 
 /** An item's id. (Bedroom pieces came first and keep their short ids, so saves made then still work.) */
