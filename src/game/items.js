@@ -16,6 +16,14 @@ export const FOODS = {
   grapejelly:  { name: 'Grape Jelly',   kind: 'meal',  taste: 'fruity', price: 60, color: 'violet' },
   mintpudding: { name: 'Mint Pudding',  kind: 'meal',  taste: 'sweet',  price: 60, color: 'mint' },
   peachbun:    { name: 'Peach Bun',     kind: 'meal',  taste: 'fruity', price: 60, color: 'pink' },
+  // cooked at home from the garden and the pantry (cooking.js), never sold: `rich` dishes fill more and cheer the pet
+  tomatotart:     { name: 'Tomato Tart',     kind: 'meal', taste: 'savory', price: 0, cooked: true, rich: true },
+  gardenomelette: { name: 'Garden Omelette', kind: 'meal', taste: 'savory', price: 0, cooked: true, rich: true },
+  carrotcake:     { name: 'Carrot Cake',     kind: 'meal', taste: 'sweet',  price: 0, cooked: true, rich: true },
+  berrytart:      { name: 'Berry Tart',      kind: 'meal', taste: 'sweet',  price: 0, cooked: true, rich: true },
+  berryshake:     { name: 'Berry Shake',     kind: 'meal', taste: 'fruity', price: 0, cooked: true, rich: true },
+  pumpkinsoup:    { name: 'Pumpkin Soup',    kind: 'meal', taste: 'spicy',  price: 0, cooked: true, rich: true },
+  oddstew:        { name: 'Odd Stew',        kind: 'meal', taste: 'none',   price: 0, cooked: true },
   // snacks: raise happiness, too many cause a toothache
   cookie:      { name: 'Cookie',        kind: 'snack', taste: 'sweet',  price: 15 },
   candy:       { name: 'Candy',         kind: 'snack', taste: 'sweet',  price: 10 },

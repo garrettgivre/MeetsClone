@@ -11,6 +11,8 @@ import {
 import { FOODS, TOYS, CLOTHES, SLOTS, COLOR_FOOD_MEALS } from './items.js';
 import { discover } from './book.js';
 import { newDecor } from './decor.js';
+import { grant } from './wishes.js';
+import { newGarden } from './garden.js';
 
 export const MIN = 60 * 1000;
 export const HOUR = 60 * MIN;
@@ -103,6 +105,10 @@ export function newGame(now = Date.now(), rng = defaultRng) {
     wardrobe: ['bow', 'scarf'],
     decor: newDecor(),   // room decorations: what is owned, and each room's layout (decor.js)
     room: 'bedroom',     // the room on show
+    garden: newGarden(), // the vegetable bed (garden.js)
+    pantry: {},          // ingredients for cooking: { id: how many } (cooking.js)
+    recipes: [],         // dishes cooked at least once
+    wishes: null,        // today's wishes (wishes.js)
     settings: { sound: true, speed: 1, alerts: false, cheats: false, lcd: true },
     generation: 1,
     album: [],
@@ -403,13 +409,14 @@ export function feed(game, foodId, rng = defaultRng) {
   }
 
   if (!food.free) game.inventory[foodId]--;
+  grant(game, 'eat', foodId);
   pet.weight += food.kind === 'meal' ? MEAL_WEIGHT : SNACK_WEIGHT;
   const fav = food.taste === pet.phenotype.taste;
   let liked = fav;
   let disliked = foodId === 'riceball' && pet.stage === 'adult' && !fav;
   if (food.kind === 'meal') {
-    pet.hunger = Math.min(4, pet.hunger + (fav ? 2 : 1));
-    if (fav) pet.happy = Math.min(4, pet.happy + 1);
+    pet.hunger = Math.min(4, pet.hunger + (fav ? 2 : 1) + (food.rich ? 1 : 0)); // (a home-cooked dish fills more)
+    if (fav || food.rich) pet.happy = Math.min(4, pet.happy + 1);
   } else {
     pet.happy = Math.min(4, pet.happy + (fav ? 2 : 1));
     pet.snackTimes = pet.snackTimes.filter(t => game.simTime - t < 3 * HOUR);
@@ -442,6 +449,7 @@ export function play(game, toyId) {
   if (pet.sick) return { ok: false, refuse: true, msg: "Doesn't feel well." };
   const fav = favouriteToy(pet) === toyId;
   pet.happy = Math.min(4, pet.happy + (fav ? 2 : 1));
+  grant(game, 'play', toyId);
   return { ok: true, liked: fav };
 }
 
@@ -461,6 +469,7 @@ export function bathe(game) {
   const dirty = isDirty(pet);
   pet.dirt = 0;
   pet.happy = Math.min(4, pet.happy + (dirty ? 1 : 0.5));
+  grant(game, 'bath');
   return { ok: true, msg: dirty ? 'So fresh and clean!' : 'Splish splash!' };
 }
 
@@ -528,6 +537,7 @@ export function comfort(game) {
 export function finishGame(game, { points = 0, good = false, skill = null } = {}) {
   const pet = game.pet;
   earn(game, points);
+  grant(game, 'game');
   game.learned = null; // what the last game taught: { skill, level, up }
   if (canAct(pet)) {
     if (good) pet.happy = Math.min(4, pet.happy + 1);

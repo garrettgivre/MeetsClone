@@ -448,7 +448,7 @@ export const friendship = (game, locId) => townState(game).friends[locId] || 0;
 // or { id, label, ui } for actions the scene handles itself (shops, games...).
 // Results: { ok, msg, anim?: 'happy'|'eat'|'sad'|'dizzy'|'scold' }
 
-const meals = Object.keys(FOODS).filter(id => FOODS[id].kind === 'meal' && !FOODS[id].free);
+const meals = Object.keys(FOODS).filter(id => FOODS[id].kind === 'meal' && !FOODS[id].free && !FOODS[id].cooked);
 const snacks = Object.keys(FOODS).filter(id => FOODS[id].kind === 'snack');
 
 /** The cafe's dish of the day (it changes every day). */

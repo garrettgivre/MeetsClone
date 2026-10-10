@@ -17,6 +17,9 @@ import { WardrobeScene, clothesIcon } from './wardrobe.js';
 import { DecorateScene } from './decorate.js';
 import { DECOR, SETS, ROOMS, owns, setOffer, buySet, buyDecor } from '../game/decor.js';
 import { VERSION } from '../version.js';
+import { CROPS, gardenOf, stageOf, wateredToday, plant, water, harvest } from '../game/garden.js';
+import { INGREDIENTS, STAPLES, RECIPES, FLOP, pantryOf, knows, canCook, buyStaple } from '../game/cooking.js';
+import { todaysWishes, wishText, WISH_POINTS, WISH_BONUS } from '../game/wishes.js';
 import { debugMenu } from './debug.js';
 import * as notify from '../notify.js';
 
@@ -44,9 +47,79 @@ function food(app, home) {
     icon: FOOD_ART[id],
     action: () => { app.home(); home.doFeed(id); },
   });
-  app.push(new ListMenu(app, 'FOOD', [...meals.map(row), ...snacks.map(row)], {
+  const cookRow = pet.stage === 'baby' ? [] : [{ label: 'Cook...', right: '▶', icon: FOOD_ART.gardenomelette, action: () => cookMenu(app, home) }];
+  app.push(new ListMenu(app, 'FOOD', [...cookRow, ...meals.map(row), ...snacks.map(row)], {
     footer: 'MEAL = HUNGER  SNACK = HAPPY',
   }));
+}
+
+/** Cooking: the recipes found so far, and trying two ingredients together to find another. */
+function cookMenu(app, home) {
+  const g = app.game, pantry = pantryOf(g);
+  const stocked = () => Object.keys(INGREDIENTS).filter(id => pantry[id] > 0);
+  const go = (a, b) => { app.home(); home.doCook(a, b); };
+  const pick = (first = null) => {
+    const ids = stocked().filter(id => id !== first || pantry[id] > 1);
+    if (!ids.length) { app.sfx('nope'); app.toast(first ? 'Nothing else to put with it!' : 'The pantry is bare. The garden grows things, and the food shops sell flour, cream and eggs.', 3200); return; }
+    app.push(new ListMenu(app, first ? `${INGREDIENTS[first].name.toUpperCase()} AND...` : 'FIRST, SOME...', ids.map(id => ({
+      label: INGREDIENTS[id].name, right: 'x' + pantry[id], action: () => (first ? go(first, id) : pick(id)),
+    })), { footer: 'TWO THINGS MAKE A DISH' }));
+  };
+  const known = Object.keys(RECIPES).filter(d => knows(g, d));
+  app.push(new ListMenu(app, 'COOK', [
+    ...known.map(d => ({
+      label: FOODS[d].name, icon: FOOD_ART[d],
+      right: canCook(g, d) ? 'COOK' : 'NEED ' + RECIPES[d].filter(id => !(pantry[id] > 0)).map(id => INGREDIENTS[id].name.toUpperCase()).join(', '),
+      action: () => { if (canCook(g, d)) go(...RECIPES[d]); else { app.sfx('nope'); app.toast(`${FOODS[d].name}: ${RECIPES[d].map(id => INGREDIENTS[id].name.toLowerCase()).join(' and ')}.`, 2400); } },
+    })),
+    { label: 'Try a new mix', right: '▶', action: () => pick() },
+  ], { footer: () => `${known.length}/${Object.keys(RECIPES).length} RECIPES FOUND` }));
+}
+
+/** The vegetable bed: plant, water and pick. (The home screen opens this out in the garden.) */
+export function gardenMenu(app) {
+  const g = app.game, garden = gardenOf(g);
+  const again = () => { app.pop(); gardenMenu(app); app.save(); };
+  const seeds = (i) => app.push(new ListMenu(app, 'SEEDS', Object.keys(CROPS).map(id => ({
+    label: CROPS[id].name, right: CROPS[id].seed,
+    action: () => {
+      const r = plant(g, i, id);
+      if (!r.ok) { app.sfx('nope'); app.toast(r.msg); return; }
+      app.sfx('coin'); app.pop(); app.toast(`Planted a ${CROPS[id].name.toLowerCase()} seed. Water it each day!`, 2400); again();
+    },
+  })), { footer: () => `POINTS: ${g.points}` }));
+  const rows = garden.plots.map((p, i) => {
+    if (!p) return { label: `Plot ${i + 1}: empty`, right: 'PLANT', action: () => seeds(i) };
+    const c = CROPS[p.crop];
+    if (stageOf(p) === 'ripe') {
+      return { label: `${c.name}: ripe!`, right: 'PICK', action: () => {
+        const r = harvest(g, i);
+        if (!r.ok) { app.sfx('nope'); app.toast(r.msg); return; }
+        app.sfx('happy'); app.toast(`Picked ${r.count} for the pantry: ${c.name.toLowerCase()}!`, 2400); again();
+      } };
+    }
+    return { label: `${c.name}  ${p.growth}/${c.days}`, right: wateredToday(g, p) ? 'WATERED' : 'WATER', action: () => {
+      const r = water(g, i);
+      if (!r.ok) { app.sfx('nope'); app.toast(r.msg); return; }
+      app.sfx('clean'); app.toast(r.ripe ? `The ${c.name.toLowerCase()} is ripe!` : 'Watered!', 1800); again();
+    } };
+  });
+  rows.push({ label: 'Water everything', right: '▶', action: () => {
+    const r = water(g);
+    if (!r.ok) { app.sfx('nope'); app.toast(r.msg); return; }
+    app.sfx('clean'); app.toast(r.ripe ? 'Watered. Something is ripe!' : 'Watered!', 1800); again();
+  } });
+  app.push(new ListMenu(app, 'VEGETABLE BED', rows, { footer: 'WATER ONCE A DAY TO GROW' }));
+}
+
+/** Today's wishes. */
+function wishMenu(app) {
+  const w = todaysWishes(app.game);
+  if (!w) { app.sfx('nope'); app.toast('Too little to wish for much yet.'); return; }
+  app.push(new ListMenu(app, 'WISHES FOR TODAY', w.list.map(x => ({
+    label: wishText(x), right: x.done ? 'DONE' : `+${WISH_POINTS}`,
+    action: () => app.toast(x.done ? 'That one came true!' : 'Make it come true today.', 1600),
+  })), { footer: `ALL OF THEM: +${WISH_BONUS} MORE` }));
 }
 
 function games(app) {
@@ -64,7 +137,10 @@ function items(app, home) {
     label: TOYS[id].name, icon: TOY_ART[id],
     action: () => { app.home(); home.doPlay(id); },
   })), { footer: 'BUY MORE IN TOWN' }));
+  const wishes = todaysWishes(g);
   app.push(new ListMenu(app, 'ITEMS', [
+    ...(wishes ? [{ label: 'Wishes', icon: ICONS.status, right: `${wishes.list.filter(x => x.done).length}/${wishes.list.length}`, action: () => wishMenu(app) }] : []),
+    { label: 'Vegetable bed', icon: FOOD_ART.fruitbowl, right: '▶', action: () => { app.home(); home.goRoom('garden', () => gardenMenu(app)); } },
     { label: 'Toys', icon: TOY_ART.ball, right: g.toys.length, action: toys },
     { label: 'Wardrobe', icon: ICONS.items, right: g.wardrobe.length, action: () => app.push(new WardrobeScene(app)) },
     { label: 'Decorate', icon: ICONS.lights, right: '▶', action: () => { app.home(); app.push(new DecorateScene(app)); } },
@@ -112,7 +188,7 @@ export function shopList(app, kind, title = null) {
   const footer = () => `POINTS: ${g.points}`;
   if (kind === 'decor') return decorShop(app);
   if (kind === 'food' || kind === 'snacks') {
-    const ids = Object.keys(FOODS).filter(id => !FOODS[id].free && (kind === 'food' || FOODS[id].kind === 'snack'));
+    const ids = Object.keys(FOODS).filter(id => !FOODS[id].free && !FOODS[id].cooked && (kind === 'food' || FOODS[id].kind === 'snack'));
     return new ListMenu(app, title || (kind === 'snacks' ? 'TREATS' : 'FOOD'), ids.map(id => ({
       label: FOODS[id].name, right: FOODS[id].price, icon: FOOD_ART[id],
       action: () => {
@@ -120,7 +196,15 @@ export function shopList(app, kind, title = null) {
         if (r.ok) { app.sfx('coin'); app.toast(`Bought ${FOODS[id].name}! (x${g.inventory[id]})`, 1400); app.save(); }
         else { app.sfx('nope'); app.toast(r.msg); }
       },
-    })), { footer });
+    })).concat(kind !== 'food' ? [] : Object.keys(STAPLES).map(id => ({
+      // for the pantry: things to cook with
+      label: `${STAPLES[id].name} (to cook)`, right: STAPLES[id].price,
+      action: () => {
+        const r = buyStaple(g, id);
+        if (r.ok) { app.sfx('coin'); app.toast(`${STAPLES[id].name} for the pantry! (x${pantryOf(g)[id]})`, 1400); app.save(); }
+        else { app.sfx('nope'); app.toast(r.msg); }
+      },
+    }))), { footer });
   }
   if (kind === 'toys') {
     return new ListMenu(app, title || 'TOYS', Object.keys(TOYS).map(id => ({

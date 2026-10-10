@@ -4,9 +4,16 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.35.0, 10 October 2026)
+## Where things stand (v0.36.0, 10 October 2026)
 
-Everything on `main` is committed and pushed. `npm test` passes (95 tests).
+Everything on `main` is committed and pushed. `npm test` passes (99 tests).
+
+**v0.36.0: daily wishes, a vegetable bed and cooking.** I listed ways to widen the game and recommended these three; the owner: "Sure do daily wishes and cooking and gardening." Rules are in three files with no drawing in them, tested by `tests/life.test.js`.
+- **Wishes** (`src/game/wishes.js`): each day a child, teen or adult has three (`todaysWishes`, rolled from the pet's id and the date, so they are the same all day): eat a named food, play with a named toy, have a bath, play a game, go into town, cook, plant, water. `grant(game, kind, id)` is called from `feed`, `play`, `bathe` and `finishGame` in `pet.js`, from `PlaceScene`, and from the garden and cooking rules; it pays `WISH_POINTS` (25) and a point of happiness, and `WISH_BONUS` (50) when all three are done, and puts a line in `game.bookNews` for the home screen to read out. The home screen announces the day's wishes once (`fresh`). Items > Wishes lists them.
+- **The vegetable bed** (`src/game/garden.js`): three plots in the garden. A seed is paid for as it is planted (`CROPS`: tomato, carrot, strawberry, pumpkin); a plant grows one step each day it is watered and is ripe after `days` waterings; picking it puts its crop in `game.pantry`. Drawn by `veggieBed(plants, sky, dark)` in `town.js` (the bed and the plants are props in `src/art/props-garden.js`: `veggieBed`, `sprout`, `leafy`, `ripeTomato` and so on), set down at `VEG_BED` between the tree and the centrepiece by `home.js`, not baked into the room picture. Tap it in the garden, or Items > Vegetable bed, for `gardenMenu` (in `menus.js`).
+- **Cooking** (`src/game/cooking.js`): the pantry holds crops and three staples (flour, cream, egg) sold at the end of the food shops' lists. Two ingredients make a dish: six pairs are `RECIPES`, anything else is an odd stew. A dish is a food (`cooked` in `FOODS`, never sold; `rich` ones fill a point more and cheer the pet) with a sprite in `src/art/dishes.js`. Food > Cook lists the recipes found and "Try a new mix"; `doCook` in `home.js` walks to the kitchen and plays a `cook` animation at the stove.
+- **Seen:** the bed in the garden with plants at each stage, all seven dishes and all seven garden props enlarged, the wish announcement, and one frame of cooking, in the browser pane; I ran the wish list, the garden menu (plant, water, pick), a cook from the pantry and the shop list through the real menus and they raised no errors. Not on a phone.
+- **Thin spots:** the bed is small and sits a little behind the tree in sets with wide trees; it does not show while a room slides in; nothing waters by itself and a plant never wilts; ingredients have no icons; the cook animation is the pet waving its arms by the stove with bubbles for steam; wishes never ask for a specific place in town or a specific dish to cook; the `town` wish is granted by entering any place; there is no streak or reward beyond points.
 
 **v0.35.0: clothes at the fine size, and two pieces for each furniture set.** The owner: "update the clothes to the new pixel density and then add clothes for each decoration theme in the game."
 - **One file, `src/art/pets/wear.js`**, holds every drawn piece of clothing, typed by hand at the fine size with the sprite key's letters (`5 6 7 8` the item's colour). The same drawing goes on the pet and is the item's icon in the shop and wardrobe. `src/art/pets/clothes.js` (the old double-size grids) and `src/art/wardrobe-icons.js` are gone; the six hats, the bandage, the sticker, the bow tie and the necktie are the fine drawings that file already had as icons, with their pivots set for wearing.
@@ -143,7 +150,7 @@ What is left of it, all small:
 ## Run, test, deploy
 
 ```bash
-npm test          # node --test tests/*.test.js (Node 22, no deps): 95 tests, all must pass
+npm test          # node --test tests/*.test.js (Node 22, no deps): 99 tests, all must pass
 npm start         # static server on http://localhost:5173 (http-server, cache off)
 ```
 
@@ -185,7 +192,7 @@ src/art/props-home.js      the home room's props, hand-pixelled; registers them 
 src/art/props-travel.js    the bus, train engine and carriage, balloon and jump-rope post
 src/art/props-decor.js     furniture for the room sets (it pulls in every set's files: props-beds, props-seaside, props-modern, props-starry*, props-forest*, surfaces, ground-bits);  src/art/decor-art.js  how each decor item is drawn
 src/art/town.js            the drawing kit, the 23 town backdrops (SCENES) and the home room (homeRoom)
-tests/                     art, book, care, decor, discipline, font, genetics, pet, save, town
+tests/                     art, book, care, decor, discipline, font, genetics, life (wishes, garden, cooking), pet, save, town
 tools/                     review pages (parts, founders, gallery, compare, lab, town, props, icons, wardrobe), dump.mjs, the sprite editor, old art scripts
 docs/STYLE.md              art rules;  docs/PLAN.md  the original plan (its Architecture section is out of date);  docs/RESEARCH.md  notes on the device
 ```

@@ -18,6 +18,7 @@ import {
 import { skillLevel, SKILL_LABEL } from '../game/pet.js';
 import { FOODS } from '../game/items.js';
 import { shopList } from './menus.js';
+import { grant } from '../game/wishes.js';
 import { JumpRopeScene } from './jumprope.js';
 import { WhichWayScene, SnackCatchScene, CopyMeScene } from './minigames.js';
 import { MatchmakerScene } from './family.js';
@@ -176,6 +177,7 @@ export class PlaceScene {
   constructor(app, locId) {
     this.app = app;
     this.loc = LOCATION[locId];
+    grant(app.game, 'town'); // (a wish to go into town is granted by arriving anywhere)
     this.sel = 0;
     this.anim = null;
     this.t = 0;

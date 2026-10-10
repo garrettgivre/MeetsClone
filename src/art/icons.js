@@ -1,5 +1,6 @@
 // UI icons, foods, toys and status symbols.
 import { hdSprite } from '../engine/sprite.js';
+import { DISH_ART } from './dishes.js';
 
 // ---------- Menu icons: hi-res sprites, in their own file ----------
 export { MENU_ICONS as ICONS } from './menu-icons.js';
@@ -1071,3 +1072,6 @@ export const TOY_ART = {
     '.ooooooooooooooooo..',
   ], FINE),
 };
+
+// the dishes cooked at home (src/art/dishes.js) are foods like any other
+Object.assign(FOOD_ART, DISH_ART);

@@ -13,8 +13,12 @@ import { drawRoom as drawRoomHD, drawRoomFront, drawSkyBars, drawSlide, skyState
 import { layoutOf, roomOf, nextRoom, ROOMS, HOUSE } from '../game/decor.js';
 import { PROPS } from '../art/props.js';
 import { DECOR_ART } from '../art/decor-art.js';
-import { tone, edgeColours, bedRim, bathRim, playRim, BED, BATH, TOILET, HOME_FEET } from '../art/town.js';
+import { tone, edgeColours, bedRim, bathRim, playRim, veggieBed, VEG_BED, BED, BATH, TOILET, HOME_FEET } from '../art/town.js';
 import { EndingScene } from './ending.js';
+import { gardenMenu } from './menus.js';
+import { gardenOf, stageOf } from '../game/garden.js';
+import { cook, FLOP } from '../game/cooking.js';
+import { todaysWishes } from '../game/wishes.js';
 
 const TOP = ['status', 'food', 'clean', 'medicine', 'lights'];
 const BOTTOM = ['games', 'items', 'town', 'family', 'settings'];
@@ -182,6 +186,7 @@ export class HomeScene {
         const dir = x < 12 ? -1 : 1;
         if (nextRoom(roomOf(this.game), dir)) { this.stepRoom(dir); return true; }
       }
+      if (roomOf(this.game) === 'garden' && Math.abs(x - VEG_BED.x / 2) < 13 && Math.abs(y - (room.y + VEG_BED.y / 2 - 6)) < 12) { gardenMenu(this.app); return true; }
       if (pet && pet.poop > 0 && x > 72 && y > ROOM_FLOOR - 20 && pet.lights && canAct(pet)) { this.sweep(); return true; }
       if (Math.abs(x - this.petX) < 16 && y > ROOM_FLOOR - 40 && y < ROOM_FLOOR + 4) { this.patPet(); return true; }
     }
@@ -252,6 +257,23 @@ export class HomeScene {
     if (!r.ok) { app.sfx('nope'); if (r.msg) app.toast(r.msg); return; }
     app.sfx('happy');
     this.play({ type: 'toy', dur: 2200, toy: toyId, done: () => { if (r.liked) app.toast('Its favourite toy!'); } });
+  }
+
+  /** Cook two things from the pantry, at the stove in the kitchen. */
+  doCook(a, b) { this.goRoom('kitchen', () => this.cookNow(a, b)); }
+  cookNow(a, b) {
+    const app = this.app;
+    const r = cook(this.game, a, b);
+    if (!r.ok) { app.sfx('nope'); if (r.msg) app.toast(r.msg); return; }
+    app.sfx('select');
+    this.play({
+      type: 'cook', dur: 2600, dish: r.dish, done: () => {
+        app.sfx(r.dish === FLOP ? 'back' : r.isNew ? 'grow' : 'happy');
+        app.toast(r.dish === FLOP ? 'Hmm. Those made an odd stew...' : r.isNew ? `A new recipe: ${r.name}! It is in the food menu.` : `${r.name} is ready!`, 3000);
+        this.play({ type: r.dish === FLOP ? 'refuse' : 'happy', dur: 900 });
+        app.save();
+      },
+    });
   }
 
   sweep() {
@@ -359,6 +381,8 @@ export class HomeScene {
     }
     this.fx = this.fx.filter(f => (f.life -= dt) > 0);
     // Gene Book finds, announced one at a time once nothing else is showing
+    const wishes = pet && !pet.asleep ? todaysWishes(this.game) : null;
+    if (wishes?.fresh) { wishes.fresh = false; (this.game.bookNews ||= []).push(`${pet.name} has ${wishes.list.length} wishes today! See Items.`); }
     const news = this.game.bookNews;
     if (news?.length && !this.anim && this.app.scene === this && !this.app.toasts.length) {
       this.app.toast(news.shift(), 2600);
@@ -422,6 +446,11 @@ export class HomeScene {
     }
     this.drawRoom(scr);
 
+    // the vegetable bed, out in the garden, with whatever is growing in it
+    if (roomOf(game) === 'garden') {
+      const bed = veggieBed(gardenOf(game).plots.map(p => p && [p.crop, stageOf(p)]), skyState(new Date(game.simTime).getHours()), lightsOff);
+      scr.bitmap(bed.bm, bed.x / 2, LAYOUT.room.y + (bed.y >> 1));
+    }
     // poop
     if (pet && !lightsOff && this.anim?.type !== 'clean-done') {
       for (let i = 0; i < (pet.poop || 0); i++) {
@@ -512,6 +541,13 @@ export class HomeScene {
           flip = false;
           arms = 'out';
           expr = Math.floor(a.t / 280) % 2 ? 'chew' : 'eat';
+          break;
+        case 'cook':
+          // at the stove, stirring
+          this.petX = this.targetX = 50;
+          flip = false;
+          expr = k > 0.8 ? 'happy' : 'idle';
+          arms = Math.floor(a.t / 220) % 2 ? 'out' : 'up';
           break;
         case 'scold':
           expr = 'sad';
@@ -645,6 +681,15 @@ export class HomeScene {
           scr.draw(spr, x, y, {});
           scr.noClip();
         }
+        break;
+      }
+      case 'cook': {
+        // steam off the stove, then the dish held up
+        for (let i = 0; i < 3; i++) {
+          const ph = (a.t / 900 + i * 0.33) % 1;
+          scr.draw(BUBBLE, 24 + i * 6 + Math.round(Math.sin(ph * 6 + i) * 2), fy - 44 - Math.round(ph * 26), { frame: i % 3 });
+        }
+        if (k > 0.8) { const spr = FOOD_ART[a.dish] || FOOD_ART.riceball; scr.draw(spr, Math.round(this.petX - spr.w / 2), fy - 46 - spr.h, {}); }
         break;
       }
       case 'toy': {

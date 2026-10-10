@@ -166,6 +166,27 @@ function rimOf(a, at, dark, sky = null) {
   return cache.get(key);
 }
 
+export const VEG_BED = { x: 112, y: 213 }; // where the vegetable bed stands in the garden (the middle of its foot)
+const RIPE = { tomato: 'ripeTomato', carrot: 'ripeCarrot', strawberry: 'ripeStrawberry', pumpkin: 'ripePumpkin' };
+/**
+ * The vegetable bed as it stands today, in the garden's light: { bm, x, y } in hi-res room pixels.
+ * `plants` has one entry per plot: null, or [crop, 'sprout' | 'leafy' | 'ripe'].
+ */
+export function veggieBed(plants, sky, dark = false) {
+  const key = `veg:${JSON.stringify(plants)}:${sky}:${dark}`;
+  if (!cache.has(key)) {
+    const bed = PROPS.veggieBed, room = 20, w = bed.w, h = bed.h + room, bm = makeBitmap(w, h, true);
+    const put = (name, cx, base) => stampProp((x, y, c) => { if (x >= 0 && y >= 0 && x < w && y < h) bm.px[y * w + x] = C(c); }, name, cx, base, {});
+    put('veggieBed', bed.at[0], h - 1);
+    plants.forEach((pl, i) => { if (pl) put(pl[1] === 'ripe' ? RIPE[pl[0]] : pl[1], 8 + i * 16, room + 3); }); // (each stands on the soil of its third of the bed)
+    const lut = timeLut(sky);
+    if (lut) for (let p = 0; p < bm.px.length; p++) bm.px[p] = lut[bm.px[p]];
+    if (dark) dim(bm);
+    cache.set(key, { bm, x: VEG_BED.x - (w >> 1), y: VEG_BED.y - h + 1 });
+  }
+  return cache.get(key);
+}
+
 /** Lights off: the room keeps its shapes but sinks to two night shades. */
 function dim(bm) {
   const night = C('night'), shade = C('shade');
