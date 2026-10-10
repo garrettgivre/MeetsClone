@@ -136,8 +136,12 @@ export function drawSkyBars(scr, simTime, appTime, lightsOff, ground = null, air
     if (lightsOff && y0 > 0) {
       // lights out: the ground goes as dark as the room's floor, the same two night shades
       scr.noClip();
-      scr.hrect(0, y0, BW, y1 - y0, C('night'));
-      scr.hdither(0, y0 / HD, W, (y1 - y0) / HD, C('shade'), 1);
+      // (only the row of icons: the bar under it, where the buttons come up over the screen, is the plain dark of
+      // the page below, so the pattern does not stop part-way down the buttons)
+      const split = Math.min(y1, LAYOUT.info.y * HD);
+      scr.hrect(0, y0, BW, split - y0, C('night'));
+      scr.hdither(0, y0 / HD, W, (split - y0) / HD, C('shade'), 1);
+      scr.hrect(0, split, BW, y1 - split, C('ink'));
       continue;
     }
     if (ground && y0 > 0) {

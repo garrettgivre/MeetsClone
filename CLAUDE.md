@@ -4,9 +4,11 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.37.1, 10 October 2026)
+## Where things stand (v0.37.2, 10 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (100 tests).
+
+**v0.37.2: lights out, two fixes.** The owner sent a phone screenshot: "When turning the light off sometimes there's a box around the pet, and the night dithering effect goes down too low below the screen." (1) The pet was dimmed by a 64 x 66 square of dither laid over it, which also fell on the room behind and, when its checker lined up with the dark room's own, blacked out a box. `drawPet` in `home.js` now dims only the pet's own pixels. (2) With the lights out the bars under the room were dithered all the way down, and the pattern stopped part-way down the buttons where the screen ends and the plain page begins. `drawSkyBars` in `room.js` now dithers only the row of icons and fills the bar under it in plain `ink`, the page's colour. Seen at 412 x 883 in the browser pane with the lights out; not on a phone.
 
 **v0.37.1: special days by date; all of a day's news can be read.** The owner: "Instead of every Wednesday or every Saturday etc, make them certain days of the month. Or every other day of the week [meaning, they explained, every other week: 'every even Tuesday']. It looks too boring on the calendar otherwise lol. Fix the +N more I want to be able to see all for the day". Special days are dates now (`DATES` in `days.js`): market on the 3rd, 13th and 23rd, games on the 7th, 17th and 27th, visiting on the 10th, 20th and 30th; the full moon as before. (The notes for v0.37.0 below still say Saturday, Wednesday and Sunday.) News page one shows as many of the day's items as fit from `top`; A moves down a screenful and back to the top after the last ("A: MORE (9)", then "A: TOP"), B turns to the calendar; a tap on the list moves it on while there is more, a tap on the strip under it turns the page. Seen in the browser pane: two screenfuls of a busy day and the month with its marks scattered.
 

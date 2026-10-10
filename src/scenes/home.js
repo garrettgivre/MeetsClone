@@ -489,8 +489,6 @@ export class HomeScene {
     this.drawAnimOverlay(scr, t);
 
     if (lightsOff) {
-      scr.hdither(Math.round(this.petX) - 32, ROOM_FLOOR - 64 - this.bedLift, 64, 66, COL.night);
-
       if (pet?.asleep) {
         const zy = ROOM_FLOOR - 44 - this.bedLift - Math.floor((t / 120) % 8);
         scr.draw(ZZZ, this.petX + 10, zy, { solid: COL.white });
@@ -634,8 +632,15 @@ export class HomeScene {
     const bm = composePet(pet.phenotype, pet.stage, { expr, arms, step, t, wag, ear, flap, bob: moving || pet.asleep ? 0 : bob, gender: pet.gender, wear: pet.wear, species: pet.species });
     const x = Math.round(this.petX - CANVAS / 2) + dx;
     dy -= this.bedLift;
-    if (lightsOff) scr.bitmap(bm, x, baseY + dy, flip, 0);
-    else scr.bitmap(bm, x, baseY + dy, flip, solid);
+    scr.bitmap(bm, x, baseY + dy, flip, lightsOff ? 0 : solid);
+    if (lightsOff) {
+      // in the dark the pet is dimmed too: every other pixel of the pet itself goes to night. (This used to be a
+      // square of dither laid over the pet, which showed as a dark box on the room behind it.)
+      const X = x * 2, Y = (baseY + dy) * 2;
+      for (let j = 0; j < bm.h; j++) for (let i = 0; i < bm.w; i++) {
+        if (bm.px[j * bm.w + i] && ((i + j) & 1) === 0) scr.hpset(X + (flip ? bm.w - 1 - i : i), Y + j, COL.night);
+      }
+    }
     if (inBed) { const rim = bedRim(layoutOf(this.game), lightsOff); scr.bitmap(rim.bm, rim.x / 2, LAYOUT.room.y + (rim.y >> 1)); }
     if (fun && !fun.on) {
       // the near side of the sandpit or pool, over the pet's feet
