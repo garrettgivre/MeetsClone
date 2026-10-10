@@ -184,7 +184,7 @@ export function build(p, stage = 'adult', pose = {}) {
   stamp(eye, exL, f[1]); stamp(eye, exR, f[1], !!eye.mirror);
   const noseY = f[1] + (F.nose ?? F.mouth - 2);
   if (nose) stamp(nose, f[0], noseY);
-  const mouthY = nose ? noseY + nose.rows.length : f[1] + F.mouth;
+  const mouthY = nose && !F.mouthFixed ? noseY + nose.rows.length : f[1] + F.mouth;
   stamp(mouth, f[0], mouthY);
 
   // clothes: a hat on top of the head, glasses and stickers over the face (drawn at twice their grid, like the old pets)
