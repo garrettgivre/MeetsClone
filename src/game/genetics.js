@@ -20,20 +20,20 @@ export const TEMPERAMENT_GENES = ['appetite', 'energy', 'taste'];
 
 export const GENES = {
   // body plans are codominant (a coin flip between the parents' forms), so lines mix
-  form:    { biped: 2, blob: 2, quad: 2, floater: 2, serpent: 2, avian: 2 },
-  head:    { gumdrop: 3, fox: 2, axolotl: 2, bug: 2, bell: 1, owl: 1 },
-  body:    { jelly: 3, fluffy: 2, chubby: 2, segmented: 2, bell: 1, feathered: 1 },
-  eyes:    { jelly: 3, bead: 3, sly: 2, pebble: 2, glow: 1, owl: 1 },
-  ears:    { nubs: 3, fox: 2, gills: 2, antennae: 2, frills: 1, tufts: 1 },
-  mouth:   { o: 3, fang: 2, smile: 2, dot: 2, munch: 2, beak: 1 },
-  pattern: { bubbles: 2, muzzle: 2, freckles: 2, bands: 2, glowspots: 1, facedisk: 1 },
-  mark:    { dots: 3, heart: 2, gleam: 2, flame: 1, spark: 1, moon: 1 },
-  tail:    { none: 3, brush: 2, paddle: 2, spike: 1, tendrils: 1 },
-  topper:  { none: 3, cream: 2, leaf: 2, lure: 1, crest: 1 },
-  feet:    { none: 2, nubs: 3, paws: 2, toes: 2, talons: 1 },
-  nose:    { none: 3, button: 2 },
-  wings:   { none: 3, veils: 1, feathered: 1 },
-  hair:    { none: 3, wisp: 2, drip: 2 },
+  form:    { biped: 2, blob: 2, quad: 2, floater: 2, serpent: 2, avian: 2, drake: 2 },
+  head:    { gumdrop: 3, fox: 2, axolotl: 2, bug: 2, bell: 1, owl: 1, dragon: 1 },
+  body:    { jelly: 3, fluffy: 2, chubby: 2, segmented: 2, bell: 1, feathered: 1, scaled: 1 },
+  eyes:    { jelly: 3, bead: 3, sly: 2, pebble: 2, glow: 1, owl: 1, slit: 1 },
+  ears:    { nubs: 3, fox: 2, gills: 2, antennae: 2, frills: 1, tufts: 1, fins: 1 },
+  mouth:   { o: 3, fang: 2, smile: 2, dot: 2, munch: 2, beak: 1, grin: 1 },
+  pattern: { bubbles: 2, muzzle: 2, freckles: 2, bands: 2, glowspots: 1, facedisk: 1, plates: 1 },
+  mark:    { dots: 3, heart: 2, gleam: 2, flame: 1, spark: 1, moon: 1, gem: 1 },
+  tail:    { none: 3, brush: 2, paddle: 2, spike: 1, tendrils: 1, arrow: 1 },
+  topper:  { none: 3, cream: 2, leaf: 2, lure: 1, crest: 1, horns: 1 },
+  feet:    { none: 2, nubs: 3, paws: 2, toes: 2, talons: 1, claws: 1 },
+  nose:    { none: 3, button: 2, snout: 1 },
+  wings:   { none: 3, veils: 1, feathered: 1, bat: 1 },
+  hair:    { none: 3, wisp: 2, drip: 2, spines: 1 },
   // temperament (shown on the status screen, changes care)
   appetite: { normal: 3, light: 2, hearty: 2 },
   energy:   { normal: 3, calm: 2, lively: 2 },
@@ -222,7 +222,7 @@ export const STARTER = {
   color: 'cream', accent: 'pink', eyeColor: 'ink', hairColor: 'cream',
 };
 
-// The founders: one per body plan. Every part belongs to exactly one founder,
+// The founders: one per body plan (seven of each). Every part belongs to exactly one founder,
 // so each founder is the root of a genetic line and every part in the game
 // descends from one of them. No two founders share a part or a body colour.
 // tier: 0 = best care, 2 = poorest care (generation 1 grows into one of these).
@@ -251,6 +251,10 @@ export const FOUNDERS = [
     form: 'avian', head: 'owl', body: 'feathered', eyes: 'owl', ears: 'tufts', mouth: 'beak', pattern: 'facedisk', mark: 'moon',
     topper: 'crest', feet: 'talons', wings: 'feathered',
     color: 'slate', accent: 'cream', eyeColor: 'ink', hairColor: 'slate', taste: 'savory', energy: 'lively' } },
+  { name: 'Ryu', line: 'storm dragon', tier: 0, traits: {
+    form: 'drake', head: 'dragon', body: 'scaled', eyes: 'slit', ears: 'fins', mouth: 'grin', pattern: 'plates', mark: 'gem',
+    tail: 'arrow', topper: 'horns', feet: 'claws', nose: 'snout', wings: 'bat', hair: 'spines',
+    color: 'indigo', accent: 'lime', eyeColor: 'green', hairColor: 'indigo', taste: 'spicy', energy: 'lively' } },
 ];
 
 // Traits that are shared, not parts owned by a line.

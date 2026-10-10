@@ -51,11 +51,11 @@ function card(p, label, zoom = z, stage = 'adult') {
 }
 
 if (!show || show === 'founders') {
-  section('The six founders');
+  section('The founders');
   const all = names.map(n => [n, compose(founder(n))]);
   const TOP = 96, RH = 190;
-  for (let from = 0; from < all.length; from += 3) {
-    const pets = all.slice(from, from + 3);
+  for (let from = 0; from < all.length; from += 4) {
+    const pets = all.slice(from, from + 4);
     sheet(RW, RH, z, (set) => {
       const room = homeRoom('day', false, undefined, q.get('room') || undefined);
       for (let y = 0; y < room.back.h; y++) for (let x = 0; x < RW; x++) set(x, y - TOP, room.back.px[y * RW + x]);

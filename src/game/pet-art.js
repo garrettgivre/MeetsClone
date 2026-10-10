@@ -4,7 +4,7 @@
 // What is shared and what is per body plan: a head, ears, tail, feet, wings,
 // topper, hair and the face parts are one drawing each and go on any body plan.
 // A body is drawn once per body plan (BODY for its founder's own plan, BODIES
-// for the rest). Arms belong to the two-legged plan. Babies and children are a
+// for the rest): seven styles in seven plans. Arms belong to the two-legged plan. Babies and children are a
 // plain head and a small body in one piece (young.js).
 //
 // The head's neck socket lands on the body's; everything else hangs on its
@@ -27,15 +27,15 @@ import * as jelly from '../art/pets/fine/jelly.js';
 import * as young from '../art/pets/fine/young.js';
 import * as dragon from '../art/pets/fine/dragon.js';
 
-export const LINES = { axolotl, caterpillar, jellyfish, fox, owl, jelly };
-// Designs that are drawn and can be put together, but are not in the gene pool yet (the review page shows them)
-export const DESIGNS = { dragon };
-export const FORMS = ['quad', 'serpent', 'floater', 'biped', 'avian', 'blob'];
+export const LINES = { axolotl, caterpillar, jellyfish, fox, owl, jelly, dragon };
+// Designs that are drawn and can be put together, but are not in the gene pool yet (the review page shows them). None just now.
+export const DESIGNS = {};
+export const FORMS = ['quad', 'serpent', 'floater', 'biped', 'avian', 'blob', 'drake'];
 export const FW = 128, FH = 128; // the most room a pet may take, in fine pixels (the feet sit 6 above the bottom)
 
 // The fine look uses a ramp's lightest shade as the body colour. For these ramps that shade is too
 // pale to read as the colour (orange turns peach, slate and cream turn white), so the body is drawn a shade deeper.
-export const DEEPER = new Set(['orange', 'slate', 'cream', 'red', 'brown']);
+export const DEEPER = new Set(['orange', 'slate', 'cream', 'red', 'brown', 'indigo']);
 
 const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '{': 'sideL', '}': 'sideR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR', '<': 'armL', '>': 'armR' };
 const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', f: 'pink.2', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist', b: 'sky.2', B: 'sky.3' };
@@ -125,8 +125,11 @@ export function build(p, stage = 'adult', pose = {}) {
   // ears that grow from the side of a head (gills, fins) use its side sockets; the rest use the ones on top
   const [sl] = H('sideL'), [sr] = H('sideR'), eL = ears?.side && sl || el, eR = ears?.side && sr || er;
   const drawEars = () => { who = 'ears'; if (ears && eL) { stamp(ears, eL[0], eL[1]); stamp(ears, eR[0], eR[1], true); } };
-  const drawWings = () => { who = 'wings'; if (wings && wl) stamp(wings, wl[0], wl[1]); if (wings && wr) stamp(wings, wr[0], wr[1], true); };
-  const lay = (list, on, from, part) => { for (const o of list) if (o.on === on) stamp(o, from[0] + o.off[0], from[1] + o.off[1], false, [0, 0], part); };
+  // (a wing part is drawn opening to the left, for the left socket, and turned round for the right one; one marked
+  // `opensRight` is the other way about. On a body seen from the side, with one socket, it is used as drawn.)
+  const drawWings = () => { who = 'wings'; const r = !!wings?.opensRight && !!wr; if (wings && wl) stamp(wings, wl[0], wl[1], r); if (wings && wr) stamp(wings, wr[0], wr[1], !r); };
+  // (an overlay sits where it was typed, measured from the face or the neck, or from the crown if it says `anchor: 'top'`)
+  const lay = (list, on, from, part) => { for (const o of list) if (o.on === on) { const a = o.anchor === 'top' ? top : from; stamp(o, a[0] + o.off[0], a[1] + o.off[1], false, [0, 0], part); } };
 
   const onePiece = form === 'blob' && !Y; // the base stands behind the head, so ears that lie behind the head go on after it
   if (ears && !ears.front && !onePiece) drawEars();
