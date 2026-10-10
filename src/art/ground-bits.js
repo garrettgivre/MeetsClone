@@ -213,6 +213,15 @@ export const GROUNDS = {
     ['snowDrift', 20, 292], ['iceGlint', 60, 296], ['snowTrack', 104, 286], ['snowDrift', 146, 298], ['iceGlint', 188, 288], ['snowDrift', 232, 300],
     ['iceGlint', 42, 310], ['snowDrift', 96, 310], ['iceGlint', 170, 310],
   ],
+  // Bamboo Teahouse: a moss garden with a path of stepping stones and a few fallen maple leaves (the bits are in props-bamboo-4.js)
+  mossgarden: [
+    ['mossPatch', 16, 170], ['mapleLeaf', 50, 166], ['mossPatch', 84, 172], ['stepStone', 128, 170], ['mossPatch', 172, 166], ['mapleLeaf', 206, 172], ['mossPatch', 240, 168],
+    ['mapleLeaf', 14, 196], ['mossPatch', 54, 192], ['stepStone', 104, 198], ['mossPatch', 146, 190], ['mapleLeaf', 178, 200], ['mossPatch', 216, 194],
+    ['mossPatch', 22, 228], ['stepStone', 82, 228], ['mapleLeaf', 124, 222], ['mossPatch', 162, 230], ['mossPatch', 204, 222], ['mapleLeaf', 238, 232],
+    ['mapleLeaf', 28, 258], ['stepStone', 62, 262], ['mossPatch', 110, 256], ['mossPatch', 166, 264], ['mapleLeaf', 198, 256], ['mossPatch', 242, 266],
+    ['mossPatch', 14, 292], ['stepStone', 44, 296], ['mapleLeaf', 96, 286], ['mossPatch', 142, 298], ['mossPatch', 190, 288], ['mapleLeaf', 230, 300],
+    ['mossPatch', 80, 310], ['mapleLeaf', 170, 310],
+  ],
   meadow: [
     ['starBloom', 20, 168], ['tuftDeep', 54, 172], ['lavender', 88, 170], ['starBloom', 126, 166], ['tuftDeep', 160, 172], ['lavender', 196, 168], ['starBloom', 234, 172],
     ['lavender', 12, 198], ['tuftDeep', 44, 194], ['starBloom', 80, 202], ['tuftDeep', 118, 192], ['starBloom', 170, 200], ['lavender', 214, 196], ['tuftDeep', 246, 204],

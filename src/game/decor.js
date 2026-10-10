@@ -134,6 +134,15 @@ export const SETS = {
       garden: { ground: 'Snowfield', horizon: 'White Peaks', fence: 'Snowy Rail Fence', tree: 'Snowy Fir', feature: 'Snowman', flowers: 'Snowdrops', play: 'Snow Fort', seat: 'Sledge Bench' },
     },
   },
+  bamboo: {
+    name: 'Bamboo Teahouse',
+    pieces: {
+      bedroom: { wall: 'Bamboo Leaf Paper', floor: 'Straw Boards', window: 'Moon Window', picture: 'Ink Scroll', shelf: 'Bamboo Pole Shelf', lamp: 'Paper Floor Lantern', bed: 'Futon Bed', rug: 'Woven Straw Mat', corner: 'Daruma and Toys', plant: 'Bonsai Pine' },
+      kitchen: { wall: 'Wave Scale Paper', floor: 'Dark Floorboards', window: 'Paper Screen Window', stove: 'Clay Rice Stove', counter: 'Drawer Chest', shelf: 'Kitchen Bamboo Shelf', table: 'Lacquer Table', seat: 'Floor Cushion' },
+      bathroom: { wall: 'Lattice Paper', floor: 'River Pebbles', window: 'Bath Paper Screen', mirror: 'Tassel Mirror', bath: 'Cedar Soaking Tub', toilet: 'Bamboo Spout Toilet', cabinet: 'Step Chest', mat: 'Rush Mat', towels: 'Bamboo Towel Ladder', plant: 'Vase of Bamboo' },
+      garden: { ground: 'Moss and Stones', horizon: 'Misty Mountains', fence: 'Bamboo Fence', tree: 'Bamboo Grove', feature: 'Stone Lantern', flowers: 'Azalea Bushes', play: 'Koi Pond', seat: 'Red Felt Bench' },
+    },
+  },
 };
 
 /** An item's id. (Bedroom pieces came first and keep their short ids, so saves made then still work.) */

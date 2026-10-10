@@ -279,6 +279,23 @@ export const HATS = {
     'owowowowowowowowomomomomomoo',
     '.oooooooooooooooooooooooooo.',
   ], [14, 17]),
+  // Bamboo Teahouse: a wide cone of woven straw.
+  kasa: P([
+    '....................oooo....................',
+    '..................ooYYyyoo..................',
+    '................ooYYYyyyyuoo................',
+    '..............ooYYYYyyyyyyuuoo..............',
+    '............ooYYYYYyyyyyyyyuuuoo............',
+    '..........ooYYYYYYyyyyyyyyyyuuuuoo..........',
+    '........ooYYYYYYYyyyyyyyyyyyyuuuuuoo........',
+    '......ooYYYYYYYYyyyyyyyyyyyyyyuuuuuuoo......',
+    '....ooYYYYYYYYYyyyyyyyyyyyyyyyyuuuuuuuoo....',
+    '..ooYYYYYYYYYYyyyyyyyyyyyyyyyyyyuuuuuuuuoo..',
+    'ooYYYYYYYYYYYyyyyyyyyyyyyyyyyyyyyuuuuuuuuuoo',
+    'oooooooooooooooooooooooooooooooooooooooooooo',
+    '..........oo....................oo..........',
+    '..........o......................o..........',
+  ], [22, 11]),
 };
 
 // ---------- glasses ----------
@@ -628,4 +645,23 @@ export const NECK = {
     '....ooooo...............',
     '....o.o.o...............',
   ], [12, 0]),
+  // Bamboo Teahouse: a lucky charm, a small red pouch with a gold crest, on a cord.
+  omamori: P([
+    'o..............o',
+    '.o............o.',
+    '..o..........o..',
+    '...o........o...',
+    '....o......o....',
+    '.....oYYYYo.....',
+    '....oooooooo....',
+    '....o877776o....',
+    '....o87YY76o....',
+    '....o8YYYY6o....',
+    '....o87YY76o....',
+    '....o877776o....',
+    '....o877766o....',
+    '....o776666o....',
+    '....oooooooo....',
+    '................',
+  ], [8, 0]),
 };

@@ -90,5 +90,7 @@ export const CLOTHES = {
   batbow:     { name: 'Bat Bow Tie',    slot: 'body', price: 90,  color: 'slate',  set: 'hollow' },
   bobblehat:  { name: 'Bobble Hat',     slot: 'head', price: 110, color: 'red',    set: 'snow' },
   muffler:    { name: 'Striped Muffler', slot: 'body', price: 100, color: 'red',   set: 'snow' },
+  kasa:       { name: 'Straw Hat',      slot: 'head', price: 100, color: 'gold',   set: 'bamboo' },
+  omamori:    { name: 'Lucky Charm',    slot: 'body', price: 110, color: 'red',    set: 'bamboo' },
   shoes:    { name: 'Shoes',        slot: 'feet', price: 70,  color: 'red' },
 };
