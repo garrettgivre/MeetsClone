@@ -1,7 +1,7 @@
 // Going out: the town map, the trip there, and each place you can visit.
 import { C } from '../engine/palette.js';
 import { W } from '../engine/screen.js';
-import { LAYOUT, COL, titleBar, text, ListMenu } from '../ui.js';
+import { LAYOUT, COL, titleBar, text, ListMenu, bubble } from '../ui.js';
 import { composePet, CANVAS, GROUND } from '../game/render.js';
 import { backdrop, frontdrop, drawVehicle, propBitmap, showsSky, FEET } from '../art/town.js';
 import { drawPlaceSky, skyState } from './room.js';
@@ -221,20 +221,25 @@ export class PlaceScene {
       const r = talk(g, this.loc.id);
       app.sfx(r.gift ? 'coin' : 'blip');
       this.play('talk', r.gift ? 'happy' : null);
-      app.toast(r.msg, 3200);
+      this.say(r.msg, 3600, true);
       app.save();
       return;
     }
     const blocked = a.needs?.(g);
-    if (blocked) { app.sfx('nope'); app.toast(blocked); return; }
+    if (blocked) { app.sfx('nope'); this.say(blocked, 2200); return; }
     if (a.ui) return this.openUi(a.ui);
     const r = doAction(g, this.loc.id, a.id);
-    if (!r.ok) { app.sfx('nope'); if (r.msg) app.toast(r.msg); return; }
+    if (!r.ok) { app.sfx('nope'); if (r.msg) this.say(r.msg, 2200); return; }
     app.sfx(r.anim === 'sad' ? 'sad' : r.anim === 'eat' ? 'eat' : 'happy');
     this.play(r.anim || 'happy');
-    app.toast(r.msg, 3200);
+    this.say(r.msg, 3200);
     app.save();
   }
+  /**
+   * What is said or happens here is shown in the place itself, so it goes when you leave: a speech bubble
+   * from the keeper (`spoken`), or a caption for something that happened.
+   */
+  say(msg, ms = 3200, spoken = false) { this.speech = { msg, until: this.t + ms, spoken }; }
   play(type, resType = null) { this.anim = { type, resType, t: 0, dur: 1100 }; }
   openUi(ui) {
     const app = this.app, g = this.game;
@@ -352,6 +357,10 @@ export class PlaceScene {
     if (tag) { const tw = tag.length * 4 + 6, ty = ry + (info && info.length * 4 + tw + 14 > W ? 35 : 25); scr.panel(W - tw - 2, ty, tw, 9, C('white'), COL.ink); text(scr, tag, W - tw + 1, ty + 2, res.elder ? COL.gray : COL.accent); }
     // place info
     if (info) { scr.panel(3, ry + 25, info.length * 4 + 6, 9, C('white'), COL.ink); text(scr, info, 6, ry + 27, COL.accent); }
+
+    // what was just said, or what just happened (under the name tags, over the keeper's head)
+    if (this.speech && t < this.speech.until) bubble(scr, this.speech.msg, { y: ry + 36, tail: this.speech.spoken ? 94 : null });
+    else this.speech = null;
 
     // the buttons
     const sel = this.buttons[this.sel];

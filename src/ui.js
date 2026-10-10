@@ -2,7 +2,7 @@
 import { C } from './engine/palette.js';
 import { text, wrap, measure, LINE_H } from './engine/font.js';
 import { W, H } from './engine/screen.js';
-import { HEART, HEART_EMPTY, RICE, RICE_EMPTY, ARROW } from './art/icons.js';
+import { HEART, HEART_EMPTY, RICE, RICE_EMPTY } from './art/icons.js';
 
 export const LAYOUT = {
   status: { y: 0, h: 12 },
@@ -32,6 +32,56 @@ export function dialog(scr, msg, { y = null, w = 112, title = null } = {}) {
   if (title) { text(scr, title, W / 2, ty, COL.accent, { align: 'center' }); ty += LINE_H + 2; }
   for (const l of lines) { text(scr, l, W / 2, ty, COL.ink, { align: 'center' }); ty += LINE_H; }
   return { x, y, w, h };
+}
+
+/**
+ * A notice: a banner that slides down from the top edge over the status bar and the top icons, so it never
+ * covers the room or the menu that is open. `k` is how far in it is (0 out of sight, 1 home). Returns its
+ * bottom edge, for taps (a tap on a notice puts it away).
+ */
+export function banner(scr, msg, k = 1) {
+  const x = 3, w = W - 6, lines = wrap(msg, w - 14);
+  const h = lines.length * LINE_H + 8;
+  const y = Math.round(-h - 2 + (h + 4) * (1 - (1 - k) * (1 - k)));
+  scr.panel(x, y, w, h, COL.white, COL.ink);
+  scr.unveil(x, y, w, h + 1); // (the see-through icons under it must not show through)
+  scr.rule(x + 2, y + h, w - 3, COL.shade); // a line of shadow under it
+  scr.hrect((x + 2) * 2, (y + 2) * 2, 3, (h - 4) * 2, COL.accent); // a pink tab down its left edge
+  let ty = y + 4;
+  for (const l of lines) { text(scr, l, W / 2 + 1, ty, COL.ink, { align: 'center' }); ty += LINE_H; }
+  return y + h + 1;
+}
+
+/**
+ * Something said or told in a scene: a white box with its top at `y`, and a tail from its bottom edge down
+ * toward whoever is speaking (`tail`: their x, or null for a caption nobody says).
+ */
+export function bubble(scr, msg, { y, tail = null, w = 116 } = {}) {
+  const lines = wrap(msg, w - 12);
+  const h = lines.length * LINE_H + 8, x = Math.floor((W - w) / 2);
+  scr.panel(x, y, w, h, COL.white, COL.ink);
+  if (tail != null) {
+    const X = Math.max(x + 8, Math.min(x + w - 8, tail)) * 2, Y = (y + h) * 2 - 1;
+    for (let r = 0; r < 6; r++) {
+      scr.hrect(X - (5 - r), Y + r, (5 - r) * 2 + 1, 1, COL.white);
+      scr.hpset(X - (5 - r), Y + r, COL.ink); scr.hpset(X + (5 - r), Y + r, COL.ink);
+    }
+  }
+  let ty = y + 4;
+  for (const l of lines) { text(scr, l, W / 2, ty, COL.ink, { align: 'center' }); ty += LINE_H; }
+}
+
+/** A small arrowhead (fine pixels), for "there is more this way" in a list. */
+function more(scr, x, y, up, c) {
+  for (let r = 0; r < 4; r++) scr.hrect(x * 2 - (up ? r : 3 - r), y * 2 + r, (up ? r : 3 - r) * 2 + 1, 1, c);
+}
+
+/** A string cut short with two dots if it is wider than `room` pixels. */
+function fit(str, room) {
+  if (measure(str) <= room) return str;
+  let s = str;
+  while (s.length > 1 && measure(s + '..') > room) s = s.slice(0, -1);
+  return s.trimEnd() + '..';
 }
 
 /** Row of up to 4 hearts. */
@@ -121,14 +171,19 @@ export class ListMenu {
       const color = it.disabled ? COL.silver : COL.ink;
       let x = 6;
       if (it.icon) { scr.draw(it.icon, x + Math.floor((iconCol - 3 - it.icon.w) / 2), y + Math.floor((this.rowH - 1 - it.icon.h) / 2), { ctx: it.iconCtx }); x += iconCol; }
-      text(scr, it.label, x, y + 5, color);
-      if (it.right !== undefined) text(scr, String(it.right), W - 8, y + 5, it.disabled ? COL.silver : COL.shade, { align: 'right' });
+      // what is on the right keeps its place; a label too long to clear it is cut short
+      const right = it.right !== undefined ? fit(String(it.right), W - 8 - x - 24) : '';
+      text(scr, fit(it.label, W - 8 - x - (right ? measure(right) + 5 : 0)), x, y + 5, color);
+      if (right) text(scr, right, W - 8, y + 5, it.disabled ? COL.silver : COL.shade, { align: 'right' });
     }
     if (this.items.length > this.rows) {
-      if (this.scroll > 0) scr.draw(ARROW, W - 6, this.top + 1, {});
+      // a thumb for where the list is, and an arrowhead wherever there is more to see
       const pct = this.scroll / (this.items.length - this.rows);
       const trackH = this.rows * this.rowH - 4;
       scr.panel(W - 4, this.top + 2 + Math.round(pct * (trackH - 8)), 3, 8, COL.silver, COL.shade);
+      const listBottom = this.top + this.rows * this.rowH;
+      if (this.scroll > 0) more(scr, W / 2, this.top - 1, true, COL.shade);
+      if (this.scroll + this.rows < this.items.length) more(scr, W / 2, listBottom - 2, false, COL.shade);
     }
     if (!this.items.length) text(scr, 'Nothing here yet!', W / 2, ry + 60, COL.gray, { align: 'center' });
     if (this.footer) {

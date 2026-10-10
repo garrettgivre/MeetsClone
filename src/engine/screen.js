@@ -143,6 +143,18 @@ export class Screen {
 
   clear(c) { this.buf.fill(c); }
 
+  /** Forget the see-through pixels drawn so far inside a rectangle (normal pixels): what is drawn there next covers them. */
+  unveil(x, y, w, h) {
+    const x0 = x * HD, y0 = y * HD, x1 = (x + w) * HD, y1 = (y + h) * HD, v = this.veil;
+    let n = 0;
+    for (let i = 0; i < v.length; i += 3) {
+      const px = v[i] % BW, py = (v[i] / BW) | 0;
+      if (px >= x0 && px < x1 && py >= y0 && py < y1) continue;
+      v[n++] = v[i]; v[n++] = v[i + 1]; v[n++] = v[i + 2];
+    }
+    v.length = n;
+  }
+
   setClip(x, y, w, h) { this.clip = [x * HD, y * HD, (x + w) * HD, (y + h) * HD]; }
   noClip() { this.clip = null; }
 

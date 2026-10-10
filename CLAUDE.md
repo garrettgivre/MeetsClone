@@ -4,9 +4,16 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.36.0, 10 October 2026)
+## Where things stand (v0.36.1, 10 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (99 tests).
+
+**v0.36.1: notices, speech and lists.** The owner sent a phone screenshot of a notice lying across a menu's title bar and first row ("Pop ups like this are not integrated very well. Can you make this look nicer"), said that a keeper's speech stayed on screen after leaving a place, and asked for "a general dialog box and menu check to make things nicer and more intuitive."
+- **Notices** (`app.toast`, drawn by `banner` in `ui.js`): a banner slides down from the top edge over the status bar and the top icons, so it never covers the room or an open menu; a pink tab down its left edge, a line of shadow under it. It slides away again, and a tap on it puts it away at once (`onTap` in `main.js`). `scr.unveil` (new, in `screen.js`) drops the see-through icon pixels under it, which are mixed in after everything else and were showing through.
+- **Speech in town** belongs to the place: `PlaceScene.say(msg, ms, spoken)` and `bubble` in `ui.js` draw a speech bubble with a tail toward the keeper for talk, and the same box without a tail for what an action did or why it cannot be done. It is part of the scene, so it goes when you leave. (Menus opened from a place still use notices.)
+- **Lists** (`ListMenu`): a label too long to clear what is on the right is cut short with two dots, so the two never run into each other; an arrowhead at the top or bottom of a list says there is more that way (the thumb is still there). The Cook list says `NO TOMATO` for the first thing a recipe lacks.
+- **Seen:** a three-line notice over the town list and the Cook list, and a keeper speaking in the park, at 412 x 883 in the browser pane. Not on a phone; I did not watch the slide move.
+- **Not changed:** the centred `dialog` boxes of the minigames; the place screens' name tags and buttons; a notice still replaces the one before it and does not queue.
 
 **v0.36.0: daily wishes, a vegetable bed and cooking.** I listed ways to widen the game and recommended these three; the owner: "Sure do daily wishes and cooking and gardening." Rules are in three files with no drawing in them, tested by `tests/life.test.js`.
 - **Wishes** (`src/game/wishes.js`): each day a child, teen or adult has three (`todaysWishes`, rolled from the pet's id and the date, so they are the same all day): eat a named food, play with a named toy, have a bath, play a game, go into town, cook, plant, water. `grant(game, kind, id)` is called from `feed`, `play`, `bathe` and `finishGame` in `pet.js`, from `PlaceScene`, and from the garden and cooking rules; it pays `WISH_POINTS` (25) and a point of happiness, and `WISH_BONUS` (50) when all three are done, and puts a line in `game.bookNews` for the home screen to read out. The home screen announces the day's wishes once (`fresh`). Items > Wishes lists them.

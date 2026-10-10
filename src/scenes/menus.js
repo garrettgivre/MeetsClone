@@ -69,7 +69,7 @@ function cookMenu(app, home) {
   app.push(new ListMenu(app, 'COOK', [
     ...known.map(d => ({
       label: FOODS[d].name, icon: FOOD_ART[d],
-      right: canCook(g, d) ? 'COOK' : 'NEED ' + RECIPES[d].filter(id => !(pantry[id] > 0)).map(id => INGREDIENTS[id].name.toUpperCase()).join(', '),
+      right: canCook(g, d) ? 'COOK' : 'NO ' + INGREDIENTS[RECIPES[d].find(id => !(pantry[id] > 0))].name.toUpperCase(), // (the first thing missing; a tap says all it needs)
       action: () => { if (canCook(g, d)) go(...RECIPES[d]); else { app.sfx('nope'); app.toast(`${FOODS[d].name}: ${RECIPES[d].map(id => INGREDIENTS[id].name.toLowerCase()).join(' and ')}.`, 2400); } },
     })),
     { label: 'Try a new mix', right: '▶', action: () => pick() },

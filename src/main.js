@@ -11,7 +11,7 @@ import { checkForUpdate, justUpdated } from './update.js';
 import { VERSION } from './version.js';
 import { paintButtons, CONTRAST } from './art/buttons.js';
 import { HomeScene } from './scenes/home.js';
-import { dialog, LAYOUT } from './ui.js';
+import { banner, LAYOUT } from './ui.js';
 
 const canvas = document.getElementById('screen');
 const scr = new Screen(canvas);
@@ -91,7 +91,8 @@ const app = {
   popTo(s) { while (this.scenes.length > 1 && this.scene !== s) this.scenes.pop(); this.scene.resume?.(); },
   home() { this.popTo(this.scenes[0]); },
   sfx(name) { if (this.game?.settings.sound) play(name); },
-  toast(msg, ms = 2200) { this.toasts = [{ msg, until: this.time + ms }]; },
+  /** A notice: a banner that slides down over the top bars for a moment (a tap on it puts it away). */
+  toast(msg, ms = 2200) { this.toasts = [{ msg, at: this.time, until: this.time + ms + 160 }]; },
   save() { if (this.game) { this.game.lastReal = Date.now(); store.save(this.game); } },
   reset() {
     store.clear();
@@ -142,6 +143,9 @@ setupInput({
   buttons: document.querySelectorAll('.btn'),
   onButton: (b, dir) => app.scene.button?.(b, dir),
   onTap: (x, y) => {
+    // a notice is put away by tapping it (it lies over the top icons)
+    const note = app.toasts[0];
+    if (note && y < (note.bottom || 0)) { note.until = Math.min(note.until, app.time + 160); return true; }
     if (app.scene.tap?.(x, y)) return true;
     // The menu icons above and below the room always work: tapping one from inside
     // another menu closes that menu and opens the one tapped.
@@ -214,7 +218,7 @@ function frame(now) {
   const toast = app.toasts[0];
   if (toast) {
     if (app.time > toast.until) app.toasts = [];
-    else dialog(scr, toast.msg, { y: LAYOUT.room.y + 4 });
+    else toast.bottom = banner(scr, toast.msg, Math.max(0, Math.min(1, (app.time - toast.at) / 160, (toast.until - app.time) / 160)));
   }
   scr.present();
   requestAnimationFrame(frame);
