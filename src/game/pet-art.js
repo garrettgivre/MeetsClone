@@ -25,8 +25,11 @@ import * as fox from '../art/pets/fine/fox.js';
 import * as owl from '../art/pets/fine/owl.js';
 import * as jelly from '../art/pets/fine/jelly.js';
 import * as young from '../art/pets/fine/young.js';
+import * as dragon from '../art/pets/fine/dragon.js';
 
 export const LINES = { axolotl, caterpillar, jellyfish, fox, owl, jelly };
+// Designs that are drawn and can be put together, but are not in the gene pool yet (the review page shows them)
+export const DESIGNS = { dragon };
 export const FORMS = ['quad', 'serpent', 'floater', 'biped', 'avian', 'blob'];
 export const FW = 128, FH = 128; // the most room a pet may take, in fine pixels (the feet sit 6 above the bottom)
 
@@ -35,7 +38,7 @@ export const FW = 128, FH = 128; // the most room a pet may take, in fine pixels
 export const DEEPER = new Set(['orange', 'slate', 'cream', 'red', 'brown']);
 
 const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '{': 'sideL', '}': 'sideR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR', '<': 'armL', '>': 'armR' };
-const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', f: 'pink.2', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist' };
+const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', f: 'pink.2', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist', b: 'sky.2', B: 'sky.3' };
 
 // read a part: note its sockets (painted as body colour unless the part says otherwise)
 function read(p) {
@@ -52,7 +55,7 @@ function read(p) {
 // ---------- the table of parts, by gene and allele ----------
 const SLOT = { head: 'HEAD', ears: 'EARS', tail: 'TAIL', feet: 'FEET', wings: 'WINGS', topper: 'TOPPER', hair: 'HAIR', eyes: 'EYE', mouth: 'MOUTH', nose: 'NOSE', mark: 'MARK' };
 export const PARTS = { body: {}, pattern: {}, face: {}, cheek: {}, arms: {} };
-for (const L of Object.values(LINES)) {
+for (const L of [...Object.values(LINES), ...Object.values(DESIGNS)]) {
   const head = read(L.HEAD), body = read(L.BODY);
   const face = head.sockets.face[0], top = head.sockets.top[0], neck = body.sockets.neck[0];
   for (const [gene, slot] of Object.entries(SLOT)) if (L.GENES[gene] && L[slot]) (PARTS[gene] ||= {})[L.GENES[gene]] = read(L[slot]);
@@ -94,7 +97,7 @@ const has = (p, gene) => p[gene] && p[gene] !== 'none';
 export function build(p, stage = 'adult', pose = {}) {
   const Y = YOUNG[stage]; // a baby or child is a plain head and body in one piece
   const adult = stage === 'adult';
-  const form = FORMS.includes(p.form) ? p.form : 'blob';
+  const form = FORMS.includes(p.form) || Object.values(DESIGNS).some(L => L.FORM === p.form) ? p.form : 'blob';
   const d = (p.deeper ?? DEEPER.has(p.color)) ? 1 : 0;
   const eyeRamp = p.eyeColor || p.eye || 'ink';
   const col = { 4: ramp(p.color, 3 - d), 3: ramp(p.color, 2 - d), 2: ramp(p.color, 1 - d), 8: ramp(p.accent, 3), 7: ramp(p.accent, 2), 6: ramp(p.accent, 1), e: ramp(eyeRamp, 2), E: ramp(eyeRamp, 3) };
@@ -161,7 +164,7 @@ export function build(p, stage = 'adult', pose = {}) {
   lay(pattern, 'head', f, 'head');
   if (hair?.layers) for (const o of hair.layers) stamp(o, (o.anchor === 'top' ? top : f)[0] + o.off[0], (o.anchor === 'top' ? top : f)[1] + o.off[1], false, [0, 0], 'head');
   if (ears?.front) drawEars();
-  const topper = adult && has(p, 'topper') && PARTS.topper[p.topper], both = !!(hair?.rows && topper);
+  const topper = adult && has(p, 'topper') && PARTS.topper[p.topper], both = !!(hair?.rows && topper && !topper.wide);
   who = 'hair'; if (hair?.rows) stamp(hair, top[0] - (both ? 7 : 0), top[1] + (both ? 1 : 0));
   if (hair?.layers) for (const [k, w] of own) if (w === 'head' && [col[7], col[8]].includes(px.get(k))) own.set(k, 'hair'); // (icing counts as hair where it shows)
   who = 'topper'; if (topper) stamp(topper, top[0] + (both ? 5 : 0), top[1] + (both ? 1 : 0));

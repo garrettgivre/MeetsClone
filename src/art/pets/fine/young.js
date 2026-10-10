@@ -84,6 +84,16 @@ export const BABY_BODY = {
     '...oooooooooo',
     '....o.o..o.o',
   ] },
+  // drake: a little lump with a stub of a tail
+  drake: { rows: [
+    '....oooooooooo',
+    '..oo44444=4444oo..o',
+    '.o4444444444444oo4o',
+    '.o44444444444444443o',
+    '.o4444444444444433o',
+    '..o443oo4443333oo',
+    '...ooo..ooooooo',
+  ] },
   // one-piece: a small puddle
   blob: { rows: [
     '......oooooooooooooooooo',
@@ -219,6 +229,19 @@ export const CHILD_BODY = {
     '..oo444444444443333oo',
     '....ooogoooooogoooo',
     '.....ogo.....ogo',
+  ] },
+  // drake: a small round body with a tail that points up behind
+  drake: { rows: [
+    '......oooooooooooooo',
+    '....oo4444444=444444oo......o',
+    '...o444444444444444444o....o4o',
+    '..o44444444444444444444oooo443o',
+    '.o444444444444444444444444433o',
+    '.o44444444444444444444444333o',
+    '.o4444444444444444444443333o',
+    '..o44443oooo4444444333ooo',
+    '..o44433o..o444443333o',
+    '...ooooo....oooooooo',
   ] },
   // one-piece: a low mound
   blob: { rows: [
