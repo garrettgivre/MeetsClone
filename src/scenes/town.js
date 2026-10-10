@@ -11,7 +11,7 @@ import { TOYS, CLOTHES } from '../game/items.js';
 import { FOUNDERS } from '../game/genetics.js';
 import {
   DISTRICTS, LOCATIONS, LOCATION, ACTIONS, MAP_PIECES, HAIR_DYES,
-  townState, districtLocked, buyPass, cantGo, resident, talk, friendship, doAction,
+  townState, districtLocked, placeLocked, placesOf, buyPass, cantGo, resident, talk, friendship, doAction,
   dishOfDay, saleOfDay, salePrice, buySale, dyeHair, founderKin,
   JOBS, jobOf, jobPay, jobRank, jobNeed, applyJob, startShift, endShift, classesLeft, isNewFace, retirees,
   SUBJECTS, NIGHT_CLASS, schoolOf, diplomaOf, gradWhy, graduate,
@@ -36,7 +36,7 @@ const WHAT = {
   work: 'JOBS AND SHIFTS', chapel: 'THE MATCHMAKER', studio: 'PHOTOS FOR THE ALBUM', beach: 'A SWIM AND SHELLS', forest: 'WILD FRUIT',
   fair: 'RIDES', stage: 'PERFORM ON STAGE', castle: 'TEA WITH THE QUEEN', starisle: 'MAKE A WISH FOR AN EGG', hidden: 'THE FOUNDERS\' FAMILIES',
 };
-const HOW = { walk: 'WALK', bus: 'BUS', train: 'TRAIN', balloon: 'BALLOON' };
+const HOW = { walk: 'WALK', trail: 'WALK', bus: 'BUS', train: 'TRAIN', balloon: 'BALLOON' };
 
 /** A list whose footer speaks for the row that is picked (its `note`), or else shows the points. */
 class GuideMenu extends ListMenu {
@@ -53,9 +53,15 @@ export class TownScene extends GuideMenu {
     const app = this.app, g = app.game, t = townState(g);
     const rows = [];
     for (const d of DISTRICTS) {
-      const locked = districtLocked(g, d), places = LOCATIONS.filter(l => l.district === d.id);
+      const locked = districtLocked(g, d), places = placesOf(d).filter(l => !placeLocked(g, l.id));
       if (d.secret && locked) {
         if (t.mapPieces > 0) rows.push({ label: '???', right: `MAP ${t.mapPieces}/${MAP_PIECES}`, disabled: true, why: 'Find the rest of the old map...', note: 'PIECES OF AN OLD MAP' });
+        continue;
+      }
+      // not yet: a part of town that opens when a pet has grown up, or one whose places are all still to be earned
+      if (locked === 'grown' || !places.length) {
+        rows.push({ label: d.name, right: '?', disabled: true, why: locked === 'grown' ? 'It opens once your pet has grown up.' : 'Nowhere there is open to you yet.',
+          note: locked === 'grown' ? 'ONCE YOUR PET HAS GROWN UP' : 'BY INVITATION ONLY' });
         continue;
       }
       if (locked === 'pass') {
@@ -94,7 +100,10 @@ class DistrictScene extends GuideMenu {
   resume() { this.build(); }
   build() {
     const app = this.app, g = app.game;
-    this.items = LOCATIONS.filter(l => l.district === this.district.id).map(loc => {
+    this.items = placesOf(this.district).map(loc => {
+      // (a place still to be earned is a row of question marks, with a hint under the list)
+      const shut = placeLocked(g, loc.id);
+      if (shut) return { label: '???', right: '', disabled: true, why: shut, note: shut.toUpperCase() };
       const f = friendship(g, loc.id);
       return { label: loc.name, right: isNewFace(g, loc.id) ? 'NEW' : f ? `♥${f}` : '', note: WHAT[loc.id] || '', action: () => go(app, loc.id) };
     });
@@ -123,6 +132,7 @@ const BESIDE = {
   bus: [['lamp', 40, { glass: 'gold' }], ['bushB', 120, {}], ['coneTree', 200, { leaf: 'mint' }], ['lamp', 280, { glass: 'gold' }], ['bushA', 350, { leaf: 'lime' }]],
   train: [['treeB', 30, {}], ['bushB', 110, { leaf: 'lime' }], ['treeC', 210, {}], ['bushC', 290, {}], ['coneTree', 360, { leaf: 'mint' }]],
   walk: [['flowersA', 30, {}], ['bushC', 110, {}], ['mushroomA', 190, { accent: 'red' }], ['flowersB', 270, { accent: 'gold' }], ['fern', 350, {}]],
+  trail: [['treeB', 20, {}], ['fern', 80, {}], ['coneTree', 140, { leaf: 'green' }], ['mushroomA', 205, { accent: 'red' }], ['treeC', 270, {}], ['fern', 345, {}]],
 };
 const NEAR = [['bushA', 60, {}], ['tallGrass', 200, {}], ['bushB', 330, { leaf: 'lime' }]];
 
@@ -148,16 +158,18 @@ function drawWay(scr, kind, ground, t) {
     for (let x = -off(12); x < BW; x += 12) { scr.hrect(x, G + 1, 5, 6, C('brown.1')); scr.hrect(x, G + 1, 5, 1, C('brown.2')); }
     scr.hrect(0, G - 1, BW, 1, C('mist')); scr.hrect(0, G, BW, 1, C('slate.1'));
   } else {
-    scr.hrect(0, G - 9, BW, 24, C('cream.3')); scr.hrect(0, G - 10, BW, 1, C('cream.2')); scr.hrect(0, G + 15, BW, 1, C('cream.1'));
-    for (let x = -off(44); x < BW; x += 44) { scr.hrect(x, G + 7, 3, 1, C('cream.1')); scr.hrect(x + 19, G - 4, 2, 1, C('cream.1')); scr.hrect(x + 31, G + 11, 2, 1, C('cream.2')); }
+    // a footpath: pale gravel in town, bare earth out in the woods
+    const [path, edge, fleck] = kind === 'trail' ? ['brown.3', 'brown.2', 'brown.1'] : ['cream.3', 'cream.2', 'cream.1'];
+    scr.hrect(0, G - 9, BW, 24, C(path)); scr.hrect(0, G - 10, BW, 1, C(edge)); scr.hrect(0, G + 15, BW, 1, C(fleck));
+    for (let x = -off(44); x < BW; x += 44) { scr.hrect(x, G + 7, 3, 1, C(fleck)); scr.hrect(x + 19, G - 4, 2, 1, C(fleck)); scr.hrect(x + 31, G + 11, 2, 1, C(edge)); }
   }
 }
 
 class TravelScene {
   constructor(app, locId, kind) { this.app = app; this.locId = locId; this.kind = kind; this.t = 0; }
   /** The backdrop whose sky and ground the bars carry on. */
-  get openAir() { return this.kind === 'balloon' ? 'tripSky' : 'trip'; }
-  enter() { this.app.sfx(this.kind === 'walk' ? 'blip' : 'select'); }
+  get openAir() { return this.kind === 'balloon' ? 'tripSky' : this.kind === 'trail' ? 'tripWoods' : 'trip'; }
+  enter() { this.app.sfx(this.kind === 'walk' || this.kind === 'trail' ? 'blip' : 'select'); }
   button(b) { if (b === 'B' || b === 'C') this.arrive(); }
   tap() { this.arrive(); return true; }
   update(dt) { this.t += dt; if (this.t >= TRIP_MS) this.arrive(); }
@@ -176,7 +188,8 @@ class TravelScene {
     // far country (or open sky) stands still; clouds, the way and what lines it slide past
     const hour = skyState(new Date(this.app.game.simTime).getHours());
     drawPlaceSky(scr, this.app.game.simTime, t);
-    scr.bitmap(backdrop(air ? 'tripSky' : 'trip', hour), 0, ry);
+    const woods = this.kind === 'trail'; // the walk to the Outskirts is through the woods
+    scr.bitmap(backdrop(air ? 'tripSky' : woods ? 'tripWoods' : 'trip', hour), 0, ry);
     scr.setClip(0, ry, W, rh);
     (air ? [...CLOUDS, ...HIGH_CLOUDS] : CLOUDS).forEach(([name, y, speed, tint], i) => {
       const span = W + 70;
@@ -184,13 +197,13 @@ class TravelScene {
     });
     if (!air) {
       // the far country slides by too, slowly: the same picture side by side, every other one mirrored so the edges meet
-      const far = backdrop('tripFar', hour), off = (t * FAR_SPEED) % (W * 2);
+      const far = backdrop(woods ? 'tripWoodsFar' : 'tripFar', hour), off = (t * FAR_SPEED) % (W * 2);
       for (let n = 0; n < 3; n++) scr.bitmap(far, n * W - off, ry, n % 2 === 1);
     }
     const ground = ry + 112;
     if (!air) drawWay(scr, this.kind, ground, t);
     const x = -40 + k * (W + 80);
-    if (this.kind === 'walk') {
+    if (this.kind === 'walk' || woods) {
       const bm = composePet(pet.phenotype, pet.stage, { step: Math.floor(t / 200) % 2 ? 1 : 2, gender: pet.gender, wear: pet.wear, species: pet.species });
       scr.bitmap(bm, Math.round(x - CANVAS / 2), ground - GROUND, true);
     } else {

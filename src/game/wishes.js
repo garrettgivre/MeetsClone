@@ -36,8 +36,8 @@ export function wishText(w) {
 function candidates(game, rng) {
   const out = [{ kind: 'game' }, { kind: 'town' }, { kind: 'cook' }];
   if ((game.pet.dirt || 0) >= 1) out.push({ kind: 'bath' });
-  // school for the young, work for the grown (both are in Uptown: only once the bus pass is bought)
-  if (game.town?.passes?.includes('bus')) out.push({ kind: game.pet.stage === 'adult' ? 'work' : 'class' });
+  // school for the young, work for the grown
+  out.push({ kind: game.pet.stage === 'adult' ? 'work' : 'class' });
   // a food on sale or in the cupboard (not the free rice ball, not baby milk, not a failed stew)
   const foods = Object.keys(FOODS).filter(id => !FOODS[id].free && !FOODS[id].babyOnly && id !== 'oddstew' && (!FOODS[id].cooked || (game.recipes || []).includes(id)));
   out.push({ kind: 'eat', id: rng.pick(foods) }, { kind: 'eat', id: rng.pick(foods) });
@@ -80,6 +80,7 @@ export function grant(game, kind, id = null) {
   (game.bookNews ||= []).push(`A wish come true: ${wishText(w).toLowerCase()}! +${WISH_POINTS}`);
   if (!wishes.paid && wishes.list.every(x => x.done)) {
     wishes.paid = true;
+    game.wishDays = (game.wishDays || 0) + 1; // (enough such days and Star Isle shows itself: town.js)
     const bonus = WISH_BONUS * (isDay(game.simTime, 'moon') ? 2 : 1); // (double under a full moon)
     game.points += bonus;
     paid += bonus;

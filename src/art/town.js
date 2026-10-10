@@ -32,7 +32,7 @@ const cache = new Map();
  * they are places of one particular light.
  */
 export const OPEN_AIR = new Set(['square', 'park', 'cottages', 'playground', 'beach', 'forest', 'fair', 'castle', 'starisle', 'hidden',
-  'playfield', 'ropefield', 'trip', 'tripFar', 'tripSky', 'farewell']);
+  'playfield', 'ropefield', 'trip', 'tripFar', 'tripWoods', 'tripWoodsFar', 'tripSky', 'farewell']);
 export const OWN_SKY = new Set(['starisle', 'hidden', 'farewell']);
 /** Whether a backdrop shows the real sky of the hour. */
 export const showsSky = (id) => OPEN_AIR.has(id) && !OWN_SKY.has(id);
@@ -942,30 +942,26 @@ function kit(hour = null) {
 const SCENES = {
   // ---- downtown ----
   square(k) {
+    // The Town Square, built from its own hand-typed pieces (src/art/props-square.js): a toadstool house, the clock-tower
+    // hall and a tall timbered shop along the back, a fountain in the middle and the job board at the side.
     k.bands(['sky.2', 'sky.2', 'sky.3'], 0, HZ);
-    k.pcloud(30, 34, 60, 'violet.3'); k.pcloud(182, 48, 56, 'pink.3', 0.9);
-    k.skyline(HZ - 60, 'sky.2', 3);
-    // rows of little cone trees peeking over the roofs
-    for (const [x, y, l] of [[6, HZ - 62, 'green'], [22, HZ - 70, 'mint'], [86, HZ - 40, 'green'], [170, HZ - 40, 'mint'], [234, HZ - 72, 'green'], [250, HZ - 62, 'mint']]) k.prop('coneTree', x, y, { leaf: l, halo: 'white' });
-    k.shopFront(4, HZ, 72, 'pink.3', ['pink.2', 'white'], { sign: 'SWEETS', signC: 'pink.1', halo: 'white' });
-    k.shopFront(180, HZ, 72, 'gold.3', ['sky.2', 'white'], { sign: 'GIFTS', signC: 'sky.1', halo: 'white' });
-    k.prop('townhall', 128, HZ, { roof: 'red', accent: 'red', halo: 'white' });
-    // the clock wears a face, and the hall has its name over the windows
-    k.disc(128, 59, 6, 'cream.3'); k.face(128, 57, 1, { gap: 3 });
-    k.sign(128, 83, 'TOWN HALL', { bg: 'red.1', pad: 2 });
-    k.cobbles(HZ, 'slate.3');
-    for (let y = HZ + 16; y < RH; y++) for (let x = 0; x < RW; x++) {
-      const dx = (x - 128) / 118, dy = (y - 252) / 50, d = Math.sqrt(dx * dx + dy * dy);
-      if (d > 1) continue;
-      const ring = Math.floor(d * 6), a = Math.atan2(dy, dx), seg = Math.floor(((a + Math.PI) / (Math.PI * 2)) * (8 + ring * 6));
-      const edge = Math.abs(d * 6 - Math.round(d * 6)) < 0.08 || Math.abs((((a + Math.PI) / (Math.PI * 2)) * (8 + ring * 6)) % 1) < 0.06;
-      k.set(x, y, edge ? 'slate.2' : d > 0.98 ? 'slate.1' : ring % 2 ? ((seg & 1) ? 'cream.3' : 'gold.3') : ((seg & 1) ? 'white' : 'cream.3'));
-    }
-    k.bunting(8, 14);
-    k.shadow(128, 252, 54, 'slate.1', 6);
-    k.prop('fountain', 128, 252);
-    k.lamp(26, 246); k.lamp(230, 246);
-    for (const [x, l] of [[56, 'green'], [200, 'mint']]) { k.shadow(x, 214, 9); k.prop('coneTree', x, 214, { leaf: l }); }
+    k.pcloud(-6, 40, 60, 'violet.3'); k.pcloud(176, 34, 64, 'pink.3', 0.9);
+    // cone trees over the roofs, and in the gaps between the houses
+    for (const [x, y, l] of [[6, HZ - 96, 'mint'], [92, HZ - 22, 'green'], [80, HZ, 'mint'], [178, HZ, 'green'], [166, HZ - 22, 'mint'], [250, HZ - 104, 'green']]) k.prop('coneTree', x, y, { leaf: l });
+    k.prop('mushroomHouse', 40, HZ, { halo: 'white' });
+    k.prop('tallShop', 220, HZ, { halo: 'white' });
+    k.prop('clockHall', 128, HZ, { halo: 'white' });
+    // the clock has a face and two hands; the hall has its name over the door
+    k.face(128, 81, 1, { gap: 4 });
+    k.sign(128, 131, 'TOWN HALL', { bg: 'red.1', pad: 2 });
+    k.cobbles(HZ, 'cream.3');
+    k.bunting(30, 9);
+    // the job board by the toadstool house, lamps either side, the fountain in the middle of it all
+    k.shadow(26, 214, 16, 'cream.1', 4); k.prop('jobBoard', 26, 214);
+    k.sign(26, 172, 'JOBS', { bg: 'red.1', pad: 1 });
+    k.lamp(100, 206); k.lamp(160, 206);
+    k.shadow(128, 226, 38, 'cream.1', 6);
+    k.prop('tierFountain', 128, 226);
     k.layer('front');
     for (const [x, f] of [[14, false], [242, true]]) { k.prop('shrubShort', x, 244, { leaf: 'green', flip: f }); k.prop('planter', x, 262, { wall: 'cream' }); k.prop('flowersB', x + (f ? -6 : 6), 239, { accent: f ? 'gold' : 'pink' }); }
     k.layer('back');
@@ -1664,6 +1660,21 @@ const SCENES = {
     k.mountain(64, 194, 200, 50, 'sky.1', { seed: 31, snow: true }); k.mountain(204, 194, 170, 36, 'mint.2', { seed: 32 });
     k.canopy(-24, 172, 304, 34, 'mint.1', { seed: 43, r: 9 });
   },
+  tripWoods(k) {
+    // the walk out to the Outskirts: a woodland floor under the trees (the trees themselves are tripWoodsFar, and the
+    // trunks and ferns that slide past beside the path)
+    k.bands(['sky.2', 'sky.2', 'mint.3'], 0, 194);
+    k.field(194, 'green.2', { seed: 21, light: 'green.3', sides: false });
+    k.tufts(200, 306, 'green.1', 44, 8);
+  },
+  tripWoodsFar(k) {
+    // the wood itself, three ranks deep, with nothing behind it; drawn side by side like tripFar
+    k.rect(0, 0, RW, RH, 'night');
+    k.canopy(-24, 120, 304, 80, 'mint.1', { seed: 61, r: 11 });
+    for (const [x, l] of [[20, 'green'], [70, 'mint'], [128, 'green'], [186, 'mint'], [236, 'green']]) k.prop('coneTree', x, 190, { leaf: l });
+    k.canopy(-24, 150, 304, 48, 'green.1', { seed: 62, r: 9 });
+    for (const [x, name] of [[44, 'treeB'], [150, 'treeC'], [214, 'treeB']]) k.prop(name, x, 198, {});
+  },
   tripSky(k) {
     // up among the clouds, the land small below
     k.bands(['sky.1', 'sky.2', 'sky.2', 'sky.3', 'sky.3'], 0, 290);
@@ -1696,7 +1707,7 @@ const SCENES = {
 export function drawVehicle(scr, kind, x, y, t) {
   const put = (name, dx = 0, dy = 0, opts = {}) => { const bm = propBitmap(name, opts); scr.bitmap(bm, x + dx - bm.at[0] / 2, y + dy - (bm.at[1] + 1) / 2); };
   const bob = Math.floor(t / 150) % 2 ? 0.5 : 0;
-  if (kind === 'bus') put('bus', 0, -bob);
+  if (kind === 'bus') put('cityBus', 0, -bob); // (the yellow `bus` prop is the one this replaced; nothing draws it now)
   else if (kind === 'train') {
     // puffs of steam drift back from the stack
     for (let i = 0; i < 3; i++) { const p = ((t / 700) + i / 3) % 1; put('cloudC', 16 - p * 22, -26 - p * 12, { accent: 'slate' }); }

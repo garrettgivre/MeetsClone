@@ -143,6 +143,7 @@ export function unlockTown(game) {
   const t = townState(game);
   for (const d of DISTRICTS) if (d.pass && !t.passes.includes(d.pass.id)) t.passes.push(d.pass.id);
   t.mapPieces = MAP_PIECES;
+  t.grown = t.invited = t.starIsle = true; // the Suburbs, the Castle's invitation, Star Isle
 }
 
 /** Let time pass for the town's residents only (they age, have children and retire). */

@@ -4,9 +4,25 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.38.0, 10 October 2026)
+## Where things stand (v0.39.0, 10 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (101 tests).
+
+**v0.39.0: the town opens a part at a time, and a new Town Square.** The owner laid out a new order for the town and asked for a critique; I raised that food and the job board would be locked behind Uptown, that paying to walk needed a name, and that the Suburbs would be thin. Their answers: "Bakery Downtown works, job board at town square makes sense, the pay scale needs to be steep for longer gameplay. I don't want the player to be overwhelmed with options. Might even need to be steeper. I'm fine with suburbs being pretty empty for now... [the map] quest [should] take a long time so it can start early game but end late game. Photo studio in uptown... hidden village stays hidden. I like both far away unlock ideas. Don't worry about old saves no one is really playing yet. Remake the town square art from scratch I don't really love it anyway. Give it a lot of cute architecture and design. Train to the boardwalk makes sense, keep that."
+- **The parts of town** (`DISTRICTS` in `src/game/town.js`; each has `places`, its list in order, and a place's `district` is set from that):
+  - Downtown, open at the start, a walk: Town Square, Hospital, Park, School, Playground, Arcade, Toy Shop, Bakery.
+  - Suburbs, open once a pet of yours has grown up (`grown`, `t.grown`), a walk: Sunset Cottages.
+  - Outskirts, a Trail Map for 100, a walk through the woods (`travel: 'trail'`): Wedding Chapel, Forest.
+  - Uptown, a Bus Pass for 500, by city bus: Workshop, Department Store, Beauty Salon, Boutique, Cafe, Photo Studio.
+  - Boardwalk, a Train Pass for 2,000 (the owner said 1,500 and then "might even need to be steeper"; 2,000 is my number), by train: Beach, Amusement Park, Concert Hall.
+  - Far Away, by balloon, not bought: each place has its own lock (`PLACE_LOCKS`, `placeLocked`). The Royal Castle sends an invitation for perfect manners or a diploma (`t.invited`); Star Isle shows itself after `STAR_DAYS` (5) days on which every wish was granted (`game.wishDays`, `t.starIsle`). Both are checked in `townState` and filed as news. A place still locked is a row of question marks with a hint.
+  - Off the Map, as before, but the old map is five pieces now and never two within `MAP_GAP_DAYS` (2), found at 15% a forage in the Forest and 3% a stroll in the Park: the hunt can start with the Trail Map and runs for weeks.
+- **The job board is on the Town Square** as well as at the Workshop, so a grown pet can be hired from the start.
+- **Travel art:** the walk to the Outskirts has its own backdrops (`tripWoods`, `tripWoodsFar` in `SCENES`, built from tree props) and an earth path; the Uptown bus is a new hand-typed `cityBus` in `props-travel.js` (mint with a red stripe; the yellow `bus` prop is still in the file, unused).
+- **The Town Square, from scratch** (`src/art/props-square.js`, hand-typed: `clockHall` 88 x 131, `mushroomHouse` 72 x 88, `tallShop` 56 x 104, `tierFountain`, `jobBoard`; `SCENES.square` puts them together and adds the clock's face, the TOWN HALL and JOBS signs, bunting, lamps and cobbles in code). The old square used the town hall prop and two shop fronts drawn by `k.shopFront`.
+- **Old saves are not carried over** (the owner: "Don't worry about old saves"): a balloon ticket bought before does nothing, and passes keep their ids (`bus`, `train`) so those two still count.
+- **Seen:** the square with two pets in it, the Travel list locked and partly open, Far Away with one place open, the woods walk and the city bus on the road, in the browser pane. Not on a phone; not at dusk or night.
+- **Thin spots:** on the square the pets stand in front of the fountain and hide most of it, and the lamps stand in front of the hall's windows; the toadstool house and the hall both have plain cream walls; the Suburbs hold one place; the Forest's walk shows the same woods whichever Outskirts place you go to; the tests open every part of town by hand (`outing()` in `tests/town.test.js`) and one test walks the locks in order.
 
 **v0.38.0: school, skills and jobs as one thread.** The owner (after I had gone through two long lists of everything the real toys have done and said what fitted): "Let's develop the systems we already have. Continue building out school, skills, and jobs. They should all thread into each other". The rules are in `src/game/town.js` under "school, skills and jobs"; how they join up:
 - **Care into school.** A class teaches a whole level only to a pet that pays attention: manners at 2 or more, and not hungry. Otherwise it teaches less and says why. Manners is itself a class.

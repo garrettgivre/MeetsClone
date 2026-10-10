@@ -13,12 +13,13 @@ import { ageTown } from '../src/game/cheats.js';
 
 const NINE_AM = new Date(2026, 0, 5, 9, 0, 0).getTime();
 
-/** A teen out on the town with plenty of points. */
-function outing(seed = 1, stage = 'teen') {
+/** A teen out on the town with plenty of points, and (unless `open` is false) every part of town open to it. */
+function outing(seed = 1, stage = 'teen', open = true) {
   const rng = makeRng(seed);
   const g = newGame(NINE_AM, rng);
   Object.assign(g.pet, { stage, hunger: 2, happy: 2, weight: BASE_WEIGHT[stage] });
   g.points = 5000;
+  if (open) { const t = townState(g); for (const d of DISTRICTS) if (d.pass) t.passes.push(d.pass.id); t.grown = t.invited = t.starIsle = true; }
   return { g, rng };
 }
 const nextDay = (g) => { g.simTime += 24 * HOUR; };
@@ -41,17 +42,38 @@ test('every place has a district, a resident and something to do', () => {
   assert.deepEqual(resident('park'), resident('park'), 'residents look the same every visit');
 });
 
-test('downtown is open, other districts need a pass, and the village needs the map', () => {
-  const { g } = outing();
+test('the town opens a part at a time: downtown first, then by growing up, by passes that cost more and more, by deeds, and by the map', () => {
+  const { g } = outing(1, 'teen', false);
   assert.equal(districtLocked(g, 'downtown'), null);
+  for (const id of ['square', 'hospital', 'school', 'bakery']) assert.equal(cantGo(g, id), null, id);
+  // the Suburbs open once a pet has grown up
+  assert.equal(districtLocked(g, 'suburbs'), 'grown');
+  assert.match(cantGo(g, 'cottages'), /grown up/);
+  // three passes, each dearer than the last
+  const prices = ['outskirts', 'uptown', 'boardwalk'].map(id => DISTRICTS.find(d => d.id === id).pass.price);
+  assert.ok(prices[0] < prices[1] && prices[1] < prices[2]);
   assert.equal(districtLocked(g, 'uptown'), 'pass');
-  assert.equal(districtLocked(g, 'hidden'), 'secret');
-  assert.match(cantGo(g, 'school'), /Bus Pass/);
+  assert.match(cantGo(g, 'cafe'), /Bus Pass/);
   assert.ok(buyPass(g, 'bus').ok);
-  assert.equal(cantGo(g, 'school'), null);
+  assert.equal(cantGo(g, 'cafe'), null);
   assert.equal(buyPass(g, 'bus').ok, false, 'only once');
+  assert.match(cantGo(g, 'forest'), /Trail Map/);
+  assert.match(cantGo(g, 'beach'), /Train Pass/);
+  // Far Away is not bought: the Castle sends for the well-mannered or the learned, Star Isle shows itself to those who grant wishes
+  assert.match(cantGo(g, 'castle'), /invitation/);
+  g.pet.diploma = 'smart';
+  assert.equal(cantGo(g, 'castle'), null);
+  assert.match(cantGo(g, 'starisle'), /wish/);
+  g.wishDays = 5;
+  assert.equal(cantGo(g, 'starisle'), null);
+  g.pet.stage = 'adult';
+  assert.equal(cantGo(g, 'cottages'), null);
+  // and the village needs the whole map
+  assert.equal(districtLocked(g, 'hidden'), 'secret');
   townState(g).mapPieces = MAP_PIECES;
   assert.equal(districtLocked(g, 'hidden'), null);
+  // every place is in exactly one part of town
+  assert.deepEqual(DISTRICTS.flatMap(d => d.places).sort(), LOCATIONS.map(l => l.id).sort());
 });
 
 test('babies stay home, and sick pets can only go to the hospital', () => {
@@ -262,8 +284,11 @@ test('a keeper\'s brother or sister can turn up at the matchmaker, and marrying 
 test('the forest and park turn up map pieces that open the hidden village', () => {
   const { g, rng } = outing(8);
   buyPass(g, 'train');
-  for (let d = 0; d < 200 && townState(g).mapPieces < MAP_PIECES; d++) { doAction(g, 'forest', 'forage', rng); nextDay(g); }
+  // a long hunt: never two pieces close together
+  let days = 0;
+  for (; days < 2000 && townState(g).mapPieces < MAP_PIECES; days++) { doAction(g, 'forest', 'forage', rng); nextDay(g); }
   assert.equal(townState(g).mapPieces, MAP_PIECES);
+  assert.ok(days >= (MAP_PIECES - 1) * 2, `took ${days} days`);
   assert.equal(cantGo(g, 'hidden'), null);
 });
 

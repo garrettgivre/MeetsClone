@@ -3,7 +3,7 @@
 // feed the rest of the game (hunger, weight, discipline, illness, points,
 // marriage and the Gene Book).
 //
-// Downtown is free to walk around. The other districts need a travel pass,
+// Downtown is free to walk around (see DISTRICTS for how the rest opens). The other districts need a travel pass,
 // and a hidden village opens once you've found every piece of an old map.
 
 import { rand as defaultRng, makeRng, hash } from '../engine/rng.js';
@@ -14,15 +14,29 @@ import { BOOK_GENES, entries, has } from './book.js';
 import { isDay } from './days.js';
 import { grant } from './wishes.js';
 
+// The parts of town, in the order they open (the owner laid this out: a few places at first, so a new player
+// is not faced with everything at once, and prices that climb steeply so the later parts are a long way off).
+//   downtown   open from the start, a walk
+//   suburbs    open once a pet of yours has grown up, a walk (other neighbourhoods are to come here)
+//   outskirts  a trail map, a walk through the woods
+//   uptown     a bus pass, by city bus
+//   boardwalk  a train pass, by train
+//   faraway    by balloon, each place opened by something done in the game (see PLACE_LOCKS), not bought
+//   hidden     found with the old map
+// `places` is each part's list, in the order shown; a place's `district` is set from it below.
 export const DISTRICTS = [
-  { id: 'downtown', name: 'Downtown', pass: null, travel: 'walk' },
-  { id: 'uptown', name: 'Uptown', pass: { id: 'bus', name: 'Bus Pass', price: 150 }, travel: 'bus' },
-  { id: 'seaside', name: 'Seaside', pass: { id: 'train', name: 'Train Pass', price: 300 }, travel: 'train' },
-  { id: 'faraway', name: 'Far Away', pass: { id: 'balloon', name: 'Balloon Ticket', price: 600 }, travel: 'balloon' },
-  { id: 'hidden', name: 'Off the Map', pass: null, travel: 'walk', secret: true },
+  { id: 'downtown', name: 'Downtown', pass: null, travel: 'walk', places: ['square', 'hospital', 'park', 'school', 'playground', 'arcade', 'toyshop', 'bakery'] },
+  { id: 'suburbs', name: 'Suburbs', pass: null, travel: 'walk', grown: true, places: ['cottages'] },
+  { id: 'outskirts', name: 'Outskirts', pass: { id: 'trail', name: 'Trail Map', price: 100 }, travel: 'trail', places: ['chapel', 'forest'] },
+  { id: 'uptown', name: 'Uptown', pass: { id: 'bus', name: 'Bus Pass', price: 500 }, travel: 'bus', places: ['work', 'dept', 'salon', 'boutique', 'cafe', 'studio'] },
+  { id: 'boardwalk', name: 'Boardwalk', pass: { id: 'train', name: 'Train Pass', price: 2000 }, travel: 'train', places: ['beach', 'fair', 'stage'] },
+  { id: 'faraway', name: 'Far Away', pass: null, travel: 'balloon', places: ['castle', 'starisle'] },
+  { id: 'hidden', name: 'Off the Map', pass: null, travel: 'walk', secret: true, places: ['hidden'] },
 ];
 
-export const MAP_PIECES = 3;
+export const MAP_PIECES = 5;
+export const MAP_GAP_DAYS = 2;  // at least this long between one piece of the old map and the next
+export const STAR_DAYS = 5;     // days on which every wish was granted, before Star Isle shows itself
 export const PHOTO_LIMIT = 20;
 export const HAIR_DYES = ['red', 'orange', 'gold', 'green', 'sky', 'violet', 'pink', 'slate'];
 
@@ -83,6 +97,9 @@ export const LOCATIONS = [
 ];
 
 export const LOCATION = Object.fromEntries(LOCATIONS.map(l => [l.id, l]));
+for (const d of DISTRICTS) for (const id of d.places) LOCATION[id].district = d.id;
+/** The places in a part of town, in the order they are listed. */
+export const placesOf = (district) => district.places.map(id => LOCATION[id]);
 export const districtOf = (id) => DISTRICTS.find(d => d.id === LOCATION[id].district);
 
 // ---------- state ----------
@@ -111,6 +128,19 @@ export function townState(game) {
   t.unread ??= 0;
   t.wed ||= {};    // 'place:generation' -> a sibling of that keeper married into your family
   t.cottage ??= 0; // which neighbour is being visited at the cottages
+  t.mapAt ??= 0;   // when the last piece of the old map was found
+  // things that open parts of town: a pet of yours has grown up (the Suburbs); an invitation from the Castle, for
+  // perfect manners or a diploma; Star Isle, once every wish has been granted on enough days
+  const pet = game.pet;
+  if (!t.grown && (game.generation > 1 || pet?.stage === 'adult')) t.grown = true;
+  if (!t.invited && pet && !pet.gone && (pet.discipline >= MAX_DISCIPLINE || pet.diploma)) {
+    t.invited = true;
+    report(game, t, 'A letter with a gold seal: an invitation to the Royal Castle! The balloon will take you.', 'marry');
+  }
+  if (!t.starIsle && (game.wishDays || 0) >= STAR_DAYS) {
+    t.starIsle = true;
+    report(game, t, 'A new star over the sea: Star Isle has shown itself to one who grants wishes.', 'wish');
+  }
   const day = new Date(game.simTime).toDateString();
   if (t.daily.day !== day) t.daily = { day, counts: {} };
   turnTown(game, t);
@@ -131,8 +161,17 @@ export function districtLocked(game, district) {
   const d = typeof district === 'string' ? DISTRICTS.find(x => x.id === district) : district;
   if (d.secret) return townState(game).mapPieces >= MAP_PIECES ? null : 'secret';
   if (d.pass && !hasPass(game, d.pass.id)) return 'pass';
+  if (d.grown && !townState(game).grown) return 'grown';
   return null;
 }
+
+/** Places that are opened one by one, by something done in the game: the flag in the town's state, and a hint. */
+export const PLACE_LOCKS = {
+  castle: { flag: 'invited', hint: 'By invitation: for fine manners or a diploma.' },
+  starisle: { flag: 'starIsle', hint: 'It shows itself to those who grant every wish.' },
+};
+/** Why a place can't be visited yet (its hint), or null. */
+export const placeLocked = (game, locId) => (PLACE_LOCKS[locId] && !townState(game)[PLACE_LOCKS[locId].flag] ? PLACE_LOCKS[locId].hint : null);
 
 export function buyPass(game, passId) {
   const d = DISTRICTS.find(x => x.pass?.id === passId);
@@ -154,6 +193,8 @@ export function cantGo(game, locId = null) {
     const why = districtLocked(game, LOCATION[locId].district);
     if (why === 'pass') return `You need the ${districtOf(locId).pass.name}.`;
     if (why === 'secret') return '???';
+    if (why === 'grown') return 'Once your pet has grown up.';
+    if (placeLocked(game, locId)) return placeLocked(game, locId);
   }
   return null;
 }
@@ -480,6 +521,7 @@ const FORTUNES = [
 
 export const ACTIONS = {
   square: [
+    { id: 'jobs', label: 'Job board', ui: 'jobs', needs: (game) => (game.pet.stage !== 'adult' ? 'Grown-ups only!' : null) },
     { id: 'fountain', label: 'Toss a coin', price: 5, run(game, rng) {
       if (used(game, 'fountain')) return { ok: false, msg: 'One wish a day at the fountain.' };
       if (!spend(game, 5)) return { ok: false, msg: 'Not enough points!' };
@@ -495,7 +537,7 @@ export const ACTIONS = {
       use(game, 'stroll');
       const pet = game.pet;
       pet.happy = clamp4(pet.happy + 0.5);
-      if (townState(game).mapPieces < MAP_PIECES && rng.chance(0.06)) return findMap(game, 'under a bench');
+      if (mapDue(game) && rng.chance(0.03)) return findMap(game, 'under a bench');
       if (rng.chance(0.5)) {
         const id = rng.pick(snacks);
         game.inventory[id] = (game.inventory[id] || 0) + 1;
@@ -626,7 +668,7 @@ export const ACTIONS = {
     { id: 'forage', label: 'Forage', run(game, rng) {
       if (used(game, 'forage')) return { ok: false, msg: 'You\'ve picked the bushes clean today.' };
       use(game, 'forage');
-      if (townState(game).mapPieces < MAP_PIECES && rng.chance(0.3)) return findMap(game, 'in a hollow log');
+      if (mapDue(game) && rng.chance(0.15)) return findMap(game, 'in a hollow log');
       const id = rng.pick(['fruitbowl', 'berrypie', 'peachbun']);
       game.inventory[id] = (game.inventory[id] || 0) + 1;
       return { ok: true, anim: 'happy', msg: `Found wild fruit: a ${FOODS[id].name}!` };
@@ -651,7 +693,7 @@ export const ACTIONS = {
     } },
   ],
   castle: [
-    { id: 'audience', label: 'Royal audience', needs: (game) => (game.pet.discipline < MAX_DISCIPLINE ? 'Only well-mannered pets may enter!' : null), run(game) {
+    { id: 'audience', label: 'Royal audience', needs: (game) => (game.pet.discipline < MAX_DISCIPLINE && !game.pet.diploma ? 'Only the well-mannered or the learned may enter!' : null), run(game) {
       const t = townState(game);
       if (!t.metQueen) {
         t.metQueen = true;
@@ -871,8 +913,12 @@ function ride(game, price, happy, msg, anim = 'happy') {
   return { ok: true, anim, msg };
 }
 
+/** Could a piece of the old map turn up now? The hunt is a long one: five pieces, and never two close together. */
+const mapDue = (game) => { const t = townState(game); return t.mapPieces < MAP_PIECES && game.simTime - t.mapAt >= MAP_GAP_DAYS * DAY; };
+
 function findMap(game, where) {
   const t = townState(game);
+  t.mapAt = game.simTime;
   t.mapPieces++;
   const done = t.mapPieces >= MAP_PIECES;
   return { ok: true, anim: 'happy', map: true, msg: done ? `Found the last map piece ${where}! A Hidden Village is on the map!` : `Found a torn map piece ${where}! (${t.mapPieces}/${MAP_PIECES})` };
