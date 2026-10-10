@@ -1,5 +1,7 @@
 # Pet Art Style Guide
 
+> **Pets were redrawn in v0.31.0.** The pet sections below (founders table, part grids, shading rules, review commands) describe the old double-pixel parts, which are gone. The current pet art is in `src/art/pets/fine/`; see "Pet art" in `CLAUDE.md`.
+
 Pets are hand-pixelled characters in a classic colour-screen virtual pet style, drawn with the charm of collectible creature games. Every pet is built from parts drawn **for its body plan**, so any mix of genes still looks like it was drawn on purpose.
 
 ## The model

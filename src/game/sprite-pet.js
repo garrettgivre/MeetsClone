@@ -1,5 +1,5 @@
-// Drawing and animating sprite-resolution pets built from their form's parts.
-// Each sprite pixel becomes a normal screen pixel (2x2 at double density). Animation is layered on the frame:
+// Placing and animating a composed pet. A pet from pet-art.js is at the fine size already (scale 1, `fine`);
+// the egg is a 64-pixel sprite whose pixels are doubled. Animation is layered on the frame:
 //   breathing   the head (rows above `neck`) bobs down a pixel
 //   walking     a one-pixel hop
 //   expressions eyes are covered with the face colour and redrawn
@@ -25,11 +25,12 @@ export function animateSprite(src, pose, canvas, ground, scale) {
   const rowEmpty = (y) => { for (let x = 0; x < src.w; x++) if (src.px[y * src.w + x]) return false; return true; };
   while (bottom > 0 && rowEmpty(bottom)) bottom--;
   const groundRow = Math.floor(ground / scale);
-  const lift = src.floats ? 3 + Math.round(Math.sin((pose.t || 0) / 500)) : 0;
-  const hop = pose.step === 1 ? 1 : 0;
+  const U = src.fine ? 2 : 1; // how many of this sprite's pixels make one old pet pixel: motions and strokes keep their size
+  const lift = src.floats ? (3 + Math.round(Math.sin((pose.t || 0) / 500))) * U : 0;
+  const hop = pose.step === 1 ? U : 0;
   const ox = Math.floor(canvas / scale / 2 - src.w / 2);
   const oy = groundRow - bottom - lift - hop;
-  const bob = pose.bob ? 1 : 0;
+  const bob = pose.bob ? U : 0;
 
   // soft shadow (dotted when floating)
   const cx = canvas / 2, gy = ground;
@@ -51,6 +52,7 @@ export function animateSprite(src, pose, canvas, ground, scale) {
 
   const ink = C('ink');
   const at = (x, y, c) => put(ox + x, oy + y + bob, c);
+  const dot = (x, y, c) => { for (let j = 0; j < U; j++) for (let i = 0; i < U; i++) at(x + i, y + j, c); }; // one stroke pixel
   const expr = pose.expr || 'idle';
   const skin = src.faceColour;
 
@@ -59,22 +61,22 @@ export function animateSprite(src, pose, canvas, ground, scale) {
   const closedEye = (box, shape) => {
     cover(box);
     const [x0, y0, w, h] = box;
-    const mid = y0 + Math.floor(h / 2);
-    const lw = Math.max(3, w);
-    const xs = x0 + Math.floor((w - lw) / 2);
-    for (let x = 0; x < lw; x++) {
-      const end = x === 0 || x === lw - 1;
-      let y = mid;
-      if (shape === 'happy') y = end ? mid + 1 : mid;
-      if (shape === 'closed') y = end ? mid - 1 : mid;
-      if (shape === 'sad') y = end ? mid + (x === 0 ? 0 : 1) : mid;
-      at(xs + x, y, ink);
+    const mid = y0 + Math.floor(h / 2) - (U >> 1);
+    const n = Math.max(3, Math.round(w / U)); // the line, in strokes
+    const xs = x0 + Math.floor((w - n * U) / 2);
+    for (let i = 0; i < n; i++) {
+      const end = i === 0 || i === n - 1;
+      let dy = 0;
+      if (shape === 'happy') dy = end ? 1 : 0;
+      if (shape === 'closed') dy = end ? -1 : 0;
+      if (shape === 'sad') dy = end ? (i === 0 ? 0 : 1) : 0;
+      dot(xs + i * U, mid + dy * U, ink);
     }
   };
   const dizzyEye = (box) => {
     cover(box);
-    const [x0, y0, w, h] = box, ex = x0 + (w >> 1), ey = y0 + (h >> 1);
-    for (let i = -1; i <= 1; i++) { at(ex + i, ey + i, ink); at(ex + i, ey - i, ink); }
+    const [x0, y0, w, h] = box, ex = x0 + (w >> 1) - (U >> 1), ey = y0 + (h >> 1) - (U >> 1);
+    for (let i = -1; i <= 1; i++) { dot(ex + i * U, ey + i * U, ink); dot(ex + i * U, ey - i * U, ink); }
   };
   const shape = { blink: 'closed', sleep: 'closed', chew: 'closed', happy: 'happy', sad: 'sad', sick: 'sad' }[expr];
   src.eyeBoxes.forEach((box, i) => {
@@ -85,20 +87,24 @@ export function animateSprite(src, pose, canvas, ground, scale) {
 
   // ----- mouth -----
   if (!src.keepMouth) {
-    const [mx, my] = src.mouth;
+    const [mx, my] = src.mouth, m = (dx, dy, c) => dot(mx - (U >> 1) + dx * U, my + dy * U, c);
+    const clear = () => { if (src.fine) for (let y = 0; y < 3 * U; y++) for (let x = -2 * U; x <= 2 * U; x++) at(mx + x, my + y, skin); }; // paint out the drawn mouth
     if (expr === 'eat' || expr === 'happy' || expr === 'wink') {
-      for (let x = -1; x <= 1; x++) at(mx + x, my, ink);
-      at(mx - 1, my + 1, ink); at(mx, my + 1, C('red.1')); at(mx + 1, my + 1, ink);
-      at(mx, my + 2, ink);
+      clear();
+      for (let x = -1; x <= 1; x++) m(x, 0, ink);
+      m(-1, 1, ink); m(0, 1, C('red.1')); m(1, 1, ink);
+      m(0, 2, ink);
     } else if (expr === 'chew') {
-      for (let x = -1; x <= 1; x++) at(mx + x, my, ink);
+      clear();
+      for (let x = -1; x <= 1; x++) m(x, 0, ink);
     }
   }
   return { out, at, ox, oy, bob };
 }
 
-/** Wrap a pet built by pet-art.js for scaling and animation. */
+/** Wrap what pet-art.js built for placing and animation. */
 export function composeKitSprite(kit, pose, canvas, ground, scale) {
+  if (kit.fine) return animateSprite({ ...kit, keepMouth: kit.bill }, pose, canvas, ground, 1).out;
   if (kit.egg) {
     return animateSprite({ ...kit, eyeBoxes: [], neck: 0, mouth: [0, 0], keepMouth: true, faceColour: 0 }, {}, canvas, ground, scale).out;
   }

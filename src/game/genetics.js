@@ -12,7 +12,7 @@ import { rand as defaultRng } from '../engine/rng.js';
 //
 // Every pet has a FORM (its body plan) and the BASE parts; ANCILLARY parts
 // are optional ('none' = doesn't have one). Every part is drawn separately
-// for every form (src/art/pets/), so any mix of genes still fits together.
+// by hand (src/art/pets/fine/); a body is drawn for every form, and the rest fit any body.
 export const FORM_GENES = ['form'];
 export const BASE_GENES = ['head', 'body', 'eyes', 'ears', 'mouth', 'pattern', 'mark'];
 export const ANCILLARY_GENES = ['tail', 'topper', 'feet', 'nose', 'wings', 'hair'];
@@ -21,19 +21,19 @@ export const TEMPERAMENT_GENES = ['appetite', 'energy', 'taste'];
 export const GENES = {
   // body plans are codominant (a coin flip between the parents' forms), so lines mix
   form:    { biped: 2, blob: 2, quad: 2, floater: 2, serpent: 2, avian: 2 },
-  head:    { gumdrop: 3, fox: 2, lamb: 2, bug: 2, bell: 1, owl: 1 },
-  body:    { jelly: 3, fluffy: 2, woolly: 2, segmented: 2, bell: 1, feathered: 1 },
-  eyes:    { jelly: 3, bead: 3, sly: 2, sleepy: 2, glow: 1, owl: 1 },
-  ears:    { nubs: 3, fox: 2, lamb: 2, antennae: 2, frills: 1, tufts: 1 },
-  mouth:   { o: 3, fang: 2, baa: 2, dot: 2, munch: 2, beak: 1 },
-  pattern: { bubbles: 2, muzzle: 2, sooty: 2, bands: 2, glowspots: 1, facedisk: 1 },
-  mark:    { dots: 3, heart: 2, clover: 2, flame: 1, spark: 1, moon: 1 },
-  tail:    { none: 3, brush: 2, puff: 2, spike: 1, tendrils: 1 },
-  topper:  { none: 3, cherry: 2, horns: 2, leaf: 2, lure: 1, plume: 1 },
-  feet:    { none: 2, nubs: 3, paws: 2, hooves: 2, talons: 1 },
-  nose:    { none: 3, button: 2, snoot: 2 },
+  head:    { gumdrop: 3, fox: 2, axolotl: 2, bug: 2, bell: 1, owl: 1 },
+  body:    { jelly: 3, fluffy: 2, chubby: 2, segmented: 2, bell: 1, feathered: 1 },
+  eyes:    { jelly: 3, bead: 3, sly: 2, pebble: 2, glow: 1, owl: 1 },
+  ears:    { nubs: 3, fox: 2, gills: 2, antennae: 2, frills: 1, tufts: 1 },
+  mouth:   { o: 3, fang: 2, smile: 2, dot: 2, munch: 2, beak: 1 },
+  pattern: { bubbles: 2, muzzle: 2, freckles: 2, bands: 2, glowspots: 1, facedisk: 1 },
+  mark:    { dots: 3, heart: 2, gleam: 2, flame: 1, spark: 1, moon: 1 },
+  tail:    { none: 3, brush: 2, paddle: 2, spike: 1, tendrils: 1 },
+  topper:  { none: 3, cream: 2, leaf: 2, lure: 1, crest: 1 },
+  feet:    { none: 2, nubs: 3, paws: 2, toes: 2, talons: 1 },
+  nose:    { none: 3, button: 2 },
   wings:   { none: 3, veils: 1, feathered: 1 },
-  hair:    { none: 3, tuft: 2, drip: 2, wool: 2 },
+  hair:    { none: 3, wisp: 2, drip: 2 },
   // temperament (shown on the status screen, changes care)
   appetite: { normal: 3, light: 2, hearty: 2 },
   energy:   { normal: 3, calm: 2, lively: 2 },
@@ -229,28 +229,28 @@ export const STARTER = {
 export const FOUNDERS = [
   { name: 'Kitsu', line: 'ember fox', tier: 1, traits: {
     form: 'biped', head: 'fox', body: 'fluffy', eyes: 'sly', ears: 'fox', mouth: 'fang', pattern: 'muzzle', mark: 'flame',
-    tail: 'brush', feet: 'paws', nose: 'button', hair: 'tuft',
-    color: 'orange', accent: 'cream', eyeColor: 'gold', hairColor: 'orange', taste: 'spicy', energy: 'lively' } },
-  { name: 'Gloop', line: 'cherry jelly', tier: 2, traits: {
+    tail: 'brush', feet: 'paws', nose: 'button', hair: 'wisp',
+    color: 'orange', accent: 'red', eyeColor: 'ink', hairColor: 'orange', taste: 'spicy', energy: 'lively' } },
+  { name: 'Gloop', line: 'lemon jelly', tier: 2, traits: {
     form: 'blob', head: 'gumdrop', body: 'jelly', eyes: 'jelly', ears: 'nubs', mouth: 'o', pattern: 'bubbles', mark: 'heart',
-    topper: 'cherry', hair: 'drip',
-    color: 'mint', accent: 'cream', eyeColor: 'blue', hairColor: 'cream', taste: 'sweet', appetite: 'hearty' } },
-  { name: 'Fleece', line: 'cloud lamb', tier: 1, traits: {
-    form: 'quad', head: 'lamb', body: 'woolly', eyes: 'sleepy', ears: 'lamb', mouth: 'baa', pattern: 'sooty', mark: 'clover',
-    tail: 'puff', topper: 'horns', feet: 'hooves', nose: 'snoot', hair: 'wool',
-    color: 'cream', accent: 'slate', eyeColor: 'ink', hairColor: 'cream', taste: 'fruity', energy: 'calm' } },
+    topper: 'cream', hair: 'drip',
+    color: 'gold', accent: 'mint', eyeColor: 'blue', hairColor: 'mint', taste: 'sweet', appetite: 'hearty' } },
+  { name: 'Lotl', line: 'pond axolotl', tier: 1, traits: {
+    form: 'quad', head: 'axolotl', body: 'chubby', eyes: 'pebble', ears: 'gills', mouth: 'smile', pattern: 'freckles', mark: 'gleam',
+    tail: 'paddle', feet: 'toes',
+    color: 'pink', accent: 'red', eyeColor: 'ink', hairColor: 'pink', taste: 'fruity', energy: 'calm' } },
   { name: 'Glimmer', line: 'lantern jellyfish', tier: 0, traits: {
     form: 'floater', head: 'bell', body: 'bell', eyes: 'glow', ears: 'frills', mouth: 'dot', pattern: 'glowspots', mark: 'spark',
     tail: 'tendrils', topper: 'lure', wings: 'veils',
-    color: 'sky', accent: 'violet', eyeColor: 'pink', hairColor: 'sky', taste: 'sweet', energy: 'calm' } },
+    color: 'blue', accent: 'violet', eyeColor: 'pink', hairColor: 'blue', taste: 'sweet', energy: 'calm' } },
   { name: 'Inchy', line: 'garden caterpillar', tier: 2, traits: {
     form: 'serpent', head: 'bug', body: 'segmented', eyes: 'bead', ears: 'antennae', mouth: 'munch', pattern: 'bands', mark: 'dots',
     tail: 'spike', topper: 'leaf', feet: 'nubs',
-    color: 'lime', accent: 'gold', eyeColor: 'ink', hairColor: 'lime', taste: 'fruity', appetite: 'hearty' } },
+    color: 'green', accent: 'gold', eyeColor: 'ink', hairColor: 'green', taste: 'fruity', appetite: 'hearty' } },
   { name: 'Hoolet', line: 'moon owlet', tier: 0, traits: {
     form: 'avian', head: 'owl', body: 'feathered', eyes: 'owl', ears: 'tufts', mouth: 'beak', pattern: 'facedisk', mark: 'moon',
-    topper: 'plume', feet: 'talons', wings: 'feathered',
-    color: 'brown', accent: 'cream', eyeColor: 'gold', hairColor: 'brown', taste: 'savory', energy: 'lively' } },
+    topper: 'crest', feet: 'talons', wings: 'feathered',
+    color: 'slate', accent: 'cream', eyeColor: 'ink', hairColor: 'slate', taste: 'savory', energy: 'lively' } },
 ];
 
 // Traits that are shared, not parts owned by a line.

@@ -19,7 +19,7 @@ import { PACKED } from '../src/engine/palette.js';
 import { makeRng } from '../src/engine/rng.js';
 import { backdrop, frontdrop, RW, RH, FEET } from '../src/art/town.js';
 import { LOCATIONS, resident } from '../src/game/town.js';
-import { composePetArt } from '../src/game/pet-art.js';
+import { composePet } from '../src/game/render.js';
 import { FOUNDERS, express, pureGenome } from '../src/game/genetics.js';
 
 const params = new URLSearchParams(location.search);
@@ -45,12 +45,10 @@ for (const loc of extra.length ? extra : LOCATIONS) {
   const ctx = c.getContext('2d');
   paint(ctx, backdrop(loc.id), 0, 0);
   if (pets) {
-    // pets are drawn at double density: each 64-px art pixel is one hi-res pixel here, scaled x2
-    const big = (art) => { const out = { w: art.w * 2, h: art.h * 2, px: new Uint8Array(art.w * art.h * 4) };
-      for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) out.px[y * out.w + x] = art.px[(y >> 1) * art.w + (x >> 1)]; return out; };
+    // pets as the game draws them (128 x 128, feet at row 122)
     const r = resident(loc.extra ? 'park' : loc.id);
-    paint(ctx, big(composePetArt(r.phenotype, 'adult', {})), 188 - 64, FEET - 122);
-    paint(ctx, big(composePetArt(express(pureGenome(FOUNDERS[1].traits), makeRng(1)), 'teen', {})), 76 - 64, FEET - 122, true);
+    paint(ctx, composePet(r.phenotype, 'adult', {}), 188 - 64, FEET - 122);
+    paint(ctx, composePet(express(pureGenome(FOUNDERS[1].traits), makeRng(1)), 'teen', {}), 76 - 64, FEET - 122, true);
   } else {
     ctx.fillStyle = 'rgba(255,0,0,0.35)'; ctx.fillRect(0, FEET, RW, 1);
   }

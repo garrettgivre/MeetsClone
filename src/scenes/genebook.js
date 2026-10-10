@@ -20,7 +20,13 @@ function preview(gene, allele) {
     const founder = FOUNDERS.find(f => f.name === lineOf(gene, allele));
     const traits = { ...STARTER, form: founder?.traits.form || STARTER.form, [gene]: allele };
     const art = composePetArt(express(pureGenome(traits), makeRng(1)), 'adult', {});
-    previews.set(key, { w: art.w, h: art.h, px: art.px, hd: true }); // drawn at double density: 32 x 32 on screen
+    // a window 80 fine pixels square (40 on screen): the pet's middle, its feet on the bottom edge
+    const V = 80, px = new Uint8Array(V * V), ox = (art.w - V) >> 1, oy = art.h - V;
+    for (let y = 0; y < V; y++) for (let x = 0; x < V; x++) {
+      const sx = x + ox, sy = y + oy;
+      if (sx >= 0 && sy >= 0 && sx < art.w && sy < art.h) px[y * V + x] = art.px[sy * art.w + sx];
+    }
+    previews.set(key, { w: V, h: V, px, hd: true });
   }
   return previews.get(key);
 }
@@ -108,7 +114,7 @@ class BookPage {
       const known = has(g, this.gene, allele);
       scr.panel(x, y, CW - 1, CH - 1, i === this.sel ? COL.hi : C('white'), COL.ink);
       scr.setClip(x + 1, y + 1, CW - 3, CH - 10);
-      scr.bitmap(preview(this.gene, allele), x + (CW - 1) / 2 - 16, y + 1, false, known ? 0 : C('silver'));
+      scr.bitmap(preview(this.gene, allele), x + (CW - 1) / 2 - 20, y + 1, false, known ? 0 : C('silver'));
       scr.noClip();
       text(scr, known ? allele.toUpperCase() : '???', x + (CW - 1) / 2, y + CH - 9, known ? COL.ink : COL.gray, { align: 'center' });
     }

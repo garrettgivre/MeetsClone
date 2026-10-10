@@ -1,433 +1,258 @@
-// Pet renderer: assembles a pet from its form's hand-pixelled parts.
+// Pet renderer: puts a pet together from the fine-line parts in src/art/pets/fine/.
 //
-// Every part is drawn for every form (src/art/pets/forms/), so a pet is just
-// its form's body with the head on the neck socket and each other part on
-// its socket. Patterns recolour inside the drawn shading, outlines between
-// connected parts of the same colour become soft creases, and the face goes
-// on last. Clothes go over all of it: a hat on top of the head, glasses and
-// stickers over the face. The result is handed to sprite-pet.js for scaling
-// and animation.
+// A pet is drawn at the fine pixel size (one art cell = one pixel of a room).
+// What is shared and what is per body plan: a head, ears, tail, feet, wings,
+// topper, hair and the face parts are one drawing each and go on any body plan.
+// A body is drawn once per body plan (BODY for its founder's own plan, BODIES
+// for the rest). Arms belong to the two-legged plan. Babies and children are a
+// plain head and a small body in one piece (young.js).
+//
+// The head's neck socket lands on the body's; everything else hangs on its
+// socket. Things laid over a head or body (markings, icing hair, spots) are kept
+// by where they sit from the face, the crown or the neck and only show on the
+// part they lie on, inside its outline, so they go on any head or body. The
+// result is handed to sprite-pet.js for placing and animation.
 
 import { C, ramp } from '../engine/palette.js';
 import { colors, lut } from '../engine/sprite.js';
-import { FORMS, EYES, MOUTHS, MARKS, NOSES, BABY_EYES, BABY_MOUTH, FACE_LAYOUT, PATTERNS, EGG } from '../art/pets/index.js';
+import { EGG } from '../art/pets/egg.js';
 import { HATS, FACE as FACE_WEAR } from '../art/pets/clothes.js';
 import { CLOTHES } from './items.js';
+import * as axolotl from '../art/pets/fine/axolotl.js';
+import * as caterpillar from '../art/pets/fine/caterpillar.js';
+import * as jellyfish from '../art/pets/fine/jellyfish.js';
+import * as fox from '../art/pets/fine/fox.js';
+import * as owl from '../art/pets/fine/owl.js';
+import * as jelly from '../art/pets/fine/jelly.js';
+import * as young from '../art/pets/fine/young.js';
 
-export const PW = 64, PH = 64; // output sprite canvas (the feet sit 3 rows above the bottom)
-const TW = 128, TH = 128, OX = 64, OY = 76; // working canvas; the body's neck socket lands on (OX, OY)
+export const LINES = { axolotl, caterpillar, jellyfish, fox, owl, jelly };
+export const FORMS = ['quad', 'serpent', 'floater', 'biped', 'avian', 'blob'];
+export const FW = 128, FH = 128; // the most room a pet may take, in fine pixels (the feet sit 6 above the bottom)
 
-// Which part drew each pixel, so joins between connected parts can be cleaned up
-const PART = { head: 1, body: 2, ears: 3, tail: 4, arms: 5, feet: 6, hair: 8, topper: 9, wings: 10, face: 11, wear: 12 };
-// parts that grow out of each other: where they meet in the same colour, the outline between them goes
-const JOINS = ['1-3', '1-8', '1-9', '2-4', '2-5', '2-6', '2-10'];
-const joinSet = (extra) => new Set([...JOINS, ...extra].flatMap(k => [k, k.split('-').reverse().join('-')]));
+// The fine look uses a ramp's lightest shade as the body colour. For these ramps that shade is too
+// pale to read as the colour (orange turns peach, slate and cream turn white), so the body is drawn a shade deeper.
+export const DEEPER = new Set(['orange', 'slate', 'cream', 'red', 'brown']);
 
-function canvas() {
-  const px = new Uint8Array(TW * TH), ids = new Uint8Array(TW * TH);
-  let cur = 0;
-  const set = (x, y, c) => { if (c && x >= 0 && y >= 0 && x < TW && y < TH) { px[y * TW + x] = c; ids[y * TW + x] = cur; } };
-  /** Draw a part with its pivot on (ax, ay). remap(charCode, i, j) can swap colours per pixel. */
-  const stamp = (p, ax, ay, ctx, flip = false, remap = null) => {
-    if (!p) return;
-    const s = p.spr, t = lut(s, ctx), f = s.frames[0];
-    const [p0x, p0y] = p.pivot;
-    for (let j = 0; j < s.h; j++) for (let i = 0; i < s.w; i++) {
-      let code = f[j * s.w + i];
-      if (!code) continue;
-      if (remap) code = remap(code, i, j);
-      const c = t[code];
-      if (!c) continue;
-      set(flip ? ax + p0x - i : ax - p0x + i, ay - p0y + j, c);
-    }
-  };
-  return { px, ids, set, stamp, part: (name) => { cur = PART[name]; } };
+const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR', '<': 'armL', '>': 'armR' };
+const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', f: 'pink.2', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist' };
+
+// read a part: note its sockets (painted as body colour unless the part says otherwise)
+function read(p) {
+  if (!p) return null;
+  const sockets = {};
+  const rows = p.rows.map((r, y) => [...r].map((ch, x) => {
+    if (!SOCKETS[ch]) return ch;
+    (sockets[SOCKETS[ch]] ||= []).push([x, y]);
+    return p.under?.[ch] || '4';
+  }));
+  return { ...p, rows, sockets, pivot: p.pivot || [0, 0] };
 }
 
-/** Where a part's sockets land once its pivot is placed on (ax, ay). */
-function placed(p, ax, ay, flip = false) {
-  const [p0x, p0y] = p.pivot;
-  return (name) => (p.sockets[name] || []).map(([x, y]) => [flip ? ax + p0x - x : ax - p0x + x, ay - p0y + y]);
-}
-
-// recolour body-ramp pixels for a pattern, keeping their shade
-const C2 = '2'.charCodeAt(0), C3 = '3'.charCodeAt(0), C4 = '4'.charCodeAt(0);
-const ACCENT = { [C2]: '6'.charCodeAt(0), [C3]: '7'.charCodeAt(0), [C4]: '8'.charCodeAt(0) };
-const BRIGHT = { [C2]: '7'.charCodeAt(0), [C3]: '8'.charCodeAt(0), [C4]: '8'.charCodeAt(0) };
-function patternRemap(pattern, region, p, info) {
-  const fn = PATTERNS[pattern];
-  if (!fn) return null;
-  return (code, i, j) => {
-    if (code !== C2 && code !== C3 && code !== C4) return code;
-    const r = fn(region, ((i + 0.5) / p.w) * 2 - 1, ((j + 0.5) / p.h) * 2 - 1, { ...info, w: p.w, h: p.h, zone: p.zones?.[j]?.[i] });
-    return r === 'accent' ? ACCENT[code] : r === 'bright' ? BRIGHT[code] : code;
-  };
-}
-
-/**
- * Erase the outline where two connected parts of the same colour meet (an ear
- * growing out of the head, a tail out of the body), leaving a soft crease in
- * the darker shade, the way a pixel artist joins shapes by hand. Silhouette
- * edges, chins, faces and accent-coloured parts keep their lines.
- */
-function joinSeams(L, ramps, joins, melt = new Set()) {
-  const ink = C('ink');
-  const info = new Map();
-  for (const r of ramps) for (let k = 0; k < 4; k++) if (!info.has(ramp(r, k))) info.set(ramp(r, k), [r, k]);
-  const isLine = (c) => c === ink || info.get(c)?.[1] === 0;
-  const out = L.px.slice();
-  for (let y = 1; y < TH - 1; y++) for (let x = 1; x < TW - 1; x++) {
-    const i = y * TW + x, c = L.px[i];
-    if (!c || !isLine(c)) continue;
-    for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
-      const a = i - dy * TW - dx, b = i + dy * TW + dx;
-      const ia = info.get(L.px[a]), ib = info.get(L.px[b]);
-      if (!ia || !ib || ia[1] === 0 || ib[1] === 0 || ia[0] !== ib[0]) continue;
-      const pa = L.ids[a], pb = L.ids[b];
-      if (pa === pb || !joins.has(pa + '-' + pb) || (L.ids[i] !== pa && L.ids[i] !== pb)) continue;
-      // a crease where parts join; where a one-piece form melts together, no line at all
-      out[i] = ramp(ia[0], melt.has(pa + '-' + pb) ? Math.min(ia[1], ib[1]) : Math.max(1, Math.min(ia[1], ib[1]) - 1));
-      break;
-    }
+// ---------- the table of parts, by gene and allele ----------
+const SLOT = { head: 'HEAD', ears: 'EARS', tail: 'TAIL', feet: 'FEET', wings: 'WINGS', topper: 'TOPPER', hair: 'HAIR', eyes: 'EYE', mouth: 'MOUTH', nose: 'NOSE', mark: 'MARK' };
+export const PARTS = { body: {}, pattern: {}, face: {}, cheek: {}, arms: {} };
+for (const L of Object.values(LINES)) {
+  const head = read(L.HEAD), body = read(L.BODY);
+  const face = head.sockets.face[0], top = head.sockets.top[0], neck = body.sockets.neck[0];
+  for (const [gene, slot] of Object.entries(SLOT)) if (L.GENES[gene] && L[slot]) (PARTS[gene] ||= {})[L.GENES[gene]] = read(L[slot]);
+  if (L.TAIL_SIDE) PARTS.tail[L.GENES.tail].side = read(L.TAIL_SIDE); // for a pet that stands on the ground
+  if (L.WINGS_SIDE) PARTS.wings[L.GENES.wings].side = read(L.WINGS_SIDE);
+  if (L.EARS_SMALL) PARTS.ears[L.GENES.ears].small = read(L.EARS_SMALL); // a child's
+  PARTS.body[L.GENES.body] = { [L.FORM]: body };
+  for (const [form, b] of Object.entries(L.BODIES || {})) PARTS.body[L.GENES.body][form] = read(b);
+  PARTS.face[L.GENES.head] = L.FACE;
+  PARTS.cheek[L.GENES.head] = read(L.CHEEK);
+  if (L.ARMS) PARTS.arms[L.FORM] = read(L.ARMS);
+  // things laid over a head or body: kept by where they sit from the face, the crown or the neck
+  const layers = [];
+  for (const o of L.OVERLAYS || []) {
+    const from = o.on === 'body' ? neck : o.anchor === 'top' ? top : face;
+    layers.push({ ...read(o), on: o.on, anchor: o.anchor, off: [o.at[0] - from[0], o.at[1] - from[1]] });
   }
-  L.px.set(out);
+  if (L.SPOTS) for (const [x, y] of L.SPOTS.at) layers.push({ ...read(L.SPOTS), on: 'head', off: [x - L.SPOTS.pivot[0] - face[0], y - L.SPOTS.pivot[1] - face[1]] });
+  const hair = layers.filter(o => o.gene === 'hair'), pattern = layers.filter(o => o.gene !== 'hair');
+  if (hair.length) (PARTS.hair ||= {})[L.GENES.hair] = { layers: hair };
+  if (L.GENES.pattern) PARTS.pattern[L.GENES.pattern] = pattern;
 }
 
-// The simpler, rounder look (the owner found the pets "not cute enough" and pointed to
-// one-piece, flat-coloured characters with heavy outlines and tiny faces). The parts are
-// the same hand-drawn grids; these settings change how they are put together and finished.
-export const STYLE = {
-  flat: true,      // one colour and one shadow per part: no light rim, no fur ticks, wool curls or feather rows
-  inkLine: true,   // the whole silhouette is outlined in ink, not in a dark shade of the pet's own colour
-  smallFace: true, // big faces use the small eyes, nose and mouth, set as wide apart as the big ones were
-  tuck: 2,         // the head sits this many pixels lower on the body, for a shorter, chubbier pet
+// babies and children: a head and a small body per body plan, in one piece
+const each = (o) => Object.fromEntries(Object.entries(o).map(([f, b]) => [f, read(b)]));
+const YOUNG = {
+  baby: { head: read(young.BABY_HEAD), body: each(young.BABY_BODY), face: young.BABY_FACE, cheek: read(young.BABY_CHEEK) },
+  child: { head: read(young.CHILD_HEAD), body: each(young.CHILD_BODY), face: young.CHILD_FACE, cheek: read(young.CHILD_CHEEK) },
 };
+const BABY_EYE = read(young.BABY_EYE), BABY_MOUTH = read(young.BABY_MOUTH);
+
+const has = (p, gene) => p[gene] && p[gene] !== 'none';
 
 /**
- * Flatten a composed pet: every lit shade becomes the base colour; a shadow
- * shade stays only where it lies along the lower right of the shape (the
- * shadow band), not where it was texture; and the outline, wherever it faces
- * empty space, becomes ink. Lines inside the shape in the pet's own dark shade
- * soften to its shadow colour.
+ * Put a pet together. Returns { px, own } (maps from "x,y" to a colour and to the part that drew it, with
+ * the body's top-left at 0, 0), the eye boxes, the mouth, the neck row and `floats`.
+ * p is a phenotype; p.deeper may force the deeper body shade on or off. stage: baby, child, teen, adult.
  */
-function simplify(L, rampNames) {
-  const ink = C('ink');
-  const info = new Map();
-  for (const r of rampNames) for (let k = 0; k < 4; k++) if (!info.has(ramp(r, k))) info.set(ramp(r, k), [r, k]);
-  const edge = (c) => c === 0 || c === ink || info.get(c)?.[1] === 0;
-  const src = L.px.slice();
-  const was = (x, y) => (x < 0 || y < 0 || x >= TW || y >= TH ? 0 : src[y * TW + x]);
-  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
-    const i = y * TW + x, c = src[i], m = info.get(c);
-    if (!m) continue;
-    const [r, shade] = m;
-    if (shade === 3 && STYLE.flat) L.px[i] = ramp(r, 2);
-    else if (shade === 1 && STYLE.flat) {
-      // the shadow band hugs the right or bottom edge: within two pixels of it
-      const near = [[1, 0], [2, 0], [0, 1], [0, 2], [1, 1]].some(([dx, dy]) => edge(was(x + dx, y + dy)));
-      if (!near) L.px[i] = ramp(r, 2);
-    } else if (shade === 0 && STYLE.inkLine) {
-      const open = !was(x - 1, y) || !was(x + 1, y) || !was(x, y - 1) || !was(x, y + 1);
-      L.px[i] = open ? ink : ramp(r, 1);
+export function build(p, stage = 'adult', pose = {}) {
+  const Y = YOUNG[stage]; // a baby or child is a plain head and body in one piece
+  const adult = stage === 'adult';
+  const form = FORMS.includes(p.form) ? p.form : 'blob';
+  const d = (p.deeper ?? DEEPER.has(p.color)) ? 1 : 0;
+  const eyeRamp = p.eyeColor || p.eye || 'ink';
+  const col = { 4: ramp(p.color, 3 - d), 3: ramp(p.color, 2 - d), 2: ramp(p.color, 1 - d), 8: ramp(p.accent, 3), 7: ramp(p.accent, 2), 6: ramp(p.accent, 1), e: ramp(eyeRamp, 2), E: ramp(eyeRamp, 3) };
+  if (eyeRamp === 'ink') col.e = col.E = C('ink');
+  for (const [k, v] of Object.entries(FIXED)) col[k] = C(v);
+  const ink = col.o;
+  const px = new Map(), own = new Map();
+  let who = '';
+  const stamp = (part, ax, ay, flip = false, at = part && part.pivot, clip = null) => part && part.rows.forEach((r, j) => r.forEach((ch, i) => {
+    if (ch === '.' || ch === ' ') return;
+    const k = (flip ? ax + at[0] - i : ax - at[0] + i) + ',' + (ay - at[1] + j);
+    if (clip && (own.get(k) !== clip || px.get(k) === ink)) return; // an overlay only shows on the part it lies on, inside its outline
+    px.set(k, col[ch]); if (!clip) own.set(k, who);
+  }));
+  const bodies = PARTS.body[p.body] || PARTS.body.jelly;
+  const body = Y ? Y.body[form] : bodies[form], head = Y ? Y.head : PARTS.head[p.head] || PARTS.head.gumdrop;
+  const [bnx, bny] = body.sockets.neck[0], [hnx, hny] = head.sockets.neck[0];
+  const hx = bnx - hnx, hy = bny - hny; // the head's top-left: its neck on the body's
+  const H = (n) => (head.sockets[n] || []).map(([x, y]) => [hx + x, hy + y]);
+  const B = (n) => body.sockets[n] || [];
+  const [el] = H('earL'), [er] = H('earR'), [f] = H('face'), [top] = H('top'), [t] = B('tail');
+  const wing0 = Y || !adult ? null : PARTS.wings?.[p.wings], wings = wing0 && (form !== 'floater' && wing0.side || wing0), [wl] = B('wingL'), [wr] = B('wingR');
+  const ears = stage === 'baby' ? null : stage === 'child' ? PARTS.ears[p.ears]?.small : PARTS.ears[p.ears];
+  const pattern = Y ? [] : PARTS.pattern[p.pattern] || [], hair = Y || !has(p, 'hair') ? null : PARTS.hair?.[p.hair];
+  const drawEars = () => { who = 'ears'; if (ears && el) { stamp(ears, el[0], el[1]); stamp(ears, er[0], er[1], true); } };
+  const drawWings = () => { who = 'wings'; if (wings && wl) stamp(wings, wl[0], wl[1]); if (wings && wr) stamp(wings, wr[0], wr[1], true); };
+  const lay = (list, on, from, part) => { for (const o of list) if (o.on === on) stamp(o, from[0] + o.off[0], from[1] + o.off[1], false, [0, 0], part); };
+
+  const onePiece = form === 'blob' && !Y; // the base stands behind the head, so ears that lie behind the head go on after it
+  if (ears && !ears.front && !onePiece) drawEars();
+  if (wings && !wings.front) drawWings();
+  const tail = !Y && has(p, 'tail') && PARTS.tail[p.tail] && (form !== 'floater' && PARTS.tail[p.tail].side || PARTS.tail[p.tail]);
+  who = 'tail'; if (t && tail) stamp(tail, t[0], t[1]);
+  who = 'body'; stamp(body, 0, 0, false, [0, 0]);
+  lay(pattern, 'body', [bnx, bny], 'body');
+  if (ears && !ears.front && onePiece) drawEars();
+  if (wings?.front) drawWings();
+  const arms = Y ? null : PARTS.arms[form], [al] = B('armL'), [ar] = B('armR');
+  who = 'arms'; if (arms && al) { stamp(arms, al[0], al[1]); stamp(arms, ar[0], ar[1], true); }
+  who = 'feet'; if (!Y && has(p, 'feet') && PARTS.feet[p.feet]) for (const [x, y] of B('feet')) stamp(PARTS.feet[p.feet], x, y);
+  who = 'head'; stamp(head, hx, hy, false, [0, 0]);
+  if (form === 'blob' || Y) {
+    // one piece: wherever the head's outline lies on the body with body colour beside it, the line goes
+    const melted = [];
+    for (const [k, c] of px) {
+      if (c !== ink || own.get(k) !== 'head') continue;
+      const [x, y] = k.split(',').map(Number), near = [[0, -1], [0, 1], [-1, 0], [1, 0]].map(([dx, dy]) => (x + dx) + ',' + (y + dy));
+      const inside = near.find(n => own.get(n) === 'head' && px.get(n) !== ink), outside = near.find(n => own.get(n) === 'body' && px.get(n) !== ink);
+      if (inside && outside) melted.push([k, px.get(Y ? outside : inside)]);
     }
+    for (const [k, c] of melted) px.set(k, c);
   }
-}
-
-/**
- * Crop the working canvas to the output size: centred, feet near the bottom.
- * The ground is the lowest pixel of the body and feet; a tail or wing that
- * dangles lower doesn't lift the pet off the floor. A floater has no floor, so
- * all of it counts (its tendrils must stay on the canvas).
- */
-function crop(L, floats = false) {
-  let x0 = TW, y0 = TH, x1 = -1, y1 = -1, ground = -1;
-  for (let y = 0; y < TH; y++) for (let x = 0; x < TW; x++) {
-    const i = y * TW + x;
-    if (!L.px[i]) continue;
-    x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-    if (floats || (L.ids[i] !== PART.tail && L.ids[i] !== PART.wings)) ground = Math.max(ground, y);
-  }
-  if (ground < 0) ground = y1;
-  const dx = Math.floor((PW - (x1 - x0 + 1)) / 2) - x0, dy = PH - 3 - ground;
-  const px = new Uint8Array(PW * PH);
-  const seen = {}; // visible pixels per part, so tests can check nothing is hidden or cut off
-  const names = Object.fromEntries(Object.entries(PART).map(([k, v]) => [v, k]));
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const i = y * TW + x, c = L.px[i], X = x + dx, Y = y + dy;
-    if (c && X >= 0 && Y >= 0 && X < PW && Y < PH) { px[Y * PW + X] = c; const n = names[L.ids[i]]; if (n) seen[n] = (seen[n] || 0) + 1; }
-  }
-  return { px, dx, dy, seen, overflow: x1 - x0 + 1 > PW || ground - y0 + 4 > PH };
-}
-
-/**
- * Hair and toppers sit over the forehead mark. If they hide more than half of
- * it, move the mark down onto bare forehead (staying above the eyes), or failing
- * that, put the small mark on the chest, so the gene always shows.
- */
-function settleMark(L, { mark, small, y, size }, fx, fy, ctx) {
-  const cellsOf = (m) => {
-    const out = [];
-    m.rows.forEach((r, j) => [...r].forEach((c, i) => { if (c !== '.') out.push([i - m.pivot[0], j - m.pivot[1]]); }));
-    return out;
-  };
-  const cells = cellsOf(mark);
-  const count = (cs, x, yy, ok) => cs.filter(([dx, dy]) => ok(L.ids[(yy + dy) * TW + x + dx])).length;
-  if (count(cells, fx, y, (id) => id === PART.face) * 2 >= cells.length) return;
-  const skin = (id) => id === PART.head || id === PART.face;
-  const lowest = fy - (size === 'L' ? 3 : 2); // the mark's bottom row stays above the eyes
-  const bottom = Math.max(...cells.map(([, d]) => d));
-  for (let dy = 1; y + dy + bottom <= lowest; dy++) {
-    if (count(cells, fx, y + dy, skin) === cells.length) { L.part('face'); L.stamp(mark, fx, y + dy, ctx); return; }
-  }
-  // the chest: the first stretch of bare body under the face
-  const cs = cellsOf(small);
-  // (below the mouth; in one-piece forms the chest is still the head part)
-  const bare = (id) => id === PART.body || id === PART.head;
-  const from = fy + (size === 'L' ? 8 : 6);
-  for (let yy = from; yy < Math.min(TH - 4, from + 14); yy++) {
-    if (count(cs, fx, yy, bare) === cs.length) { L.part('face'); L.stamp(small, fx, yy, ctx); return; }
-  }
-}
-
-/** Draw the eyes, cheeks, mark, nose and mouth around a face socket. */
-function drawFace(L, p, stage, pose, ctx, [fx, fy], size, on = {}) {
-  // (a big face can be given the small parts: they keep the big face's spacing)
-  const parts = size === 'L' && STYLE.smallFace ? 'S' : size;
-  // layout: house defaults, then the form's, then the part's own (a small head can set a closer eye spread)
-  const lay = { ...FACE_LAYOUT[size], ...(FORMS[p.form]?.faceLayout || {}) };
-  const simple = stage === 'baby';
-  const eye = simple ? BABY_EYES : (EYES[p.eyes] || EYES.bead)[parts];
-  const spread = on.spread || (simple ? 3 : lay.spread);
-  const exL = fx - spread, exR = fx + spread;
-  const skinAt = (x, y) => { const c = L.px[y * TW + x]; return c && c !== C('ink') && c !== C('white') ? c : null; };
-  // the skin on the inner side of each eye, to paint over closed eyes (a mask or patch keeps its colour)
-  const eyeSkin = [skinAt(exL + eye.w - eye.pivot[0], fy), skinAt(exR - (eye.w - eye.pivot[0]), fy)].map(c => c || ramp(p.color, 2));
-  L.part('face');
-  // cheeks: a soft blush under the outer corner of each eye
-  if (pose.expr !== 'sick') {
-    const by = fy + eye.h - eye.pivot[1];
-    for (const x of [exL - 2, exL - 1, exR + 1, exR + 2]) if (skinAt(x, by)) L.set(x, by, C('pink.2'));
-  }
-  const before = L.px.slice(); // to count eye pixels that miss the head
-  L.stamp(eye, exL, fy, ctx);
-  // the right eye keeps its glint on the lit (left) side unless the eye is meant to mirror
-  if (eye.mirror) L.stamp(eye, exR, fy, ctx, true);
-  else L.stamp(eye, exR + 2 * eye.pivot[0] - eye.w + 1, fy, ctx);
-  // eye pixels on empty space or over the head's outline mean the eyes don't fit the head
-  const edge = new Set([0, C('ink'), ramp(p.color, 0)]);
-  const off = [];
-  for (let i = 0; i < before.length; i++) if (L.px[i] !== before[i] && edge.has(before[i])) off.push(i);
-  if (pose.gender === 'f' && !simple) {
-    // a single lash at the outer top of each eye
-    L.set(exL - eye.pivot[0] - 1, fy - eye.pivot[1], C('ink'));
-    L.set(exR + eye.pivot[0] + 1, fy - eye.pivot[1], C('ink'));
-  }
-  const withEyes = L.px.slice();
-  const shift = parts === size ? 0 : -1; // small parts sit a row closer to the eyes
-  if (!simple && p.nose && p.nose !== 'none') L.stamp(NOSES[p.nose]?.[parts], fx, fy + lay.nose + shift, ctx);
-  const mouth = simple ? BABY_MOUTH : (MOUTHS[p.mouth] || MOUTHS.o)[parts];
-  const my = fy + (mouth.bill ? 1 : simple ? 2 : lay.mouth + shift);
-  L.stamp(mouth, fx, my, ctx);
-  // nose and mouth pixels that cover an eye or miss the head
-  for (let i = 0; i < before.length; i++) if (L.px[i] !== withEyes[i] && (withEyes[i] !== before[i] || edge.has(before[i]))) off.push(i);
-  return { off, eyes: [[exL, fy], [exR, fy]], eye, mouth: [fx, my + (mouth.bill ? mouth.h - 1 : 0)], bill: !!mouth.bill, eyeSkin };
-}
-
-/** The top row of the head in each column (before hair and toppers go on), so a hat can sit on it. */
-function headTops(L) {
+  // the top of the head in each column, before anything is put on it, for hats
   const tops = new Map();
-  for (let x = 0; x < TW; x++) for (let y = 0; y < TH; y++) {
-    const id = L.ids[y * TW + x];
-    if (L.px[y * TW + x] && (id === PART.head || id === PART.face)) { tops.set(x, y); break; }
+  for (const [k, w] of own) if (w === 'head') { const [x, y] = k.split(',').map(Number); if (!tops.has(x) || y < tops.get(x)) tops.set(x, y); }
+  lay(pattern, 'head', f, 'head');
+  if (hair?.layers) for (const o of hair.layers) stamp(o, (o.anchor === 'top' ? top : f)[0] + o.off[0], (o.anchor === 'top' ? top : f)[1] + o.off[1], false, [0, 0], 'head');
+  if (ears?.front) drawEars();
+  who = 'hair'; if (hair?.rows) stamp(hair, top[0], top[1]);
+  if (hair?.layers) for (const [k, w] of own) if (w === 'head' && [col[7], col[8]].includes(px.get(k))) own.set(k, 'hair'); // (icing counts as hair where it shows)
+  who = 'topper'; if (adult && has(p, 'topper') && PARTS.topper[p.topper]) stamp(PARTS.topper[p.topper], top[0], top[1]);
+
+  who = 'face';
+  const F = Y ? Y.face : PARTS.face[p.head] || PARTS.face.gumdrop, cheek = Y ? Y.cheek : PARTS.cheek[p.head];
+  const eye = stage === 'baby' ? BABY_EYE : PARTS.eyes[p.eyes] || PARTS.eyes.bead, mouth = stage === 'baby' ? BABY_MOUTH : PARTS.mouth[p.mouth] || PARTS.mouth.o;
+  const nose = Y || !has(p, 'nose') ? null : PARTS.nose?.[p.nose], mark = Y ? null : PARTS.mark[p.mark];
+  if (mark) stamp(mark, f[0] + F.mark[0], f[1] + F.mark[1]);
+  if (cheek && F.cheeks && pose.expr !== 'sick') { stamp(cheek, f[0] - F.cheeks[0], f[1] + F.cheeks[1]); stamp(cheek, f[0] + F.cheeks[0], f[1] + F.cheeks[1]); }
+  lay(pattern, 'face', f, null);
+  // the eyes; remember each one's box and the colour under it, so it can be covered and redrawn for a blink or a mood
+  const ew = eye.rows[0].length, eh = eye.rows.length;
+  const exL = f[0] - F.eyes, exR = f[0] + F.eyes - (eye.mirror ? 1 : 0);
+  const boxes = [[exL - eye.pivot[0], f[1] - eye.pivot[1], ew, eh], [eye.mirror ? exR + eye.pivot[0] - (ew - 1) : exR - eye.pivot[0], f[1] - eye.pivot[1], ew, eh]];
+  for (const b of boxes) b.push(px.get((b[0] + (ew >> 1)) + ',' + (b[1] + (eh >> 1))) || col[4]);
+  stamp(eye, exL, f[1]); stamp(eye, exR, f[1], !!eye.mirror);
+  const noseY = f[1] + (F.nose ?? F.mouth - 2);
+  if (nose) stamp(nose, f[0], noseY);
+  const mouthY = nose ? noseY + nose.rows.length : f[1] + F.mouth;
+  stamp(mouth, f[0], mouthY);
+
+  // clothes: a hat on top of the head, glasses and stickers over the face (drawn at twice their grid, like the old pets)
+  let eyesHidden = false;
+  const wear = Y || stage === 'baby' ? {} : pose.wear || {};
+  who = 'wear';
+  const dress = (part, ctx, x0, y0, only = null) => {
+    const t2 = lut(part.spr, ctx);
+    part.rows.forEach((r, j) => [...r].forEach((ch, i) => {
+      const c = t2[ch.charCodeAt(0)]; if (!c) return;
+      for (let b = 0; b < 2; b++) for (let a = 0; a < 2; a++) {
+        const k = (x0 + (i - part.pivot[0]) * 2 + a) + ',' + (y0 + (j - part.pivot[1]) * 2 + b);
+        if (only && !px.has(k)) continue; // a sticker only shows where there is pet to stick to
+        px.set(k, c); own.set(k, 'wear');
+      }
+    }));
+  };
+  if (wear.head && HATS[wear.head] && tops.size) {
+    const hat = HATS[wear.head];
+    let x = top[0] + (hat.offset || 0) * 2;
+    while (!tops.has(x) && x > top[0]) x--;
+    if (tops.has(x)) dress(hat, colors(p.color, CLOTHES[wear.head].color, 'ink', 'brown'), x, tops.get(x));
   }
-  return tops;
-}
-
-/** A hat: its pivot on the top of the head, in the column of the head's `top` socket (plus the hat's own offset). */
-function drawHat(L, p, id, topX, tops) {
-  const hat = HATS[id];
-  if (!hat || !tops.size) return;
-  let x = topX + (hat.offset || 0);
-  while (!tops.has(x) && x > topX) x--; // a narrow head: come back toward the middle
-  if (!tops.has(x)) return;
-  L.part('wear');
-  L.stamp(hat, x, tops.get(x), colors(p.color, CLOTHES[id].color, 'ink', 'brown'));
-}
-
-/**
- * Glasses, a monocle, or something stuck on the brow, over the finished face.
- * Returns true if the eyes are hidden (shades), so they aren't redrawn for expressions.
- */
-function drawFaceWear(L, p, id, face) {
-  const item = FACE_WEAR[id];
-  if (!item) return false;
-  const ctx = colors(p.color, CLOTHES[id].color, 'ink', 'brown');
-  const { eye, eyes: [[exL, fy], [exR]] } = face;
-  // each eye's box: [left, top]
-  const boxes = [[exL - eye.pivot[0], fy - eye.pivot[1]], [exR + eye.pivot[0] - eye.w + 1, fy - eye.pivot[1]]];
-  L.part('wear');
-  if (item.lens) {
-    const lens = item.lens.find(l => l.inner >= Math.max(eye.w, eye.h)) || item.lens[item.lens.length - 1];
-    // centre the ring on the eye (the clear space starts one pixel inside it)
-    const at = ([x, y]) => [x - 1 - Math.floor((lens.inner - eye.w) / 2), y - 1 - Math.floor((lens.inner - eye.h) / 2)];
-    const [l, r] = boxes.map(at);
-    if (!item.oneSide) {
-      L.stamp(lens, l[0], l[1], ctx);
-      // the bridge, level with the middle of the eyes
-      for (let x = l[0] + lens.w; x < r[0]; x++) L.set(x, l[1] + Math.floor(lens.h / 2) - 1, C('ink'));
+  if (wear.face && FACE_WEAR[wear.face]) {
+    const item = FACE_WEAR[wear.face], ctx = colors(p.color, CLOTHES[wear.face].color, 'ink', 'brown');
+    if (item.lens) {
+      const need = Math.ceil(Math.max(ew, eh) / 2);
+      const lens = item.lens.find(l => l.inner >= need) || item.lens[item.lens.length - 1];
+      const place = ([x, y]) => [x + (ew >> 1) - lens.w, y + (eh >> 1) - lens.h]; // the ring centred on the eye
+      const [l, r] = boxes.map(place), bare = { ...lens, pivot: [0, 0] };
+      if (!item.oneSide) {
+        dress(bare, ctx, l[0], l[1]);
+        for (let x = l[0] + lens.w * 2; x < r[0]; x++) for (let b = 0; b < 2; b++) { const k = x + ',' + (l[1] + lens.h - 2 + b); px.set(k, ink); own.set(k, 'wear'); }
+      }
+      dress(bare, ctx, r[0], r[1]);
+      if (item.chain) dress(item.chain, ctx, r[0] + lens.w * 2 - 2, r[1] + lens.h * 2 - 2);
     }
-    L.stamp(lens, r[0], r[1], ctx);
-    if (item.chain) L.stamp(item.chain, r[0] + lens.w - 1, r[1] + lens.h - 1, ctx);
+    if (item.brow) {
+      const left = item.side === 'left', b = boxes[left ? 0 : 1];
+      dress(item.brow, ctx, b[0] + (ew >> 1), b[1] - 4, true);
+    }
+    eyesHidden = !!item.hidesEyes;
   }
-  if (item.brow) {
-    // just above one eye, leaning toward its outer corner; it only shows where there is pet to stick to
-    const left = item.side === 'left', b = item.brow, s = b.spr, t = lut(s, ctx), f = s.frames[0];
-    const by = boxes[0][1] - 2;
-    const cellsAt = (bx) => {
-      const out = [];
-      for (let j = 0; j < s.h; j++) for (let i = 0; i < s.w; i++) if (t[f[j * s.w + i]]) out.push([bx - b.pivot[0] + i, by - b.pivot[1] + j, t[f[j * s.w + i]]]);
-      return out;
-    };
-    const stuck = (cells) => cells.filter(([x, y]) => L.px[y * TW + x]).length;
-    // start over the eye's outer half and come in toward the middle until it is all on the head
-    let bx = left ? boxes[0][0] + 1 : boxes[1][0] + eye.w - 2, cells = cellsAt(bx);
-    for (let n = 0; n < 4 && stuck(cells) < cells.length; n++) { bx += left ? 1 : -1; const next = cellsAt(bx); if (stuck(next) > stuck(cells)) cells = next; else break; }
-    for (const [x, y, col] of cells) if (L.px[y * TW + x]) L.set(x, y, col);
+
+  // a pet that stands on the ground: nothing hangs through the floor (the floor is the lowest point of its body and feet)
+  const floats = form === 'floater';
+  if (!floats) {
+    let floor = -Infinity;
+    for (const [k, w] of own) if (w === 'body' || w === 'feet') floor = Math.max(floor, +k.split(',')[1]);
+    for (const k of [...px.keys()]) if (+k.split(',')[1] > floor) { px.delete(k); own.delete(k); }
   }
-  return !!item.hidesEyes;
+  return { px, own, boxes, eyesHidden, mouth: [f[0], mouthY], neck: Y ? bny + 1 : bny, floats, bill: !Y && stage !== 'baby' && p.mouth === 'beak', faceColour: col[4] };
 }
 
 /**
- * Compose a pet at sprite resolution.
- * Returns { px, w, h, eyes, eyeSize, eyePivot, eyeSkin, mouth, faceColour, neck, floats, bill, ctx }.
+ * Compose a pet at its own (fine) resolution, cropped to what it covers.
+ * Returns { px, w, h, eyeBoxes, mouth, neck, floats, bill, faceColour, eyesHidden, seen, overflow, fine: true }.
  */
 export function composePetArt(p, stage, pose = {}) {
-  const F = FORMS[p.form] || FORMS.blob;
-  const ctx = colors(p.color, p.accent, p.eyeColor, p.hairColor || p.color);
-  const L = canvas();
-  let face, neckY = OY, eyesHidden = false;
-  const wear = pose.wear || {};
-
-  if (stage === 'baby' || stage === 'child') {
-    // early stages are simple shapes in the form's spirit, with a face
-    const shape = F[stage];
-    L.part('body');
-    const ax = OX, ay = OY;
-    const at = placed(shape, ax, ay);
-    // children already show their ears, drawn small (the serpent's ears are the small set)
-    const ears = stage === 'child' && FORMS.serpent.ears[p.ears];
-    const drawEars = () => {
-      const [l] = at('earL'), [r] = at('earR');
-      L.part('ears');
-      if (l) L.stamp(ears, l[0], l[1], ctx);
-      if (r) L.stamp(ears, r[0], r[1], ctx, true);
-      L.part('body');
-    };
-    if (ears && !ears.front) drawEars();
-    L.stamp(shape, ax, ay, ctx, false, stage === 'child' ? patternRemap(p.pattern, 'body', shape, { form: p.form, fu: 0, fv: 0 }) : null);
-    if (ears && ears.front) drawEars();
-    simplify(L, [p.color, p.accent, p.hairColor || p.color]);
-    face = drawFace(L, p, stage, pose, ctx, at('faceS')[0], 'S', shape);
-    neckY = at('faceS')[0][1] + 4;
-  } else {
-    const adult = stage === 'adult';
-    const body = F.body[p.body] || Object.values(F.body)[0];
-    const head = F.head[p.head] || Object.values(F.head)[0];
-    const [bnx, bny] = body.sockets.neck[0];
-    const [hnx, hny] = head.sockets.neck[0];
-    // the head's neck socket lands on the body's
-    const bx0 = OX - bnx, by0 = OY - bny, hx0 = OX - hnx, hy0 = OY - hny + (F.floats || F.merge ? 0 : STYLE.tuck);
-    const B = (name) => (body.sockets[name] || []).map(([x, y]) => [bx0 + x, by0 + y]);
-    const Hs = (name) => (head.sockets[name] || []).map(([x, y]) => [hx0 + x, hy0 + y]);
-    const faceSock = Hs('faceL')[0] ? ['L', Hs('faceL')[0]] : ['S', Hs('faceS')[0]];
-    const [fx, fy] = faceSock[1];
-    const headInfo = { form: p.form, fu: ((fx - hx0 + 0.5) / head.w) * 2 - 1, fv: ((fy - hy0 + 0.5) / head.h) * 2 - 1 };
-
-    const has = (gene) => p[gene] && p[gene] !== 'none';
-    const showWings = adult && has('wings');
-    const armPose = pose.arms || 'down';
-    const [armL, armR] = armPose === 'wave' ? ['up', 'down'] : [armPose, armPose];
-    const arm = (k) => F.arms?.[k] || F.arms?.down;
-    const drawArms = (which) => {
-      if (!F.arms || (F.armsUnlessWings && showWings)) return;
-      L.part('arms');
-      const [l] = B('armL'), [r] = B('armR');
-      if (l && which(armL)) L.stamp(arm(armL), l[0], l[1], ctx);
-      if (r && which(armR)) L.stamp(arm(armR), r[0], r[1], ctx, true);
-    };
-    const ears = F.ears[p.ears];
-    const drawEars = () => {
-      if (!ears) return;
-      L.part('ears');
-      const [l] = Hs('earL'), [r] = Hs('earR');
-      if (l) L.stamp(ears, l[0], l[1], ctx);
-      if (r) L.stamp(ears, r[0], r[1], ctx, true);
-    };
-    let markAt = null; // where the forehead mark went, so it can move if hair hides it
-    let tops = new Map(); // the head's top edge, for hats
-    const steps = {
-      wings: () => {
-        if (!showWings) return;
-        const w = F.wings[p.wings]; L.part('wings');
-        const [l] = B('wingL'), [r] = B('wingR');
-        if (l) L.stamp(w, l[0], l[1], ctx);
-        if (r) L.stamp(w, r[0], r[1], ctx, true);
-      },
-      tail: () => { if (has('tail')) { L.part('tail'); const [t] = B('tail'); if (t) L.stamp(F.tail[p.tail], t[0], t[1], ctx); } },
-      body: () => { L.part('body'); L.stamp(body, bx0 + body.pivot[0], by0 + body.pivot[1], ctx, false, patternRemap(p.pattern, 'body', body, { form: p.form, fu: 0, fv: 0 })); },
-      feet: () => {
-        const foot = has('feet') ? F.feet[p.feet] : F.plainFeet && Object.values(F.plainFeet)[0];
-        if (!foot) return;
-        L.part('feet');
-        const lift = (i) => (pose.step === 1 && i % 2 === 0) || (pose.step === 2 && i % 2 === 1) ? 1 : 0;
-        B('footL').forEach(([x, y], i) => L.stamp(foot, x, y - lift(i), ctx));
-        B('footR').forEach(([x, y], i) => L.stamp(foot, x, y - lift(i + 1), ctx, true));
-      },
-      arms: () => drawArms((k) => k !== 'up'),
-      ears: () => { if (!ears?.front) drawEars(); },
-      head: () => {
-        L.part('head');
-        L.stamp(head, hx0 + head.pivot[0], hy0 + head.pivot[1], ctx, false, patternRemap(p.pattern, 'head', head, headInfo));
-        // the forehead mark goes on with the head, so hair and toppers can sit over it
-        const lay = { ...FACE_LAYOUT[faceSock[0]], ...(F.faceLayout || {}) };
-        const mark = MARKS[p.mark]?.[lay.markSize || faceSock[0]];
-        if (mark) { L.part('face'); L.stamp(mark, fx, fy + lay.mark, ctx); L.part('head'); markAt = { mark, small: MARKS[p.mark].S, y: fy + lay.mark, size: faceSock[0] }; }
-        tops = headTops(L);
-        if (ears?.front) drawEars();
-      },
-      hair: () => { if (has('hair')) { L.part('hair'); const [t] = Hs('top'); if (t) L.stamp(F.hair[p.hair], t[0], t[1], ctx); } },
-      topper: () => { if (adult && has('topper')) { L.part('topper'); const [t] = Hs('top'); if (t) L.stamp(F.topper[p.topper], t[0], t[1], ctx); } },
-    };
-    for (const step of F.order) steps[step]?.();
-    if (markAt) settleMark(L, markAt, fx, fy, ctx);
-    drawArms((k) => k === 'up'); // raised arms go in front of the head
-    joinSeams(L, [p.color, p.hairColor || p.color], joinSet(F.merge ? ['1-2'] : []), F.merge ? new Set(['1-2', '2-1']) : undefined);
-    if (wear.head) drawHat(L, p, wear.head, Hs('top')[0]?.[0] ?? fx, tops);
-    simplify(L, [p.color, p.accent, p.hairColor || p.color]);
-    face = drawFace(L, p, stage, pose, ctx, [fx, fy], faceSock[0], head);
-    if (wear.face) eyesHidden = drawFaceWear(L, p, wear.face, face);
-  }
-
-  const { px, dx, dy, seen, overflow } = crop(L, !!F.floats);
-  const sh = ([x, y]) => [x + dx, y + dy];
+  const k = build(p, stage, pose);
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const key of k.px.keys()) { const [x, y] = key.split(',').map(Number); x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const w = x1 - x0 + 1, h = y1 - y0 + 1, px = new Uint8Array(w * h), seen = {};
+  for (const [key, c] of k.px) { const [x, y] = key.split(',').map(Number); px[(y - y0) * w + (x - x0)] = c; const n = k.own.get(key); seen[n] = (seen[n] || 0) + 1; }
   return {
-    px, w: PW, h: PH, overflow, seen,
-    offFace: face.off.length, offFacePx: face.off.map(i => [(i % TW) + dx, Math.floor(i / TW) + dy]),
-    eyes: face.eyes.map(sh), eyeSize: [face.eye.w, face.eye.h], eyePivot: face.eye.pivot, eyeSkin: face.eyeSkin,
-    mouth: sh(face.mouth), faceColour: ramp(p.color, 2), neck: neckY + dy,
-    floats: !!F.floats,
-    bill: face.bill, ctx, expr: pose.expr, eyesHidden,
+    px, w, h, fine: true, seen, overflow: w > FW || h > FH - 6 - (k.floats ? 10 : 0),
+    eyeBoxes: k.eyesHidden ? [] : k.boxes.map(([x, y, bw, bh, c]) => [x - x0, y - y0, bw, bh, c]),
+    eyesHidden: k.eyesHidden, mouth: [k.mouth[0] - x0, k.mouth[1] - y0], neck: k.neck - y0,
+    floats: k.floats, bill: k.bill, faceColour: k.faceColour,
   };
 }
 
-/** The egg: colours hint at the baby inside. */
+// ---------- the egg (still at the old double-size grid) ----------
+/** The egg: colours hint at the baby inside. Returns a 64 x 64 sprite for sprite-pet.js to scale. */
 export function composeEggArt(p, crack = 0, wobble = 0) {
-  const L = canvas();
-  const ctx = colors(p?.color || 'gold', p?.accent || 'cream', 'ink', 'brown');
-  L.stamp(EGG, OX + wobble, OY, ctx);
-  const x0 = OX + wobble - EGG.pivot[0], y0 = OY - EGG.pivot[1];
+  const W = 64, px = new Uint8Array(W * W);
+  const t = lut(EGG.spr, colors(p?.color || 'gold', p?.accent || 'cream', 'ink', 'brown'));
+  const x0 = ((W - EGG.w) >> 1) + wobble, y0 = W - 3 - EGG.h;
+  EGG.rows.forEach((r, j) => [...r].forEach((ch, i) => { const c = t[ch.charCodeAt(0)]; if (c) px[(y0 + j) * W + x0 + i] = c; }));
   const cracks = [[8, 3], [7, 4], [8, 5], [9, 6], [8, 7], [10, 4], [11, 5], [6, 6], [5, 7]];
-  for (let i = 0; i < Math.min(cracks.length, crack * 3); i++) L.set(x0 + cracks[i][0], y0 + cracks[i][1], C('ink'));
-  const { px } = crop(L);
-  return { px, w: PW, h: PH, egg: true };
+  for (let i = 0; i < Math.min(cracks.length, crack * 3); i++) px[(y0 + cracks[i][1]) * W + x0 + cracks[i][0]] = C('ink');
+  return { px, w: W, h: W, egg: true };
 }

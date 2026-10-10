@@ -48,7 +48,7 @@ test('old saves are credited from the family album without a points windfall', (
   delete g.pet.weight; delete g.pet.discipline;
   const points = g.points;
   const m = migrate(JSON.parse(JSON.stringify(g)));
-  assert.ok(has(m, 'ears', 'fox') && has(m, 'topper', 'cherry'));
+  assert.ok(has(m, 'ears', 'fox') && has(m, 'topper', 'cream'));
   assert.equal(m.points, points);
   assert.deepEqual(m.bookNews, []);
   assert.equal(typeof m.pet.weight, 'number');

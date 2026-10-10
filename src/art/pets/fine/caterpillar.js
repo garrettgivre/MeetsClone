@@ -8,7 +8,7 @@
 export const LOOK = { color: 'green', accent: 'gold' };
 // The body plan this founder is drawn in, and the gene names of its parts
 export const FORM = 'serpent';
-export const GENES = { head: 'bug', body: 'segmented', ears: 'antennae', tail: 'spike', feet: 'nubs', topper: 'leaf', eyes: 'bead', mouth: 'munch', mark: 'dots' };
+export const GENES = { head: 'bug', body: 'segmented', ears: 'antennae', tail: 'spike', feet: 'nubs', topper: 'leaf', eyes: 'bead', mouth: 'munch', mark: 'dots', pattern: 'bands' };
 
 // Head, "bug": 44 x 46, an egg standing on its broad end: a narrow crown, fullest low down
 export const HEAD = { rows: [
@@ -92,6 +92,19 @@ export const EARS_SMALL = { pivot: [5, 8], front: true, rows: [
   '....o',
   '.....o',
 ] };
+
+// Markings, "bands": two soft stripes in the deeper shade across the crown (they show on whatever head they lie on)
+export const OVERLAYS = [
+  { on: 'head', anchor: 'top', at: [-8, 4], rows: [
+    '333333333333333333333333333333333333333333333333333333333333',
+    '333333333333333333333333333333333333333333333333333333333333',
+    '.',
+    '.',
+    '.',
+    '333333333333333333333333333333333333333333333333333333333333',
+    '333333333333333333333333333333333333333333333333333333333333',
+  ] },
+];
 
 // Topper, "leaf": one leaf on a short stem
 export const TOPPER = { pivot: [3, 8], rows: [

@@ -5,6 +5,26 @@ import { discover } from './book.js';
 import { fixDecor } from './decor.js';
 
 const KEY = 'meetsclone.save.v2';
+
+// Parts renamed or dropped when the pets were redrawn (v0.31). An old name maps to its new one;
+// the lamb's horns, wool and snoot, which have no new drawing, become "none".
+const RENAMED = {
+  head: { lamb: 'axolotl' }, body: { woolly: 'chubby' }, eyes: { sleepy: 'pebble' }, ears: { lamb: 'gills' },
+  mouth: { baa: 'smile' }, pattern: { sooty: 'freckles' }, mark: { clover: 'gleam' }, tail: { puff: 'paddle' },
+  topper: { horns: 'none', cherry: 'cream', plume: 'crest' }, feet: { hooves: 'toes' }, nose: { snoot: 'none' },
+  hair: { wool: 'none', tuft: 'wisp' },
+};
+/** Walk a save and bring every genome, phenotype, book page and founder name in it up to date. */
+function rename(o, depth = 0) {
+  if (!o || typeof o !== 'object' || depth > 12) return;
+  if (Array.isArray(o)) { for (const v of o) rename(v, depth + 1); return; }
+  for (const [k, v] of Object.entries(o)) {
+    if (k === 'species' && v === 'Fleece') o[k] = 'Lotl';
+    else if (RENAMED[k] && typeof v === 'string') o[k] = RENAMED[k][v] || v;
+    else if (RENAMED[k] && Array.isArray(v) && v.every(x => typeof x === 'string')) o[k] = v.map(x => RENAMED[k][x] || x); // a genome's pair, or a Gene Book page
+    else rename(v, depth + 1);
+  }
+}
 export const SAVE_VERSION = 2;
 
 export function load() {
@@ -32,6 +52,9 @@ export function clear() {
  */
 export function migrate(g) {
   if (!g || typeof g !== 'object' || !g.version || g.version < SAVE_VERSION) return null;
+  rename(g);
+  // (a Gene Book page is a list of finds: no "none", no repeats)
+  if (g.book) for (const k of Object.keys(g.book)) if (Array.isArray(g.book[k])) g.book[k] = [...new Set(g.book[k])].filter(a => a !== 'none');
   const seeded = !!g.bookSeeded; // (read before the defaults below fill it in)
   const fresh = newGame(g.simTime || Date.now());
   for (const k of Object.keys(fresh)) if (g[k] === undefined) g[k] = fresh[k];
