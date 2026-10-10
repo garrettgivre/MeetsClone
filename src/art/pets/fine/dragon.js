@@ -125,41 +125,41 @@ export const OVERLAYS = [
 ];
 
 // Body, "scaled", in its own plan: a little dragon standing on four legs, seen from the side. The chest is up at the
-// front under the head, three spikes and a small one run along the back, and there is a strong haunch behind. The two
-// legs on the far side are in the deeper shade. `farWing` draws the wing a second time behind the body, a little up and
-// to the left, so both wings show.
+// front under the head; the back runs flat under the wing and then drops to the rump in three spikes, clear of the
+// wing; the legs narrow to the ankle and end in a rounded foot that points forward. The two legs on the far side are in
+// the deeper shade. `farWing` draws the wing a second time behind the body, a little up and to the left, so both show.
 export const BODY = { farWing: [-8, -5], rows: [
   '..........oooooooooooooo',
   '........oo44444444444444oo',
   '.......o444444444444444444o',
   '.......o44444444=4444444444o',
-  '......o444444444444444444444o..o.....o.....o',
-  '......o444444444444444444444o.o7o...o7o...o7o',
-  '.....o4444444444444444444444oo777o.o777o.o777o..o',
-  '.....o44444444444444444444444ooooooooooooooooooo7o',
-  '.....o44444444444444444444444444444444444444444ooooo',
-  '.....o4444444444444444444444444444(44444444444444444ooo',
-  '.....o4444444444444444444444444444444444444444444444444oo',
+  '......o444444444444444444444o.................o',
+  '......o444444444444444444444o................o7o...o',
+  '.....o4444444444444444444444o...............o777o.o7o',
+  '.....o44444444444444444444444oooooooooooooooooooo777o..o',
+  '.....o4444444444444444444444444444444444444444444ooooo.o7o',
+  '.....o44444444444444444444444444(444444444444444444444oooo',
+  '.....o444444444444444444444444444444444444444444444444433o',
   '.....o444444444444444444444444444444444444444444444444433o',
   '.....o4444444444444444444444444444444444444444444444444333o',
   '.....o444444444444444444444444444444444444444444444444433~o',
   '.....o4444444444444444444444444444444444444444444444444333o',
   '.....o4444444444444444444444444444444444444444444444444333o',
   '......o444444444444444444444444444444444444444444444444333o',
-  '.......o44444444444444444444444444444444444444444444444433o',
+  '.......o4444444444444444444444444444444444444444444444433o',
   '........o444444444444444444444444444444444444444444444333o',
   '.........o4444444444444444444444444444444444444444444333o',
   '..........o44444444444444444444444444444444444444444333o',
   '..........o444444444oo33333oooooooo3333oo4444444444333o',
   '..........o444444444oo33333o......o3333oo4444444444333o',
   '..........o444444444oo33333o......o3333oo4444444444333o',
-  '..........o444444444oo33333o......o3333oo4444444444333o',
-  '..........o444444444oo33333o......o3333oo4444444444333o',
-  '..........o444444444oo33333o......o3333oo4444444444333o',
-  '..........o444444444oo33333o......o3333oo4444444444333o',
-  '..........o444444443ooooooooo......ooooooo4444444444333o',
-  '..........o444!44443o...................o44444!4444333o',
-  '...........ooooooooo.....................ooooooooooooo',
+  '...........o44444444oo33333o......o3333o.o44444444333o',
+  '...........o44444443oo33333o......o3333o...o44444333o',
+  '...........o44444443oo33333o......o3333o...o44444333o',
+  '...........o44444443ooooooooo......oooooo...o44444333o',
+  '........ooo444444443o...................ooo444444333o',
+  '.......o44444!444443o..................o44444!443333o',
+  '........oooooooooooo....................oooooooooooo',
 ] };
 
 // Tail, "arrow": a thick tail that curls up behind and ends in a spade in the accent colour. Its left end lies behind the body.
