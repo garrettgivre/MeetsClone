@@ -15,8 +15,9 @@ export const LOOK = { color: 'indigo', accent: 'lime', eye: 'green', deeper: tru
 export const FORM = 'drake';
 export const GENES = { head: 'dragon', body: 'scaled', ears: 'fins', tail: 'arrow', feet: 'claws', wings: 'bat', topper: 'horns', hair: 'spines', eyes: 'slit', nose: 'snout', mouth: 'grin', mark: 'gem', pattern: 'plates' };
 
-// Head, "dragon": 54 x 40. A broad flat-topped skull with its corners rounded off, and a square muzzle below it
-// (shorter than the first long one, which made a horse of it).
+// Head, "dragon": 54 x 34. A broad flat-topped skull with rounded corners, and a snout that comes forward out of the
+// lower face and tilts up a little: its top edge is drawn on the face, the nostrils sit on top of it and the mouth runs
+// along its lower part, the way a muzzle looks when it points at you.
 export const HEAD = { rows: [
   '.................oooooooooooooooooooo',
   '............ooooo4444444444^444444444ooooo',
@@ -34,28 +35,22 @@ export const HEAD = { rows: [
   'o{44444444444444444444444444444444444444444444444443}o',
   'o4444444444444444444444444444444444444444444444444433o',
   'o4444444444444444444444444444444444444444444444444433o',
-  'o4444444444444444444444444444444444444444444444444433o',
   'o44444444444444444444444444@4444444444444444444444433o',
   'o4444444444444444444444444444444444444444444444444433o',
   'o4444444444444444444444444444444444444444444444444433o',
+  'o4444444444444444444444444444444444444444444444444433o',
   'o4444444444444444444444444444444444444444444444444333o',
-  '.oo444444444444444444444444444444444444444444444333oo',
-  '...ooo444444444444444444444444444444444444443333ooo',
-  '......ooo444444444444444444444444444444443333ooo',
-  '.........oo44444444444444444444444444443333oo',
-  '...........o444444444444444444444444444333o',
-  '............o4444444444444444444444444433o',
-  '............o4444444444444444444444444433o',
-  '............o4444444444444444444444444433o',
-  '............o4444444444444444444444444433o',
-  '............o4444444444444444444444444433o',
-  '............o4444444444444444444444444433o',
-  '............o4444444444444444444444444333o',
-  '............o4444444444444444444444444333o',
-  '............o4444444444444444444444444333o',
-  '............o4444444444444444444444444333o',
+  '.o444444444444444oooooooooooooooooooo444444444444333o',
+  '..o444444444444oo44444444444444444444oo444444444333o',
+  '...oo44444444oo444444444444444444444444oo44444333oo',
+  '.....ooo44444o44444444444444444444444444o44333ooo',
+  '........ooo44o44444444444444444444444444o43ooo',
+  '...........ooo44444444444444444444444444ooo',
+  '.............o44444444444444444444444333o',
+  '.............o44444444444444444444444333o',
+  '.............o44444444444444444444444333o',
   '.............o44444444444444444444443333o',
-  '.............oo444444444444444444433333oo',
+  '..............o444444444444444444433333o',
   '...............ooo444444444=44433333ooo',
   '..................oooooooooooooooooo',
 ] };
@@ -226,17 +221,16 @@ export const WINGS = { pivot: [1, 21], rows: [
   'oo',
 ] };
 
-// Eyes, "slit": a round eye in the eye colour with a narrow upright pupil and one shine
-export const EYE = { pivot: [4, 4], rows: [
-  '..oooo..',
-  '.oeooeo.',
-  'owwooeeo',
-  'owwooeeo',
-  'oeeooeeo',
-  'oeeooeeo',
-  'oeeooeeo',
-  '.oeooeo.',
-  '..oooo..',
+// Eyes, "slit": a dragon's eye. A heavy lid slants down toward the middle of the face, over an iris in the eye colour
+// with a narrow upright pupil and one shine. The left one; the right is turned round.
+export const EYE = { pivot: [5, 3], mirror: true, rows: [
+  'oooo',
+  'oeeeoooo',
+  'oeeooeeeoo',
+  'owwooeeeeo',
+  'oeeooeeeeo',
+  '.oeooeeeo',
+  '..oooooo',
 ] };
 
 // Nose, "snout": two small nostrils set apart
@@ -267,5 +261,5 @@ export const CHEEK = { pivot: [4, 2], rows: [
   '.PPPPPP.',
 ] };
 
-// (mouthFixed: the mouth keeps its place at the end of the muzzle whether or not there is a nose above it)
-export const FACE = { eyes: 14, nose: 12, mouth: 15, mouthFixed: true, mark: [0, -12], cheeks: [17, 3] };
+// (mouthFixed: the mouth keeps its place low on the snout whether or not there is a nose above it)
+export const FACE = { eyes: 14, nose: 8, mouth: 12, mouthFixed: true, mark: [0, -11], cheeks: [19, 5] };
