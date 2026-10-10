@@ -26,7 +26,8 @@ export function animateSprite(src, pose, canvas, ground, scale) {
   while (bottom > 0 && rowEmpty(bottom)) bottom--;
   const groundRow = Math.floor(ground / scale);
   const U = src.fine ? 2 : 1; // how many of this sprite's pixels make one old pet pixel: motions and strokes keep their size
-  const lift = src.floats ? (3 + Math.round(Math.sin((pose.t || 0) / 500))) * U : 0;
+  // (a floater hangs above the ground, as far as its height leaves room for)
+  const lift = src.floats ? Math.max(0, Math.min((3 + Math.round(Math.sin((pose.t || 0) / 500))) * U, groundRow - bottom)) : 0;
   const hop = pose.step === 1 ? U : 0;
   const ox = Math.floor(canvas / scale / 2 - src.w / 2);
   const oy = groundRow - bottom - lift - hop;

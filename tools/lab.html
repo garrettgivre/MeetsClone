@@ -72,6 +72,7 @@
     <button data-tab="pair" class="on">One pair</button>
     <button data-tab="random">Random pairings</button>
     <button data-tab="lineage">Lineage</button>
+    <button data-tab="sheet">Test sheet</button>
   </div>
   <label>Seed <input id="seed" type="number" value="1"></label>
   <button id="reseed" title="New random seed">New seed</button>
@@ -114,6 +115,21 @@
     <div class="pairs" id="pairs"></div>
   </section>
 
+  <section id="tab-sheet" hidden>
+    <div class="tools">
+      <button class="primary" id="rerollSheet">New sheet</button>
+      <label>Pets <input id="sheetCount" type="number" value="24" min="1" max="120"></label>
+      <label>Generations of mixing <input id="sheetGens" type="number" value="3" min="1" max="8"></label>
+      <label>Body plan <select id="sheetForm"><option value="">any</option></select></label>
+      <label><input type="checkbox" id="sheetFlagged"> only pets with a warning</label>
+    </div>
+    <p class="muted">Each pet is bred down from the six founders for that many generations (a random child of two random pets each time), so parts,
+      body plans and colours are well mixed. Under each: its body plan and the parts it shows. A <b class="new">warning</b> means the picture is too
+      big for the canvas, a part it should show is hidden, or an eye is off the head. Click a pet to open it in the pair view against a founder.</p>
+    <div id="sheetSummary" class="muted"></div>
+    <div class="kids" id="sheet" style="grid-template-columns: repeat(auto-fill, minmax(168px, 1fr))"></div>
+  </section>
+
   <section id="tab-lineage" hidden>
     <div class="tools">
       <button class="primary" id="rerollLineage">New lineage</button>
@@ -128,6 +144,7 @@
 import { PACKED } from '../src/engine/palette.js';
 import { makeRng } from '../src/engine/rng.js';
 import { composePet, CANVAS } from '../src/game/render.js';
+import { composePetArt, FORMS, PARTS } from '../src/game/pet-art.js';
 import { randomOutfit } from '../src/game/pet.js';
 import { makeRng as outfitRng } from '../src/engine/rng.js';
 import { hash } from '../src/engine/rng.js';
@@ -229,7 +246,7 @@ function renderKids() {
     d.append(canvasFor(k, 'med'));
     const tag = document.createElement('div');
     tag.className = 'tag';
-    tag.innerHTML = `${k.name} ${sym(k.gender)}${nov.length ? ` <span class="new" title="${nov.map(g => GENE_LABELS[g] + ': ' + k.phenotype[g]).join(', ')}">★${nov.length}</span>` : ''}${k.phenotype.aura === 'sparkle' ? ' ✨' : ''}`;
+    tag.innerHTML = `${k.name} ${sym(k.gender)}${nov.length ? ` <span class="new" title="${nov.map(g => GENE_LABELS[g] + ': ' + k.phenotype[g]).join(', ')}">★${nov.length}</span>` : ''}`;
     d.append(tag);
     d.onclick = () => { state.sel = i; renderKids(); renderDetail(); };
     el.append(d);
@@ -337,10 +354,72 @@ function renderLineage() {
 }
 $('rerollLineage').onclick = renderLineage;
 
+// ---------- test sheet ----------
+/** What is wrong with a pet's picture, as a list of short notes (empty if nothing). */
+function warnings(pet, stage) {
+  const p = pet.phenotype, k = composePetArt(p, stage, {}), out = [];
+  if (k.overflow) out.push(`too big (${k.w}x${k.h})`);
+  const adult = stage === 'adult', grown = adult || stage === 'teen';
+  const body = PARTS.body[p.body]?.[p.form];
+  const want = { head: 150, body: 12, face: 15 };
+  if (stage !== 'baby' && p.ears !== 'none') want.ears = 6;
+  if (grown) {
+    if (p.tail !== 'none' && body?.sockets.tail) want.tail = 4;
+    if (p.feet !== 'none' && body?.sockets.feet) want.feet = 4;
+    if (p.hair !== 'none') want.hair = 6;
+  }
+  if (adult) {
+    if (p.topper !== 'none') want.topper = 6;
+    if (p.wings !== 'none' && body?.sockets.wingL) want.wings = 6;
+  }
+  for (const [part, n] of Object.entries(want)) if ((k.seen[part] || 0) < n) out.push(`${part} hidden (${k.seen[part] || 0}px)`);
+  for (const [x, y, w, h] of k.eyeBoxes) if (x < 0 || y < 0 || x + w > k.w || y + h > k.h) out.push('eye off the picture');
+  return out;
+}
+function mixedPet(gens) {
+  // start from two founders, then marry in a child of two other founders each generation
+  const pure = () => pureGenome(rng.pick(FOUNDERS).traits);
+  let g = inherit(pure(), pure(), rng);
+  for (let i = 1; i < gens; i++) g = inherit(g, inherit(pure(), pure(), rng), rng);
+  return makePet(g);
+}
+function renderSheet() {
+  const el = $('sheet');
+  el.innerHTML = '';
+  const n = Math.max(1, Math.min(120, +$('sheetCount').value || 24)), gens = Math.max(1, Math.min(8, +$('sheetGens').value || 3));
+  const form = $('sheetForm').value, flaggedOnly = $('sheetFlagged').checked, stage = $('stage').value;
+  let made = 0, flagged = 0, tries = 0;
+  while (made < n && tries++ < n * 40) {
+    const pet = mixedPet(gens);
+    if (form) { pet.genome.form = [form, form]; pet.phenotype.form = form; }
+    const warn = warnings(pet, stage);
+    if (warn.length) flagged++;
+    if (flaggedOnly && !warn.length) continue;
+    made++;
+    const d = document.createElement('div');
+    d.className = 'kid';
+    const c = canvasFor(pet, 'med');
+    c.style.width = c.style.height = '160px';
+    const p = pet.phenotype, show = (g) => (p[g] && p[g] !== 'none' ? p[g] + ' ' + g : '');
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = `<b>${p.form}</b> · ${p.head} head · ${p.body} body<br>${[p.ears + ' ears', show('tail'), show('feet'), show('topper'), show('hair'), show('wings'), p.eyes + ' eyes', p.mouth + ' mouth', p.pattern, p.mark + ' mark', p.color + '/' + p.accent].filter(Boolean).join(', ')}`
+      + (warn.length ? `<br><span class="new">${warn.join('; ')}</span>` : '');
+    d.append(c, tag);
+    d.onclick = () => { state.A = { ...pet, gender: 'f' }; state.B = founderParent(rng.pick(FOUNDERS), 'm'); showTab('pair'); refreshPair(); };
+    el.append(d);
+  }
+  $('sheetSummary').textContent = `${made} shown; ${flagged} of the ${tries - 1 || made} bred had a warning.`;
+}
+$('rerollSheet').onclick = renderSheet;
+for (const f of FORMS) $('sheetForm').append(new Option(f, f));
+for (const id of ['sheetCount', 'sheetGens', 'sheetForm', 'sheetFlagged']) $(id).onchange = renderSheet;
+
 // ---------- tabs, seed, stage ----------
 function showTab(name) {
   for (const b of document.querySelectorAll('#tabs button')) b.classList.toggle('on', b.dataset.tab === name);
-  for (const t of ['pair', 'random', 'lineage']) $('tab-' + t).hidden = t !== name;
+  for (const t of ['pair', 'random', 'lineage', 'sheet']) $('tab-' + t).hidden = t !== name;
+  if (name === 'sheet') renderSheet();
   if (name === 'random') renderPairs();
   if (name === 'lineage') renderLineage();
 }
@@ -360,6 +439,15 @@ $('stage').onchange = () => { refreshPair(false); const tab = document.querySele
 $('kidCount').onchange = () => { litter(); renderKids(); renderDetail(); };
 $('dress').onchange = $('stage').onchange;
 
+// the address can open a tab ready set up: ?tab=sheet&seed=3&n=24&gens=3&form=quad&stage=child&flagged
+const q = new URLSearchParams(location.search);
+if (q.get('seed')) $('seed').value = q.get('seed');
+if (q.get('stage')) $('stage').value = q.get('stage');
+if (q.get('n')) $('sheetCount').value = q.get('n');
+if (q.get('gens')) $('sheetGens').value = q.get('gens');
+if (q.get('form')) $('sheetForm').value = q.get('form');
+if (q.has('flagged')) $('sheetFlagged').checked = true;
+if (q.get('tab')) for (const b of document.querySelectorAll('#tabs button')) b.classList.toggle('on', b.dataset.tab === q.get('tab'));
 restart();
 </script>
 </body>

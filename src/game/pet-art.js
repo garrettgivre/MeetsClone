@@ -34,7 +34,7 @@ export const FW = 128, FH = 128; // the most room a pet may take, in fine pixels
 // pale to read as the colour (orange turns peach, slate and cream turn white), so the body is drawn a shade deeper.
 export const DEEPER = new Set(['orange', 'slate', 'cream', 'red', 'brown']);
 
-const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR', '<': 'armL', '>': 'armR' };
+const SOCKETS = { '^': 'top', '[': 'earL', ']': 'earR', '{': 'sideL', '}': 'sideR', '@': 'face', '=': 'neck', '~': 'tail', '!': 'feet', '(': 'wingL', ')': 'wingR', '<': 'armL', '>': 'armR' };
 const FIXED = { o: 'ink', w: 'white', l: 'green.2', L: 'green.1', j: 'green.0', P: 'pink.3', f: 'pink.2', q: 'red.2', r: 'red.1', Y: 'gold.3', y: 'gold.1', g: 'gray', v: 'silver', m: 'mist' };
 
 // read a part: note its sockets (painted as body colour unless the part says otherwise)
@@ -119,23 +119,30 @@ export function build(p, stage = 'adult', pose = {}) {
   const wing0 = Y || !adult ? null : PARTS.wings?.[p.wings], wings = wing0 && (form !== 'floater' && wing0.side || wing0), [wl] = B('wingL'), [wr] = B('wingR');
   const ears = stage === 'baby' ? null : stage === 'child' ? PARTS.ears[p.ears]?.small : PARTS.ears[p.ears];
   const pattern = Y ? [] : PARTS.pattern[p.pattern] || [], hair = Y || !has(p, 'hair') ? null : PARTS.hair?.[p.hair];
-  const drawEars = () => { who = 'ears'; if (ears && el) { stamp(ears, el[0], el[1]); stamp(ears, er[0], er[1], true); } };
+  // ears that grow from the side of a head (gills, fins) use its side sockets; the rest use the ones on top
+  const [sl] = H('sideL'), [sr] = H('sideR'), eL = ears?.side && sl || el, eR = ears?.side && sr || er;
+  const drawEars = () => { who = 'ears'; if (ears && eL) { stamp(ears, eL[0], eL[1]); stamp(ears, eR[0], eR[1], true); } };
   const drawWings = () => { who = 'wings'; if (wings && wl) stamp(wings, wl[0], wl[1]); if (wings && wr) stamp(wings, wr[0], wr[1], true); };
   const lay = (list, on, from, part) => { for (const o of list) if (o.on === on) stamp(o, from[0] + o.off[0], from[1] + o.off[1], false, [0, 0], part); };
 
   const onePiece = form === 'blob' && !Y; // the base stands behind the head, so ears that lie behind the head go on after it
   if (ears && !ears.front && !onePiece) drawEars();
-  if (wings && !wings.front) drawWings();
+  const flank = !!wl && !wr; // seen from the side: one wing, lying on the flank in front of the body
+  const overHead = form === 'blob' && !Y; // on the one-piece mound the head covers the body, so wings go on last, at its sides
+  if (wings && !wings.front && !flank && !overHead) drawWings();
   const tail = !Y && has(p, 'tail') && PARTS.tail[p.tail] && (form !== 'floater' && PARTS.tail[p.tail].side || PARTS.tail[p.tail]);
   who = 'tail'; if (t && tail) stamp(tail, t[0], t[1]);
   who = 'body'; stamp(body, 0, 0, false, [0, 0]);
   lay(pattern, 'body', [bnx, bny], 'body');
   if (ears && !ears.front && onePiece) drawEars();
-  if (wings?.front) drawWings();
+  if (wings && (wings.front || flank) && !overHead) drawWings();
   const arms = Y ? null : PARTS.arms[form], [al] = B('armL'), [ar] = B('armR');
   who = 'arms'; if (arms && al) { stamp(arms, al[0], al[1]); stamp(arms, ar[0], ar[1], true); }
   who = 'feet'; if (!Y && has(p, 'feet') && PARTS.feet[p.feet]) for (const [x, y] of B('feet')) stamp(PARTS.feet[p.feet], x, y);
+  const under = onePiece ? new Set([...own].filter(([, w]) => w === 'body').map(([k]) => k)) : null;
   who = 'head'; stamp(head, hx, hy, false, [0, 0]);
+  // one piece: the head's own shadow would lie across the mound as a streak, so over the mound the head is plain
+  if (under) for (const k of under) if (own.get(k) === 'head' && px.get(k) === col[3]) px.set(k, col[4]);
   if (form === 'blob' || Y) {
     // one piece: wherever the head's outline lies on the body with body colour beside it, the line goes
     const melted = [];
@@ -147,15 +154,17 @@ export function build(p, stage = 'adult', pose = {}) {
     }
     for (const [k, c] of melted) px.set(k, c);
   }
+  if (wings && overHead) drawWings();
   // the top of the head in each column, before anything is put on it, for hats
   const tops = new Map();
   for (const [k, w] of own) if (w === 'head') { const [x, y] = k.split(',').map(Number); if (!tops.has(x) || y < tops.get(x)) tops.set(x, y); }
   lay(pattern, 'head', f, 'head');
   if (hair?.layers) for (const o of hair.layers) stamp(o, (o.anchor === 'top' ? top : f)[0] + o.off[0], (o.anchor === 'top' ? top : f)[1] + o.off[1], false, [0, 0], 'head');
   if (ears?.front) drawEars();
-  who = 'hair'; if (hair?.rows) stamp(hair, top[0], top[1]);
+  const topper = adult && has(p, 'topper') && PARTS.topper[p.topper], both = !!(hair?.rows && topper);
+  who = 'hair'; if (hair?.rows) stamp(hair, top[0] - (both ? 7 : 0), top[1] + (both ? 1 : 0));
   if (hair?.layers) for (const [k, w] of own) if (w === 'head' && [col[7], col[8]].includes(px.get(k))) own.set(k, 'hair'); // (icing counts as hair where it shows)
-  who = 'topper'; if (adult && has(p, 'topper') && PARTS.topper[p.topper]) stamp(PARTS.topper[p.topper], top[0], top[1]);
+  who = 'topper'; if (topper) stamp(topper, top[0] + (both ? 5 : 0), top[1] + (both ? 1 : 0));
 
   who = 'face';
   const F = Y ? Y.face : PARTS.face[p.head] || PARTS.face.gumdrop, cheek = Y ? Y.cheek : PARTS.cheek[p.head];
@@ -238,7 +247,7 @@ export function composePetArt(p, stage, pose = {}) {
   const w = x1 - x0 + 1, h = y1 - y0 + 1, px = new Uint8Array(w * h), seen = {};
   for (const [key, c] of k.px) { const [x, y] = key.split(',').map(Number); px[(y - y0) * w + (x - x0)] = c; const n = k.own.get(key); seen[n] = (seen[n] || 0) + 1; }
   return {
-    px, w, h, fine: true, seen, overflow: w > FW || h > FH - 6 - (k.floats ? 10 : 0),
+    px, w, h, fine: true, seen, overflow: w > FW || h > FH - 6,
     eyeBoxes: k.eyesHidden ? [] : k.boxes.map(([x, y, bw, bh, c]) => [x - x0, y - y0, bw, bh, c]),
     eyesHidden: k.eyesHidden, mouth: [k.mouth[0] - x0, k.mouth[1] - y0], neck: k.neck - y0,
     floats: k.floats, bill: k.bill, faceColour: k.faceColour,
