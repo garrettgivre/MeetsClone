@@ -4,7 +4,7 @@
 // Colours can blend or drift a step around the colour wheel, and rare
 // mutations bring brand-new alleles.
 
-import { RAMP_NAMES } from '../engine/palette.js';
+import { RAMP_NAMES, PACKED, ramp } from '../engine/palette.js';
 import { rand as defaultRng } from '../engine/rng.js';
 
 // dominance: 3 = common/dominant, 2 = normal, 1 = rare/recessive.
@@ -103,16 +103,35 @@ export function pureGenome(traits) {
   return g;
 }
 
-/** Blend two body colours: the ramp halfway between them on the colour wheel. */
-export function blendColor(a, b, rng = defaultRng) {
+// Mixing two colours like paint: average the two (their middle shades) and take the palette colour nearest to that.
+// Cream with red gives pink, cream with blue gives sky, brown with gold gives orange, pink with blue gives violet.
+// Plain mixing has one fault: colours from opposite sides of the wheel cancel to grey, and bred pets would all drift
+// to slate. So when two bright colours would mix to a neutral that neither of them is, the child takes the hue halfway
+// between them round the wheel instead (red with green gives gold, not brown).
+const NEUTRAL = ['brown', 'cream', 'slate'];
+const rgbOf = (name) => { const v = PACKED[ramp(name, 2)]; return [v & 255, (v >> 8) & 255, (v >> 16) & 255]; };
+function nearestColor([r, g, b]) {
+  let best = null, d = Infinity;
+  for (const n of BODY_COLORS) { const [x, y, z] = rgbOf(n), e = (r - x) ** 2 + (g - y) ** 2 + (b - z) ** 2; if (e < d) { d = e; best = n; } }
+  return best;
+}
+function betweenOnWheel(a, b, rng) {
   const ia = WHEEL.indexOf(a), ib = WHEEL.indexOf(b);
-  if (ia < 0 || ib < 0) return rng.chance(0.5) ? a : b; // neutrals don't blend
   let d = ib - ia;
   if (Math.abs(d) > WHEEL.length / 2) d -= Math.sign(d) * WHEEL.length;
   if (Math.abs(d) <= 1) return rng.chance(0.5) ? a : b;
   const mid = ia + d / 2;
   const i = rng.chance(0.5) ? Math.floor(mid) : Math.ceil(mid);
   return WHEEL[((i % WHEEL.length) + WHEEL.length) % WHEEL.length];
+}
+/** Mix two colours: the palette colour nearest their blend (see above). */
+export function blendColor(a, b, rng = defaultRng) {
+  if (a === b) return a;
+  const A = rgbOf(a), B = rgbOf(b), mixed = nearestColor(A.map((x, i) => (x + B[i]) / 2));
+  if (mixed === a || mixed === b || !NEUTRAL.includes(mixed)) return mixed;
+  // it went to a neutral that neither parent is
+  if (!NEUTRAL.includes(a) && !NEUTRAL.includes(b)) return betweenOnWheel(a, b, rng);
+  return rng.chance(0.5) ? a : b;
 }
 
 /** Work out the visible traits for a genome (done once at conception). */
@@ -126,7 +145,7 @@ export function express(genome, rng = defaultRng) {
   for (const gene of COLOR_GENES) {
     const [a, b] = genome[gene];
     if (a === b) p[gene] = a;
-    else if (gene !== 'eyeColor' && rng.chance(0.3)) p[gene] = blendColor(a, b, rng);
+    else if (gene !== 'eyeColor') p[gene] = blendColor(a, b, rng); // two different colours always mix; both are still carried
     else p[gene] = rng.chance(0.5) ? a : b;
   }
   // Markings in the same colour as the body would be invisible.

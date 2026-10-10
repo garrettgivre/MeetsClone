@@ -4,7 +4,7 @@ MeetsClone is a mobile-first browser virtual pet inspired by *Tamagotchi Meets /
 
 The owner plays it as an installed app on an Android phone (Chrome, full screen) and sends screenshots from there. Design for that first.
 
-## Where things stand (v0.32.0, 9 October 2026)
+## Where things stand (v0.32.1, 9 October 2026)
 
 Everything on `main` is committed and pushed. `npm test` passes (94 tests).
 
@@ -282,7 +282,7 @@ The owner asked for the dark blue areas outside the room to show the sky the win
 
 ## Genetics
 
-`src/game/genetics.js`. Each gene has two alleles; dominance follows the `GENES` numbers (3 common … 1 rare); ties are a coin flip made once at conception (`express`). Forms are codominant. An ancillary part paired with `none` is always a coin flip. Colours blend (30%) or drift a step round the wheel; neutrals don't blend; accent never equals body colour. `randomGenome` starts from a founder line and adds one to three twists. `resemblance`, `childOdds` and `carried` support the Pairing Lab and Status page. Generation 1 is a plain starter that grows into a founder chosen by care (`founderFor`); from generation 2 looks come only from genes.
+`src/game/genetics.js`. Each gene has two alleles; dominance follows the `GENES` numbers (3 common … 1 rare); ties are a coin flip made once at conception (`express`). Forms are codominant. An ancillary part paired with `none` is always a coin flip. Colours mix like paint (v0.32.1; the owner: "it mixes the two parents colors together and finds the closes color in our palette"): a pet carrying two different colours always shows `blendColor(a, b)`, the palette colour nearest the average of the two, and still carries both, so its own children can come out either pure colour again. Plain mixing sends opposite hues to grey (44 of the 182 pairs gave slate, and a bred population drifted to it), so when two bright colours would mix to a neutral that neither is, the child takes the hue halfway between them round the wheel. Eye colour does not mix. Colours also drift a step round the wheel now and then; accent never equals body colour. `randomGenome` starts from a founder line and adds one to three twists. `resemblance`, `childOdds` and `carried` support the Pairing Lab and Status page. Generation 1 is a plain starter that grows into a founder chosen by care (`founderFor`); from generation 2 looks come only from genes.
 
 ## Care, skills, jobs, alerts, cheats
 
